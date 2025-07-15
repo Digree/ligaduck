@@ -11,8 +11,8 @@ Widget buildCampionatoButton(CampionatoButtonModel model) {
   return Padding(
     padding: EdgeInsets.all(8.0),
     child: SizedBox(
-      width: 120,
-      height: 120,
+      width: 240,
+      height: 240,
       child: FloatingActionButton(
         heroTag: model.text,
         onPressed: model.onPressed,

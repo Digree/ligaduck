@@ -12,8 +12,8 @@ class HomePage extends StatelessWidget {
         backgroundColor: Colors.blueAccent,
         title: const Text('Liga Duck', style: TextStyle(color: Colors.white)),
       ),
-      body: Container(
-        child: Row(
+      body: Center(
+        child: Column(
           children: [
             buildCampionatoButton(
               CampionatoButtonModel(
@@ -33,7 +33,13 @@ class HomePage extends StatelessWidget {
               CampionatoButtonModel(
                 text: '43° Campionato',
                 onPressed: () {
-                  print('Button 2 pressed');
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          CampionatoHomePage(title: '43° Campionato'),
+                    ),
+                  );
                 },
               ),
             ),
