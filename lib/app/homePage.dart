@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/campionatoHomePage.dart';
-import 'package:ligaduck/app/models/campionatoButtonModel.dart';
+import 'package:ligaduck/app/models/campionato/campionatoButtonModel.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});

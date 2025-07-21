@@ -19,3 +19,5 @@ flutter:
   uses-material-design: true
   assets:
     - assets/logo_champions.png
+    - assets/squadre/paperopoli.png
+    - assets/squadre/golden_city.png

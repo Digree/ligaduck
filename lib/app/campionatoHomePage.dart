@@ -1,7 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/homePage.dart';
-import 'package:ligaduck/app/models/competizioneButtonModel.dart';
+import 'package:ligaduck/app/models/campionato/campionatoMatchModel.dart';
+import 'package:ligaduck/app/models/competizione/competizioneButtonModel.dart';
 
 class CampionatoHomePage extends StatefulWidget {
   final String title;
@@ -22,6 +23,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    bool isWide = MediaQuery.of(context).size.width > 600;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blueAccent,
@@ -137,6 +139,17 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                 ),
               ),
             ),
+            isWide
+                ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Column(children: [buildProssimePartite()]),
+                      Column(children: [buildListaSquadre()]),
+                    ],
+                  )
+                : Column(
+                    children: [buildProssimePartite(), buildListaSquadre()],
+                  ),
           ],
         ),
       ),
@@ -144,10 +157,104 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
   }
 
   Widget buildProssimePartite() {
-    return Scaffold();
+    return SizedBox(
+      width: MediaQuery.of(context).size.width * 0.5,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'Prossime Partite:',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.left,
+            ),
+          ),
+          Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: buildCampionatoMatch(
+                      CampionatoMatchModel(match: '1'),
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: buildCampionatoMatch(
+                      CampionatoMatchModel(match: '2'),
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: buildCampionatoMatch(
+                      CampionatoMatchModel(match: '3'),
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: buildCampionatoMatch(
+                      CampionatoMatchModel(match: '4'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   Widget buildListaSquadre() {
-    return Scaffold();
+    final squadre = [
+      'Anatre FC',
+      'Paperopoli',
+      'Real Quack',
+      'Duck United',
+      'FC Lago',
+    ];
+
+    return SizedBox(
+      width: MediaQuery.of(context).size.width * 0.5,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'Squadre:',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+          ),
+          ...squadre.map(
+            (nome) => SizedBox(
+              width: 1000,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 4.0,
+                ),
+                child: ElevatedButton(
+                  onPressed: () {
+                    // Azione per la squadra
+                  },
+                  child: Text(nome, style: TextStyle(color: Colors.blueAccent)),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
