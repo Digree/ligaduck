@@ -1,0 +1,264 @@
+import 'package:flutter/material.dart';
+import 'package:ligaduck/app/campionatoHomePage.dart';
+
+class SquadrePage extends StatelessWidget {
+  final String title;
+  const SquadrePage({super.key, required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(kToolbarHeight),
+        child: AppBar(
+          flexibleSpace: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.green, Colors.yellow],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      CampionatoHomePage(title: '43° Campionato'),
+                ),
+              );
+            },
+          ),
+          title: Text(title, style: TextStyle(color: Colors.white)),
+        ),
+      ),
+      body: Container(
+        child: Column(
+          children: [
+            headerTeam(context),
+            infoTeam(),
+            // Add more widgets here as needed
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget headerTeam(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    return Container(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(left: 16, top: 16, right: 16),
+            child: Container(
+              width: screenWidth * 0.13,
+              height: 250,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.green, Colors.yellow],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(32),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Align(
+                alignment: Alignment.center,
+                child: Image.asset(
+                  'assets/squadre/paperopoli.png',
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.only(left: 16, top: 16, right: 16),
+            child: Container(
+              width: screenWidth * 0.82,
+              height: 250,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.green, Colors.yellow],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(32),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 40),
+                  child: Row(
+                    children: [
+                      Image.asset(
+                        'assets/divise/divise_43/paperopoli_1.png',
+                        //fit: BoxFit.cover,
+                      ),
+                      Image.asset(
+                        'assets/divise/divise_43/paperopoli_2.png',
+                        //fit: BoxFit.cover,
+                      ),
+                      Image.asset(
+                        'assets/divise/divise_43/paperopoli_1.png',
+                        //fit: BoxFit.cover,
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(left: 100),
+                        child: Column(
+                          children: [
+                            Image.asset(
+                              'assets/miscellaneous/stadium.png',
+                              //fit: BoxFit.cover,
+                            ),
+                            Text(
+                              'PdP Stadium',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(left: 20),
+                        child: Column(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget infoTeam() {
+    return Padding(
+      padding: EdgeInsets.only(top: 20),
+      child: DefaultTabController(
+        length: 3,
+        child: Column(
+          children: [
+            Container(
+              constraints: BoxConstraints(maxHeight: 50),
+              child: TabBar(
+                labelColor: Colors.green[800],
+                unselectedLabelColor: Colors.grey,
+                indicatorColor: Colors.green,
+                tabs: [
+                  Tab(text: 'Squadra'),
+                  Tab(text: 'Palmarès'),
+                  Tab(text: 'Statistiche'),
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 610,
+              child: TabBarView(
+                children: [
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.vertical,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minWidth: constraints.maxWidth,
+                          ),
+                          child: DataTable(
+                            columns: <DataColumn>[
+                              DataColumn(label: Text("Num.")),
+                              DataColumn(label: Text("Nome")),
+                              DataColumn(label: Text("Pres.")),
+                              DataColumn(label: Text("GF")),
+                              DataColumn(label: Text("GS")),
+                              DataColumn(label: Text("Esp.")),
+                              DataColumn(label: Text("Aut.")),
+                            ],
+                            rows: [
+                              DataRow(
+                                cells: [
+                                  DataCell(Text("1")),
+                                  DataCell(Text("Pascal")),
+                                  DataCell(Text("0")),
+                                  DataCell(Text("0")),
+                                  DataCell(Text("0")),
+                                  DataCell(Text("0")),
+                                  DataCell(Text("0")),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  // Tab 2: Placeholder
+                  GridView.builder(
+                    itemCount: 10,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 5, // 3 colonne
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                    ),
+                    itemBuilder: (context, index) {
+                      return Container(
+                        color: Colors.grey[300],
+                        child: Padding(
+                          padding: EdgeInsets.only(top: 50),
+                          child: Column(
+                            children: [
+                              Image.asset(
+                                scale: 2,
+                                'assets/trophies/champions_league.png',
+                                //fit: BoxFit.cover,
+                              ),
+                              Text(
+                                '1 Campionato',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  // Tab 3: Placeholder
+                  Center(child: Text('Statistiche')),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:ligaduck/app/homePage.dart';
 import 'package:ligaduck/app/models/campionato/campionatoMatchModel.dart';
 import 'package:ligaduck/app/models/competizione/competizioneButtonModel.dart';
+import 'package:ligaduck/app/squadrePage.dart';
 
 class CampionatoHomePage extends StatefulWidget {
   final String title;
@@ -40,117 +41,122 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
       ),
       body: Align(
         alignment: Alignment.topCenter,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Padding(
-              padding: EdgeInsets.only(top: 15.0, bottom: 16.0),
-              child: Padding(
-                padding: EdgeInsetsGeometry.only(left: 16.0, top: 8.0),
-                child: Align(
-                  alignment: Alignment.topLeft,
-                  child: Text(
-                    'Competizioni:',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 15.0, bottom: 16.0),
+                child: Padding(
+                  padding: EdgeInsetsGeometry.only(left: 16.0, top: 8.0),
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: Text(
+                      'Competizioni:',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-            Listener(
-              onPointerSignal: (pointerSignal) {
-                if (pointerSignal is PointerScrollEvent) {
-                  _scrollController.jumpTo(
-                    _scrollController.offset + pointerSignal.scrollDelta.dy,
-                  );
-                }
-              },
-              child: Scrollbar(
-                controller: _scrollController,
-                child: SingleChildScrollView(
+              Listener(
+                onPointerSignal: (pointerSignal) {
+                  if (pointerSignal is PointerScrollEvent) {
+                    _scrollController.jumpTo(
+                      _scrollController.offset + pointerSignal.scrollDelta.dy,
+                    );
+                  }
+                },
+                child: Scrollbar(
                   controller: _scrollController,
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      buildCompetizioneButton(
-                        CompetizioneButtonModel(
-                          text: 'Liga Duck',
-                          imagePath: 'assets/logo_champions.png',
-                          onPressed: () {},
+                  child: SingleChildScrollView(
+                    controller: _scrollController,
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        buildCompetizioneButton(
+                          CompetizioneButtonModel(
+                            text: 'Liga Duck',
+                            imagePath: 'assets/logo_champions.png',
+                            onPressed: () {},
+                          ),
                         ),
-                      ),
-                      buildCompetizioneButton(
-                        CompetizioneButtonModel(
-                          text: 'Coppa dei Paperi',
-                          imagePath: 'assets/logo_champions.png',
-                          onPressed: () {},
+                        buildCompetizioneButton(
+                          CompetizioneButtonModel(
+                            text: 'Coppa dei Paperi',
+                            imagePath: 'assets/logo_champions.png',
+                            onPressed: () {},
+                          ),
                         ),
-                      ),
-                      buildCompetizioneButton(
-                        CompetizioneButtonModel(
-                          text: 'Coppa di Lega',
-                          imagePath: 'assets/logo_champions.png',
-                          onPressed: () {},
+                        buildCompetizioneButton(
+                          CompetizioneButtonModel(
+                            text: 'Coppa di Lega',
+                            imagePath: 'assets/logo_champions.png',
+                            onPressed: () {},
+                          ),
                         ),
-                      ),
-                      buildCompetizioneButton(
-                        CompetizioneButtonModel(
-                          text: 'Supercoppa dei Paperi',
-                          imagePath: 'assets/logo_champions.png',
-                          onPressed: () {},
+                        buildCompetizioneButton(
+                          CompetizioneButtonModel(
+                            text: 'Supercoppa dei Paperi',
+                            imagePath: 'assets/logo_champions.png',
+                            onPressed: () {},
+                          ),
                         ),
-                      ),
-                      buildCompetizioneButton(
-                        CompetizioneButtonModel(
-                          text: 'Supercoppa Europea',
-                          imagePath: 'assets/logo_champions.png',
-                          onPressed: () {},
+                        buildCompetizioneButton(
+                          CompetizioneButtonModel(
+                            text: 'Supercoppa Europea',
+                            imagePath: 'assets/logo_champions.png',
+                            onPressed: () {},
+                          ),
                         ),
-                      ),
-                      buildCompetizioneButton(
-                        CompetizioneButtonModel(
-                          text: 'Champions League',
-                          imagePath: 'assets/logo_champions.png',
-                          onPressed: () {},
+                        buildCompetizioneButton(
+                          CompetizioneButtonModel(
+                            text: 'Champions League',
+                            imagePath: 'assets/logo_champions.png',
+                            onPressed: () {},
+                          ),
                         ),
-                      ),
-                      buildCompetizioneButton(
-                        CompetizioneButtonModel(
-                          text: 'Europa League',
-                          imagePath: 'assets/logo_champions.png',
-                          onPressed: () {},
+                        buildCompetizioneButton(
+                          CompetizioneButtonModel(
+                            text: 'Europa League',
+                            imagePath: 'assets/logo_champions.png',
+                            onPressed: () {},
+                          ),
                         ),
-                      ),
-                      buildCompetizioneButton(
-                        CompetizioneButtonModel(
-                          text: 'Conference League',
-                          imagePath: 'assets/logo_champions.png',
-                          onPressed: () {},
+                        buildCompetizioneButton(
+                          CompetizioneButtonModel(
+                            text: 'Conference League',
+                            imagePath: 'assets/logo_champions.png',
+                            onPressed: () {},
+                          ),
                         ),
-                      ),
-                      buildCompetizioneButton(
-                        CompetizioneButtonModel(
-                          text: 'Coppa Intercontinentale',
-                          imagePath: 'assets/logo_champions.png',
-                          onPressed: () {},
+                        buildCompetizioneButton(
+                          CompetizioneButtonModel(
+                            text: 'Coppa Intercontinentale',
+                            imagePath: 'assets/logo_champions.png',
+                            onPressed: () {},
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-            isWide
-                ? Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Column(children: [buildProssimePartite()]),
-                      Column(children: [buildListaSquadre()]),
-                    ],
-                  )
-                : Column(
-                    children: [buildProssimePartite(), buildListaSquadre()],
-                  ),
-          ],
+              isWide
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Column(children: [buildProssimePartite()]),
+                        Column(children: [buildListaSquadre()]),
+                      ],
+                    )
+                  : Column(
+                      children: [buildProssimePartite(), buildListaSquadre()],
+                    ),
+            ],
+          ),
         ),
       ),
     );
@@ -236,21 +242,67 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
           ),
-          ...squadre.map(
-            (nome) => SizedBox(
-              width: 1000,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 4.0,
+          DefaultTabController(
+            length: 3,
+            child: Column(
+              children: [
+                Container(
+                  constraints: BoxConstraints(maxHeight: 50, maxWidth: 900),
+                  child: TabBar(
+                    labelColor: Colors.blueAccent,
+                    unselectedLabelColor: Colors.grey,
+                    indicatorColor: Colors.blueAccent,
+                    tabs: [
+                      Tab(text: 'Serie A'),
+                      Tab(text: 'Serie B'),
+                      Tab(text: 'Serie C'),
+                    ],
+                  ),
                 ),
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Azione per la squadra
-                  },
-                  child: Text(nome, style: TextStyle(color: Colors.blueAccent)),
+                SizedBox(
+                  height: 200,
+                  width: 1000,
+                  child: TabBarView(
+                    children: [
+                      Column(
+                        children: [
+                          ...squadre.map(
+                            (nome) => SizedBox(
+                              width: 1000,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0,
+                                  vertical: 4.0,
+                                ),
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => SquadrePage(
+                                          title: squadre.singleWhere(
+                                            (s) => s == nome,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: Text(
+                                    nome,
+                                    style: TextStyle(color: Colors.blueAccent),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Center(child: Text('Palmarès')),
+                      Center(child: Text('Statistiche')),
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ],
