@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:ligaduck/app/campionatoHomePage.dart';
 
 class SquadrePage extends StatelessWidget {
@@ -37,11 +38,13 @@ class SquadrePage extends StatelessWidget {
           title: Text(title, style: TextStyle(color: Colors.white)),
         ),
       ),
-      body: Container(
+      body: SizedBox(
+        width: MediaQuery.of(context).size.width * 1.0,
+        height: MediaQuery.of(context).size.height * 1.0,
         child: Column(
           children: [
             headerTeam(context),
-            infoTeam(),
+            infoTeam(context),
             // Add more widgets here as needed
           ],
         ),
@@ -158,7 +161,7 @@ class SquadrePage extends StatelessWidget {
     );
   }
 
-  Widget infoTeam() {
+  Widget infoTeam(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(top: 20),
       child: DefaultTabController(
@@ -166,7 +169,6 @@ class SquadrePage extends StatelessWidget {
         child: Column(
           children: [
             Container(
-              constraints: BoxConstraints(maxHeight: 50),
               child: TabBar(
                 labelColor: Colors.green[800],
                 unselectedLabelColor: Colors.grey,
@@ -179,45 +181,10 @@ class SquadrePage extends StatelessWidget {
               ),
             ),
             SizedBox(
-              height: 610,
+              height: MediaQuery.of(context).size.height * 1.0,
               child: TabBarView(
                 children: [
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      return SingleChildScrollView(
-                        scrollDirection: Axis.vertical,
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            minWidth: constraints.maxWidth,
-                          ),
-                          child: DataTable(
-                            columns: <DataColumn>[
-                              DataColumn(label: Text("Num.")),
-                              DataColumn(label: Text("Nome")),
-                              DataColumn(label: Text("Pres.")),
-                              DataColumn(label: Text("GF")),
-                              DataColumn(label: Text("GS")),
-                              DataColumn(label: Text("Esp.")),
-                              DataColumn(label: Text("Aut.")),
-                            ],
-                            rows: [
-                              DataRow(
-                                cells: [
-                                  DataCell(Text("1")),
-                                  DataCell(Text("Pascal")),
-                                  DataCell(Text("0")),
-                                  DataCell(Text("0")),
-                                  DataCell(Text("0")),
-                                  DataCell(Text("0")),
-                                  DataCell(Text("0")),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                  teamList(context),
                   // Tab 2: Placeholder
                   GridView.builder(
                     itemCount: 10,
@@ -258,6 +225,36 @@ class SquadrePage extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget teamList(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.vertical,
+      child: DataTable(
+        columns: <DataColumn>[
+          DataColumn(label: Text("Num.")),
+          DataColumn(label: Text("Nome")),
+          DataColumn(label: Text("Pres.")),
+          DataColumn(label: Text("GF")),
+          DataColumn(label: Text("GS")),
+          DataColumn(label: Text("Esp.")),
+          DataColumn(label: Text("Aut.")),
+        ],
+        rows: [
+          DataRow(
+            cells: [
+              DataCell(Text("1")),
+              DataCell(Text("Pascal")),
+              DataCell(Text("0")),
+              DataCell(Text("0")),
+              DataCell(Text("0")),
+              DataCell(Text("0")),
+              DataCell(Text("0")),
+            ],
+          ),
+        ],
       ),
     );
   }

@@ -163,8 +163,11 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
   }
 
   Widget buildProssimePartite() {
+    bool isWide = MediaQuery.of(context).size.width > 600;
     return SizedBox(
-      width: MediaQuery.of(context).size.width * 0.5,
+      width: isWide
+          ? MediaQuery.of(context).size.width * 0.5
+          : MediaQuery.of(context).size.width,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -229,9 +232,11 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
       'Duck United',
       'FC Lago',
     ];
-
+    bool isWide = MediaQuery.of(context).size.width > 600;
     return SizedBox(
-      width: MediaQuery.of(context).size.width * 0.5,
+      width: isWide
+          ? MediaQuery.of(context).size.width * 0.5
+          : MediaQuery.of(context).size.width,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
