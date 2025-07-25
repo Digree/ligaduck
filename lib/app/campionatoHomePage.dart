@@ -265,8 +265,8 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                   ),
                 ),
                 SizedBox(
-                  height: 200,
-                  width: 1000,
+                  height: squadre.length * 45.0,
+                  width: MediaQuery.of(context).size.width * 1,
                   child: TabBarView(
                     children: [
                       Column(

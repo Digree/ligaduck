@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:ligaduck/app/campionatoHomePage.dart';
 
 class SquadrePage extends StatelessWidget {
@@ -35,7 +34,6 @@ class SquadrePage extends StatelessWidget {
               );
             },
           ),
-          title: Text(title, style: TextStyle(color: Colors.white)),
         ),
       ),
       body: SizedBox(
@@ -44,7 +42,7 @@ class SquadrePage extends StatelessWidget {
         child: Column(
           children: [
             headerTeam(context),
-            infoTeam(context),
+            //infoTeam(context),
             // Add more widgets here as needed
           ],
         ),
@@ -54,113 +52,187 @@ class SquadrePage extends StatelessWidget {
 
   Widget headerTeam(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    bool isWide = MediaQuery.of(context).size.width > 1000;
     return Container(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Padding(
-            padding: EdgeInsets.only(left: 16, top: 16, right: 16),
-            child: Container(
-              width: screenWidth * 0.13,
-              height: 250,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.green, Colors.yellow],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(32),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Align(
-                alignment: Alignment.center,
-                child: Image.asset(
-                  'assets/squadre/paperopoli.png',
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.only(left: 16, top: 16, right: 16),
-            child: Container(
-              width: screenWidth * 0.82,
-              height: 250,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.green, Colors.yellow],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(32),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Align(
-                alignment: Alignment.topLeft,
-                child: Padding(
-                  padding: EdgeInsets.only(left: 40),
-                  child: Row(
-                    children: [
-                      Image.asset(
-                        'assets/divise/divise_43/paperopoli_1.png',
-                        //fit: BoxFit.cover,
-                      ),
-                      Image.asset(
-                        'assets/divise/divise_43/paperopoli_2.png',
-                        //fit: BoxFit.cover,
-                      ),
-                      Image.asset(
-                        'assets/divise/divise_43/paperopoli_1.png',
-                        //fit: BoxFit.cover,
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(left: 100),
-                        child: Column(
-                          children: [
-                            Image.asset(
-                              'assets/miscellaneous/stadium.png',
-                              //fit: BoxFit.cover,
-                            ),
-                            Text(
-                              'PdP Stadium',
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(left: 20),
-                        child: Column(),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+      child: buildResponsiveTeamLayout(
+        context,
+        isWide,
+        screenWidth,
+        screenHeight,
       ),
     );
   }
 
+  Widget buildResponsiveTeamLayout(
+    BuildContext context,
+    bool isWide,
+    double screenWidth,
+    double screenHeight,
+  ) {
+    List<Widget> children = buildTeamLayoutChildren(
+      context,
+      isWide,
+      screenWidth,
+      screenHeight,
+    );
+
+    return isWide
+        ? Row(mainAxisAlignment: MainAxisAlignment.center, children: children)
+        : Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: children,
+          );
+  }
+
+  List<Widget> buildTeamLayoutChildren(
+    BuildContext context,
+    bool isWide,
+    double screenWidth,
+    double screenHeight,
+  ) {
+    return [
+      Padding(
+        padding: EdgeInsets.only(left: 16, top: 16, right: 16),
+        child: Container(
+          width: isWide ? screenWidth * 0.13 : screenWidth * 0.9,
+          height: isWide ? 250 : screenWidth * 0.6,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.green, Colors.yellow],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 8,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Padding(
+            padding: EdgeInsets.all(isWide ? 16.0 : 8.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Flexible(
+                  flex: 3,
+                  child: Image.asset(
+                    'assets/squadre/paperopoli.png',
+                    fit: BoxFit.contain,
+                    height: screenHeight * 0.70,
+                  ),
+                ),
+                SizedBox(height: isWide ? 16 : 8),
+                Flexible(
+                  flex: 1,
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: isWide ? 20 : 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      Padding(
+        padding: EdgeInsets.only(left: 16, top: 16, right: 16),
+        child: Container(
+          width: isWide ? screenWidth * 0.82 : screenWidth * 0.9,
+          height: isWide ? 250 : screenWidth * 0.4,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.green, Colors.yellow],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 8,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Align(
+            //alignment: Alignment.topLeft,
+            child: Padding(
+              padding: EdgeInsets.only(left: 40),
+              child: Row(
+                mainAxisAlignment: isWide
+                    ? MainAxisAlignment.start
+                    : MainAxisAlignment.center,
+                children: [
+                  Flexible(
+                    flex: 1,
+                    child: Image.asset(
+                      'assets/divise/divise_43/paperopoli_1.png',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  Flexible(
+                    flex: 1,
+                    child: Image.asset(
+                      'assets/divise/divise_43/paperopoli_2.png',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  Flexible(
+                    flex: 1,
+                    child: Image.asset(
+                      'assets/divise/divise_43/paperopoli_1.png',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  isWide
+                      ? Padding(
+                          padding: EdgeInsets.only(left: 100),
+                          child: Column(
+                            children: [
+                              Image.asset(
+                                'assets/miscellaneous/stadium.png',
+                                //fit: BoxFit.cover,
+                              ),
+                              Text(
+                                'PdP Stadium',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : Container(),
+                  Padding(padding: EdgeInsets.only(left: 20), child: Column()),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    ];
+  }
+
+  Widget buildSubData() {
+    return Container();
+  }
+
+  /*  
   Widget infoTeam(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(top: 20),
@@ -257,5 +329,5 @@ class SquadrePage extends StatelessWidget {
         ],
       ),
     );
-  }
+  } */
 }
