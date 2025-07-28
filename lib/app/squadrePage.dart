@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/campionatoHomePage.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 
 class SquadrePage extends StatelessWidget {
   final String title;
@@ -34,6 +35,7 @@ class SquadrePage extends StatelessWidget {
               );
             },
           ),
+          title: Text(title, style: TextStyle(color: Colors.white)),
         ),
       ),
       body: SizedBox(
@@ -91,42 +93,55 @@ class SquadrePage extends StatelessWidget {
     double screenWidth,
     double screenHeight,
   ) {
-    return [
-      Padding(
-        padding: EdgeInsets.only(left: 16, top: 16, right: 16),
-        child: Container(
-          width: isWide ? screenWidth * 0.13 : screenWidth * 0.9,
-          height: isWide ? 250 : screenWidth * 0.6,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.green, Colors.yellow],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(32),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 8,
-                offset: Offset(0, 4),
-              ),
-            ],
+    return isWide
+        ? [
+            teamLogo(context, isWide, screenWidth, screenHeight),
+            buildSubData(context, isWide, screenWidth, screenHeight),
+          ]
+        : [sliderSubData(context, isWide, screenWidth, screenHeight)];
+  }
+
+  Widget teamLogo(
+    BuildContext context,
+    bool isWide,
+    double screenWidth,
+    double screenHeight,
+  ) {
+    return Padding(
+      padding: EdgeInsets.only(left: 16, top: 16, right: 16),
+      child: Container(
+        width: isWide ? screenWidth * 0.14 : screenWidth * 0.9,
+        height: isWide ? 250 : screenWidth * 0.4,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.green, Colors.yellow],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          clipBehavior: Clip.antiAlias,
-          child: Padding(
-            padding: EdgeInsets.all(isWide ? 16.0 : 8.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Flexible(
-                  flex: 3,
-                  child: Image.asset(
-                    'assets/squadre/paperopoli.png',
-                    fit: BoxFit.contain,
-                    height: screenHeight * 0.70,
-                  ),
+          borderRadius: BorderRadius.circular(32),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: EdgeInsets.all(isWide ? 16.0 : 8.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Flexible(
+                flex: 3,
+                child: Image.asset(
+                  'assets/squadre/paperopoli.png',
+                  fit: BoxFit.contain,
+                  height: screenHeight * 0.70,
                 ),
-                SizedBox(height: isWide ? 16 : 8),
+              ),
+              /*                 SizedBox(height: isWide ? 16 : 8),
                 Flexible(
                   flex: 1,
                   child: Text(
@@ -140,96 +155,157 @@ class SquadrePage extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
+                ), */
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget buildSubData(
+    BuildContext context,
+    bool isWide,
+    double screenWidth,
+    double screenHeight,
+  ) {
+    return Padding(
+      padding: EdgeInsets.only(left: 16, top: 16, right: 16),
+      child: Container(
+        width: isWide ? screenWidth * 0.80 : screenWidth * 0.9,
+        height: isWide ? 250 : screenWidth * 0.4,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.green, Colors.yellow],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(32),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Align(
+          //alignment: Alignment.topLeft,
+          child: Padding(
+            padding: isWide
+                ? EdgeInsets.only(left: 40)
+                : EdgeInsets.only(left: 20),
+            child: Row(
+              mainAxisAlignment: isWide
+                  ? MainAxisAlignment.start
+                  : MainAxisAlignment.center,
+              children: [
+                Flexible(
+                  flex: 1,
+                  child: Image.asset(
+                    'assets/divise/divise_43/paperopoli_1.png',
+                    fit: BoxFit.contain,
+                  ),
                 ),
+                Flexible(
+                  flex: 1,
+                  child: Image.asset(
+                    'assets/divise/divise_43/paperopoli_2.png',
+                    fit: BoxFit.contain,
+                  ),
+                ),
+                Flexible(
+                  flex: 1,
+                  child: Image.asset(
+                    'assets/divise/divise_43/paperopoli_1.png',
+                    fit: BoxFit.contain,
+                  ),
+                ),
+                isWide ? moreInfo(context, isWide) : Container(),
+                Padding(padding: EdgeInsets.only(left: 20), child: Column()),
               ],
             ),
           ),
         ),
       ),
-      Padding(
-        padding: EdgeInsets.only(left: 16, top: 16, right: 16),
-        child: Container(
-          width: isWide ? screenWidth * 0.82 : screenWidth * 0.9,
-          height: isWide ? 250 : screenWidth * 0.4,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.green, Colors.yellow],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(32),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 8,
-                offset: Offset(0, 4),
-              ),
-            ],
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Align(
-            //alignment: Alignment.topLeft,
-            child: Padding(
-              padding: EdgeInsets.only(left: 40),
-              child: Row(
-                mainAxisAlignment: isWide
-                    ? MainAxisAlignment.start
-                    : MainAxisAlignment.center,
-                children: [
-                  Flexible(
-                    flex: 1,
-                    child: Image.asset(
-                      'assets/divise/divise_43/paperopoli_1.png',
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                  Flexible(
-                    flex: 1,
-                    child: Image.asset(
-                      'assets/divise/divise_43/paperopoli_2.png',
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                  Flexible(
-                    flex: 1,
-                    child: Image.asset(
-                      'assets/divise/divise_43/paperopoli_1.png',
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                  isWide
-                      ? Padding(
-                          padding: EdgeInsets.only(left: 100),
-                          child: Column(
-                            children: [
-                              Image.asset(
-                                'assets/miscellaneous/stadium.png',
-                                //fit: BoxFit.cover,
-                              ),
-                              Text(
-                                'PdP Stadium',
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : Container(),
-                  Padding(padding: EdgeInsets.only(left: 20), child: Column()),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    ];
+    );
   }
 
-  Widget buildSubData() {
-    return Container();
+  Widget moreInfo(BuildContext context, bool isWide) {
+    return Padding(
+      padding: isWide ? EdgeInsets.only(left: 100) : EdgeInsets.only(),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Flexible(
+            child: Image.asset(
+              'assets/miscellaneous/stadium.png',
+              fit: BoxFit.contain,
+              //fit: BoxFit.cover,
+            ),
+          ),
+          Flexible(
+            child: Text(
+              'PdP Stadium',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget sliderSubData(
+    BuildContext context,
+    bool isWide,
+    double screenWidth,
+    double screenHeight,
+  ) {
+    return SizedBox(
+      height: 200.0,
+      child: CarouselSlider(
+        items: [
+          //1st Image of Slider
+          teamLogo(context, isWide, screenWidth, screenHeight),
+          buildSubData(context, isWide, screenWidth, screenHeight),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.green, Colors.yellow],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(32),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 8,
+                  offset: Offset(0, 4),
+                ),
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Center(child: moreInfo(context, isWide)),
+          ),
+        ],
+
+        //Slider Container properties
+        options: CarouselOptions(
+          height: screenWidth * 0.4, // Altezza del carousel
+          enlargeCenterPage: true,
+          autoPlay: false,
+          aspectRatio: 16 / 9,
+          autoPlayCurve: Curves.fastOutSlowIn,
+          enableInfiniteScroll: true,
+          viewportFraction: 0.8,
+        ),
+      ),
+    );
   }
 
   /*  

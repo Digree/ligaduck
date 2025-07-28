@@ -228,6 +228,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
     final squadre = [
       'Anatre FC',
       'Paperopoli',
+      'Golden City',
       'Real Quack',
       'Duck United',
       'FC Lago',
@@ -249,65 +250,72 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
           ),
           DefaultTabController(
             length: 3,
-            child: Column(
-              children: [
-                Container(
-                  constraints: BoxConstraints(maxHeight: 50, maxWidth: 900),
-                  child: TabBar(
-                    labelColor: Colors.blueAccent,
-                    unselectedLabelColor: Colors.grey,
-                    indicatorColor: Colors.blueAccent,
-                    tabs: [
-                      Tab(text: 'Serie A'),
-                      Tab(text: 'Serie B'),
-                      Tab(text: 'Serie C'),
-                    ],
+            child: SizedBox(
+              height: 400, // Altezza fissa per il TabController
+              child: Column(
+                children: [
+                  Container(
+                    constraints: BoxConstraints(maxHeight: 50, maxWidth: 900),
+                    child: TabBar(
+                      labelColor: Colors.blueAccent,
+                      unselectedLabelColor: Colors.grey,
+                      indicatorColor: Colors.blueAccent,
+                      tabs: [
+                        Tab(text: 'Serie A'),
+                        Tab(text: 'Serie B'),
+                        Tab(text: 'Serie C'),
+                      ],
+                    ),
                   ),
-                ),
-                SizedBox(
-                  height: squadre.length * 45.0,
-                  width: MediaQuery.of(context).size.width * 1,
-                  child: TabBarView(
-                    children: [
-                      Column(
+                  Expanded(
+                    flex: 1,
+                    child: SizedBox(
+                      width: MediaQuery.of(context).size.width * 1,
+                      child: TabBarView(
                         children: [
-                          ...squadre.map(
-                            (nome) => SizedBox(
-                              width: 1000,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16.0,
-                                  vertical: 4.0,
-                                ),
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => SquadrePage(
-                                          title: squadre.singleWhere(
-                                            (s) => s == nome,
+                          Column(
+                            children: [
+                              ...squadre.map(
+                                (nome) => SizedBox(
+                                  width: 1000,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16.0,
+                                      vertical: 4.0,
+                                    ),
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => SquadrePage(
+                                              title: squadre.singleWhere(
+                                                (s) => s == nome,
+                                              ),
+                                            ),
                                           ),
+                                        );
+                                      },
+                                      child: Text(
+                                        nome,
+                                        style: TextStyle(
+                                          color: Colors.blueAccent,
                                         ),
                                       ),
-                                    );
-                                  },
-                                  child: Text(
-                                    nome,
-                                    style: TextStyle(color: Colors.blueAccent),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
+                            ],
                           ),
+                          Center(child: Text('Palmarès')),
+                          Center(child: Text('Statistiche')),
                         ],
                       ),
-                      Center(child: Text('Palmarès')),
-                      Center(child: Text('Statistiche')),
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
