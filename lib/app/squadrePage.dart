@@ -8,6 +8,9 @@ class SquadrePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    bool isWide = MediaQuery.of(context).size.width > 1000;
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(kToolbarHeight),
@@ -43,8 +46,8 @@ class SquadrePage extends StatelessWidget {
         height: MediaQuery.of(context).size.height * 1.0,
         child: Column(
           children: [
-            headerTeam(context),
-            //infoTeam(context),
+            headerTeam(context, isWide, screenWidth, screenHeight),
+            infoTeam(context, isWide, screenWidth, screenHeight),
             // Add more widgets here as needed
           ],
         ),
@@ -52,10 +55,12 @@ class SquadrePage extends StatelessWidget {
     );
   }
 
-  Widget headerTeam(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-    bool isWide = MediaQuery.of(context).size.width > 1000;
+  Widget headerTeam(
+    BuildContext context,
+    bool isWide,
+    double screenWidth,
+    double screenHeight,
+  ) {
     return Container(
       child: buildResponsiveTeamLayout(
         context,
@@ -308,16 +313,20 @@ class SquadrePage extends StatelessWidget {
     );
   }
 
-  /*  
-  Widget infoTeam(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(top: 20),
-      child: DefaultTabController(
-        length: 3,
-        child: Column(
-          children: [
-            Container(
-              child: TabBar(
+  Widget infoTeam(
+    BuildContext context,
+    bool isWide,
+    double screenWidth,
+    double screenHeight,
+  ) {
+    return Expanded(
+      child: Padding(
+        padding: EdgeInsets.only(top: 20),
+        child: DefaultTabController(
+          length: 3,
+          child: Column(
+            children: [
+              TabBar(
                 labelColor: Colors.green[800],
                 unselectedLabelColor: Colors.grey,
                 indicatorColor: Colors.green,
@@ -327,83 +336,134 @@ class SquadrePage extends StatelessWidget {
                   Tab(text: 'Statistiche'),
                 ],
               ),
-            ),
-            SizedBox(
-              height: MediaQuery.of(context).size.height * 1.0,
-              child: TabBarView(
-                children: [
-                  teamList(context),
-                  // Tab 2: Placeholder
-                  GridView.builder(
-                    itemCount: 10,
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 5, // 3 colonne
-                      crossAxisSpacing: 8,
-                      mainAxisSpacing: 8,
-                    ),
-                    itemBuilder: (context, index) {
-                      return Container(
-                        color: Colors.grey[300],
-                        child: Padding(
-                          padding: EdgeInsets.only(top: 50),
-                          child: Column(
-                            children: [
-                              Image.asset(
-                                scale: 2,
-                                'assets/trophies/champions_league.png',
-                                //fit: BoxFit.cover,
-                              ),
-                              Text(
-                                '1 Campionato',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  // Tab 3: Placeholder
-                  Center(child: Text('Statistiche')),
-                ],
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    teamList(context, isWide, screenWidth, screenHeight),
+                    Center(child: Text('Palmarès')),
+                    Center(child: Text('Statistiche')),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget teamList(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.vertical,
-      child: DataTable(
-        columns: <DataColumn>[
-          DataColumn(label: Text("Num.")),
-          DataColumn(label: Text("Nome")),
-          DataColumn(label: Text("Pres.")),
-          DataColumn(label: Text("GF")),
-          DataColumn(label: Text("GS")),
-          DataColumn(label: Text("Esp.")),
-          DataColumn(label: Text("Aut.")),
-        ],
-        rows: [
-          DataRow(
-            cells: [
-              DataCell(Text("1")),
-              DataCell(Text("Pascal")),
-              DataCell(Text("0")),
-              DataCell(Text("0")),
-              DataCell(Text("0")),
-              DataCell(Text("0")),
-              DataCell(Text("0")),
-            ],
+  Widget teamList(
+    BuildContext context,
+    bool isWide,
+    double screenWidth,
+    double screenHeight,
+  ) {
+    return ListView(
+      children: [
+        teamListHeader(
+          context,
+          isWide,
+          screenWidth,
+          screenHeight,
+          'Allenatore',
+        ),
+        for (var i = 0; i < 1; i++)
+          teamListPlayer(context, isWide, screenWidth, screenHeight),
+        teamListHeader(context, isWide, screenWidth, screenHeight, 'Portieri'),
+        for (var i = 0; i < 3; i++)
+          teamListPlayer(context, isWide, screenWidth, screenHeight),
+        teamListHeader(context, isWide, screenWidth, screenHeight, 'Difensori'),
+        for (var i = 0; i < 7; i++)
+          teamListPlayer(context, isWide, screenWidth, screenHeight),
+        teamListHeader(
+          context,
+          isWide,
+          screenWidth,
+          screenHeight,
+          'Centrocampisti',
+        ),
+        for (var i = 0; i < 8; i++)
+          teamListPlayer(context, isWide, screenWidth, screenHeight),
+        teamListHeader(
+          context,
+          isWide,
+          screenWidth,
+          screenHeight,
+          'Attaccanti',
+        ),
+        for (var i = 0; i < 4; i++)
+          teamListPlayer(context, isWide, screenWidth, screenHeight),
+      ],
+    );
+  }
+
+  Widget teamListHeader(
+    BuildContext context,
+    bool isWide,
+    double screenWidth,
+    double screenHeight,
+    String role,
+  ) {
+    return Container(
+      width: screenWidth * 1,
+      height: 30,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [?Colors.grey[300], ?Colors.grey[350]],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        color: Colors.grey[350],
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.grey[350] ?? Colors.grey,
+            width: 1.0,
           ),
-        ],
+        ),
+      ),
+      child: Padding(
+        padding: EdgeInsets.only(left: 20, top: 5),
+        child: Text(
+          role,
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
     );
-  } */
+  }
+
+  Widget teamListPlayer(
+    BuildContext context,
+    bool isWide,
+    double screenWidth,
+    double screenHeight,
+  ) {
+    return Container(
+      width: screenWidth * 1,
+      height: 60,
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.grey[350] ?? Colors.grey,
+            width: 1.0,
+          ),
+        ),
+      ),
+      child: Padding(
+        padding: EdgeInsets.only(left: 20, top: 18),
+        child: Text(
+          'Allenatore',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
 }
