@@ -10,6 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   carousel_slider: ^5.1.1
+  http: ^0.13.6
 
 dev_dependencies:
   flutter_test:

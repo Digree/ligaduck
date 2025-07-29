@@ -1,15 +1,38 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:ligaduck/app/campionatoHomePage.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:ligaduck/app/config/env.dart';
 
-class SquadrePage extends StatelessWidget {
+class SquadrePage extends StatefulWidget {
   final String title;
   const SquadrePage({super.key, required this.title});
+
+  @override
+  State<SquadrePage> createState() => _SquadrePageState();
+}
+
+class _SquadrePageState extends State<SquadrePage> {
+  @override
+  void initState() {
+    super.initState();
+    print('Titolo ricevuto: ${widget.title}');
+  }
+
+  void showMessageWithPrefix(BuildContext context) async {
+    String message = await fetchUsers();
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text("🔥 Messaggio ricevuto: $message")));
+  }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
+    showMessageWithPrefix(context);
     bool isWide = MediaQuery.of(context).size.width > 1000;
     return Scaffold(
       appBar: PreferredSize(
@@ -38,7 +61,7 @@ class SquadrePage extends StatelessWidget {
               );
             },
           ),
-          title: Text(title, style: TextStyle(color: Colors.white)),
+          title: Text(widget.title, style: TextStyle(color: Colors.white)),
         ),
       ),
       body: SizedBox(
@@ -53,6 +76,17 @@ class SquadrePage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String snap() {
+    return fetchUsers()
+        .then((value) {
+          return value;
+        })
+        .catchError((error) {
+          return 'Errore: $error';
+        })
+        .toString();
   }
 
   Widget headerTeam(
@@ -545,5 +579,15 @@ class SquadrePage extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Future<String> fetchUsers() async {
+    final response = await http.get(Uri.parse('${Env.apiUrl}/hello'));
+
+    if (response.statusCode == 200) {
+      return response.body;
+    } else {
+      throw Exception('Errore nel recupero utenti');
+    }
   }
 }
