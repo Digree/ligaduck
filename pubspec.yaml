@@ -18,6 +18,10 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  fonts:
+    - family: Franklin Gothic
+      fonts:
+        - asset: assets/font/framd.ttf
   assets:
     - assets/logo_champions.png
     - assets/squadre/paperopoli.png
@@ -26,3 +30,5 @@ flutter:
     - assets/divise/divise_43/paperopoli_2.png
     - assets/miscellaneous/stadium.png
     - assets/trophies/champions_league.png
+    - assets/miscellaneous/divisa_1.png
+    - assets/nations/italy.png

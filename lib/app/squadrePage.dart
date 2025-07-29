@@ -340,7 +340,7 @@ class SquadrePage extends StatelessWidget {
                 child: TabBarView(
                   children: [
                     teamList(context, isWide, screenWidth, screenHeight),
-                    Center(child: Text('Palmarès')),
+                    buildPalmares(context, isWide, screenWidth, screenHeight),
                     Center(child: Text('Statistiche')),
                   ],
                 ),
@@ -453,16 +453,96 @@ class SquadrePage extends StatelessWidget {
           ),
         ),
       ),
-      child: Padding(
-        padding: EdgeInsets.only(left: 20, top: 18),
-        child: Text(
-          'Allenatore',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
+      child: Row(
+        children: [
+          Padding(
+            padding: EdgeInsets.only(left: 20),
+            child: Image.asset(
+              'assets/miscellaneous/divisa_1.png',
+              fit: BoxFit.contain,
+              height: 40,
+            ),
           ),
+          Padding(
+            padding: EdgeInsets.only(left: 20),
+            child: Text(
+              'Allenatore',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: EdgeInsets.only(right: 20),
+                child: CircleAvatar(
+                  radius: 15,
+                  backgroundImage: AssetImage('assets/nations/italy.png'),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildPalmares(
+    BuildContext context,
+    bool isWide,
+    double screenWidth,
+    double screenHeight,
+  ) {
+    return Scaffold(
+      body: GridView.builder(
+        padding: const EdgeInsets.all(16),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: isWide ? 5 : 2,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
         ),
+        itemCount: 10,
+        itemBuilder: (context, index) {
+          return Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                colors: [Colors.grey, ?Colors.grey[350]],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Flexible(
+                  child: Align(
+                    alignment: Alignment.center,
+                    child: Image.asset(
+                      'assets/trophies/champions_league.png',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+                Flexible(
+                  child: Text(
+                    '1 Champions League',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: isWide ? 20 : 15,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
