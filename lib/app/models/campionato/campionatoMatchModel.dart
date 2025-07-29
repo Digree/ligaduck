@@ -6,7 +6,8 @@ class CampionatoMatchModel {
   CampionatoMatchModel({required this.match});
 }
 
-Widget buildCampionatoMatch(CampionatoMatchModel model) {
+Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
+  final screenWidth = MediaQuery.of(context).size.width;
   return Padding(
     padding: const EdgeInsets.only(
       left: 16.0,
@@ -15,7 +16,7 @@ Widget buildCampionatoMatch(CampionatoMatchModel model) {
       bottom: 6.0,
     ),
     child: SizedBox(
-      width: 380,
+      width: screenWidth * 0.5,
       height: 60,
       child: FloatingActionButton(
         heroTag: model.match,
@@ -31,10 +32,11 @@ Widget buildCampionatoMatch(CampionatoMatchModel model) {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8.0),
+                  padding:
+                      EdgeInsets.only(), //EdgeInsets.symmetric(horizontal: 8.0),
                   child: Image.asset(
                     'assets/squadre/paperopoli.png',
-                    fit: BoxFit.cover,
+                    fit: BoxFit.contain,
                     height: 50,
                   ),
                 ),

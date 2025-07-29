@@ -79,63 +79,63 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                         buildCompetizioneButton(
                           CompetizioneButtonModel(
                             text: 'Liga Duck',
-                            imagePath: 'assets/logo_champions.png',
+                            imagePath: 'assets/logos/logo_champions.png',
                             onPressed: () {},
                           ),
                         ),
                         buildCompetizioneButton(
                           CompetizioneButtonModel(
                             text: 'Coppa dei Paperi',
-                            imagePath: 'assets/logo_champions.png',
+                            imagePath: 'assets/logos/logo_champions.png',
                             onPressed: () {},
                           ),
                         ),
                         buildCompetizioneButton(
                           CompetizioneButtonModel(
                             text: 'Coppa di Lega',
-                            imagePath: 'assets/logo_champions.png',
+                            imagePath: 'assets/logos/logo_champions.png',
                             onPressed: () {},
                           ),
                         ),
                         buildCompetizioneButton(
                           CompetizioneButtonModel(
                             text: 'Supercoppa dei Paperi',
-                            imagePath: 'assets/logo_champions.png',
+                            imagePath: 'assets/logos/logo_champions.png',
                             onPressed: () {},
                           ),
                         ),
                         buildCompetizioneButton(
                           CompetizioneButtonModel(
                             text: 'Supercoppa Europea',
-                            imagePath: 'assets/logo_champions.png',
+                            imagePath: 'assets/logos/logo_champions.png',
                             onPressed: () {},
                           ),
                         ),
                         buildCompetizioneButton(
                           CompetizioneButtonModel(
                             text: 'Champions League',
-                            imagePath: 'assets/logo_champions.png',
+                            imagePath: 'assets/logos/logo_champions.png',
                             onPressed: () {},
                           ),
                         ),
                         buildCompetizioneButton(
                           CompetizioneButtonModel(
                             text: 'Europa League',
-                            imagePath: 'assets/logo_champions.png',
+                            imagePath: 'assets/logos/logo_champions.png',
                             onPressed: () {},
                           ),
                         ),
                         buildCompetizioneButton(
                           CompetizioneButtonModel(
                             text: 'Conference League',
-                            imagePath: 'assets/logo_champions.png',
+                            imagePath: 'assets/logos/logo_champions.png',
                             onPressed: () {},
                           ),
                         ),
                         buildCompetizioneButton(
                           CompetizioneButtonModel(
                             text: 'Coppa Intercontinentale',
-                            imagePath: 'assets/logo_champions.png',
+                            imagePath: 'assets/logos/logo_champions.png',
                             onPressed: () {},
                           ),
                         ),
@@ -148,12 +148,15 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                   ? Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Column(children: [buildProssimePartite()]),
+                        Column(children: [buildProssimePartite(context)]),
                         Column(children: [buildListaSquadre()]),
                       ],
                     )
                   : Column(
-                      children: [buildProssimePartite(), buildListaSquadre()],
+                      children: [
+                        buildProssimePartite(context),
+                        buildListaSquadre(),
+                      ],
                     ),
             ],
           ),
@@ -162,7 +165,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
     );
   }
 
-  Widget buildProssimePartite() {
+  Widget buildProssimePartite(BuildContext context) {
     bool isWide = MediaQuery.of(context).size.width > 600;
     return SizedBox(
       width: isWide
@@ -186,6 +189,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                   Expanded(
                     child: buildCampionatoMatch(
                       CampionatoMatchModel(match: '1'),
+                      context,
                     ),
                   ),
                 ],
@@ -195,6 +199,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                   Expanded(
                     child: buildCampionatoMatch(
                       CampionatoMatchModel(match: '2'),
+                      context,
                     ),
                   ),
                 ],
@@ -204,6 +209,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                   Expanded(
                     child: buildCampionatoMatch(
                       CampionatoMatchModel(match: '3'),
+                      context,
                     ),
                   ),
                 ],
@@ -213,6 +219,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                   Expanded(
                     child: buildCampionatoMatch(
                       CampionatoMatchModel(match: '4'),
+                      context,
                     ),
                   ),
                 ],
