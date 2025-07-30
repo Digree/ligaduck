@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:ligaduck/app/campionatoHomePage.dart';
@@ -18,7 +16,6 @@ class _SquadrePageState extends State<SquadrePage> {
   @override
   void initState() {
     super.initState();
-    print('Titolo ricevuto: ${widget.title}');
   }
 
   void showMessageWithPrefix(BuildContext context) async {
@@ -582,12 +579,16 @@ class _SquadrePageState extends State<SquadrePage> {
   }
 
   Future<String> fetchUsers() async {
-    final response = await http.get(Uri.parse('${Env.apiUrl}/hello'));
+    try {
+      final response = await http.get(Uri.parse('${Env.apiUrl}/hello'));
 
-    if (response.statusCode == 200) {
-      return response.body;
-    } else {
-      throw Exception('Errore nel recupero utenti');
+      if (response.statusCode == 200) {
+        return response.body;
+      } else {
+        throw Exception('Errore nel recupero utenti');
+      }
+    } catch (e) {
+      return 'Errore di connessione: $e';
     }
   }
 }

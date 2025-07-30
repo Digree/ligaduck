@@ -3,5 +3,10 @@
   "editor.codeActionsOnSave": {
     "source.fixAll": "explicit"
   },
-  "dart.previewHotReloadOnSave": true
+  "dart.previewHotReloadOnSave": true,
+
+  "java.jdt.ls.java.home": "/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home",
+  "java.import.gradle.java.home": "/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home",
+  "java.import.gradle.home": "/Users/e.digregorio/job/javasoft/gradle-8.10.2",
+  "workbench.colorTheme": "ceb8c11f-f736-420b-962b-fc0db26b3708"
 }

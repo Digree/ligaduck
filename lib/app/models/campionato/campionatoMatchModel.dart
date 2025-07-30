@@ -8,6 +8,7 @@ class CampionatoMatchModel {
 
 Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
   final screenWidth = MediaQuery.of(context).size.width;
+  bool isWide = MediaQuery.of(context).size.width > 600;
   return Padding(
     padding: const EdgeInsets.only(
       left: 16.0,
@@ -26,43 +27,43 @@ Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Logo sinistra
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding:
-                      EdgeInsets.only(), //EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Image.asset(
-                    'assets/squadre/paperopoli.png',
-                    fit: BoxFit.contain,
-                    height: 50,
-                  ),
-                ),
-              ],
-            ),
-            // Contenuto centrale centrato
             Expanded(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Padding(
-                    padding: EdgeInsets.only(left: 10.0, right: 10.0),
-                    child: Text(
-                      'Paperopoli',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Colors.black,
-                      ),
+                  SizedBox(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Padding(
+                          padding:
+                              EdgeInsets.only(), //EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Image.asset(
+                            'assets/squadre/paperopoli.png',
+                            fit: BoxFit.contain,
+                            height: 50,
+                          ),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.only(left: 10.0, right: 10.0),
+                          child: Text(
+                            'Paperopoli',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 10.0),
                     child: Container(
-                      width: 60,
+                      width: isWide ? 60 : screenWidth * 0.13,
                       height: 30,
                       decoration: BoxDecoration(
                         color: Colors.blueGrey.withOpacity(0.3),
@@ -87,23 +88,16 @@ Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
                       ),
                     ),
                   ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Image.asset(
+                      'assets/squadre/golden_city.png',
+                      fit: BoxFit.cover,
+                      height: 50,
+                    ),
+                  ),
                 ],
               ),
-            ),
-            // Logo destra
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Image.asset(
-                    'assets/squadre/golden_city.png',
-                    fit: BoxFit.cover,
-                    height: 50,
-                  ),
-                ),
-              ],
             ),
           ],
         ),
