@@ -12,12 +12,18 @@ class CompetizioneButtonModel {
   });
 }
 
-Widget buildCompetizioneButton(CompetizioneButtonModel model) {
+Widget buildCompetizioneButton(
+  CompetizioneButtonModel model,
+  BuildContext context,
+) {
+  final screenWidth = MediaQuery.of(context).size.width;
+  final screenHeight = MediaQuery.of(context).size.height;
+  bool isWide = MediaQuery.of(context).size.width > 600;
   return Padding(
-    padding: EdgeInsets.only(top: 16.0, left: 8.0, right: 8.0, bottom: 50.0),
+    padding: EdgeInsets.only(top: 16.0, left: 8.0, right: 8.0, bottom: 25.0),
     child: SizedBox(
-      width: 190,
-      height: 160,
+      width: isWide ? 190 : screenWidth * 0.3,
+      height: isWide ? 160 : screenHeight * 0.1,
       child: FloatingActionButton(
         heroTag: model.text,
         onPressed: model.onPressed,
@@ -27,9 +33,23 @@ Widget buildCompetizioneButton(CompetizioneButtonModel model) {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (model.imagePath != null)
-              Image.asset(model.imagePath!, fit: BoxFit.cover, height: 115),
-            SizedBox(height: 8),
-            Text(model.text, style: TextStyle(color: Colors.white)),
+              Flexible(
+                child: Image.asset(
+                  model.imagePath!,
+                  fit: BoxFit.contain,
+                  height: 115,
+                ),
+              ),
+            if (isWide)
+              Text(
+                model.text,
+                style: TextStyle(color: Colors.white),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+
+            //SizedBox(height: 8),
           ],
         ),
         /* model.imagePath != null

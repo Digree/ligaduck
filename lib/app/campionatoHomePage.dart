@@ -82,6 +82,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                             imagePath: 'assets/logos/logo_champions.png',
                             onPressed: () {},
                           ),
+                          context,
                         ),
                         buildCompetizioneButton(
                           CompetizioneButtonModel(
@@ -89,6 +90,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                             imagePath: 'assets/logos/logo_champions.png',
                             onPressed: () {},
                           ),
+                          context,
                         ),
                         buildCompetizioneButton(
                           CompetizioneButtonModel(
@@ -96,6 +98,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                             imagePath: 'assets/logos/logo_champions.png',
                             onPressed: () {},
                           ),
+                          context,
                         ),
                         buildCompetizioneButton(
                           CompetizioneButtonModel(
@@ -103,6 +106,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                             imagePath: 'assets/logos/logo_champions.png',
                             onPressed: () {},
                           ),
+                          context,
                         ),
                         buildCompetizioneButton(
                           CompetizioneButtonModel(
@@ -110,6 +114,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                             imagePath: 'assets/logos/logo_champions.png',
                             onPressed: () {},
                           ),
+                          context,
                         ),
                         buildCompetizioneButton(
                           CompetizioneButtonModel(
@@ -117,6 +122,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                             imagePath: 'assets/logos/logo_champions.png',
                             onPressed: () {},
                           ),
+                          context,
                         ),
                         buildCompetizioneButton(
                           CompetizioneButtonModel(
@@ -124,6 +130,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                             imagePath: 'assets/logos/logo_champions.png',
                             onPressed: () {},
                           ),
+                          context,
                         ),
                         buildCompetizioneButton(
                           CompetizioneButtonModel(
@@ -131,6 +138,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                             imagePath: 'assets/logos/logo_champions.png',
                             onPressed: () {},
                           ),
+                          context,
                         ),
                         buildCompetizioneButton(
                           CompetizioneButtonModel(
@@ -138,6 +146,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                             imagePath: 'assets/logos/logo_champions.png',
                             onPressed: () {},
                           ),
+                          context,
                         ),
                       ],
                     ),

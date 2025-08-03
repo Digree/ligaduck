@@ -8,7 +8,7 @@ class CampionatoMatchModel {
 
 Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
   final screenWidth = MediaQuery.of(context).size.width;
-  bool isWide = MediaQuery.of(context).size.width > 600;
+  bool isWide = MediaQuery.of(context).size.width > 1000;
   return Padding(
     padding: const EdgeInsets.only(
       left: 16.0,
@@ -63,7 +63,7 @@ Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 10.0),
                     child: Container(
-                      width: isWide ? 60 : screenWidth * 0.13,
+                      width: isWide ? 60 : screenWidth * 0.1,
                       height: 30,
                       decoration: BoxDecoration(
                         color: Colors.blueGrey.withOpacity(0.3),
