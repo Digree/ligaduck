@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/campionatoHomePage.dart';
+import 'package:ligaduck/app/service/squadreProvider.dart';
+import 'package:provider/provider.dart';
 
-void main() => runApp(const MyApp());
+void main() => runApp(
+  MultiProvider(
+    providers: [ChangeNotifierProvider(create: (_) => SquadreProvider())],
+    child: MyApp(),
+  ),
+);
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

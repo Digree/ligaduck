@@ -3,10 +3,11 @@ import 'package:http/http.dart' as http;
 import 'package:ligaduck/app/campionatoHomePage.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:ligaduck/app/config/env.dart';
+import 'package:ligaduck/app/service/models/squadra.dart';
 
 class SquadrePage extends StatefulWidget {
-  final String title;
-  const SquadrePage({super.key, required this.title});
+  final Squadra squadra;
+  const SquadrePage({super.key, required this.squadra});
 
   @override
   State<SquadrePage> createState() => _SquadrePageState();
@@ -18,18 +19,19 @@ class _SquadrePageState extends State<SquadrePage> {
     super.initState();
   }
 
-  void showMessageWithPrefix(BuildContext context) async {
+  /*   void showMessageWithPrefix(BuildContext context) async {
     String message = await fetchUsers();
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text("🔥 Messaggio ricevuto: $message")));
-  }
+  } */
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    showMessageWithPrefix(context);
+
+    //showMessageWithPrefix(context);
     bool isWide = MediaQuery.of(context).size.width > 1000;
     return Scaffold(
       appBar: PreferredSize(
@@ -38,7 +40,7 @@ class _SquadrePageState extends State<SquadrePage> {
           flexibleSpace: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.green, Colors.yellow],
+                colors: [getColor('primary'), getColor('secondary')],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -58,7 +60,10 @@ class _SquadrePageState extends State<SquadrePage> {
               );
             },
           ),
-          title: Text(widget.title, style: TextStyle(color: Colors.white)),
+          title: Text(
+            widget.squadra.nome,
+            style: TextStyle(color: Colors.white),
+          ),
         ),
       ),
       body: SizedBox(
@@ -75,7 +80,7 @@ class _SquadrePageState extends State<SquadrePage> {
     );
   }
 
-  String snap() {
+  /*   String snap() {
     return fetchUsers()
         .then((value) {
           return value;
@@ -84,7 +89,7 @@ class _SquadrePageState extends State<SquadrePage> {
           return 'Errore: $error';
         })
         .toString();
-  }
+  } */
 
   Widget headerTeam(
     BuildContext context,
@@ -150,7 +155,7 @@ class _SquadrePageState extends State<SquadrePage> {
         height: isWide ? 250 : screenWidth * 0.4,
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.green, Colors.yellow],
+            colors: [getColor('primary'), getColor('secondary')],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -172,7 +177,7 @@ class _SquadrePageState extends State<SquadrePage> {
               Flexible(
                 flex: 3,
                 child: Image.asset(
-                  'assets/squadre/paperopoli.png',
+                  'assets/squadre/${widget.squadra.cod}.png',
                   fit: BoxFit.contain,
                   height: screenHeight * 0.70,
                 ),
@@ -212,7 +217,7 @@ class _SquadrePageState extends State<SquadrePage> {
         height: isWide ? 250 : screenWidth * 0.4,
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.green, Colors.yellow],
+            colors: [getColor('primary'), getColor('secondary')],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -240,21 +245,21 @@ class _SquadrePageState extends State<SquadrePage> {
                 Flexible(
                   flex: 1,
                   child: Image.asset(
-                    'assets/divise/divise_43/paperopoli_1.png',
+                    'assets/divise/divise_43/${widget.squadra.cod}_1.png',
                     fit: BoxFit.contain,
                   ),
                 ),
                 Flexible(
                   flex: 1,
                   child: Image.asset(
-                    'assets/divise/divise_43/paperopoli_2.png',
+                    'assets/divise/divise_43/${widget.squadra.cod}_2.png',
                     fit: BoxFit.contain,
                   ),
                 ),
                 Flexible(
                   flex: 1,
                   child: Image.asset(
-                    'assets/divise/divise_43/paperopoli_1.png',
+                    'assets/divise/divise_43/${widget.squadra.cod}_3.png',
                     fit: BoxFit.contain,
                   ),
                 ),
@@ -283,7 +288,7 @@ class _SquadrePageState extends State<SquadrePage> {
           ),
           Flexible(
             child: Text(
-              'PdP Stadium',
+              widget.squadra.stadio,
               style: TextStyle(
                 color: Colors.black,
                 fontSize: 20,
@@ -312,7 +317,7 @@ class _SquadrePageState extends State<SquadrePage> {
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.green, Colors.yellow],
+                colors: [getColor('primary'), getColor('secondary')],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -358,9 +363,9 @@ class _SquadrePageState extends State<SquadrePage> {
           child: Column(
             children: [
               TabBar(
-                labelColor: Colors.green[800],
+                labelColor: getColor('primary'),
                 unselectedLabelColor: Colors.grey,
-                indicatorColor: Colors.green,
+                indicatorColor: getColor('primary'),
                 tabs: [
                   Tab(text: 'Squadra'),
                   Tab(text: 'Palmarès'),
@@ -578,7 +583,36 @@ class _SquadrePageState extends State<SquadrePage> {
     );
   }
 
-  Future<String> fetchUsers() async {
+  Color getColor(String type) {
+    final Map<String, Color> colorMap = {
+      'red': Colors.red,
+      'green': Colors.green,
+      'blue': Colors.blueAccent,
+      'yellow': Colors.yellow,
+      'orange': Colors.orange,
+      'purple': Colors.purple,
+      'black': Colors.black,
+      'white': Colors.white,
+      'grey': Colors.grey,
+      'fucsia': ?Colors.pink[700],
+      'cyan': Colors.cyan,
+      'brown': Colors.brown,
+    };
+
+    if (type.contains('primary')) {
+      final primaryColorName = widget.squadra.colorePrimario.toLowerCase();
+      final primaryColor = colorMap[primaryColorName] ?? Colors.grey;
+      return primaryColor;
+    } else if (type.contains('secondary')) {
+      final secondaryColorName = widget.squadra.coloreSecondario.toLowerCase();
+      final secondaryColor = colorMap[secondaryColorName] ?? Colors.grey;
+      return secondaryColor;
+    } else {
+      return Colors.grey;
+    }
+  }
+
+  /*   Future<String> fetchUsers() async {
     try {
       final response = await http.get(Uri.parse('${Env.apiUrl}/hello'));
 
@@ -590,5 +624,5 @@ class _SquadrePageState extends State<SquadrePage> {
     } catch (e) {
       return 'Errore di connessione: $e';
     }
-  }
+  } */
 }

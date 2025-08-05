@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:ligaduck/app/homePage.dart';
 import 'package:ligaduck/app/models/campionato/campionatoMatchModel.dart';
 import 'package:ligaduck/app/models/competizione/competizioneButtonModel.dart';
+import 'package:ligaduck/app/service/models/squadra.dart';
+import 'package:ligaduck/app/service/squadreProvider.dart';
 import 'package:ligaduck/app/squadrePage.dart';
+import 'package:provider/provider.dart';
 
 class CampionatoHomePage extends StatefulWidget {
   final String title;
@@ -22,9 +25,15 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
     super.dispose();
   }
 
+  Future<List<Squadra>> getSquadre(SquadreProvider provider) async {
+    List<Squadra> squadre = await provider.fetchSquadre();
+    return squadre;
+  }
+
   @override
   Widget build(BuildContext context) {
     bool isWide = MediaQuery.of(context).size.width > 600;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blueAccent,
@@ -241,15 +250,9 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
   }
 
   Widget buildListaSquadre() {
-    final squadre = [
-      'Anatre FC',
-      'Paperopoli',
-      'Golden City',
-      'Real Quack',
-      'Duck United',
-      'FC Lago',
-    ];
+    final provider = Provider.of<SquadreProvider>(context, listen: false);
     bool isWide = MediaQuery.of(context).size.width > 600;
+    final screenHeight = MediaQuery.of(context).size.height;
     return SizedBox(
       width: isWide
           ? MediaQuery.of(context).size.width * 0.5
@@ -267,7 +270,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
           DefaultTabController(
             length: 3,
             child: SizedBox(
-              height: 400, // Altezza fissa per il TabController
+              height: screenHeight * 0.5, // Altezza fissa per il TabController
               child: Column(
                 children: [
                   Container(
@@ -289,40 +292,61 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                       width: MediaQuery.of(context).size.width * 1,
                       child: TabBarView(
                         children: [
-                          Column(
-                            children: [
-                              ...squadre.map(
-                                (nome) => SizedBox(
-                                  width: 1000,
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16.0,
-                                      vertical: 4.0,
-                                    ),
-                                    child: ElevatedButton(
-                                      onPressed: () {
-                                        Navigator.pushReplacement(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => SquadrePage(
-                                              title: squadre.singleWhere(
-                                                (s) => s == nome,
+                          FutureBuilder<List<Squadra>>(
+                            future: getSquadre(provider),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              }
+
+                              if (snapshot.hasError) {
+                                return Center(
+                                  child: Text('Errore: ${snapshot.error}'),
+                                );
+                              }
+                              final squadre = snapshot.data ?? [];
+
+                              squadre.sort((a, b) => a.nome.compareTo(b.nome));
+
+                              return SingleChildScrollView(
+                                child: Column(
+                                  children: [
+                                    for (var squadra in squadre)
+                                      SizedBox(
+                                        width: 1000,
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16.0,
+                                            vertical: 4.0,
+                                          ),
+                                          child: ElevatedButton(
+                                            onPressed: () {
+                                              Navigator.pushReplacement(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      SquadrePage(
+                                                        squadra: squadra,
+                                                      ),
+                                                ),
+                                              );
+                                            },
+                                            child: Text(
+                                              squadra.nome,
+                                              style: TextStyle(
+                                                color: Colors.blueAccent,
                                               ),
                                             ),
                                           ),
-                                        );
-                                      },
-                                      child: Text(
-                                        nome,
-                                        style: TextStyle(
-                                          color: Colors.blueAccent,
                                         ),
                                       ),
-                                    ),
-                                  ),
+                                  ],
                                 ),
-                              ),
-                            ],
+                              );
+                            },
                           ),
                           Center(child: Text('Palmarès')),
                           Center(child: Text('Statistiche')),
