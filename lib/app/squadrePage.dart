@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:ligaduck/app/campionatoHomePage.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:ligaduck/app/config/env.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
+import 'package:oktoast/oktoast.dart';
 
 class SquadrePage extends StatefulWidget {
   final Squadra squadra;
@@ -19,19 +18,19 @@ class _SquadrePageState extends State<SquadrePage> {
     super.initState();
   }
 
-  /*   void showMessageWithPrefix(BuildContext context) async {
-    String message = await fetchUsers();
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text("🔥 Messaggio ricevuto: $message")));
-  } */
+  List<dynamic>? getTrofeiSquadra(Squadra squadra) {
+    if (squadra.trofei != null) {
+      return squadra.trofei;
+    } else {
+      return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
-    //showMessageWithPrefix(context);
     bool isWide = MediaQuery.of(context).size.width > 1000;
     return Scaffold(
       appBar: PreferredSize(
@@ -79,17 +78,6 @@ class _SquadrePageState extends State<SquadrePage> {
       ),
     );
   }
-
-  /*   String snap() {
-    return fetchUsers()
-        .then((value) {
-          return value;
-        })
-        .catchError((error) {
-          return 'Errore: $error';
-        })
-        .toString();
-  } */
 
   Widget headerTeam(
     BuildContext context,
@@ -376,7 +364,14 @@ class _SquadrePageState extends State<SquadrePage> {
                 child: TabBarView(
                   children: [
                     teamList(context, isWide, screenWidth, screenHeight),
-                    buildPalmares(context, isWide, screenWidth, screenHeight),
+                    OKToast(
+                      child: buildPalmares(
+                        context,
+                        isWide,
+                        screenWidth,
+                        screenHeight,
+                      ),
+                    ),
                     Center(child: Text('Statistiche')),
                   ],
                 ),
@@ -533,6 +528,8 @@ class _SquadrePageState extends State<SquadrePage> {
     double screenWidth,
     double screenHeight,
   ) {
+    List<dynamic>? trofei = getTrofeiSquadra(widget.squadra);
+
     return Scaffold(
       body: GridView.builder(
         padding: const EdgeInsets.all(16),
@@ -541,41 +538,57 @@ class _SquadrePageState extends State<SquadrePage> {
           crossAxisSpacing: 10,
           mainAxisSpacing: 10,
         ),
-        itemCount: 10,
-        itemBuilder: (context, index) {
-          return Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(
-                colors: [Colors.grey, ?Colors.grey[350]],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+        itemCount: trofei != null ? trofei.length : 0,
+        itemBuilder: (context, i) {
+          return Material(
+            child: InkWell(
+              onTap: () {
+                showToast(
+                  trofei != null
+                      ? 'Campionato: ${trofei[i].anni.join(", ")}'
+                      : '',
+                  duration: Duration(seconds: 5),
+                  position: ToastPosition.bottom,
+                  backgroundColor: getColor('primary'),
+                );
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: LinearGradient(
+                    colors: [Colors.grey, ?Colors.grey[350]],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: Image.asset(
+                          'assets/trophies/${trofei != null ? trofei[i].codCompetizione : 'champions_league'}.png',
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                    Flexible(
+                      child: Text(
+                        trofei != null
+                            ? '${trofei[i].quantita} ${trofei[i].competizione}'
+                            : '',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: isWide ? 20 : 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Flexible(
-                  child: Align(
-                    alignment: Alignment.center,
-                    child: Image.asset(
-                      'assets/trophies/champions_league.png',
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-                Flexible(
-                  child: Text(
-                    '1 Champions League',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: isWide ? 20 : 15,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
             ),
           );
         },
@@ -611,18 +624,4 @@ class _SquadrePageState extends State<SquadrePage> {
       return Colors.grey;
     }
   }
-
-  /*   Future<String> fetchUsers() async {
-    try {
-      final response = await http.get(Uri.parse('${Env.apiUrl}/hello'));
-
-      if (response.statusCode == 200) {
-        return response.body;
-      } else {
-        throw Exception('Errore nel recupero utenti');
-      }
-    } catch (e) {
-      return 'Errore di connessione: $e';
-    }
-  } */
 }

@@ -1,3 +1,5 @@
+import 'package:ligaduck/app/service/models/trofeo.dart';
+
 class Squadra {
   final String id;
   final String nome;
@@ -7,6 +9,7 @@ class Squadra {
   final String campionato;
   final String colorePrimario;
   final String coloreSecondario;
+  final List<Trofeo>? trofei;
 
   Squadra({
     required this.id,
@@ -17,6 +20,7 @@ class Squadra {
     required this.campionato,
     required this.colorePrimario,
     required this.coloreSecondario,
+    this.trofei,
   });
 
   factory Squadra.fromJson(Map<String, dynamic> json) {
@@ -29,6 +33,11 @@ class Squadra {
       campionato: json['campionato'],
       colorePrimario: json['colorePrimario'],
       coloreSecondario: json['coloreSecondario'],
+      trofei: json['trofei'] != null
+          ? (json['trofei'] as List)
+                .map((e) => Trofeo.fromJson(e as Map<String, dynamic>))
+                .toList()
+          : null,
     );
   }
 
@@ -42,6 +51,7 @@ class Squadra {
       'campionato': campionato,
       'colorePrimario': colorePrimario,
       'coloreSecondario': coloreSecondario,
+      'trofei': trofei?.map((t) => t.toJson()).toList(),
     };
   }
 }

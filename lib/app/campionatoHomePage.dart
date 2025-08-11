@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:ligaduck/app/homePage.dart';
 import 'package:ligaduck/app/models/campionato/campionatoMatchModel.dart';
 import 'package:ligaduck/app/models/competizione/competizioneButtonModel.dart';
+import 'package:ligaduck/app/service/competizioniProvider.dart';
+import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/service/squadreProvider.dart';
 import 'package:ligaduck/app/squadrePage.dart';
@@ -28,6 +30,13 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
   Future<List<Squadra>> getSquadre(SquadreProvider provider) async {
     List<Squadra> squadre = await provider.fetchSquadre();
     return squadre;
+  }
+
+  Future<List<Competizione>> getCompetizioni(
+    CompetizioniProvider provider,
+  ) async {
+    List<Competizione> competizioni = await provider.fetchSquadre();
+    return competizioni;
   }
 
   @override

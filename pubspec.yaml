@@ -12,6 +12,7 @@ dependencies:
   carousel_slider: ^5.1.1
   http: ^0.13.6
   provider: ^6.1.1
+  oktoast: ^3.3.1 
 
 dev_dependencies:
   flutter_test:
@@ -117,6 +118,13 @@ flutter:
     - assets/divise/divise_43/torelli_3.png
 
     - assets/miscellaneous/stadium.png
+
+    - assets/trophies/liga_duck.png
+    - assets/trophies/coppa_dei_paperi.png
+    - assets/trophies/serie_b.png
     - assets/trophies/champions_league.png
+    - assets/trophies/europa_league.png
+    - assets/trophies/supercoppa_europea.png
+
     - assets/miscellaneous/divisa_1.png
     - assets/nations/italy.png

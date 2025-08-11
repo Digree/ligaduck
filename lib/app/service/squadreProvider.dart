@@ -27,16 +27,3 @@ class SquadreProvider with ChangeNotifier {
     }
   }
 }
-
-
-/*    Future<List<Squadra>> fetchSquadre() async {
-    final response = await http.get(Uri.parse('${Env.apiUrl}/squadre'));
-
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      // Converti ogni elemento JSON in oggetto Squadra
-      return data.map((item) => Squadra.fromJson(item)).toList();
-    } else {
-      throw Exception('Failed to load squadre');
-    }
-  }  */
