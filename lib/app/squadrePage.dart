@@ -569,7 +569,7 @@ class _SquadrePageState extends State<SquadrePage> {
                       child: Align(
                         alignment: Alignment.center,
                         child: Image.asset(
-                          'assets/trophies/${trofei != null ? trofei[i].codCompetizione : 'champions_league'}.png',
+                          'assets/trophies/${trofei != null ? trofei[i].cod : 'champions_league'}.png',
                           fit: BoxFit.contain,
                         ),
                       ),
@@ -577,7 +577,7 @@ class _SquadrePageState extends State<SquadrePage> {
                     Flexible(
                       child: Text(
                         trofei != null
-                            ? '${trofei[i].quantita} ${trofei[i].competizione}'
+                            ? '${trofei[i].quantita} ${trofei[i].nome}'
                             : '',
                         style: TextStyle(
                           color: Colors.black,

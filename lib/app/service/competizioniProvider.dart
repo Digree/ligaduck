@@ -10,7 +10,7 @@ class CompetizioniProvider with ChangeNotifier {
 
   List<Competizione> get competizioni => _competizioni;
 
-  Future<List<Competizione>> fetchSquadre() async {
+  Future<List<Competizione>> fetchCompetizioni() async {
     try {
       final response = await http.get(Uri.parse('${Env.apiUrl}/competizioni'));
 

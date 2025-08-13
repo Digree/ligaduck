@@ -34,7 +34,18 @@ flutter:
       fonts:
         - asset: assets/font/framd.ttf
   assets:
-    - assets/logos/logo_champions.png
+    #loghi competizione
+    - assets/logos/logo_liga_duck.png
+    - assets/logos/logo_coppa_dei_paperi.png
+    - assets/logos/logo_coppa_di_lega.png
+    - assets/logos/logo_supercoppa_dei_paperi.png
+    - assets/logos/logo_champions_league.png
+    - assets/logos/logo_europa_league.png
+    - assets/logos/logo_conference_league.png
+    - assets/logos/logo_supercoppa_europea.png
+    - assets/logos/logo_coppa_intercontinentale.png
+
+    #loghi squadre
     - assets/squadre/atletico_ocaville.png
     - assets/squadre/black_fury.png
     - assets/squadre/canal_city.png
@@ -56,6 +67,7 @@ flutter:
     - assets/squadre/topolinia.png
     - assets/squadre/torelli.png
     
+    #divise
     - assets/divise/divise_43/atletico_ocaville_1.png
     - assets/divise/divise_43/atletico_ocaville_2.png
     - assets/divise/divise_43/atletico_ocaville_3.png
@@ -117,14 +129,25 @@ flutter:
     - assets/divise/divise_43/torelli_2.png
     - assets/divise/divise_43/torelli_3.png
 
+    #miscellaneous
     - assets/miscellaneous/stadium.png
+    - assets/miscellaneous/divisa_1.png
 
+    #trofei
     - assets/trophies/liga_duck.png
     - assets/trophies/coppa_dei_paperi.png
+    - assets/trophies/coppa_di_lega.png
+    - assets/trophies/supercoppa_dei_paperi.png
     - assets/trophies/serie_b.png
     - assets/trophies/champions_league.png
     - assets/trophies/europa_league.png
+    - assets/trophies/conference_league.png
     - assets/trophies/supercoppa_europea.png
+    - assets/trophies/coppa_delle_coppe.png
+    - assets/trophies/mitropa_cup.png
+    - assets/trophies/mondiale_per_club.png
+    - assets/trophies/mondiale_per_club_fifa.png
+    - assets/trophies/coppa_intercontinentale.png
 
-    - assets/miscellaneous/divisa_1.png
+    #nazioni
     - assets/nations/italy.png

@@ -35,14 +35,14 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
   Future<List<Competizione>> getCompetizioni(
     CompetizioniProvider provider,
   ) async {
-    List<Competizione> competizioni = await provider.fetchSquadre();
+    List<Competizione> competizioni = await provider.fetchCompetizioni();
     return competizioni;
   }
 
   @override
   Widget build(BuildContext context) {
     bool isWide = MediaQuery.of(context).size.width > 600;
-
+    final provider = Provider.of<CompetizioniProvider>(context, listen: false);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blueAccent,
@@ -92,81 +92,41 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                   child: SingleChildScrollView(
                     controller: _scrollController,
                     scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        buildCompetizioneButton(
-                          CompetizioneButtonModel(
-                            text: 'Liga Duck',
-                            imagePath: 'assets/logos/logo_champions.png',
-                            onPressed: () {},
-                          ),
-                          context,
-                        ),
-                        buildCompetizioneButton(
-                          CompetizioneButtonModel(
-                            text: 'Coppa dei Paperi',
-                            imagePath: 'assets/logos/logo_champions.png',
-                            onPressed: () {},
-                          ),
-                          context,
-                        ),
-                        buildCompetizioneButton(
-                          CompetizioneButtonModel(
-                            text: 'Coppa di Lega',
-                            imagePath: 'assets/logos/logo_champions.png',
-                            onPressed: () {},
-                          ),
-                          context,
-                        ),
-                        buildCompetizioneButton(
-                          CompetizioneButtonModel(
-                            text: 'Supercoppa dei Paperi',
-                            imagePath: 'assets/logos/logo_champions.png',
-                            onPressed: () {},
-                          ),
-                          context,
-                        ),
-                        buildCompetizioneButton(
-                          CompetizioneButtonModel(
-                            text: 'Supercoppa Europea',
-                            imagePath: 'assets/logos/logo_champions.png',
-                            onPressed: () {},
-                          ),
-                          context,
-                        ),
-                        buildCompetizioneButton(
-                          CompetizioneButtonModel(
-                            text: 'Champions League',
-                            imagePath: 'assets/logos/logo_champions.png',
-                            onPressed: () {},
-                          ),
-                          context,
-                        ),
-                        buildCompetizioneButton(
-                          CompetizioneButtonModel(
-                            text: 'Europa League',
-                            imagePath: 'assets/logos/logo_champions.png',
-                            onPressed: () {},
-                          ),
-                          context,
-                        ),
-                        buildCompetizioneButton(
-                          CompetizioneButtonModel(
-                            text: 'Conference League',
-                            imagePath: 'assets/logos/logo_champions.png',
-                            onPressed: () {},
-                          ),
-                          context,
-                        ),
-                        buildCompetizioneButton(
-                          CompetizioneButtonModel(
-                            text: 'Coppa Intercontinentale',
-                            imagePath: 'assets/logos/logo_champions.png',
-                            onPressed: () {},
-                          ),
-                          context,
-                        ),
-                      ],
+                    child: FutureBuilder(
+                      future: getCompetizioni(provider),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return Center(child: CircularProgressIndicator());
+                        }
+
+                        if (snapshot.hasError) {
+                          return Center(
+                            child: Text('Errore: ${snapshot.error}'),
+                          );
+                        }
+
+                        final competizioni = snapshot.data ?? [];
+
+                        competizioni.removeWhere(
+                          (comp) => comp.attiva == false,
+                        );
+
+                        return Row(
+                          children: [
+                            for (var competizione in competizioni)
+                              buildCompetizioneButton(
+                                CompetizioneButtonModel(
+                                  text: competizione.nome,
+                                  imagePath:
+                                      'assets/logos/logo_${competizione.cod}.png',
+                                  onPressed: () {},
+                                ),
+                                context,
+                              ),
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -317,42 +277,76 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                                 );
                               }
                               final squadre = snapshot.data ?? [];
+                              final provider =
+                                  Provider.of<CompetizioniProvider>(
+                                    context,
+                                    listen: false,
+                                  );
 
                               squadre.sort((a, b) => a.nome.compareTo(b.nome));
 
                               return SingleChildScrollView(
-                                child: Column(
-                                  children: [
-                                    for (var squadra in squadre)
-                                      SizedBox(
-                                        width: 1000,
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 16.0,
-                                            vertical: 4.0,
-                                          ),
-                                          child: ElevatedButton(
-                                            onPressed: () {
-                                              Navigator.pushReplacement(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      SquadrePage(
-                                                        squadra: squadra,
-                                                      ),
+                                child: FutureBuilder<List<Competizione>>(
+                                  future: getCompetizioni(provider),
+                                  builder: (context, snapshot) {
+                                    if (snapshot.connectionState ==
+                                        ConnectionState.waiting) {
+                                      return Center(
+                                        child: CircularProgressIndicator(),
+                                      );
+                                    }
+
+                                    if (snapshot.hasError) {
+                                      return Center(
+                                        child: Text(
+                                          'Errore: ${snapshot.error}',
+                                        ),
+                                      );
+                                    }
+                                    final competizioni = snapshot.data ?? [];
+
+                                    for (var squadra in squadre) {
+                                      squadra = addCompetizioni(
+                                        squadra,
+                                        competizioni,
+                                      );
+                                    }
+
+                                    return Column(
+                                      children: [
+                                        for (var squadra in squadre)
+                                          SizedBox(
+                                            width: 1000,
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 16.0,
+                                                    vertical: 4.0,
+                                                  ),
+                                              child: ElevatedButton(
+                                                onPressed: () {
+                                                  Navigator.pushReplacement(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          SquadrePage(
+                                                            squadra: squadra,
+                                                          ),
+                                                    ),
+                                                  );
+                                                },
+                                                child: Text(
+                                                  squadra.nome,
+                                                  style: TextStyle(
+                                                    color: Colors.blueAccent,
+                                                  ),
                                                 ),
-                                              );
-                                            },
-                                            child: Text(
-                                              squadra.nome,
-                                              style: TextStyle(
-                                                color: Colors.blueAccent,
                                               ),
                                             ),
                                           ),
-                                        ),
-                                      ),
-                                  ],
+                                      ],
+                                    );
+                                  },
                                 ),
                               );
                             },
@@ -370,5 +364,20 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
         ],
       ),
     );
+  }
+
+  Squadra addCompetizioni(Squadra squadra, List<Competizione> competizioni) {
+    if (squadra.trofei == null) {
+      return squadra;
+    }
+    for (var competizione in competizioni) {
+      for (var i = 0; i < squadra.trofei!.length; i++) {
+        if (squadra.trofei?[i].idCompetizione == competizione.id) {
+          squadra.trofei?[i].nome = competizione.nome;
+          squadra.trofei?[i].cod = competizione.cod;
+        }
+      }
+    }
+    return squadra;
   }
 }

@@ -1,8 +1,8 @@
 class Trofeo {
   final List<String> anni;
   final int quantita;
-  final String? nome;
-  final String? cod;
+  String? nome;
+  String? cod;
   final int idCompetizione;
 
   Trofeo({
@@ -19,7 +19,7 @@ class Trofeo {
       quantita: json['quantita'],
       nome: json['nome'],
       cod: json['cod'],
-      idCompetizione: json['codCompetizione'],
+      idCompetizione: json['idCompetizione'],
     );
   }
 
@@ -29,7 +29,7 @@ class Trofeo {
       'quantita': quantita,
       'nome': nome,
       'cod': cod,
-      'codCompetizione': idCompetizione,
+      'idCompetizione': idCompetizione,
     };
   }
 }
