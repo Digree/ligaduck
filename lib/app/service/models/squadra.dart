@@ -1,7 +1,9 @@
+import 'dart:ffi';
+
 import 'package:ligaduck/app/service/models/trofeo.dart';
 
 class Squadra {
-  final String id;
+  final int id;
   final String nome;
   final String citta;
   final String stadio;
