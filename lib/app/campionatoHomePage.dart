@@ -12,7 +12,12 @@ import 'package:provider/provider.dart';
 
 class CampionatoHomePage extends StatefulWidget {
   final String title;
-  const CampionatoHomePage({super.key, required this.title});
+  final String campionato;
+  const CampionatoHomePage({
+    super.key,
+    required this.title,
+    required this.campionato,
+  });
 
   @override
   State<CampionatoHomePage> createState() => _CampionatoHomePageState();
@@ -28,14 +33,16 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
   }
 
   Future<List<Squadra>> getSquadre(SquadreProvider provider) async {
-    List<Squadra> squadre = await provider.fetchSquadre();
+    List<Squadra> squadre = await provider.fetchSquadre(widget.campionato);
     return squadre;
   }
 
   Future<List<Competizione>> getCompetizioni(
     CompetizioniProvider provider,
   ) async {
-    List<Competizione> competizioni = await provider.fetchCompetizioni();
+    List<Competizione> competizioni = await provider.fetchCompetizioni(
+      widget.campionato,
+    );
     return competizioni;
   }
 
@@ -261,98 +268,9 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                       width: MediaQuery.of(context).size.width * 1,
                       child: TabBarView(
                         children: [
-                          FutureBuilder<List<Squadra>>(
-                            future: getSquadre(provider),
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return Center(
-                                  child: CircularProgressIndicator(),
-                                );
-                              }
-
-                              if (snapshot.hasError) {
-                                return Center(
-                                  child: Text('Errore: ${snapshot.error}'),
-                                );
-                              }
-                              final squadre = snapshot.data ?? [];
-                              final provider =
-                                  Provider.of<CompetizioniProvider>(
-                                    context,
-                                    listen: false,
-                                  );
-
-                              squadre.sort((a, b) => a.nome.compareTo(b.nome));
-
-                              return SingleChildScrollView(
-                                child: FutureBuilder<List<Competizione>>(
-                                  future: getCompetizioni(provider),
-                                  builder: (context, snapshot) {
-                                    if (snapshot.connectionState ==
-                                        ConnectionState.waiting) {
-                                      return Center(
-                                        child: CircularProgressIndicator(),
-                                      );
-                                    }
-
-                                    if (snapshot.hasError) {
-                                      return Center(
-                                        child: Text(
-                                          'Errore: ${snapshot.error}',
-                                        ),
-                                      );
-                                    }
-                                    final competizioni = snapshot.data ?? [];
-
-                                    for (var squadra in squadre) {
-                                      squadra = addCompetizioni(
-                                        squadra,
-                                        competizioni,
-                                      );
-                                    }
-
-                                    return Column(
-                                      children: [
-                                        for (var squadra in squadre)
-                                          SizedBox(
-                                            width: 1000,
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 16.0,
-                                                    vertical: 4.0,
-                                                  ),
-                                              child: ElevatedButton(
-                                                onPressed: () {
-                                                  Navigator.pushReplacement(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          SquadrePage(
-                                                            squadra: squadra,
-                                                          ),
-                                                    ),
-                                                  );
-                                                },
-                                                child: Text(
-                                                  squadra.nome,
-                                                  style: TextStyle(
-                                                    color: Colors.blueAccent,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                      ],
-                                    );
-                                  },
-                                ),
-                              );
-                            },
-                          ),
-                          Center(child: Text('Palmarès')),
-                          Center(child: Text('Statistiche')),
+                          showSquadre(provider, 'Serie A'),
+                          showSquadre(provider, 'Serie B'),
+                          showSquadre(provider, 'Serie C'),
                         ],
                       ),
                     ),
@@ -379,5 +297,81 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
       }
     }
     return squadra;
+  }
+
+  Widget showSquadre(SquadreProvider provider, String categoria) {
+    return FutureBuilder<List<Squadra>>(
+      future: getSquadre(provider),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(child: Text('Errore: ${snapshot.error}'));
+        }
+        final squadre = snapshot.data ?? [];
+        final provider = Provider.of<CompetizioniProvider>(
+          context,
+          listen: false,
+        );
+
+        final filteredSquadre = squadre.where((squadra) {
+          return squadra.categoria == categoria;
+        }).toList();
+
+        filteredSquadre.sort((a, b) => a.nome.compareTo(b.nome));
+
+        return SingleChildScrollView(
+          child: FutureBuilder<List<Competizione>>(
+            future: getCompetizioni(provider),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator());
+              }
+
+              if (snapshot.hasError) {
+                return Center(child: Text('Errore: ${snapshot.error}'));
+              }
+              final competizioni = snapshot.data ?? [];
+
+              for (var squadra in squadre) {
+                squadra = addCompetizioni(squadra, competizioni);
+              }
+
+              return Column(
+                children: [
+                  for (var squadra in filteredSquadre)
+                    SizedBox(
+                      width: 1000,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 4.0,
+                        ),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    SquadrePage(squadra: squadra),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            squadra.nome,
+                            style: TextStyle(color: Colors.blueAccent),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
   }
 }

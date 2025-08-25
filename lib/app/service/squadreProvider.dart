@@ -9,9 +9,11 @@ class SquadreProvider with ChangeNotifier {
 
   List<Squadra> get squadre => _squadre;
 
-  Future<List<Squadra>> fetchSquadre() async {
+  Future<List<Squadra>> fetchSquadre(String campionato) async {
     try {
-      final response = await http.get(Uri.parse('${Env.apiUrl}/squadre'));
+      final response = await http.get(
+        Uri.parse('${Env.apiUrl}/$campionato/squadre'),
+      );
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
@@ -22,7 +24,8 @@ class SquadreProvider with ChangeNotifier {
         throw Exception('Errore nel caricamento: ${response.statusCode}');
       }
     } catch (e) {
-      print('Errore: $e');
+      print('Tipo errore: ${e.runtimeType}');
+      print('Dettaglio errore: $e');
       return [];
     }
   }

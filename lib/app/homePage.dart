@@ -22,8 +22,10 @@ class HomePage extends StatelessWidget {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          CampionatoHomePage(title: '42° Campionato'),
+                      builder: (context) => CampionatoHomePage(
+                        title: '42° Campionato',
+                        campionato: '42',
+                      ),
                     ),
                   );
                 },
@@ -36,8 +38,10 @@ class HomePage extends StatelessWidget {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          CampionatoHomePage(title: '43° Campionato'),
+                      builder: (context) => CampionatoHomePage(
+                        title: '43° Campionato',
+                        campionato: '43',
+                      ),
                     ),
                   );
                 },

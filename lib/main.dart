@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: CampionatoHomePage(title: '43° Campionato'),
+      home: CampionatoHomePage(title: '43° Campionato', campionato: '43'),
       theme: ThemeData(fontFamily: 'Franklin Gothic'),
     );
   }

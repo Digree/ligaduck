@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:ligaduck/app/service/models/trofeo.dart';
 
 class Squadra {
@@ -8,7 +6,7 @@ class Squadra {
   final String citta;
   final String stadio;
   final String cod;
-  final String campionato;
+  final String categoria;
   final String colorePrimario;
   final String coloreSecondario;
   final List<Trofeo>? trofei;
@@ -19,7 +17,7 @@ class Squadra {
     required this.citta,
     required this.stadio,
     required this.cod,
-    required this.campionato,
+    required this.categoria,
     required this.colorePrimario,
     required this.coloreSecondario,
     this.trofei,
@@ -32,7 +30,7 @@ class Squadra {
       citta: json['citta'],
       stadio: json['stadio'],
       cod: json['cod'],
-      campionato: json['campionato'],
+      categoria: json['categoria'],
       colorePrimario: json['colorePrimario'],
       coloreSecondario: json['coloreSecondario'],
       trofei: json['trofei'] != null
@@ -50,7 +48,7 @@ class Squadra {
       'citta': citta,
       'stadio': stadio,
       'cod': cod,
-      'campionato': campionato,
+      'categoria': categoria,
       'colorePrimario': colorePrimario,
       'coloreSecondario': coloreSecondario,
       'trofei': trofei?.map((t) => t.toJson()).toList(),

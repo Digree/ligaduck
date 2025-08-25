@@ -53,8 +53,10 @@ class _SquadrePageState extends State<SquadrePage> {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      CampionatoHomePage(title: '43° Campionato'),
+                  builder: (context) => CampionatoHomePage(
+                    title: '43° Campionato',
+                    campionato: '43',
+                  ),
                 ),
               );
             },
