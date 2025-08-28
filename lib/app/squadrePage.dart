@@ -307,7 +307,13 @@ class _SquadrePageState extends State<SquadrePage> {
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [getColor('primary'), getColor('secondary')],
+                colors: [
+                  getColor('primary'),
+                  getColor('secondary'),
+                  widget.squadra.colori.length > 2
+                      ? getColor('tertiary')
+                      : getColor('secondary'),
+                ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -600,28 +606,32 @@ class _SquadrePageState extends State<SquadrePage> {
 
   Color getColor(String type) {
     final Map<String, Color> colorMap = {
-      'red': Colors.red,
-      'green': Colors.green,
-      'blue': Colors.blueAccent,
-      'yellow': Colors.yellow,
-      'orange': Colors.orange,
-      'purple': Colors.purple,
-      'black': Colors.black,
-      'white': Colors.white,
-      'grey': Colors.grey,
+      'rosso': Colors.red,
+      'verde': Colors.green,
+      'blu': Colors.blueAccent,
+      'giallo': Colors.yellow,
+      'arancione': Colors.orange,
+      'viola': Colors.purple,
+      'nero': Colors.black,
+      'bianco': Colors.white,
+      'grigio': Colors.grey,
       'fucsia': ?Colors.pink[700],
-      'cyan': Colors.cyan,
-      'brown': Colors.brown,
+      'ciano': Colors.cyan,
+      'marrone': Colors.brown,
     };
 
     if (type.contains('primary')) {
-      final primaryColorName = widget.squadra.colorePrimario.toLowerCase();
+      final primaryColorName = widget.squadra.colori[0].toLowerCase();
       final primaryColor = colorMap[primaryColorName] ?? Colors.grey;
       return primaryColor;
     } else if (type.contains('secondary')) {
-      final secondaryColorName = widget.squadra.coloreSecondario.toLowerCase();
+      final secondaryColorName = widget.squadra.colori[1].toLowerCase();
       final secondaryColor = colorMap[secondaryColorName] ?? Colors.grey;
       return secondaryColor;
+    } else if (type.contains('tertiary') && widget.squadra.colori.length > 2) {
+      final tertiaryColorName = widget.squadra.colori[2].toLowerCase();
+      final tertiaryColor = colorMap[tertiaryColorName] ?? Colors.grey;
+      return tertiaryColor;
     } else {
       return Colors.grey;
     }

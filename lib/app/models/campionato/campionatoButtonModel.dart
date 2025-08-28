@@ -9,10 +9,10 @@ class CampionatoButtonModel {
 
 Widget buildCampionatoButton(CampionatoButtonModel model) {
   return Padding(
-    padding: EdgeInsets.all(8.0),
+    padding: EdgeInsets.only(top: 8.0, bottom: 8.0, left: 100.0, right: 100.0),
     child: SizedBox(
       width: 240,
-      height: 240,
+      height: 100,
       child: FloatingActionButton(
         heroTag: model.text,
         onPressed: model.onPressed,

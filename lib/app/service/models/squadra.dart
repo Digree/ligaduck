@@ -7,8 +7,7 @@ class Squadra {
   final String stadio;
   final String cod;
   final String categoria;
-  final String colorePrimario;
-  final String coloreSecondario;
+  final List<String> colori;
   final List<Trofeo>? trofei;
 
   Squadra({
@@ -18,8 +17,7 @@ class Squadra {
     required this.stadio,
     required this.cod,
     required this.categoria,
-    required this.colorePrimario,
-    required this.coloreSecondario,
+    required this.colori,
     this.trofei,
   });
 
@@ -31,8 +29,7 @@ class Squadra {
       stadio: json['stadio'],
       cod: json['cod'],
       categoria: json['categoria'],
-      colorePrimario: json['colorePrimario'],
-      coloreSecondario: json['coloreSecondario'],
+      colori: json['colori'] != null ? List<String>.from(json['colori']) : [],
       trofei: json['trofei'] != null
           ? (json['trofei'] as List)
                 .map((e) => Trofeo.fromJson(e as Map<String, dynamic>))
@@ -49,8 +46,7 @@ class Squadra {
       'stadio': stadio,
       'cod': cod,
       'categoria': categoria,
-      'colorePrimario': colorePrimario,
-      'coloreSecondario': coloreSecondario,
+      'colori': colori,
       'trofei': trofei?.map((t) => t.toJson()).toList(),
     };
   }

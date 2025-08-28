@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:ligaduck/app/competizioneHomePage.dart';
 import 'package:ligaduck/app/homePage.dart';
 import 'package:ligaduck/app/models/campionato/campionatoMatchModel.dart';
 import 'package:ligaduck/app/models/competizione/competizioneButtonModel.dart';
@@ -127,7 +128,19 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                                   text: competizione.nome,
                                   imagePath:
                                       'assets/logos/logo_${competizione.cod}.png',
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            CompetizioneHomePage(
+                                              title: competizione.nome,
+                                              campionato: widget.campionato,
+                                              competizione: competizione,
+                                            ),
+                                      ),
+                                    );
+                                  },
                                 ),
                                 context,
                               ),
