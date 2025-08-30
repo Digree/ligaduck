@@ -182,7 +182,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
             child: Text(
               'Prossime Partite:',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),

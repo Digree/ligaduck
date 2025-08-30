@@ -23,12 +23,6 @@ class CompetizioneHomePage extends StatefulWidget {
 
 class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
   String? selectedGiornata;
-  final List<String> giornate = [
-    'Giornata 1',
-    'Giornata 2',
-    'Giornata 3',
-    'Giornata 4',
-  ];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
