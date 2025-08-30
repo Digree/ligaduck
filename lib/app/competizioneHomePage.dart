@@ -3,6 +3,8 @@ import 'package:ligaduck/app/campionatoHomePage.dart';
 import 'package:ligaduck/app/service/giornateProvider.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/giornata.dart';
+import 'package:ligaduck/app/service/models/partita.dart';
+import 'package:ligaduck/app/service/partiteProvider.dart';
 import 'package:provider/provider.dart';
 
 class CompetizioneHomePage extends StatefulWidget {
@@ -23,8 +25,11 @@ class CompetizioneHomePage extends StatefulWidget {
 
 class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
   String? selectedGiornata;
+
   @override
   Widget build(BuildContext context) {
+    bool isWide = MediaQuery.of(context).size.width > 600;
+    final screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(200),
@@ -113,14 +118,62 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
           ),
         ),
       ),
-      body: buildGiornateBox(),
+      body: !isWide
+          ? Column(
+              children: [
+                buildGiornateBox(),
+                Expanded(
+                  child: DefaultTabController(
+                    length: 2,
+                    child: SizedBox(
+                      height: screenHeight * 0.5,
+                      child: Column(
+                        children: [
+                          Container(
+                            constraints: BoxConstraints(
+                              maxHeight: 50,
+                              maxWidth: 900,
+                            ),
+                            child: TabBar(
+                              labelColor: Colors.blueAccent,
+                              unselectedLabelColor: Colors.grey,
+                              indicatorColor: Colors.blueAccent,
+                              tabs: [
+                                Tab(text: 'Partite'),
+                                Tab(text: 'Classifica'),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            flex: 1,
+                            child: SizedBox(
+                              width: MediaQuery.of(context).size.width * 1,
+                              child: TabBarView(
+                                children: [
+                                  buildPartiteList(selectedGiornata!),
+                                  Center(child: Text('Classifica')),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          : Container(),
     );
   }
 
   Widget buildGiornateBox() {
-    final provider = Provider.of<GiornateProvider>(context, listen: false);
+    final giornateProvider = Provider.of<GiornateProvider>(
+      context,
+      listen: false,
+    );
     return FutureBuilder<List<Giornata>>(
-      future: getGiornate(provider),
+      future: getGiornate(giornateProvider),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
@@ -136,13 +189,13 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
             if (selectedGiornata == null) {
               final nonConcluse = giornate.where((g) => !g.conclusa).toList();
               if (nonConcluse.isNotEmpty) {
-                selectedGiornata = nonConcluse.first.giornata;
+                selectedGiornata = nonConcluse.first.id;
               } else {
-                selectedGiornata = giornate.first.giornata;
+                selectedGiornata = giornate.first.id;
               }
             }
             return Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: EdgeInsets.only(left: 8.0, right: 8.0, top: 8.0),
               child: DropdownButton<String>(
                 value: selectedGiornata,
                 hint: const Text('Seleziona giornata'),
@@ -150,7 +203,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                 items: giornate
                     .map(
                       (g) => DropdownMenuItem<String>(
-                        value: g.giornata,
+                        value: g.id,
                         child: Text(
                           g.fase == 'G'
                               ? "${g.giornata}^ Giornata"
@@ -172,25 +225,43 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
         }
       },
     );
-    /*     return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: DropdownButton<String>(
-        value: selectedGiornata,
-        hint: const Text('Seleziona giornata'),
-        isExpanded: true,
-        items: giornate
-            .map(
-              (String value) =>
-                  DropdownMenuItem<String>(value: value, child: Text(value)),
-            )
-            .toList(),
-        onChanged: (String? newValue) {
-          setState(() {
-            selectedGiornata = newValue;
-          });
-        },
-      ),
-    ); */
+  }
+
+  Widget buildPartiteList(String idGiornata) {
+    final partiteProvider = Provider.of<PartiteProvider>(
+      context,
+      listen: false,
+    );
+    return FutureBuilder(
+      future: getPartite(partiteProvider, idGiornata),
+      builder: (context, snapshot) {
+        /*         if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Errore nel caricamento delle partite'));
+        } else if (snapshot.hasData) {
+          final partite = snapshot.data!;
+          if (partite.isEmpty) {
+            return Center(child: Text('Nessuna partita disponibile'));
+          } else {
+            return ListView.builder(
+              itemCount: partite.length,
+              itemBuilder: (context, index) {
+                final partita = partite[index];
+                return ListTile(
+                  title: Text(partita.nome),
+                  subtitle: Text('Data: ${partita.data}'),
+                );
+              },
+            );
+          }
+        } else {
+          return Center(child: Text('Stato sconosciuto'));
+        }
+      }, */
+        return Center(child: Text('Partite'));
+      },
+    );
   }
 
   Future<List<Giornata>> getGiornate(GiornateProvider provider) async {
@@ -199,5 +270,16 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
       widget.competizione.id,
     );
     return giornata;
+  }
+
+  Future<List<Partita>> getPartite(
+    PartiteProvider provider,
+    String idGiornata,
+  ) async {
+    List<Partita> partite = await provider.fetchPartite(
+      widget.campionato,
+      idGiornata,
+    );
+    return partite;
   }
 }

@@ -4,6 +4,7 @@ import 'package:ligaduck/app/config/models/config.dart';
 import 'package:ligaduck/app/config/models/service/configProvider.dart';
 import 'package:ligaduck/app/service/competizioniProvider.dart';
 import 'package:ligaduck/app/service/giornateProvider.dart';
+import 'package:ligaduck/app/service/partiteProvider.dart';
 import 'package:ligaduck/app/service/squadreProvider.dart';
 import 'package:provider/provider.dart';
 
@@ -14,6 +15,7 @@ void main() => runApp(
       ChangeNotifierProvider(create: (_) => CompetizioniProvider()),
       ChangeNotifierProvider(create: (_) => ConfigProvider()),
       ChangeNotifierProvider(create: (_) => GiornateProvider()),
+      ChangeNotifierProvider(create: (_) => PartiteProvider()),
     ],
     child: MyApp(),
   ),
