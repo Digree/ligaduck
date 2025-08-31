@@ -122,45 +122,48 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
           ? Column(
               children: [
                 buildGiornateBox(),
-                Expanded(
-                  child: DefaultTabController(
-                    length: 2,
-                    child: SizedBox(
-                      height: screenHeight * 0.5,
-                      child: Column(
-                        children: [
-                          Container(
-                            constraints: BoxConstraints(
-                              maxHeight: 50,
-                              maxWidth: 900,
-                            ),
-                            child: TabBar(
-                              labelColor: Colors.blueAccent,
-                              unselectedLabelColor: Colors.grey,
-                              indicatorColor: Colors.blueAccent,
-                              tabs: [
-                                Tab(text: 'Partite'),
-                                Tab(text: 'Classifica'),
-                              ],
-                            ),
-                          ),
-                          Expanded(
-                            flex: 1,
-                            child: SizedBox(
-                              width: MediaQuery.of(context).size.width * 1,
-                              child: TabBarView(
-                                children: [
-                                  buildPartiteList(selectedGiornata!),
-                                  Center(child: Text('Classifica')),
+                if (selectedGiornata != null)
+                  Expanded(
+                    child: DefaultTabController(
+                      length: 2,
+                      child: SizedBox(
+                        height: screenHeight * 0.5,
+                        child: Column(
+                          children: [
+                            Container(
+                              constraints: BoxConstraints(
+                                maxHeight: 50,
+                                maxWidth: 900,
+                              ),
+                              child: TabBar(
+                                labelColor: Colors.blueAccent,
+                                unselectedLabelColor: Colors.grey,
+                                indicatorColor: Colors.blueAccent,
+                                tabs: [
+                                  Tab(text: 'Partite'),
+                                  Tab(text: 'Classifica'),
                                 ],
                               ),
                             ),
-                          ),
-                        ],
+                            Expanded(
+                              flex: 1,
+                              child: SizedBox(
+                                width: MediaQuery.of(context).size.width * 1,
+                                child: TabBarView(
+                                  children: [
+                                    buildPartiteList(selectedGiornata!),
+                                    Center(child: Text('Classifica')),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ),
+                  )
+                else
+                  const Center(child: CircularProgressIndicator()),
               ],
             )
           : Container(),
