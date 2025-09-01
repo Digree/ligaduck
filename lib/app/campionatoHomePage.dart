@@ -194,40 +194,11 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
               Row(
                 children: [
                   Expanded(
-                    child: buildCampionatoMatch(
-                      CampionatoMatchModel(match: '1'),
+                    child: /* buildCampionatoMatch(
+                      CampionatoMatchModel(match: '4', null),
                       context,
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: buildCampionatoMatch(
-                      CampionatoMatchModel(match: '2'),
-                      context,
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: buildCampionatoMatch(
-                      CampionatoMatchModel(match: '3'),
-                      context,
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: buildCampionatoMatch(
-                      CampionatoMatchModel(match: '4'),
-                      context,
-                    ),
+                    ), */
+                        Container(),
                   ),
                 ],
               ),

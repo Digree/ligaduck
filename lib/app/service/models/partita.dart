@@ -5,6 +5,8 @@ class Partita {
   final int idTeamAway;
   final String teamHome;
   final String teamAway;
+  final String codHome;
+  final String codAway;
   //final DateTime data;
   final int risultatoHome;
   final int risultatoAway;
@@ -21,6 +23,8 @@ class Partita {
     required this.id,
     required this.teamHome,
     required this.teamAway,
+    required this.codHome,
+    required this.codAway,
     required this.risultatoHome,
     required this.risultatoAway,
     required this.formazioneHome,
@@ -38,6 +42,8 @@ class Partita {
       id: json['id'],
       teamHome: json['teamHome'],
       teamAway: json['teamAway'],
+      codHome: json['codHome'],
+      codAway: json['codAway'],
       risultatoHome: json['risultatoHome'],
       risultatoAway: json['risultatoAway'],
       formazioneHome: (json['formazioneHome'] as List)
@@ -62,6 +68,8 @@ class Partita {
       'id': id,
       'teamHome': teamHome,
       'teamAway': teamAway,
+      'codHome': codHome,
+      'codAway': codAway,
       'risultatoHome': risultatoHome,
       'risultatoAway': risultatoAway,
       'formazioneHome': formazioneHome.map((e) => e.toJson()).toList(),

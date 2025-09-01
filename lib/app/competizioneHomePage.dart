@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/campionatoHomePage.dart';
+import 'package:ligaduck/app/models/campionato/campionatoMatchModel.dart';
 import 'package:ligaduck/app/service/giornateProvider.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/giornata.dart';
@@ -166,7 +167,60 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                   const Center(child: CircularProgressIndicator()),
               ],
             )
-          : Container(),
+          : Column(
+              children: [
+                buildGiornateBox(),
+                if (selectedGiornata != null)
+                  Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Partite:',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.left,
+                              ),
+                              Padding(
+                                padding: EdgeInsets.only(top: 16),
+                                child: Center(
+                                  child: buildPartiteList(selectedGiornata!),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(width: 32),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Classifica:',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.left,
+                              ),
+                              Center(child: Text('Classifica')),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  const Center(child: CircularProgressIndicator()),
+              ],
+            ),
     );
   }
 
@@ -190,12 +244,18 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
             giornate.sort((a, b) => a.giornata.compareTo(b.giornata));
 
             if (selectedGiornata == null) {
-              final nonConcluse = giornate.where((g) => !g.conclusa).toList();
-              if (nonConcluse.isNotEmpty) {
-                selectedGiornata = nonConcluse.first.id;
-              } else {
-                selectedGiornata = giornate.first.id;
-              }
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                setState(() {
+                  final nonConcluse = giornate
+                      .where((g) => !g.conclusa)
+                      .toList();
+                  if (nonConcluse.isNotEmpty) {
+                    selectedGiornata = nonConcluse.first.id;
+                  } else {
+                    selectedGiornata = giornate.first.id;
+                  }
+                });
+              });
             }
             return Padding(
               padding: EdgeInsets.only(left: 8.0, right: 8.0, top: 8.0),
@@ -231,6 +291,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
   }
 
   Widget buildPartiteList(String idGiornata) {
+    bool isWide = MediaQuery.of(context).size.width > 600;
     final partiteProvider = Provider.of<PartiteProvider>(
       context,
       listen: false,
@@ -238,31 +299,38 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
     return FutureBuilder(
       future: getPartite(partiteProvider, idGiornata),
       builder: (context, snapshot) {
-        /*         if (snapshot.connectionState == ConnectionState.waiting) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
           return Center(child: Text('Errore nel caricamento delle partite'));
         } else if (snapshot.hasData) {
-          final partite = snapshot.data!;
+          final partite = snapshot.data ?? [];
           if (partite.isEmpty) {
             return Center(child: Text('Nessuna partita disponibile'));
           } else {
-            return ListView.builder(
-              itemCount: partite.length,
-              itemBuilder: (context, index) {
-                final partita = partite[index];
-                return ListTile(
-                  title: Text(partita.nome),
-                  subtitle: Text('Data: ${partita.data}'),
-                );
-              },
+            return Padding(
+              padding: EdgeInsets.only(top: 16),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.6,
+                width: isWide ? 600 : double.infinity,
+                child: ListView.builder(
+                  itemCount: partite.length,
+                  itemBuilder: (context, index) {
+                    return buildCampionatoMatch(
+                      CampionatoMatchModel(
+                        match: partite[index].id,
+                        partita: partite[index],
+                      ),
+                      context,
+                    );
+                  },
+                ),
+              ),
             );
           }
         } else {
           return Center(child: Text('Stato sconosciuto'));
         }
-      }, */
-        return Center(child: Text('Partite'));
       },
     );
   }

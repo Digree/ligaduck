@@ -14,6 +14,14 @@ class HomePage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.blueAccent,
         title: const Text('Liga Duck', style: TextStyle(color: Colors.white)),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.settings, color: Colors.white),
+            onPressed: () {
+              // Azione quando premi il pulsante impostazioni
+            },
+          ),
+        ],
       ),
       body: FutureBuilder(
         future: configs(context),

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:ligaduck/app/service/models/partita.dart';
 
 class CampionatoMatchModel {
   final String match;
+  final Partita partita;
 
-  CampionatoMatchModel({required this.match});
+  CampionatoMatchModel({required this.match, required this.partita});
 }
 
 Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
@@ -41,7 +43,7 @@ Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
                           padding:
                               EdgeInsets.only(), //EdgeInsets.symmetric(horizontal: 8.0),
                           child: Image.asset(
-                            'assets/squadre/paperopoli.png',
+                            'assets/squadre/${model.partita.codHome}.png',
                             fit: BoxFit.contain,
                             height: 50,
                           ),
@@ -49,10 +51,10 @@ Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
                         Padding(
                           padding: EdgeInsets.only(left: 10.0, right: 10.0),
                           child: Text(
-                            'Paperopoli',
+                            model.partita.teamHome,
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                              fontSize: 15,
                               color: Colors.black,
                             ),
                           ),
@@ -80,10 +82,10 @@ Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
                   Padding(
                     padding: EdgeInsets.only(left: 10.0, right: 10.0),
                     child: Text(
-                      'Golden City',
+                      model.partita.teamAway,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                        fontSize: 15,
                         color: Colors.black,
                       ),
                     ),
@@ -91,7 +93,7 @@ Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 8.0),
                     child: Image.asset(
-                      'assets/squadre/golden_city.png',
+                      'assets/squadre/${model.partita.codAway}.png',
                       fit: BoxFit.cover,
                       height: 50,
                     ),
