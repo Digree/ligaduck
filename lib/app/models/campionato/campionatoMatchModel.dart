@@ -40,8 +40,7 @@ Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Padding(
-                          padding:
-                              EdgeInsets.only(), //EdgeInsets.symmetric(horizontal: 8.0),
+                          padding: EdgeInsets.only(),
                           child: Image.asset(
                             'assets/squadre/${model.partita.codHome}.png',
                             fit: BoxFit.contain,
@@ -49,13 +48,22 @@ Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
                           ),
                         ),
                         Padding(
-                          padding: EdgeInsets.only(left: 10.0, right: 10.0),
-                          child: Text(
-                            model.partita.teamHome,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                              color: Colors.black,
+                          padding: EdgeInsets.only(
+                            left: 10.0,
+                            right: isWide ? 20 : 10,
+                          ),
+                          child: SizedBox(
+                            width: isWide ? 120 : 80,
+                            child: Center(
+                              child: Text(
+                                model.partita.teamHome,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                  color: Colors.black,
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -73,25 +81,34 @@ Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
                       ),
                       child: Center(
                         child: Text(
-                          '0-0',
+                          '${model.partita.risultatoHome}-${model.partita.risultatoAway}',
                           style: TextStyle(fontSize: 16, color: Colors.white),
                         ),
                       ),
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.only(left: 10.0, right: 10.0),
-                    child: Text(
-                      model.partita.teamAway,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        color: Colors.black,
+                    padding: EdgeInsets.only(
+                      left: isWide ? 20 : 10,
+                      right: 10.0,
+                    ),
+                    child: SizedBox(
+                      width: isWide ? 120 : 80,
+                      child: Center(
+                        child: Text(
+                          model.partita.teamAway,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: Colors.black,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8.0),
+                    padding: EdgeInsets.only(),
                     child: Image.asset(
                       'assets/squadre/${model.partita.codAway}.png',
                       fit: BoxFit.cover,

@@ -48,6 +48,8 @@ class Giornata {
 class PosizioneClassifica {
   final int posizione;
   final int idSquadra;
+  final String? nomeSquadra;
+  final String? codSquadra;
   final int win;
   final int draw;
   final int loss;
@@ -59,6 +61,8 @@ class PosizioneClassifica {
   PosizioneClassifica({
     required this.posizione,
     required this.idSquadra,
+    this.nomeSquadra,
+    this.codSquadra,
     required this.win,
     required this.draw,
     required this.loss,
@@ -72,6 +76,8 @@ class PosizioneClassifica {
     return PosizioneClassifica(
       posizione: json['posizione'],
       idSquadra: json['idSquadra'],
+      nomeSquadra: json['nomeSquadra'],
+      codSquadra: json['codSquadra'],
       win: json['win'],
       draw: json['draw'],
       loss: json['loss'],
@@ -86,6 +92,8 @@ class PosizioneClassifica {
     return {
       'posizione': posizione,
       'idSquadra': idSquadra,
+      'nomeSquadra': nomeSquadra,
+      'codSquadra': codSquadra,
       'win': win,
       'draw': draw,
       'loss': loss,

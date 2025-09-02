@@ -53,7 +53,7 @@ class HomePage extends StatelessWidget {
                   CampionatoButtonModel(
                     text: '$i° Campionato',
                     onPressed: () {
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => CampionatoHomePage(

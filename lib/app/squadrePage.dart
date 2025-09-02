@@ -50,15 +50,7 @@ class _SquadrePageState extends State<SquadrePage> {
           leading: IconButton(
             icon: Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => CampionatoHomePage(
-                    title: '43° Campionato',
-                    campionato: '43',
-                  ),
-                ),
-              );
+              Navigator.pop(context);
             },
           ),
           title: Text(

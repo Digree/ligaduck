@@ -5,7 +5,10 @@ import 'package:ligaduck/app/service/giornateProvider.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/giornata.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
+import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/service/partiteProvider.dart';
+import 'package:ligaduck/app/service/squadreProvider.dart';
+import 'package:ligaduck/app/squadrePage.dart';
 import 'package:provider/provider.dart';
 
 class CompetizioneHomePage extends StatefulWidget {
@@ -26,6 +29,7 @@ class CompetizioneHomePage extends StatefulWidget {
 
 class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
   String? selectedGiornata;
+  List<Giornata> giornate = [];
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +80,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                     child: IconButton(
                       icon: const Icon(Icons.arrow_back, color: Colors.white),
                       onPressed: () {
-                        Navigator.pushReplacement(
+                        Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => CampionatoHomePage(
@@ -88,7 +92,6 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                       },
                     ),
                   ),
-                  // Contenuto centrale
                   Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -153,7 +156,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                                 child: TabBarView(
                                   children: [
                                     buildPartiteList(selectedGiornata!),
-                                    Center(child: Text('Classifica')),
+                                    buildClassifica(context, selectedGiornata!),
                                   ],
                                 ),
                               ),
@@ -210,7 +213,15 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                                 ),
                                 textAlign: TextAlign.left,
                               ),
-                              Center(child: Text('Classifica')),
+                              Padding(
+                                padding: EdgeInsets.only(top: 16),
+                                child: Center(
+                                  child: buildClassifica(
+                                    context,
+                                    selectedGiornata!,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -225,6 +236,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
   }
 
   Widget buildGiornateBox() {
+    bool isWide = MediaQuery.of(context).size.width > 1000;
     final giornateProvider = Provider.of<GiornateProvider>(
       context,
       listen: false,
@@ -237,7 +249,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
         } else if (snapshot.hasError) {
           return Center(child: Text('Errore nel caricamento delle giornate'));
         } else if (snapshot.hasData) {
-          final giornate = snapshot.data!;
+          giornate = snapshot.data!;
           if (giornate.isEmpty) {
             return Center(child: Text('Nessuna giornata disponibile'));
           } else {
@@ -258,7 +270,11 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
               });
             }
             return Padding(
-              padding: EdgeInsets.only(left: 8.0, right: 8.0, top: 8.0),
+              padding: EdgeInsets.only(
+                left: isWide ? 16 : 8,
+                right: isWide ? 16 : 8,
+                top: 8.0,
+              ),
               child: DropdownButton<String>(
                 value: selectedGiornata,
                 hint: const Text('Seleziona giornata'),
@@ -312,7 +328,6 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
               padding: EdgeInsets.only(top: 16),
               child: SizedBox(
                 height: MediaQuery.of(context).size.height * 0.6,
-                width: isWide ? 600 : double.infinity,
                 child: ListView.builder(
                   itemCount: partite.length,
                   itemBuilder: (context, index) {
@@ -335,6 +350,52 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
     );
   }
 
+  Widget buildClassifica(BuildContext context, String idGiornata) {
+    bool isWide = MediaQuery.of(context).size.width > 600;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    dynamic giornata;
+    for (var giornata_ in giornate) {
+      if (giornata_.id == idGiornata) {
+        giornata = giornata_;
+        break;
+      }
+    }
+
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.only(top: 8.0),
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width,
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: Card(
+            color: Colors.blueAccent.withOpacity(0.5), // colore desiderato
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: ListView(
+                children: [
+                  buildHeader(),
+                  for (var i = 0; i < giornata.classifica.length; i++)
+                    teamListClassifica(
+                      context,
+                      isWide,
+                      screenWidth,
+                      screenHeight,
+                      giornata.classifica[i],
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<List<Giornata>> getGiornate(GiornateProvider provider) async {
     List<Giornata> giornata = await provider.fetchSquadre(
       widget.campionato,
@@ -352,5 +413,219 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
       idGiornata,
     );
     return partite;
+  }
+
+  Widget buildHeader() {
+    return Container(
+      width: MediaQuery.of(context).size.width * 1,
+      height: 45,
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.grey[350] ?? Colors.grey,
+            width: 1.0,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Padding(
+            padding: EdgeInsets.only(),
+            child: Text(
+              'Pos',
+              style: TextStyle(fontSize: 12, color: Colors.white),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.only(left: 8),
+            child: Text(
+              'Squadra',
+              style: TextStyle(fontSize: 12, color: Colors.white),
+            ),
+          ),
+          Spacer(),
+          Padding(
+            padding: EdgeInsets.only(left: 8),
+            child: Text(
+              'Pti',
+              style: TextStyle(fontSize: 12, color: Colors.white),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.only(left: 16),
+            child: Text(
+              'V',
+              style: TextStyle(fontSize: 12, color: Colors.white),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.only(left: 16),
+            child: Text(
+              'P',
+              style: TextStyle(fontSize: 12, color: Colors.white),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.only(left: 16),
+            child: Text(
+              'S',
+              style: TextStyle(fontSize: 12, color: Colors.white),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.only(left: 8),
+            child: Text(
+              'GF',
+              style: TextStyle(fontSize: 12, color: Colors.white),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.only(left: 8),
+            child: Text(
+              'GS',
+              style: TextStyle(fontSize: 12, color: Colors.white),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.only(left: 8),
+            child: Text(
+              'DR',
+              style: TextStyle(fontSize: 12, color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget teamListClassifica(
+    BuildContext context,
+    bool isWide,
+    double screenWidth,
+    double screenHeight,
+    PosizioneClassifica? posizione,
+  ) {
+    final provider = Provider.of<SquadreProvider>(context, listen: false);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () async {
+          print(posizione.idSquadra);
+          final squadra = await getSquadra(provider, posizione.idSquadra);
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SquadrePage(squadra: squadra),
+            ),
+          );
+        },
+        child: Container(
+          width: screenWidth * 1,
+          height: 45,
+          decoration: BoxDecoration(
+            color: Colors.transparent,
+            border: Border(
+              bottom: BorderSide(
+                color: Colors.grey[350] ?? Colors.grey,
+                width: 1.0,
+              ),
+            ),
+          ),
+          child: Row(
+            children: [
+              Padding(
+                padding: EdgeInsets.only(right: 8),
+                child: Text(
+                  '${posizione!.posizione}',
+                  style: TextStyle(fontSize: 12, color: Colors.white),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.only(left: 8),
+                child: Image.asset(
+                  'assets/squadre/${posizione.codSquadra}.png',
+                  fit: BoxFit.cover,
+                  height: 35,
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.only(left: 8),
+                child: Text(
+                  '${posizione.nomeSquadra}',
+                  style: TextStyle(fontSize: 12, color: Colors.white),
+                ),
+              ),
+              Spacer(),
+              Padding(
+                padding: EdgeInsets.only(left: 32),
+                child: Text(
+                  '${posizione.punti}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.only(left: 16),
+                child: Text(
+                  '${posizione.win}',
+                  style: TextStyle(fontSize: 12, color: Colors.white),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.only(left: 16),
+                child: Text(
+                  '${posizione.draw}',
+                  style: TextStyle(fontSize: 12, color: Colors.white),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.only(left: 16),
+                child: Text(
+                  '${posizione.loss}',
+                  style: TextStyle(fontSize: 12, color: Colors.white),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.only(left: 16),
+                child: Text(
+                  '${posizione.gFatti}',
+                  style: TextStyle(fontSize: 12, color: Colors.white),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.only(left: 16),
+                child: Text(
+                  '${posizione.gSubiti}',
+                  style: TextStyle(fontSize: 12, color: Colors.white),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.only(left: 16),
+                child: Text(
+                  '${posizione.diff}',
+                  style: TextStyle(fontSize: 12, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<Squadra> getSquadra(SquadreProvider provider, int idSquadra) async {
+    List<Squadra> squadre = await provider.fetchSquadre(widget.campionato);
+
+    for (var squadra in squadre) {
+      print(squadra.id);
+      if (squadra.id == idSquadra) {
+        return squadra;
+      }
+    }
+    throw Exception('Squadra non trovata');
   }
 }

@@ -2,7 +2,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/competizioneHomePage.dart';
 import 'package:ligaduck/app/homePage.dart';
-import 'package:ligaduck/app/models/campionato/campionatoMatchModel.dart';
 import 'package:ligaduck/app/models/competizione/competizioneButtonModel.dart';
 import 'package:ligaduck/app/service/competizioniProvider.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
@@ -57,7 +56,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.pushReplacement(
+            Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => HomePage()),
             );
@@ -129,7 +128,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                                   imagePath:
                                       'assets/logos/logo_${competizione.cod}.png',
                                   onPressed: () {
-                                    Navigator.pushReplacement(
+                                    Navigator.push(
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) =>
@@ -335,7 +334,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                         ),
                         child: ElevatedButton(
                           onPressed: () {
-                            Navigator.pushReplacement(
+                            Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) =>
