@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/campionatoHomePage.dart';
 import 'package:ligaduck/app/models/campionato/campionatoMatchModel.dart';
@@ -10,6 +11,7 @@ import 'package:ligaduck/app/service/partiteProvider.dart';
 import 'package:ligaduck/app/service/squadreProvider.dart';
 import 'package:ligaduck/app/squadrePage.dart';
 import 'package:provider/provider.dart';
+import 'package:ligaduck/app/config/models/global.dart' as globals;
 
 class CompetizioneHomePage extends StatefulWidget {
   final String title;
@@ -40,6 +42,16 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
         preferredSize: Size.fromHeight(200),
         child: AppBar(
           automaticallyImplyLeading: false,
+          actions: [
+            globals.admin
+                ? IconButton(
+                    onPressed: () {
+                      showAddCalendarModal();
+                    },
+                    icon: Icon(Icons.add, color: Colors.white),
+                  )
+                : SizedBox(),
+          ],
           flexibleSpace: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -376,17 +388,23 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
             ),
             child: Padding(
               padding: const EdgeInsets.all(24.0),
-              child: ListView(
+              child: Column(
                 children: [
                   buildHeader(),
-                  for (var i = 0; i < giornata.classifica.length; i++)
-                    teamListClassifica(
-                      context,
-                      isWide,
-                      screenWidth,
-                      screenHeight,
-                      giornata.classifica[i],
+                  Expanded(
+                    child: ListView(
+                      children: [
+                        for (var i = 0; i < giornata.classifica.length; i++)
+                          teamListClassifica(
+                            context,
+                            isWide,
+                            screenWidth,
+                            screenHeight,
+                            giornata.classifica[i],
+                          ),
+                      ],
                     ),
+                  ),
                 ],
               ),
             ),
@@ -614,6 +632,63 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
           ),
         ),
       ),
+    );
+  }
+
+  Future showAddCalendarModal() {
+    return showModalBottomSheet(
+      backgroundColor: Colors.blueAccent.withOpacity(0.8),
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          padding: EdgeInsets.all(16),
+          height: 300,
+          width: 500,
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.only(top: 32, bottom: 16),
+                child: Center(
+                  child: Text(
+                    'Carica un file XML con il calendario',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent.withOpacity(0.1),
+                ),
+                icon: Icon(Icons.upload, color: Colors.white),
+                label: Text(
+                  'Carica XML',
+                  style: TextStyle(color: Colors.white),
+                ),
+                onPressed: () async {
+                  FilePickerResult? result = await FilePicker.platform
+                      .pickFiles(
+                        type: FileType.custom,
+                        allowedExtensions: ['xml'],
+                      );
+                  if (result != null) {
+                    // Usa result.files.single.path per il percorso del file XML
+                    // Esegui qui la logica di upload/parsing
+                  }
+                },
+              ),
+              Padding(
+                padding: EdgeInsets.only(top: 130.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Icon(Icons.close, color: Colors.blueAccent),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

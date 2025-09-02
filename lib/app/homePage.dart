@@ -4,10 +4,17 @@ import 'package:ligaduck/app/config/models/config.dart';
 import 'package:ligaduck/app/config/models/service/configProvider.dart';
 import 'package:ligaduck/app/models/campionato/campionatoButtonModel.dart';
 import 'package:provider/provider.dart';
+import 'package:ligaduck/app/config/models/global.dart' as globals;
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
+  @override
+  _HomePage createState() => _HomePage();
+}
+
+class _HomePage extends State<HomePage> {
+  bool isAdmin = false;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -18,7 +25,66 @@ class HomePage extends StatelessWidget {
           IconButton(
             icon: Icon(Icons.settings, color: Colors.white),
             onPressed: () {
-              // Azione quando premi il pulsante impostazioni
+              showModalBottomSheet(
+                backgroundColor: Colors.blueAccent.withOpacity(0.8),
+                context: context,
+                builder: (BuildContext context) {
+                  bool isAdmin = globals.admin;
+                  return StatefulBuilder(
+                    builder: (context, setModalState) {
+                      return Container(
+                        padding: EdgeInsets.all(16),
+                        height: 300,
+                        width: 500,
+                        child: Column(
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.only(top: 32),
+                              child: Row(
+                                children: [
+                                  Padding(
+                                    padding: EdgeInsets.only(left: 16.0),
+                                    child: Text(
+                                      'Modalità Admin',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                  Spacer(),
+                                  Switch(
+                                    value: isAdmin,
+                                    activeColor: Colors.white,
+                                    onChanged: (value) {
+                                      setModalState(() {
+                                        isAdmin = value;
+                                        globals.admin = value;
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.only(top: 150.0),
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: Icon(
+                                  Icons.close,
+                                  color: Colors.blueAccent,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+              );
             },
           ),
         ],
