@@ -152,9 +152,25 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                                 maxWidth: 900,
                               ),
                               child: TabBar(
-                                labelColor: Colors.blueAccent,
+                                labelColor: Color(
+                                  widget.competizione.colori.isNotEmpty
+                                      ? int.parse(
+                                          widget.competizione.colori[0]
+                                              .replaceFirst('#', 'FF'),
+                                          radix: 16,
+                                        )
+                                      : 0xFF000000,
+                                ),
                                 unselectedLabelColor: Colors.grey,
-                                indicatorColor: Colors.blueAccent,
+                                indicatorColor: Color(
+                                  widget.competizione.colori.isNotEmpty
+                                      ? int.parse(
+                                          widget.competizione.colori[0]
+                                              .replaceFirst('#', 'FF'),
+                                          radix: 16,
+                                        )
+                                      : 0xFF000000,
+                                ),
                                 tabs: [
                                   Tab(text: 'Partite'),
                                   Tab(text: 'Classifica'),
@@ -380,35 +396,74 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
         child: SizedBox(
           width: MediaQuery.of(context).size.width,
           height: MediaQuery.of(context).size.height * 0.6,
-          child: Card(
-            color: Colors.blueAccent.withOpacity(0.5), // colore desiderato
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                children: [
-                  buildHeader(),
-                  Expanded(
-                    child: ListView(
-                      children: [
-                        for (var i = 0; i < giornata.classifica.length; i++)
-                          teamListClassifica(
-                            context,
-                            isWide,
-                            screenWidth,
-                            screenHeight,
-                            giornata.classifica[i],
-                          ),
-                      ],
-                    ),
+          child: widget.competizione.classifica == "Gironi"
+              ? SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      for (var i = 0; i < 8; i++)
+                        cardClassifica(
+                          giornata,
+                          isWide,
+                          screenWidth,
+                          screenHeight,
+                        ),
+                    ],
                   ),
+                )
+              : cardClassifica(giornata, isWide, screenWidth, screenHeight),
+        ),
+      ),
+    );
+  }
+
+  Widget cardClassifica(
+    Giornata giornata,
+    bool isWide,
+    screenWidth,
+    screenHeight,
+  ) {
+    return Card(
+      color: Color(
+        widget.competizione.colori.isNotEmpty
+            ? int.parse(
+                widget.competizione.colori[0].replaceFirst('#', 'FF'),
+                radix: 16,
+              )
+            : 0xFF000000,
+      ),
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (widget.competizione.classifica == "Gironi")
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Girone A",
+                  style: TextStyle(color: Colors.white, fontSize: 20),
+                ),
+              ),
+            buildHeader(),
+            Flexible(
+              fit: FlexFit.loose,
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  for (var i = 0; i < (giornata.classifica?.length ?? 0); i++)
+                    teamListClassifica(
+                      context,
+                      isWide,
+                      screenWidth,
+                      screenHeight,
+                      giornata.classifica![i],
+                    ),
                 ],
               ),
             ),
-          ),
+          ],
         ),
       ),
     );

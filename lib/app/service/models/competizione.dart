@@ -3,6 +3,7 @@ class Competizione {
   final String nome;
   final String cod;
   final bool attiva;
+  final String? classifica;
   final List<String> colori;
 
   Competizione({
@@ -10,6 +11,7 @@ class Competizione {
     required this.nome,
     required this.cod,
     required this.attiva,
+    this.classifica,
     required this.colori,
   });
 
@@ -19,6 +21,7 @@ class Competizione {
       nome: json['nome'],
       cod: json['cod'],
       attiva: json['attiva'],
+      classifica: json['classifica'],
       colori: json['colori'] != null ? List<String>.from(json['colori']) : [],
     );
   }
@@ -29,6 +32,7 @@ class Competizione {
       'nome': nome,
       'cod': cod,
       'attiva': attiva,
+      'classifica': classifica,
       'colori': colori,
     };
   }
