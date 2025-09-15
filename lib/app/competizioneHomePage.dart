@@ -37,111 +37,111 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
   Widget build(BuildContext context) {
     bool isWide = MediaQuery.of(context).size.width > 600;
     final screenHeight = MediaQuery.of(context).size.height;
-    return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(200),
-        child: AppBar(
-          automaticallyImplyLeading: false,
-          actions: [
-            globals.admin
-                ? IconButton(
-                    onPressed: () {
-                      showAddCalendarModal();
-                    },
-                    icon: Icon(Icons.add, color: Colors.white),
-                  )
-                : SizedBox(),
-          ],
-          flexibleSpace: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Color(
-                    widget.competizione.colori.isNotEmpty
-                        ? int.parse(
-                            widget.competizione.colori[0].replaceFirst(
-                              '#',
-                              'FF',
-                            ),
-                            radix: 16,
-                          )
-                        : 0xFF000000,
-                  ),
-                  Color(
-                    widget.competizione.colori.length > 1
-                        ? int.parse(
-                            widget.competizione.colori[1].replaceFirst(
-                              '#',
-                              'FF',
-                            ),
-                            radix: 16,
-                          )
-                        : 0xFF000000,
-                  ),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: SafeArea(
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: 10,
-                    left: 10,
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        appBar: PreferredSize(
+          preferredSize: Size.fromHeight(200),
+          child: AppBar(
+            automaticallyImplyLeading: false,
+            actions: [
+              globals.admin
+                  ? IconButton(
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => CampionatoHomePage(
-                              title: "${widget.campionato}° Campionato",
-                              campionato: widget.campionato,
-                            ),
-                          ),
-                        );
+                        showAddCalendarModal();
                       },
+                      icon: Icon(Icons.add, color: Colors.white),
+                    )
+                  : SizedBox(),
+            ],
+            flexibleSpace: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(
+                      widget.competizione.colori.isNotEmpty
+                          ? int.parse(
+                              widget.competizione.colori[0].replaceFirst(
+                                '#',
+                                'FF',
+                              ),
+                              radix: 16,
+                            )
+                          : 0xFF000000,
                     ),
-                  ),
-                  Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const SizedBox(height: 16),
-                        Image.asset(
-                          'assets/logos/logo_${widget.competizione.cod}.png',
-                          fit: BoxFit.contain,
-                          height: 100,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          widget.title,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                    Color(
+                      widget.competizione.colori.length > 1
+                          ? int.parse(
+                              widget.competizione.colori[1].replaceFirst(
+                                '#',
+                                'FF',
+                              ),
+                              radix: 16,
+                            )
+                          : 0xFF000000,
+                    ),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: SafeArea(
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: 10,
+                      left: 10,
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => CampionatoHomePage(
+                                title: "${widget.campionato}° Campionato",
+                                campionato: widget.campionato,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(height: 16),
+                          Image.asset(
+                            'assets/logos/logo_${widget.competizione.cod}.png',
+                            fit: BoxFit.contain,
+                            height: 100,
                           ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+                          const SizedBox(height: 8),
+                          Text(
+                            widget.title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
         ),
-      ),
-      body: !isWide
-          ? Column(
-              children: [
-                buildGiornateBox(),
-                if (selectedGiornata != null)
-                  Expanded(
-                    child: DefaultTabController(
-                      length: 2,
+        body: !isWide
+            ? Column(
+                children: [
+                  buildGiornateBox(),
+                  if (selectedGiornata != null)
+                    Expanded(
                       child: SizedBox(
                         height: screenHeight * 0.5,
                         child: Column(
@@ -174,6 +174,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                                 tabs: [
                                   Tab(text: 'Partite'),
                                   Tab(text: 'Classifica'),
+                                  Tab(text: 'Statistiche'),
                                 ],
                               ),
                             ),
@@ -185,6 +186,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                                   children: [
                                     buildPartiteList(selectedGiornata!),
                                     buildClassifica(context, selectedGiornata!),
+                                    Center(child: Text('Statistiche')),
                                   ],
                                 ),
                               ),
@@ -192,74 +194,74 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                           ],
                         ),
                       ),
-                    ),
-                  )
-                else
-                  const Center(child: CircularProgressIndicator()),
-              ],
-            )
-          : Column(
-              children: [
-                buildGiornateBox(),
-                if (selectedGiornata != null)
-                  Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Partite:',
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
+                    )
+                  else
+                    const Center(child: CircularProgressIndicator()),
+                ],
+              )
+            : Column(
+                children: [
+                  buildGiornateBox(),
+                  if (selectedGiornata != null)
+                    Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Partite:',
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.left,
                                 ),
-                                textAlign: TextAlign.left,
-                              ),
-                              Padding(
-                                padding: EdgeInsets.only(top: 16),
-                                child: Center(
-                                  child: buildPartiteList(selectedGiornata!),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(width: 32),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Classifica:',
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                textAlign: TextAlign.left,
-                              ),
-                              Padding(
-                                padding: EdgeInsets.only(top: 16),
-                                child: Center(
-                                  child: buildClassifica(
-                                    context,
-                                    selectedGiornata!,
+                                Padding(
+                                  padding: EdgeInsets.only(top: 16),
+                                  child: Center(
+                                    child: buildPartiteList(selectedGiornata!),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  )
-                else
-                  const Center(child: CircularProgressIndicator()),
-              ],
-            ),
+                          SizedBox(width: 32),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Classifica:',
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.left,
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.only(top: 16),
+                                  child: Center(
+                                    child: buildClassifica(
+                                      context,
+                                      selectedGiornata!,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    const Center(child: CircularProgressIndicator()),
+                ],
+              ),
+      ),
     );
   }
 
@@ -382,11 +384,19 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
     bool isWide = MediaQuery.of(context).size.width > 600;
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
+    int count = 0;
+
     dynamic giornata;
     for (var giornata_ in giornate) {
       if (giornata_.id == idGiornata) {
         giornata = giornata_;
         break;
+      }
+    }
+
+    for (var pos in giornata.classifica!) {
+      if (pos.girone == String.fromCharCode(65 + count)) {
+        count++;
       }
     }
 
@@ -400,17 +410,18 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
               ? SingleChildScrollView(
                   child: Column(
                     children: [
-                      for (var i = 0; i < 8; i++)
+                      for (var i = 0; i < count; i++)
                         cardClassifica(
                           giornata,
                           isWide,
                           screenWidth,
                           screenHeight,
+                          i,
                         ),
                     ],
                   ),
                 )
-              : cardClassifica(giornata, isWide, screenWidth, screenHeight),
+              : cardClassifica(giornata, isWide, screenWidth, screenHeight, 0),
         ),
       ),
     );
@@ -421,7 +432,21 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
     bool isWide,
     screenWidth,
     screenHeight,
+    int index,
   ) {
+    List<PosizioneClassifica>? classifica = [];
+    if (widget.competizione.classifica == "Gironi") {
+      giornata.classifica?.sort((a, b) => a.posizione.compareTo(b.posizione));
+      for (var pos in giornata.classifica!) {
+        if (pos.girone == String.fromCharCode(65 + index)) {
+          classifica.add(pos);
+        }
+        classifica.sort((a, b) => a.posizione.compareTo(b.posizione));
+      }
+    } else {
+      giornata.classifica?.sort((a, b) => a.posizione.compareTo(b.posizione));
+      classifica = giornata.classifica;
+    }
     return Card(
       color: Color(
         widget.competizione.colori.isNotEmpty
@@ -442,7 +467,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  "Girone A",
+                  "Girone ${classifica!.isNotEmpty ? classifica[0].girone : String.fromCharCode(65 + index)}",
                   style: TextStyle(color: Colors.white, fontSize: 20),
                 ),
               ),
@@ -452,13 +477,13 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
               child: ListView(
                 shrinkWrap: true,
                 children: [
-                  for (var i = 0; i < (giornata.classifica?.length ?? 0); i++)
+                  for (var i = 0; i < (classifica?.length ?? 0); i++)
                     teamListClassifica(
                       context,
                       isWide,
                       screenWidth,
                       screenHeight,
-                      giornata.classifica![i],
+                      classifica![i],
                     ),
                 ],
               ),
@@ -697,7 +722,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
       builder: (BuildContext context) {
         return Container(
           padding: EdgeInsets.all(16),
-          height: 300,
+          height: 350,
           width: 500,
           child: Column(
             children: [

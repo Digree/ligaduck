@@ -57,6 +57,7 @@ class PosizioneClassifica {
   final int gFatti;
   final int gSubiti;
   final int diff;
+  final String? girone;
 
   PosizioneClassifica({
     required this.posizione,
@@ -70,6 +71,7 @@ class PosizioneClassifica {
     required this.gFatti,
     required this.gSubiti,
     required this.diff,
+    this.girone,
   });
 
   factory PosizioneClassifica.fromJson(Map<String, dynamic> json) {
@@ -85,6 +87,7 @@ class PosizioneClassifica {
       gFatti: json['gFatti'],
       gSubiti: json['gSubiti'],
       diff: json['diff'],
+      girone: json['girone'],
     );
   }
 
@@ -101,6 +104,7 @@ class PosizioneClassifica {
       'gFatti': gFatti,
       'gSubiti': gSubiti,
       'diff': diff,
+      'girone': girone,
     };
   }
 }

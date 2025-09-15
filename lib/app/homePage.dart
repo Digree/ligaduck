@@ -34,7 +34,7 @@ class _HomePage extends State<HomePage> {
                     builder: (context, setModalState) {
                       return Container(
                         padding: EdgeInsets.all(16),
-                        height: 300,
+                        height: 350,
                         width: 500,
                         child: Column(
                           children: [

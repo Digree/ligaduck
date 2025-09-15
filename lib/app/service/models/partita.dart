@@ -7,7 +7,6 @@ class Partita {
   final String teamAway;
   final String codHome;
   final String codAway;
-  //final DateTime data;
   final int risultatoHome;
   final int risultatoAway;
   final List<GiocatoreFormazione> formazioneHome;
@@ -15,6 +14,7 @@ class Partita {
   final int divisaHome;
   final int divisaAway;
   final List<Evento> tabellino;
+  final DateTime data;
 
   Partita({
     required this.idGiornata,
@@ -32,6 +32,7 @@ class Partita {
     required this.divisaHome,
     required this.divisaAway,
     required this.tabellino,
+    required this.data,
   });
 
   factory Partita.fromJson(Map<String, dynamic> json) {
@@ -57,6 +58,7 @@ class Partita {
       tabellino: (json['tabellino'] as List)
           .map((e) => Evento.fromJson(e))
           .toList(),
+      data: DateTime.parse(json['data']),
     );
   }
 
@@ -77,6 +79,7 @@ class Partita {
       'divisaHome': divisaHome,
       'divisaAway': divisaAway,
       'tabellino': tabellino.map((e) => e.toJson()).toList(),
+      'data': data.toIso8601String(),
     };
   }
 }

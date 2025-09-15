@@ -2,13 +2,17 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/competizioneHomePage.dart';
 import 'package:ligaduck/app/homePage.dart';
+import 'package:ligaduck/app/models/campionato/campionatoMatchModel.dart';
 import 'package:ligaduck/app/models/competizione/competizioneButtonModel.dart';
 import 'package:ligaduck/app/service/competizioniProvider.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
+import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
+import 'package:ligaduck/app/service/partiteProvider.dart';
 import 'package:ligaduck/app/service/squadreProvider.dart';
 import 'package:ligaduck/app/squadrePage.dart';
 import 'package:provider/provider.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class CampionatoHomePage extends StatefulWidget {
   final String title;
@@ -25,6 +29,7 @@ class CampionatoHomePage extends StatefulWidget {
 
 class _CampionatoHomePageState extends State<CampionatoHomePage> {
   final ScrollController _scrollController = ScrollController();
+  final PageController _pageController = PageController();
 
   @override
   void dispose() {
@@ -173,6 +178,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
 
   Widget buildProssimePartite(BuildContext context) {
     bool isWide = MediaQuery.of(context).size.width > 600;
+    final provider = Provider.of<PartiteProvider>(context, listen: false);
     return SizedBox(
       width: isWide
           ? MediaQuery.of(context).size.width * 0.5
@@ -188,30 +194,114 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
               textAlign: TextAlign.left,
             ),
           ),
-          Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: /* buildCampionatoMatch(
-                      CampionatoMatchModel(match: '4', null),
-                      context,
-                    ), */
-                        Container(),
+          FutureBuilder(
+            future: getPartiteByDate(provider),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text('Errore: ${snapshot.error}'));
+              } else {
+                final partite = snapshot.data ?? [];
+                if (partite.isEmpty) {
+                  return Center(child: Text('Nessuna partita in programma.'));
+                }
+
+                // Suddividi le partite in pagine da 5
+                final pages = <List<Partita>>[];
+                for (var i = 0; i < partite.length; i += 5) {
+                  pages.add(
+                    partite.sublist(
+                      i,
+                      (i + 5 > partite.length) ? partite.length : i + 5,
+                    ),
+                  );
+                }
+
+                return SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.45,
+                  child: Card(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 8,
+                    ),
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          return Column(
+                            children: [
+                              SizedBox(
+                                height: 300,
+                                child: PageView.builder(
+                                  controller: _pageController,
+                                  itemCount: pages.length,
+                                  itemBuilder: (context, pageIndex) {
+                                    final pagePartite = pages[pageIndex];
+                                    return Column(
+                                      mainAxisAlignment: MainAxisAlignment
+                                          .start, // Riduce lo spazio extra
+                                      children: [
+                                        for (var partita in pagePartite)
+                                          SizedBox(
+                                            width: MediaQuery.of(
+                                              context,
+                                            ).size.width,
+                                            height:
+                                                60, // Altezza fissa e nessun Flexible
+                                            child: buildCampionatoMatch(
+                                              CampionatoMatchModel(
+                                                match: partita.id ?? 'unknown',
+                                                partita: partita,
+                                              ),
+                                              context,
+                                            ),
+                                          ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              SmoothPageIndicator(
+                                controller: _pageController,
+                                count: pages.length,
+                                effect: WormEffect(
+                                  dotHeight: 10,
+                                  dotWidth: 10,
+                                  activeDotColor: Colors.blueAccent,
+                                  dotColor: Colors.grey.shade300,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
                   ),
-                ],
-              ),
-            ],
+                );
+              }
+            },
           ),
         ],
       ),
     );
   }
 
+  /* buildCampionatoMatch(
+                      CampionatoMatchModel(match: '4', null),
+                      context,
+                    ), */
   Widget buildListaSquadre() {
     final provider = Provider.of<SquadreProvider>(context, listen: false);
     bool isWide = MediaQuery.of(context).size.width > 600;
-    final screenHeight = MediaQuery.of(context).size.height;
+    final screenHeight = isWide
+        ? MediaQuery.of(context).size.height
+        : MediaQuery.of(context).size.height * 0.9;
     return SizedBox(
       width: isWide
           ? MediaQuery.of(context).size.width * 0.5
@@ -356,5 +446,16 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
         );
       },
     );
+  }
+
+  Future<List<Partita>> getPartiteByDate(PartiteProvider provider) async {
+    DateTime da = DateTime.now();
+    DateTime a = da.add(Duration(days: 7));
+    List<Partita> partite = await provider.fetchPartiteByDate(
+      widget.campionato,
+      da,
+      a,
+    );
+    return partite;
   }
 }

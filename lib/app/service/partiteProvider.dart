@@ -32,4 +32,31 @@ class PartiteProvider with ChangeNotifier {
       return [];
     }
   }
+
+  Future<List<Partita>> fetchPartiteByDate(
+    String campionato,
+    DateTime da,
+    DateTime a,
+  ) async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+          '${Env.apiUrl}/$campionato/partite?da=${da.toIso8601String()}&a=${a.toIso8601String()}',
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        _partite = data.map((item) => Partita.fromJson(item)).toList();
+        notifyListeners();
+        return _partite;
+      } else {
+        throw Exception('Errore nel caricamento: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Tipo errore: ${e.runtimeType}');
+      print('Dettaglio errore: $e');
+      return [];
+    }
+  }
 }
