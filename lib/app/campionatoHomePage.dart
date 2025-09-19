@@ -61,9 +61,10 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.push(
+            Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(builder: (context) => HomePage()),
+              (route) => false,
             );
           },
         ),
@@ -78,7 +79,10 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
               const Padding(
                 padding: EdgeInsets.only(top: 15.0, bottom: 16.0),
                 child: Padding(
-                  padding: EdgeInsetsGeometry.only(left: 16.0, top: 8.0),
+                  padding: EdgeInsets.only(
+                    left: 16.0,
+                    top: 8.0,
+                  ), // Cambiato da EdgeInsetsGeometry
                   child: Align(
                     alignment: Alignment.topLeft,
                     child: Text(
@@ -183,90 +187,122 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
       width: isWide
           ? MediaQuery.of(context).size.width * 0.5
           : MediaQuery.of(context).size.width,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
-            child: Text(
-              'Prossime Partite:',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.left,
+      child: Padding(
+        padding: EdgeInsetsGeometry.only(right: 16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
+              child: Text(
+                'Prossime Partite:',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.left,
+              ),
             ),
-          ),
-          FutureBuilder(
-            future: getPartiteByDate(provider),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return Center(child: Text('Errore: ${snapshot.error}'));
-              } else {
-                final partite = snapshot.data ?? [];
-                if (partite.isEmpty) {
-                  return Center(child: Text('Nessuna partita in programma.'));
-                }
+            FutureBuilder(
+              future: getPartiteByDate(provider),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Errore: ${snapshot.error}'));
+                } else {
+                  final partite = snapshot.data ?? [];
+                  if (partite.isEmpty) {
+                    return Center(child: Text('Nessuna partita in programma.'));
+                  }
 
-                // Suddividi le partite in pagine da 5
-                final pages = <List<Partita>>[];
-                for (var i = 0; i < partite.length; i += 5) {
-                  pages.add(
-                    partite.sublist(
-                      i,
-                      (i + 5 > partite.length) ? partite.length : i + 5,
-                    ),
-                  );
-                }
+                  // Suddividi le partite in pagine da 5
+                  final pages = <List<Partita>>[];
+                  for (var i = 0; i < partite.length; i += 5) {
+                    pages.add(
+                      partite.sublist(
+                        i,
+                        (i + 5 > partite.length) ? partite.length : i + 5,
+                      ),
+                    );
+                  }
 
-                return SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.45,
-                  child: Card(
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 8,
-                    ),
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          return Column(
-                            children: [
-                              SizedBox(
-                                height: 300,
-                                child: PageView.builder(
-                                  controller: _pageController,
-                                  itemCount: pages.length,
-                                  itemBuilder: (context, pageIndex) {
-                                    final pagePartite = pages[pageIndex];
-                                    return Column(
-                                      mainAxisAlignment: MainAxisAlignment
-                                          .start, // Riduce lo spazio extra
-                                      children: [
-                                        for (var partita in pagePartite)
-                                          SizedBox(
-                                            width: MediaQuery.of(
-                                              context,
-                                            ).size.width,
-                                            height:
-                                                60, // Altezza fissa e nessun Flexible
-                                            child: buildCampionatoMatch(
-                                              CampionatoMatchModel(
-                                                match: partita.id ?? 'unknown',
-                                                partita: partita,
-                                              ),
-                                              context,
+                  return SizedBox(
+                    height: isWide
+                        ? MediaQuery.of(context).size.height * 0.5
+                        : MediaQuery.of(context).size.height * 0.45,
+                    child: Card(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 8,
+                      ),
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(32.0),
+                        child: Column(
+                          children: [
+                            SizedBox(
+                              height: isWide ? 260 : 300,
+                              child: PageView.builder(
+                                controller: _pageController,
+                                itemCount: pages.length,
+                                itemBuilder: (context, pageIndex) {
+                                  final pagePartite = pages[pageIndex];
+                                  return Column(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      for (var partita in pagePartite)
+                                        SizedBox(
+                                          width: MediaQuery.of(
+                                            context,
+                                          ).size.width,
+                                          height: 50,
+                                          child: buildCampionatoMatch(
+                                            CampionatoMatchModel(
+                                              match: partita.id ?? 'unknown',
+                                              partita: partita,
                                             ),
+                                            context,
                                           ),
-                                      ],
-                                    );
-                                  },
-                                ),
+                                        ),
+                                    ],
+                                  );
+                                },
                               ),
-                              const SizedBox(height: 12),
+                            ),
+                            if (isWide && pages.length > 1)
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  IconButton(
+                                    onPressed: () {
+                                      if (_pageController.hasClients) {
+                                        _pageController.previousPage(
+                                          duration: Duration(milliseconds: 300),
+                                          curve: Curves.easeInOut,
+                                        );
+                                      }
+                                    },
+                                    icon: Icon(Icons.arrow_back_ios),
+                                    tooltip: 'Pagina precedente',
+                                  ),
+                                  IconButton(
+                                    onPressed: () {
+                                      if (_pageController.hasClients) {
+                                        _pageController.nextPage(
+                                          duration: Duration(milliseconds: 300),
+                                          curve: Curves.easeInOut,
+                                        );
+                                      }
+                                    },
+                                    icon: Icon(Icons.arrow_forward_ios),
+                                    tooltip: 'Pagina successiva',
+                                  ),
+                                ],
+                              ),
+                            const SizedBox(height: 12),
+                            if (!isWide)
                               SmoothPageIndicator(
                                 controller: _pageController,
                                 count: pages.length,
@@ -277,17 +313,16 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                                   dotColor: Colors.grey.shade300,
                                 ),
                               ),
-                            ],
-                          );
-                        },
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                );
-              }
-            },
-          ),
-        ],
+                  );
+                }
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -310,7 +345,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.only(left: 16.0, right: 16.0),
             child: Text(
               'Squadre:',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),

@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/campionatoHomePage.dart';
@@ -32,6 +35,9 @@ class CompetizioneHomePage extends StatefulWidget {
 class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
   String? selectedGiornata;
   List<Giornata> giornate = [];
+  String previousG = "";
+  List<Giornata> giornateToPush = [];
+  List<Partita> partiteToPush = [];
 
   @override
   Widget build(BuildContext context) {
@@ -139,118 +145,52 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
         body: !isWide
             ? Column(
                 children: [
+                  // Mantieni il dropdown fisso
                   buildGiornateBox(),
                   if (selectedGiornata != null)
                     Expanded(
-                      child: SizedBox(
-                        height: screenHeight * 0.5,
-                        child: Column(
-                          children: [
-                            Container(
-                              constraints: BoxConstraints(
-                                maxHeight: 50,
-                                maxWidth: 900,
-                              ),
-                              child: TabBar(
-                                labelColor: Color(
-                                  widget.competizione.colori.isNotEmpty
-                                      ? int.parse(
-                                          widget.competizione.colori[0]
-                                              .replaceFirst('#', 'FF'),
-                                          radix: 16,
-                                        )
-                                      : 0xFF000000,
-                                ),
-                                unselectedLabelColor: Colors.grey,
-                                indicatorColor: Color(
-                                  widget.competizione.colori.isNotEmpty
-                                      ? int.parse(
-                                          widget.competizione.colori[0]
-                                              .replaceFirst('#', 'FF'),
-                                          radix: 16,
-                                        )
-                                      : 0xFF000000,
-                                ),
-                                tabs: [
-                                  Tab(text: 'Partite'),
-                                  Tab(text: 'Classifica'),
-                                  Tab(text: 'Statistiche'),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              flex: 1,
-                              child: SizedBox(
-                                width: MediaQuery.of(context).size.width * 1,
-                                child: TabBarView(
-                                  children: [
-                                    buildPartiteList(selectedGiornata!),
-                                    buildClassifica(context, selectedGiornata!),
-                                    Center(child: Text('Statistiche')),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  else
-                    const Center(child: CircularProgressIndicator()),
-                ],
-              )
-            : Column(
-                children: [
-                  buildGiornateBox(),
-                  if (selectedGiornata != null)
-                    Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      // Aggiungi Expanded qui per permettere al contenuto di occupare lo spazio rimanente
+                      child: Column(
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Partite:',
-                                  style: TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  textAlign: TextAlign.left,
-                                ),
-                                Padding(
-                                  padding: EdgeInsets.only(top: 16),
-                                  child: Center(
-                                    child: buildPartiteList(selectedGiornata!),
-                                  ),
-                                ),
+                          Container(
+                            constraints: BoxConstraints(
+                              maxHeight: 50,
+                              maxWidth: MediaQuery.of(context).size.width,
+                            ),
+                            child: TabBar(
+                              labelColor: Color(
+                                widget.competizione.colori.isNotEmpty
+                                    ? int.parse(
+                                        widget.competizione.colori[0]
+                                            .replaceFirst('#', 'FF'),
+                                        radix: 16,
+                                      )
+                                    : 0xFF000000,
+                              ),
+                              unselectedLabelColor: Colors.grey,
+                              indicatorColor: Color(
+                                widget.competizione.colori.isNotEmpty
+                                    ? int.parse(
+                                        widget.competizione.colori[0]
+                                            .replaceFirst('#', 'FF'),
+                                        radix: 16,
+                                      )
+                                    : 0xFF000000,
+                              ),
+                              tabs: [
+                                Tab(text: 'Partite'),
+                                Tab(text: 'Classifica'),
+                                Tab(text: 'Statistiche'),
                               ],
                             ),
                           ),
-                          SizedBox(width: 32),
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            // Mantieni questo Expanded per il TabBarView
+                            child: TabBarView(
                               children: [
-                                Text(
-                                  'Classifica:',
-                                  style: TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  textAlign: TextAlign.left,
-                                ),
-                                Padding(
-                                  padding: EdgeInsets.only(top: 16),
-                                  child: Center(
-                                    child: buildClassifica(
-                                      context,
-                                      selectedGiornata!,
-                                    ),
-                                  ),
-                                ),
+                                buildPartiteList(selectedGiornata!),
+                                buildClassifica(context, selectedGiornata!),
+                                Center(child: Text('Statistiche')),
                               ],
                             ),
                           ),
@@ -258,7 +198,78 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                       ),
                     )
                   else
-                    const Center(child: CircularProgressIndicator()),
+                    const Expanded(
+                      // Aggiungi Expanded anche qui per il CircularProgressIndicator
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                ],
+              )
+            : Column(
+                children: [
+                  buildGiornateBox(),
+                  if (selectedGiornata != null)
+                    Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Partite:',
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.left,
+                                  ),
+                                  Expanded(
+                                    child: Padding(
+                                      padding: EdgeInsets.only(top: 16),
+                                      child: buildPartiteList(
+                                        selectedGiornata!,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(width: 32),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Classifica:',
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.left,
+                                  ),
+                                  Expanded(
+                                    child: Padding(
+                                      padding: EdgeInsets.only(top: 16),
+                                      child: buildClassifica(
+                                        context,
+                                        selectedGiornata!,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    const Expanded(
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
                 ],
               ),
       ),
@@ -356,20 +367,17 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
           } else {
             return Padding(
               padding: EdgeInsets.only(top: 16),
-              child: SizedBox(
-                height: MediaQuery.of(context).size.height * 0.6,
-                child: ListView.builder(
-                  itemCount: partite.length,
-                  itemBuilder: (context, index) {
-                    return buildCampionatoMatch(
-                      CampionatoMatchModel(
-                        match: partite[index].id,
-                        partita: partite[index],
-                      ),
-                      context,
-                    );
-                  },
-                ),
+              child: ListView.builder(
+                itemCount: partite.length,
+                itemBuilder: (context, index) {
+                  return buildCampionatoMatch(
+                    CampionatoMatchModel(
+                      match: partite[index].id,
+                      partita: partite[index],
+                    ),
+                    context,
+                  );
+                },
               ),
             );
           }
@@ -400,30 +408,32 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
       }
     }
 
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.only(top: 8.0),
-        child: SizedBox(
-          width: MediaQuery.of(context).size.width,
-          height: MediaQuery.of(context).size.height * 0.6,
-          child: widget.competizione.classifica == "Gironi"
-              ? SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      for (var i = 0; i < count; i++)
-                        cardClassifica(
-                          giornata,
-                          isWide,
-                          screenWidth,
-                          screenHeight,
-                          i,
-                        ),
-                    ],
-                  ),
-                )
-              : cardClassifica(giornata, isWide, screenWidth, screenHeight, 0),
-        ),
-      ),
+    return Padding(
+      padding: EdgeInsets.only(top: 8.0),
+      child: widget.competizione.classifica == "Gironi"
+          ? SingleChildScrollView(
+              child: Column(
+                children: [
+                  for (var i = 0; i < count; i++)
+                    cardClassifica(
+                      giornata,
+                      isWide,
+                      screenWidth,
+                      screenHeight,
+                      i,
+                    ),
+                ],
+              ),
+            )
+          : SingleChildScrollView(
+              child: cardClassifica(
+                giornata,
+                isWide,
+                screenWidth,
+                screenHeight,
+                0,
+              ),
+            ),
     );
   }
 
@@ -730,7 +740,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                 padding: EdgeInsets.only(top: 32, bottom: 16),
                 child: Center(
                   child: Text(
-                    'Carica un file XML con il calendario',
+                    'Carica un file CSV con il calendario',
                     style: TextStyle(color: Colors.white),
                   ),
                 ),
@@ -741,19 +751,11 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                 ),
                 icon: Icon(Icons.upload, color: Colors.white),
                 label: Text(
-                  'Carica XML',
+                  'Carica CSV',
                   style: TextStyle(color: Colors.white),
                 ),
                 onPressed: () async {
-                  FilePickerResult? result = await FilePicker.platform
-                      .pickFiles(
-                        type: FileType.custom,
-                        allowedExtensions: ['xml'],
-                      );
-                  if (result != null) {
-                    // Usa result.files.single.path per il percorso del file XML
-                    // Esegui qui la logica di upload/parsing
-                  }
+                  await _pickAndProcessCsvFile();
                 },
               ),
               Padding(
@@ -782,5 +784,170 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
       }
     }
     throw Exception('Squadra non trovata');
+  }
+
+  Future<void> _pickAndProcessCsvFile() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['csv'],
+      );
+
+      if (result != null) {
+        // Se siamo su web, path è null, usiamo bytes
+        if (result.files.single.bytes != null) {
+          final input = String.fromCharCodes(result.files.single.bytes!);
+          await _processCsvString(input);
+        }
+        // Se siamo su mobile/desktop, usiamo il path
+        else if (result.files.single.path != null) {
+          final file = File(result.files.single.path!);
+          await _processCsvFile(file);
+        } else {
+          _showMessage('Nessun file selezionato');
+        }
+      } else {
+        _showMessage('Nessun file selezionato');
+      }
+    } catch (e) {
+      _showMessage('Errore nella selezione del file: $e');
+    }
+  }
+
+  Future<void> _processCsvString(String input) async {
+    try {
+      // Specifica il separatore ';'
+      List<List<dynamic>> csvData = const CsvToListConverter(
+        fieldDelimiter: ';',
+      ).convert(input);
+
+      if (csvData.length < 2) {
+        _showMessage(
+          'Il file CSV deve avere almeno intestazione e una riga dati',
+        );
+        return;
+      }
+
+      print('csvData: $csvData');
+
+      List<String> headers = csvData.first.map((e) => e.toString()).toList();
+      List<List<dynamic>> dataRows = csvData.sublist(1);
+
+      if (dataRows.isEmpty) {
+        _showMessage('Nessuna riga dati trovata nel CSV');
+        return;
+      }
+
+      for (int i = 0; i < dataRows.length; i++) {
+        List<dynamic> row = dataRows[i];
+        await _processRow(row, i + 2);
+      }
+
+      _showMessage(
+        'File CSV processato con successo: ${dataRows.length} righe',
+      );
+      Navigator.pop(context);
+    } catch (e) {
+      _showMessage('Errore nell\'elaborazione del CSV: $e');
+    }
+  }
+
+  Future<void> _processCsvFile(File file) async {
+    try {
+      final input = await file.readAsString();
+      await _processCsvString(input);
+    } catch (e) {
+      _showMessage('Errore nella lettura del file CSV: $e');
+    }
+  }
+
+  Future<void> _processRow(List<dynamic> row, int rowNumber) async {
+    try {
+      // Esempio di elaborazione - adatta in base alla struttura del tuo CSV
+      // Supponiamo che il CSV abbia colonne: giornata, squadraCasa, squadraTrasferta, data, ora
+
+      if (row.length < 3) {
+        print('Riga $rowNumber: dati insufficienti');
+        return;
+      }
+
+      String numeroGiornata = row[0]?.toString() ?? '';
+      String squadraCasa = row[1]?.toString() ?? '';
+      String squadraTrasferta = row[2]?.toString() ?? '';
+
+      // Validazione dei dati
+      if (numeroGiornata.isEmpty ||
+          squadraCasa.isEmpty ||
+          squadraTrasferta.isEmpty) {
+        print('Riga $rowNumber: dati mancanti');
+        return;
+      }
+
+      // Qui puoi creare/salvare la partita nel tuo sistema
+      await _createPartitaFromCsv(
+        numeroGiornata,
+        squadraCasa,
+        squadraTrasferta,
+      );
+    } catch (e) {
+      print('Errore nell\'elaborazione della riga $rowNumber: $e');
+    }
+  }
+
+  Future<void> _createPartitaFromCsv(
+    String numeroGiornata,
+    String squadraCasa,
+    String squadraTrasferta,
+  ) async {
+    if (numeroGiornata != previousG) {
+      final giornata = Giornata(
+        id: '',
+        idCompetizione: widget.competizione.id,
+        giornata: numeroGiornata,
+        fase: 'G',
+        conclusa: false,
+      );
+      giornateToPush.add(giornata);
+    }
+    final partita = Partita(
+      id: '',
+      idGiornata: '', // Da impostare correttamente
+      teamHome: squadraCasa,
+      teamAway: squadraTrasferta,
+      idTeamHome: 0,
+      idTeamAway: 0,
+      codHome: '',
+      codAway: '',
+      risultatoHome: 0,
+      risultatoAway: 0,
+      formazioneHome: [],
+      formazioneAway: [],
+      divisaHome: 0,
+      divisaAway: 0,
+      tabellino: [],
+      data: DateTime.now(),
+    );
+    partiteToPush.add(partita);
+    previousG = numeroGiornata;
+
+    print(
+      'Creando partita: $squadraCasa vs $squadraTrasferta - Giornata: $numeroGiornata',
+    );
+
+    // Qui dovresti chiamare il tuo provider/servizio per salvare i dati
+    // Esempio:
+    // await partiteProvider.createPartita(
+    //   giornata: giornata,
+    //   squadraCasa: squadraCasa,
+    //   squadraTrasferta: squadraTrasferta,
+    //   data: data,
+    //   ora: ora,
+    // );
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), duration: Duration(seconds: 3)),
+    );
   }
 }

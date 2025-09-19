@@ -15,6 +15,7 @@ dependencies:
   oktoast: ^3.3.1
   file_picker: ^5.2.5
   smooth_page_indicator: ^1.1.0
+  csv: ^6.0.0
 
 dev_dependencies:
   flutter_test:
