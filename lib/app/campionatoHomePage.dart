@@ -242,7 +242,9 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                         child: Column(
                           children: [
                             SizedBox(
-                              height: isWide ? 260 : 300,
+                              height: isWide
+                                  ? MediaQuery.of(context).size.height * 0.35
+                                  : MediaQuery.of(context).size.height * 0.32,
                               child: PageView.builder(
                                 controller: _pageController,
                                 itemCount: pages.length,
@@ -256,7 +258,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                                           width: MediaQuery.of(
                                             context,
                                           ).size.width,
-                                          height: 50,
+                                          height: isWide ? 70 : 50,
                                           child: buildCampionatoMatch(
                                             CampionatoMatchModel(
                                               match: partita.id ?? 'unknown',
