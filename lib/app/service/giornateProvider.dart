@@ -9,7 +9,7 @@ class GiornateProvider with ChangeNotifier {
 
   List<Giornata> get giornate => _giornate;
 
-  Future<List<Giornata>> fetchSquadre(
+  Future<List<Giornata>> fetchGiornate(
     String campionato,
     int idCompetizione,
   ) async {
@@ -30,6 +30,29 @@ class GiornateProvider with ChangeNotifier {
       print('Tipo errore: ${e.runtimeType}');
       print('Dettaglio errore: $e');
       return [];
+    }
+  }
+
+  Future<bool> aggiungiGiornate(
+    String campionato,
+    List<Giornata> giornate,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${Env.apiUrl}/$campionato/add/giornate'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(giornate.map((g) => g.toJson()).toList()),
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return true;
+      } else {
+        print('Errore POST: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Errore POST: $e');
+      return false;
     }
   }
 }

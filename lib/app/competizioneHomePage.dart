@@ -13,6 +13,7 @@ import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/service/partiteProvider.dart';
 import 'package:ligaduck/app/service/squadreProvider.dart';
 import 'package:ligaduck/app/squadrePage.dart';
+import 'package:mongo_dart/mongo_dart.dart' as mongo;
 import 'package:provider/provider.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
 
@@ -35,7 +36,6 @@ class CompetizioneHomePage extends StatefulWidget {
 class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
   String? selectedGiornata;
   List<Giornata> giornate = [];
-  String previousG = "";
   List<Giornata> giornateToPush = [];
   List<Partita> partiteToPush = [];
 
@@ -505,7 +505,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
   }
 
   Future<List<Giornata>> getGiornate(GiornateProvider provider) async {
-    List<Giornata> giornata = await provider.fetchSquadre(
+    List<Giornata> giornata = await provider.fetchGiornate(
       widget.campionato,
       widget.competizione.id,
     );
@@ -787,6 +787,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
   }
 
   Future<void> _pickAndProcessCsvFile() async {
+    giornateToPush = [];
+    partiteToPush = [];
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -843,6 +845,16 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
         await _processRow(row, i + 2);
       }
 
+      final giornateProvider = Provider.of<GiornateProvider>(
+        context,
+        listen: false,
+      );
+
+      await giornateProvider.aggiungiGiornate(
+        widget.campionato,
+        giornateToPush,
+      );
+
       _showMessage(
         'File CSV processato con successo: ${dataRows.length} righe',
       );
@@ -863,9 +875,6 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
 
   Future<void> _processRow(List<dynamic> row, int rowNumber) async {
     try {
-      // Esempio di elaborazione - adatta in base alla struttura del tuo CSV
-      // Supponiamo che il CSV abbia colonne: giornata, squadraCasa, squadraTrasferta, data, ora
-
       if (row.length < 3) {
         print('Riga $rowNumber: dati insufficienti');
         return;
@@ -874,8 +883,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
       String numeroGiornata = row[0]?.toString() ?? '';
       String squadraCasa = row[1]?.toString() ?? '';
       String squadraTrasferta = row[2]?.toString() ?? '';
+      String fase = row[3]?.toString() ?? '';
 
-      // Validazione dei dati
       if (numeroGiornata.isEmpty ||
           squadraCasa.isEmpty ||
           squadraTrasferta.isEmpty) {
@@ -883,11 +892,11 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
         return;
       }
 
-      // Qui puoi creare/salvare la partita nel tuo sistema
       await _createPartitaFromCsv(
         numeroGiornata,
         squadraCasa,
         squadraTrasferta,
+        fase,
       );
     } catch (e) {
       print('Errore nell\'elaborazione della riga $rowNumber: $e');
@@ -898,13 +907,14 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
     String numeroGiornata,
     String squadraCasa,
     String squadraTrasferta,
+    String fase,
   ) async {
-    if (numeroGiornata != previousG) {
+    if (!giornateToPush.any((g) => g.giornata == numeroGiornata)) {
       final giornata = Giornata(
-        id: '',
+        id: mongo.ObjectId().toHexString(),
         idCompetizione: widget.competizione.id,
         giornata: numeroGiornata,
-        fase: 'G',
+        fase: fase.isNotEmpty ? fase : 'G',
         conclusa: false,
       );
       giornateToPush.add(giornata);
@@ -928,21 +938,10 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
       data: DateTime.now(),
     );
     partiteToPush.add(partita);
-    previousG = numeroGiornata;
 
     print(
       'Creando partita: $squadraCasa vs $squadraTrasferta - Giornata: $numeroGiornata',
     );
-
-    // Qui dovresti chiamare il tuo provider/servizio per salvare i dati
-    // Esempio:
-    // await partiteProvider.createPartita(
-    //   giornata: giornata,
-    //   squadraCasa: squadraCasa,
-    //   squadraTrasferta: squadraTrasferta,
-    //   data: data,
-    //   ora: ora,
-    // );
   }
 
   void _showMessage(String message) {

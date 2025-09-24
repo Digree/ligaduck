@@ -182,6 +182,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
 
   Widget buildProssimePartite(BuildContext context) {
     bool isWide = MediaQuery.of(context).size.width > 600;
+    bool isTall = MediaQuery.of(context).size.height > 200;
     final provider = Provider.of<PartiteProvider>(context, listen: false);
     return SizedBox(
       width: isWide
@@ -243,7 +244,11 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                           children: [
                             SizedBox(
                               height: isWide
-                                  ? MediaQuery.of(context).size.height * 0.35
+                                  ? isTall
+                                        ? MediaQuery.of(context).size.height *
+                                              0.32
+                                        : MediaQuery.of(context).size.height *
+                                              0.35
                                   : MediaQuery.of(context).size.height * 0.32,
                               child: PageView.builder(
                                 controller: _pageController,
@@ -258,7 +263,11 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                                           width: MediaQuery.of(
                                             context,
                                           ).size.width,
-                                          height: isWide ? 70 : 50,
+                                          height: isWide
+                                              ? isTall
+                                                    ? 50
+                                                    : 70
+                                              : 50,
                                           child: buildCampionatoMatch(
                                             CampionatoMatchModel(
                                               match: partita.id ?? 'unknown',
@@ -347,7 +356,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.only(left: 16.0, right: 16.0),
+            padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 16.0),
             child: Text(
               'Squadre:',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
