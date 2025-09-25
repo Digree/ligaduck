@@ -87,4 +87,25 @@ class GiornateProvider with ChangeNotifier {
       return [];
     }
   }
+
+  Future<void> closeGiornata(
+    String campionato,
+    String idGiornata,
+    bool conclusa,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${Env.apiUrl}/$campionato/concludi/$idGiornata'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(conclusa),
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+      } else {
+        print('Errore POST: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      print('Errore POST: $e');
+    }
+  }
 }

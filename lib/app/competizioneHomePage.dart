@@ -36,15 +36,34 @@ class CompetizioneHomePage extends StatefulWidget {
 
 class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
   String? selectedGiornata;
+  bool? giornataChiusa;
   List<Giornata> giornate = [];
+  List<Giornata> giornate_ = [];
   List<Giornata> giornateToPush = [];
   List<Partita> partiteToPush = [];
   List<PosizioneClassifica> classifica = [];
 
   @override
+  void initState() {
+    super.initState();
+    caricaGiornate();
+  }
+
+  void caricaGiornate() async {
+    final provider = Provider.of<GiornateProvider>(context, listen: false);
+    final result = await getGiornate(provider);
+    setState(() {
+      giornate_ = result;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     bool isWide = MediaQuery.of(context).size.width > 600;
-    final screenHeight = MediaQuery.of(context).size.height;
+
+    giornataChiusa = giornate_.where((g) => g.id == selectedGiornata).isNotEmpty
+        ? giornate_.firstWhere((g) => g.id == selectedGiornata).conclusa
+        : false;
     return DefaultTabController(
       length: 3,
       child: Scaffold(
@@ -54,11 +73,25 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
             automaticallyImplyLeading: false,
             actions: [
               globals.admin
-                  ? IconButton(
-                      onPressed: () {
-                        showAddCalendarModal();
-                      },
-                      icon: Icon(Icons.add, color: Colors.white),
+                  ? Row(
+                      children: [
+                        if (giornataChiusa != null)
+                          IconButton(
+                            onPressed: () {
+                              giornataChiusa = !giornataChiusa!;
+                              closeGiornata();
+                            },
+                            icon: giornataChiusa!
+                                ? Icon(Icons.lock, color: Colors.white)
+                                : Icon(Icons.lock_open, color: Colors.white),
+                          ),
+                        IconButton(
+                          onPressed: () {
+                            showAddCalendarModal();
+                          },
+                          icon: Icon(Icons.add, color: Colors.white),
+                        ),
+                      ],
                     )
                   : SizedBox(),
             ],
@@ -416,29 +449,19 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
     return Padding(
       padding: EdgeInsets.only(top: 8.0),
       child: widget.competizione.classifica == "Gironi"
-          ? SingleChildScrollView(
-              child: Column(
-                children: [
-                  for (var i = 0; i < count; i++)
-                    cardClassifica(
-                      giornata,
-                      isWide,
-                      screenWidth,
-                      screenHeight,
-                      i,
-                    ),
-                ],
-              ),
+          ? Column(
+              children: [
+                for (var i = 0; i < count; i++)
+                  cardClassifica(
+                    giornata,
+                    isWide,
+                    screenWidth,
+                    screenHeight,
+                    i,
+                  ),
+              ],
             )
-          : SingleChildScrollView(
-              child: cardClassifica(
-                giornata,
-                isWide,
-                screenWidth,
-                screenHeight,
-                0,
-              ),
-            ),
+          : cardClassifica(giornata, isWide, screenWidth, screenHeight, 0),
     );
   }
 
@@ -1026,5 +1049,43 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
       }
     }
     return squadra;
+  }
+
+  void closeGiornata() {
+    final giornateProvider = Provider.of<GiornateProvider>(
+      context,
+      listen: false,
+    );
+    if (selectedGiornata != null) {
+      giornateProvider
+          .closeGiornata(widget.campionato, selectedGiornata!, giornataChiusa!)
+          .then((_) async {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: giornataChiusa!
+                    ? Text('Giornata chiusa con successo')
+                    : Text('Giornata riaperta con successo'),
+                duration: Duration(seconds: 3),
+              ),
+            );
+            caricaGiornate();
+            selectedGiornata = giornate_
+                .firstWhere(
+                  (g) => giornataChiusa!
+                      ? g.id != selectedGiornata
+                      : g.id == selectedGiornata,
+                )
+                .id;
+            setState(() {});
+          })
+          .catchError((error) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Errore nella chiusura della giornata: $error'),
+                duration: Duration(seconds: 3),
+              ),
+            );
+          });
+    }
   }
 }
