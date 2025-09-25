@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:ligaduck/app/campionatoHomePage.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:oktoast/oktoast.dart';

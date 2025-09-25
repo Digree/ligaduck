@@ -59,4 +59,24 @@ class PartiteProvider with ChangeNotifier {
       return [];
     }
   }
+
+  Future<bool> aggiungiPartite(String campionato, List<Partita> partite) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${Env.apiUrl}/$campionato/add/partite'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(partite.map((p) => p.toJson()).toList()),
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return true;
+      } else {
+        print('Errore POST: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Errore POST: $e');
+      return false;
+    }
+  }
 }

@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/campionatoHomePage.dart';
 import 'package:ligaduck/app/models/campionato/campionatoMatchModel.dart';
+import 'package:ligaduck/app/service/competizioniProvider.dart';
 import 'package:ligaduck/app/service/giornateProvider.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/giornata.dart';
@@ -38,6 +39,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
   List<Giornata> giornate = [];
   List<Giornata> giornateToPush = [];
   List<Partita> partiteToPush = [];
+  List<PosizioneClassifica> classifica = [];
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +121,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                         children: [
                           const SizedBox(height: 16),
                           Image.asset(
-                            'assets/logos/logo_${widget.competizione.cod}.png',
+                            'assets/logos/logo_${widget.competizione.cod}_comp.png',
                             fit: BoxFit.contain,
                             height: 100,
                           ),
@@ -145,11 +147,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
         body: !isWide
             ? Column(
                 children: [
-                  // Mantieni il dropdown fisso
                   buildGiornateBox(),
                   if (selectedGiornata != null)
                     Expanded(
-                      // Aggiungi Expanded qui per permettere al contenuto di occupare lo spazio rimanente
                       child: Column(
                         children: [
                           Container(
@@ -185,7 +185,6 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                             ),
                           ),
                           Expanded(
-                            // Mantieni questo Expanded per il TabBarView
                             child: TabBarView(
                               children: [
                                 buildPartiteList(selectedGiornata!),
@@ -196,12 +195,11 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                           ),
                         ],
                       ),
-                    )
-                  else
-                    const Expanded(
-                      // Aggiungi Expanded anche qui per il CircularProgressIndicator
-                      child: Center(child: CircularProgressIndicator()),
                     ),
+                  /*                   else
+                    const Expanded(
+                      child: Center(child: CircularProgressIndicator()),
+                    ), */
                 ],
               )
             : Column(
@@ -265,11 +263,11 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                           ],
                         ),
                       ),
-                    )
-                  else
+                    ),
+                  /* else
                     const Expanded(
                       child: Center(child: CircularProgressIndicator()),
-                    ),
+                    ), */
                 ],
               ),
       ),
@@ -292,7 +290,10 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
         } else if (snapshot.hasData) {
           giornate = snapshot.data!;
           if (giornate.isEmpty) {
-            return Center(child: Text('Nessuna giornata disponibile'));
+            return Padding(
+              padding: EdgeInsetsGeometry.only(top: 100),
+              child: Center(child: Text('Nessuna giornata disponibile')),
+            );
           } else {
             giornate.sort((a, b) => a.giornata.compareTo(b.giornata));
 
@@ -400,6 +401,10 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
         giornata = giornata_;
         break;
       }
+    }
+
+    if (giornata.classifica == null || giornata.classifica.isEmpty) {
+      return Center(child: Text('Nessuna classifica disponibile'));
     }
 
     for (var pos in giornata.classifica!) {
@@ -615,12 +620,20 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
     PosizioneClassifica? posizione,
   ) {
     final provider = Provider.of<SquadreProvider>(context, listen: false);
+    final competizioniProvider = Provider.of<CompetizioniProvider>(
+      context,
+      listen: false,
+    );
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: () async {
           print(posizione.idSquadra);
-          final squadra = await getSquadra(provider, posizione.idSquadra);
+          var squadra = await getSquadra(provider, posizione.idSquadra);
+          squadra = addCompetizioni(
+            squadra,
+            await competizioniProvider.fetchCompetizioni(widget.campionato),
+          );
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -643,9 +656,11 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
           child: Row(
             children: [
               Padding(
-                padding: EdgeInsets.only(right: 8),
+                padding: EdgeInsets.only(
+                  right: posizione!.posizione > 9 ? 1 : 8,
+                ),
                 child: Text(
-                  '${posizione!.posizione}',
+                  '${posizione.posizione}',
                   style: TextStyle(fontSize: 12, color: Colors.white),
                 ),
               ),
@@ -818,7 +833,31 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
 
   Future<void> _processCsvString(String input) async {
     try {
-      // Specifica il separatore ';'
+      final giornateProvider = Provider.of<GiornateProvider>(
+        context,
+        listen: false,
+      );
+      final partiteProvider = Provider.of<PartiteProvider>(
+        context,
+        listen: false,
+      );
+
+      final idToGiornata = {'giornata': '', 'id': ''};
+      final idToGiornataList = [];
+
+      try {
+        classifica = await giornateProvider.generaClassifica(
+          widget.campionato,
+          widget.competizione.id,
+          widget.competizione.classifica!,
+        );
+
+        classifica.sort((a, b) => a.posizione.compareTo(b.posizione));
+      } catch (e) {
+        _showMessage('Errore nella generazione della classifica: $e');
+        return;
+      }
+
       List<List<dynamic>> csvData = const CsvToListConverter(
         fieldDelimiter: ';',
       ).convert(input);
@@ -842,22 +881,28 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
 
       for (int i = 0; i < dataRows.length; i++) {
         List<dynamic> row = dataRows[i];
-        await _processRow(row, i + 2);
+        await _processRow(row, i + 2, idToGiornataList);
       }
 
-      final giornateProvider = Provider.of<GiornateProvider>(
-        context,
-        listen: false,
-      );
+      try {
+        await giornateProvider.aggiungiGiornate(
+          widget.campionato,
+          giornateToPush,
+          widget.competizione.id,
+        );
+      } catch (e) {
+        _showMessage('Errore nel caricamento delle giornate: $e');
+      }
 
-      await giornateProvider.aggiungiGiornate(
-        widget.campionato,
-        giornateToPush,
-      );
+      try {
+        await partiteProvider.aggiungiPartite(widget.campionato, partiteToPush);
+      } catch (e) {
+        _showMessage('Errore nel caricamento delle partite: $e');
+      }
 
-      _showMessage(
-        'File CSV processato con successo: ${dataRows.length} righe',
-      );
+      _showMessage('File CSV caricato con successo: ${dataRows.length} righe');
+
+      setState(() {});
       Navigator.pop(context);
     } catch (e) {
       _showMessage('Errore nell\'elaborazione del CSV: $e');
@@ -873,7 +918,11 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
     }
   }
 
-  Future<void> _processRow(List<dynamic> row, int rowNumber) async {
+  Future<void> _processRow(
+    List<dynamic> row,
+    int rowNumber,
+    idToGiornataList,
+  ) async {
     try {
       if (row.length < 3) {
         print('Riga $rowNumber: dati insufficienti');
@@ -897,6 +946,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
         squadraCasa,
         squadraTrasferta,
         fase,
+        idToGiornataList,
       );
     } catch (e) {
       print('Errore nell\'elaborazione della riga $rowNumber: $e');
@@ -908,20 +958,33 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
     String squadraCasa,
     String squadraTrasferta,
     String fase,
+    idToGiornataList,
   ) async {
+    var id;
+    if (idToGiornataList.any(
+      (element) => element['giornata'] == numeroGiornata,
+    )) {
+      id = idToGiornataList.firstWhere(
+        (element) => element['giornata'] == numeroGiornata,
+      )['id'];
+    } else {
+      id = mongo.ObjectId().toHexString();
+      idToGiornataList.add({'giornata': numeroGiornata, 'id': id});
+    }
     if (!giornateToPush.any((g) => g.giornata == numeroGiornata)) {
       final giornata = Giornata(
-        id: mongo.ObjectId().toHexString(),
+        id: id,
         idCompetizione: widget.competizione.id,
         giornata: numeroGiornata,
         fase: fase.isNotEmpty ? fase : 'G',
+        classifica: classifica,
         conclusa: false,
       );
       giornateToPush.add(giornata);
     }
     final partita = Partita(
-      id: '',
-      idGiornata: '', // Da impostare correttamente
+      id: mongo.ObjectId().toHexString(),
+      idGiornata: id,
       teamHome: squadraCasa,
       teamAway: squadraTrasferta,
       idTeamHome: 0,
@@ -932,8 +995,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
       risultatoAway: 0,
       formazioneHome: [],
       formazioneAway: [],
-      divisaHome: 0,
-      divisaAway: 0,
+      divisaHome: 1,
+      divisaAway: 1,
       tabellino: [],
       data: DateTime.now(),
     );
@@ -948,5 +1011,20 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), duration: Duration(seconds: 3)),
     );
+  }
+
+  Squadra addCompetizioni(Squadra squadra, List<Competizione> competizioni) {
+    if (squadra.trofei == null) {
+      return squadra;
+    }
+    for (var competizione in competizioni) {
+      for (var i = 0; i < squadra.trofei!.length; i++) {
+        if (squadra.trofei?[i].idCompetizione == competizione.id) {
+          squadra.trofei?[i].nome = competizione.nome;
+          squadra.trofei?[i].cod = competizione.cod;
+        }
+      }
+    }
+    return squadra;
   }
 }

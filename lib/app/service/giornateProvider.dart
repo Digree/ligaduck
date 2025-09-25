@@ -6,8 +6,10 @@ import 'package:ligaduck/app/service/models/giornata.dart';
 
 class GiornateProvider with ChangeNotifier {
   List<Giornata> _giornate = [];
+  List<PosizioneClassifica> _classifica = [];
 
   List<Giornata> get giornate => _giornate;
+  List<PosizioneClassifica> get classifica => _classifica;
 
   Future<List<Giornata>> fetchGiornate(
     String campionato,
@@ -36,10 +38,11 @@ class GiornateProvider with ChangeNotifier {
   Future<bool> aggiungiGiornate(
     String campionato,
     List<Giornata> giornate,
+    int idCompetizione,
   ) async {
     try {
       final response = await http.post(
-        Uri.parse('${Env.apiUrl}/$campionato/add/giornate'),
+        Uri.parse('${Env.apiUrl}/$campionato/add/giornate/$idCompetizione'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(giornate.map((g) => g.toJson()).toList()),
       );
@@ -53,6 +56,35 @@ class GiornateProvider with ChangeNotifier {
     } catch (e) {
       print('Errore POST: $e');
       return false;
+    }
+  }
+
+  Future<List<PosizioneClassifica>> generaClassifica(
+    String campionato,
+    int idCompetizione,
+    String modalita,
+  ) async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+          '${Env.apiUrl}/$campionato/$idCompetizione/classifica/$modalita',
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        _classifica = data
+            .map((item) => PosizioneClassifica.fromJson(item))
+            .toList();
+        notifyListeners();
+        return _classifica;
+      } else {
+        throw Exception('Errore nel caricamento: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Tipo errore: ${e.runtimeType}');
+      print('Dettaglio errore: $e');
+      return [];
     }
   }
 }

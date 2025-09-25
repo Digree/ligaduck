@@ -211,7 +211,15 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                 } else {
                   final partite = snapshot.data ?? [];
                   if (partite.isEmpty) {
-                    return Center(child: Text('Nessuna partita in programma.'));
+                    return Padding(
+                      padding: EdgeInsetsGeometry.only(
+                        top: isWide ? 100 : 50,
+                        bottom: isWide ? 100 : 50,
+                      ),
+                      child: Center(
+                        child: Text('Nessuna partita in programma'),
+                      ),
+                    );
                   }
 
                   // Suddividi le partite in pagine da 5
@@ -246,7 +254,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                               height: isWide
                                   ? isTall
                                         ? MediaQuery.of(context).size.height *
-                                              0.32
+                                              0.33
                                         : MediaQuery.of(context).size.height *
                                               0.35
                                   : MediaQuery.of(context).size.height * 0.32,
@@ -265,9 +273,9 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                                           ).size.width,
                                           height: isWide
                                               ? isTall
-                                                    ? 50
+                                                    ? 60
                                                     : 70
-                                              : 50,
+                                              : 55,
                                           child: buildCampionatoMatch(
                                             CampionatoMatchModel(
                                               match: partita.id ?? 'unknown',
