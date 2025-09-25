@@ -79,10 +79,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
               const Padding(
                 padding: EdgeInsets.only(top: 15.0, bottom: 16.0),
                 child: Padding(
-                  padding: EdgeInsets.only(
-                    left: 16.0,
-                    top: 8.0,
-                  ), // Cambiato da EdgeInsetsGeometry
+                  padding: EdgeInsets.only(left: 16.0, top: 8.0),
                   child: Align(
                     alignment: Alignment.topLeft,
                     child: Text(
@@ -236,7 +233,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                   return SizedBox(
                     height: isWide
                         ? MediaQuery.of(context).size.height * 0.5
-                        : MediaQuery.of(context).size.height * 0.45,
+                        : MediaQuery.of(context).size.height * 0.5,
                     child: Card(
                       margin: const EdgeInsets.symmetric(
                         horizontal: 8,
@@ -257,7 +254,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                                               0.33
                                         : MediaQuery.of(context).size.height *
                                               0.35
-                                  : MediaQuery.of(context).size.height * 0.32,
+                                  : MediaQuery.of(context).size.height * 0.35,
                               child: PageView.builder(
                                 controller: _pageController,
                                 itemCount: pages.length,
