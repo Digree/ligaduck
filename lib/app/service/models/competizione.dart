@@ -2,7 +2,7 @@ class Competizione {
   final int id;
   final String nome;
   final String cod;
-  final bool attiva;
+  final bool? attiva;
   final String? classifica;
   final List<String> colori;
 
@@ -10,7 +10,7 @@ class Competizione {
     required this.id,
     required this.nome,
     required this.cod,
-    required this.attiva,
+    this.attiva,
     this.classifica,
     required this.colori,
   });

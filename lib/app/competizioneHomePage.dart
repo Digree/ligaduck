@@ -408,6 +408,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                     CampionatoMatchModel(
                       match: partite[index].id,
                       partita: partite[index],
+                      campionato: widget.campionato,
+                      competizioneId: widget.competizione.id,
                     ),
                     context,
                   );
@@ -1058,7 +1060,12 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
     );
     if (selectedGiornata != null) {
       giornateProvider
-          .closeGiornata(widget.campionato, selectedGiornata!, giornataChiusa!)
+          .closeGiornata(
+            widget.campionato,
+            selectedGiornata!,
+            giornataChiusa!,
+            widget.competizione.id,
+          )
           .then((_) async {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

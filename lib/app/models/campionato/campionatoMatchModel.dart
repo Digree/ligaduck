@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:ligaduck/app/partitaHomePage.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 
 class CampionatoMatchModel {
   final String match;
   final Partita partita;
+  final String campionato;
+  final int competizioneId;
 
-  CampionatoMatchModel({required this.match, required this.partita});
+  CampionatoMatchModel({
+    required this.match,
+    required this.partita,
+    required this.campionato,
+    required this.competizioneId,
+  });
 }
 
 Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
@@ -25,7 +33,18 @@ Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
         heroTag: model.match,
         backgroundColor: Colors.blueGrey.withOpacity(0.3),
         elevation: 0,
-        onPressed: () => print('Match pressed'),
+        onPressed: () => {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PartitaHomePage(
+                partita: model.partita,
+                campionato: model.campionato,
+                competizioneId: model.competizioneId,
+              ),
+            ),
+          ),
+        },
         child: FittedBox(
           fit: BoxFit.scaleDown,
           child: Row(

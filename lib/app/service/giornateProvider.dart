@@ -92,10 +92,13 @@ class GiornateProvider with ChangeNotifier {
     String campionato,
     String idGiornata,
     bool conclusa,
+    int idCompetizione,
   ) async {
     try {
       final response = await http.post(
-        Uri.parse('${Env.apiUrl}/$campionato/concludi/$idGiornata'),
+        Uri.parse(
+          '${Env.apiUrl}/$campionato/$idCompetizione/concludi/$idGiornata',
+        ),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(conclusa),
       );

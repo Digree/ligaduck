@@ -277,6 +277,8 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                                             CampionatoMatchModel(
                                               match: partita.id ?? 'unknown',
                                               partita: partita,
+                                              campionato: widget.campionato,
+                                              competizioneId: 1,
                                             ),
                                             context,
                                           ),
