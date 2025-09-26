@@ -55,7 +55,7 @@ class _HomePage extends State<HomePage> {
                                   Spacer(),
                                   Switch(
                                     value: isAdmin,
-                                    activeColor: Colors.white,
+                                    activeThumbColor: Colors.white,
                                     onChanged: (value) {
                                       setModalState(() {
                                         isAdmin = value;
@@ -97,7 +97,23 @@ class _HomePage extends State<HomePage> {
           } else if (snapshot.hasError) {
             return Center(child: Text('Errore nel caricamento dei dati'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('Nessun dato disponibile'));
+            return Scaffold(
+              body: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('Nessun dato disponibile'),
+                    SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () {
+                        setState(() {});
+                      },
+                      child: Icon(Icons.refresh, color: Colors.blueAccent),
+                    ),
+                  ],
+                ),
+              ),
+            );
           } else {
             final filteredConfigs = snapshot.data!;
             String campionato = '';

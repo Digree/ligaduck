@@ -42,11 +42,11 @@ class CompetizioniProvider with ChangeNotifier {
 
   Future<Competizione> getCompetizione(
     String campionato,
-    int competizioneId,
+    String idGiornata,
   ) async {
     try {
       final response = await http.get(
-        Uri.parse('${Env.apiUrl}/$campionato/competizioni/$competizioneId'),
+        Uri.parse('${Env.apiUrl}/$campionato/competizioni/$idGiornata'),
       );
 
       if (response.statusCode == 200) {

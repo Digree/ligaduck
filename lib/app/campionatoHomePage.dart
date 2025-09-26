@@ -30,6 +30,7 @@ class CampionatoHomePage extends StatefulWidget {
 class _CampionatoHomePageState extends State<CampionatoHomePage> {
   final ScrollController _scrollController = ScrollController();
   final PageController _pageController = PageController();
+  final partitaCompList = [];
 
   @override
   void dispose() {
@@ -77,7 +78,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Padding(
-                padding: EdgeInsets.only(top: 15.0, bottom: 16.0),
+                padding: EdgeInsets.only(top: 15.0, bottom: 8.0),
                 child: Padding(
                   padding: EdgeInsets.only(left: 16.0, top: 8.0),
                   child: Align(
@@ -100,8 +101,8 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                     );
                   }
                 },
-                child: Scrollbar(
-                  controller: _scrollController,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 16.0),
                   child: SingleChildScrollView(
                     controller: _scrollController,
                     scrollDirection: Axis.horizontal,
@@ -180,6 +181,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
   Widget buildProssimePartite(BuildContext context) {
     bool isWide = MediaQuery.of(context).size.width > 600;
     bool isTall = MediaQuery.of(context).size.height > 200;
+
     final provider = Provider.of<PartiteProvider>(context, listen: false);
     return SizedBox(
       width: isWide
@@ -219,119 +221,208 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                     );
                   }
 
-                  // Suddividi le partite in pagine da 5
-                  final pages = <List<Partita>>[];
-                  for (var i = 0; i < partite.length; i += 5) {
-                    pages.add(
-                      partite.sublist(
-                        i,
-                        (i + 5 > partite.length) ? partite.length : i + 5,
-                      ),
-                    );
+                  partite.sort((a, b) => a.data.compareTo(b.data));
+
+                  // Raggruppa le partite per giornata/competizione
+                  Map<String, Map<String, dynamic>> partitePerCompetizione = {};
+                  for (var partita in partite) {
+                    String competizione = '';
+                    String cod = '';
+                    for (var pc in partitaCompList) {
+                      if (pc['idPartita'] == partita.id) {
+                        competizione = pc['nome'];
+                        cod = pc['cod'];
+                        break;
+                      }
+                    }
+
+                    if (!partitePerCompetizione.containsKey(competizione)) {
+                      partitePerCompetizione[competizione] = {
+                        'cod': cod,
+                        'partite': <Partita>[],
+                      };
+                    }
+                    (partitePerCompetizione[competizione]!['partite']
+                            as List<Partita>)
+                        .add(partita);
                   }
+
+                  // Suddividi ogni giornata in pagine da max 5 partite
+                  final pages = <Map<String, dynamic>>[];
+                  partitePerCompetizione.forEach((competizione, compData) {
+                    final List<Partita> partiteGiornata =
+                        compData['partite'] as List<Partita>;
+                    final String cod = compData['cod'] as String;
+                    for (var i = 0; i < partiteGiornata.length; i += 5) {
+                      pages.add({
+                        'competizione': competizione,
+                        'cod': cod,
+                        'partite': partiteGiornata.sublist(
+                          i,
+                          (i + 5 > partiteGiornata.length)
+                              ? partiteGiornata.length
+                              : i + 5,
+                        ),
+                      });
+                    }
+                  });
 
                   return SizedBox(
                     height: isWide
-                        ? MediaQuery.of(context).size.height * 0.5
-                        : MediaQuery.of(context).size.height * 0.5,
-                    child: Card(
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 8,
-                      ),
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(32.0),
-                        child: Column(
-                          children: [
-                            SizedBox(
-                              height: isWide
-                                  ? isTall
-                                        ? MediaQuery.of(context).size.height *
-                                              0.33
-                                        : MediaQuery.of(context).size.height *
-                                              0.35
-                                  : MediaQuery.of(context).size.height * 0.35,
-                              child: PageView.builder(
-                                controller: _pageController,
-                                itemCount: pages.length,
-                                itemBuilder: (context, pageIndex) {
-                                  final pagePartite = pages[pageIndex];
-                                  return Column(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      for (var partita in pagePartite)
-                                        SizedBox(
-                                          width: MediaQuery.of(
-                                            context,
-                                          ).size.width,
-                                          height: isWide
-                                              ? isTall
-                                                    ? 60
-                                                    : 70
-                                              : 55,
-                                          child: buildCampionatoMatch(
-                                            CampionatoMatchModel(
-                                              match: partita.id ?? 'unknown',
-                                              partita: partita,
-                                              campionato: widget.campionato,
-                                              competizioneId: 1,
+                        ? MediaQuery.of(context).size.height * 0.6
+                        : MediaQuery.of(context).size.height * 0.49,
+                    child: Padding(
+                      padding: EdgeInsetsGeometry.only(left: 16),
+                      child: Card(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 8,
+                        ),
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 16),
+                          child: Column(
+                            children: [
+                              SizedBox(
+                                height: isWide
+                                    ? isTall
+                                          ? MediaQuery.of(context).size.height *
+                                                0.4
+                                          : MediaQuery.of(context).size.height *
+                                                0.35
+                                    : MediaQuery.of(context).size.height * 0.4,
+                                child: PageView.builder(
+                                  controller: _pageController,
+                                  itemCount: pages.length,
+                                  itemBuilder: (context, pageIndex) {
+                                    final page = pages[pageIndex];
+                                    final String competizione =
+                                        page['competizione'];
+                                    final List<Partita> pagePartite =
+                                        page['partite'];
+                                    return Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      children: [
+                                        // Titolo della giornata
+                                        Padding(
+                                          padding: EdgeInsets.only(
+                                            bottom: 8.0,
+                                            top: 4.0,
+                                            left: 16.0,
+                                          ),
+                                          child: Align(
+                                            alignment: Alignment.centerLeft,
+                                            child: Row(
+                                              children: [
+                                                Image.asset(
+                                                  'assets/logos/logo_${page['cod']}_comp.png',
+                                                  height: 24,
+                                                  width: 24,
+                                                ),
+                                                SizedBox(width: 8),
+                                                Text(
+                                                  competizione,
+                                                  style: TextStyle(
+                                                    fontSize: 15,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.blueAccent,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                            context,
                                           ),
                                         ),
-                                    ],
-                                  );
-                                },
-                              ),
-                            ),
-                            if (isWide && pages.length > 1)
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  IconButton(
-                                    onPressed: () {
-                                      if (_pageController.hasClients) {
-                                        _pageController.previousPage(
-                                          duration: Duration(milliseconds: 300),
-                                          curve: Curves.easeInOut,
-                                        );
-                                      }
-                                    },
-                                    icon: Icon(Icons.arrow_back_ios),
-                                    tooltip: 'Pagina precedente',
-                                  ),
-                                  IconButton(
-                                    onPressed: () {
-                                      if (_pageController.hasClients) {
-                                        _pageController.nextPage(
-                                          duration: Duration(milliseconds: 300),
-                                          curve: Curves.easeInOut,
-                                        );
-                                      }
-                                    },
-                                    icon: Icon(Icons.arrow_forward_ios),
-                                    tooltip: 'Pagina successiva',
-                                  ),
-                                ],
-                              ),
-                            const SizedBox(height: 12),
-                            if (!isWide)
-                              SmoothPageIndicator(
-                                controller: _pageController,
-                                count: pages.length,
-                                effect: WormEffect(
-                                  dotHeight: 10,
-                                  dotWidth: 10,
-                                  activeDotColor: Colors.blueAccent,
-                                  dotColor: Colors.grey.shade300,
+                                        // Partite della giornata
+                                        for (var partita in pagePartite)
+                                          SizedBox(
+                                            width: MediaQuery.of(
+                                              context,
+                                            ).size.width,
+                                            height: isWide
+                                                ? isTall
+                                                      ? 60
+                                                      : 70
+                                                : 55,
+                                            child: buildCampionatoMatch(
+                                              CampionatoMatchModel(
+                                                match: partita.id ?? 'unknown',
+                                                partita: partita,
+                                                campionato: widget.campionato,
+                                              ),
+                                              context,
+                                            ),
+                                          ),
+                                      ],
+                                    );
+                                  },
                                 ),
                               ),
-                          ],
+                              if (isWide && pages.length > 1)
+                                Padding(
+                                  padding: EdgeInsets.only(top: 32),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Padding(
+                                        padding: EdgeInsetsGeometry.only(
+                                          left: 16,
+                                        ),
+                                        child: IconButton(
+                                          onPressed: () {
+                                            if (_pageController.hasClients) {
+                                              _pageController.previousPage(
+                                                duration: Duration(
+                                                  milliseconds: 300,
+                                                ),
+                                                curve: Curves.easeInOut,
+                                              );
+                                            }
+                                          },
+                                          icon: Icon(Icons.arrow_back_ios),
+                                          tooltip: 'Pagina precedente',
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: EdgeInsetsGeometry.only(
+                                          right: 16,
+                                        ),
+                                        child: IconButton(
+                                          onPressed: () {
+                                            if (_pageController.hasClients) {
+                                              _pageController.nextPage(
+                                                duration: Duration(
+                                                  milliseconds: 300,
+                                                ),
+                                                curve: Curves.easeInOut,
+                                              );
+                                            }
+                                          },
+                                          icon: Icon(Icons.arrow_forward_ios),
+                                          tooltip: 'Pagina successiva',
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              const SizedBox(height: 0),
+                              if (!isWide)
+                                SmoothPageIndicator(
+                                  controller: _pageController,
+                                  count: pages.length,
+                                  effect: WormEffect(
+                                    dotHeight: 10,
+                                    dotWidth: 10,
+                                    activeDotColor: Colors.blueAccent,
+                                    dotColor: Colors.grey.shade300,
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -353,7 +444,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
     final provider = Provider.of<SquadreProvider>(context, listen: false);
     bool isWide = MediaQuery.of(context).size.width > 600;
     final screenHeight = isWide
-        ? MediaQuery.of(context).size.height
+        ? MediaQuery.of(context).size.height * 1.2
         : MediaQuery.of(context).size.height * 0.9;
     return SizedBox(
       width: isWide
@@ -372,20 +463,26 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
           DefaultTabController(
             length: 3,
             child: SizedBox(
-              height: screenHeight * 0.5, // Altezza fissa per il TabController
+              height: screenHeight * 0.5,
               child: Column(
                 children: [
                   Container(
                     constraints: BoxConstraints(maxHeight: 50, maxWidth: 900),
-                    child: TabBar(
-                      labelColor: Colors.blueAccent,
-                      unselectedLabelColor: Colors.grey,
-                      indicatorColor: Colors.blueAccent,
-                      tabs: [
-                        Tab(text: 'Serie A'),
-                        Tab(text: 'Serie B'),
-                        Tab(text: 'Serie C'),
-                      ],
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        right: 16.0,
+                        left: isWide ? 16.0 : 8.0,
+                      ),
+                      child: TabBar(
+                        labelColor: Colors.blueAccent,
+                        unselectedLabelColor: Colors.grey,
+                        indicatorColor: Colors.blueAccent,
+                        tabs: [
+                          Tab(text: 'Serie A'),
+                          Tab(text: 'Serie B'),
+                          Tab(text: 'Serie C'),
+                        ],
+                      ),
                     ),
                   ),
                   Expanded(
@@ -502,13 +599,42 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
   }
 
   Future<List<Partita>> getPartiteByDate(PartiteProvider provider) async {
-    DateTime da = DateTime.now();
+    DateTime now = DateTime.now();
+    DateTime da = DateTime(now.year, now.month, now.day);
     DateTime a = da.add(Duration(days: 7));
     List<Partita> partite = await provider.fetchPartiteByDate(
       widget.campionato,
       da,
       a,
     );
+    final competizioneProvider = Provider.of<CompetizioniProvider>(
+      context,
+      listen: false,
+    );
+    for (var partita in partite) {
+      Competizione competizione = await getCompetizione(
+        competizioneProvider,
+        partita,
+      );
+      var partitaComp = {
+        'idPartita': partita.id,
+        'idCompetizione': competizione.id,
+        'cod': competizione.cod,
+        'nome': competizione.nome,
+      };
+      partitaCompList.add(partitaComp);
+    }
     return partite;
+  }
+
+  Future<Competizione> getCompetizione(
+    CompetizioniProvider provider,
+    Partita partita,
+  ) async {
+    Competizione competizione = await provider.getCompetizione(
+      widget.campionato,
+      partita.idGiornata,
+    );
+    return competizione;
   }
 }

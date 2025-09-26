@@ -7,13 +7,11 @@ import 'package:provider/provider.dart';
 class PartitaHomePage extends StatefulWidget {
   final Partita partita;
   final String campionato;
-  final int competizioneId;
 
   const PartitaHomePage({
     super.key,
     required this.partita,
     required this.campionato,
-    required this.competizioneId,
   });
 
   @override
@@ -85,7 +83,88 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                       end: Alignment.bottomRight,
                     ),
                   ),
-            child: SafeArea(child: Stack()),
+            child: SafeArea(
+              child: Stack(
+                children: [
+                  Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '${widget.partita.data.toIso8601String().split('T')[0]} - ${widget.partita.data.toIso8601String().split('T')[1].split('.')[0]}' ??
+                              '',
+                          style: TextStyle(fontSize: 12, color: Colors.white),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 80,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.asset(
+                                    'assets/squadre/${widget.partita.codHome}.png',
+                                    height: 80,
+                                    width: 80,
+                                  ),
+                                  Text(
+                                    widget.partita.teamHome,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      color: Colors.white,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(width: 40),
+                            SizedBox(
+                              width: 80,
+                              child: Text(
+                                '${widget.partita.risultatoHome} - ${widget.partita.risultatoAway}',
+                                style: TextStyle(
+                                  fontSize: 40,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            SizedBox(width: 40),
+                            SizedBox(
+                              width: 80,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.asset(
+                                    'assets/squadre/${widget.partita.codAway}.png',
+                                    height: 80,
+                                    width: 80,
+                                  ),
+                                  Text(
+                                    widget.partita.teamAway,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      color: Colors.white,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 2,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -95,7 +174,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   Future<Competizione> getCompetizione(CompetizioniProvider provider) async {
     Competizione competizione = await provider.getCompetizione(
       widget.campionato,
-      widget.competizioneId,
+      widget.partita.idGiornata,
     );
     return competizione;
   }

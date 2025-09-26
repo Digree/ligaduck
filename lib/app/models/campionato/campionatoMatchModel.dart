@@ -6,13 +6,11 @@ class CampionatoMatchModel {
   final String match;
   final Partita partita;
   final String campionato;
-  final int competizioneId;
 
   CampionatoMatchModel({
     required this.match,
     required this.partita,
     required this.campionato,
-    required this.competizioneId,
   });
 }
 
@@ -40,7 +38,6 @@ Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
               builder: (context) => PartitaHomePage(
                 partita: model.partita,
                 campionato: model.campionato,
-                competizioneId: model.competizioneId,
               ),
             ),
           ),

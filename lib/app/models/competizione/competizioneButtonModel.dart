@@ -20,7 +20,12 @@ Widget buildCompetizioneButton(
   final screenHeight = MediaQuery.of(context).size.height;
   bool isWide = MediaQuery.of(context).size.width > 600;
   return Padding(
-    padding: EdgeInsets.only(top: 16.0, left: 8.0, right: 8.0, bottom: 50.0),
+    padding: EdgeInsets.only(
+      top: 8.0,
+      left: 8.0,
+      right: 8.0,
+      bottom: isWide ? 32.0 : 16.0,
+    ),
     child: SizedBox(
       width: isWide ? 190 : screenWidth * 0.3,
       height: isWide ? 160 : screenHeight * 0.1,

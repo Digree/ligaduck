@@ -75,7 +75,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
               globals.admin
                   ? Row(
                       children: [
-                        if (giornataChiusa != null)
+                        if (giornataChiusa != null && giornate_.isNotEmpty)
                           IconButton(
                             onPressed: () {
                               giornataChiusa = !giornataChiusa!;
@@ -156,7 +156,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                           Image.asset(
                             'assets/logos/logo_${widget.competizione.cod}_comp.png',
                             fit: BoxFit.contain,
-                            height: 100,
+                            height: 90,
                           ),
                           const SizedBox(height: 8),
                           Text(
@@ -409,7 +409,6 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                       match: partite[index].id,
                       partita: partite[index],
                       campionato: widget.campionato,
-                      competizioneId: widget.competizione.id,
                     ),
                     context,
                   );
@@ -451,17 +450,17 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
     return Padding(
       padding: EdgeInsets.only(top: 8.0),
       child: widget.competizione.classifica == "Gironi"
-          ? Column(
-              children: [
-                for (var i = 0; i < count; i++)
-                  cardClassifica(
-                    giornata,
-                    isWide,
-                    screenWidth,
-                    screenHeight,
-                    i,
-                  ),
-              ],
+          ? ListView.builder(
+              itemCount: count,
+              itemBuilder: (context, index) {
+                return cardClassifica(
+                  giornata,
+                  isWide,
+                  screenWidth,
+                  screenHeight,
+                  index,
+                );
+              },
             )
           : cardClassifica(giornata, isWide, screenWidth, screenHeight, 0),
     );
@@ -697,11 +696,15 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                   height: 35,
                 ),
               ),
-              Padding(
-                padding: EdgeInsets.only(left: 8),
-                child: Text(
-                  '${posizione.nomeSquadra}',
-                  style: TextStyle(fontSize: 12, color: Colors.white),
+              SizedBox(
+                width: isWide ? screenWidth * 0.3 : screenWidth * 0.22,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 8),
+                  child: Text(
+                    '${posizione.nomeSquadra}',
+                    style: TextStyle(fontSize: 12, color: Colors.white),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
               Spacer(),
@@ -927,6 +930,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
 
       _showMessage('File CSV caricato con successo: ${dataRows.length} righe');
 
+      caricaGiornate();
       setState(() {});
       Navigator.pop(context);
     } catch (e) {
