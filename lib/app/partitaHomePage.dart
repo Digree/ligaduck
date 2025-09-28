@@ -91,8 +91,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          '${widget.partita.data.toIso8601String().split('T')[0]} - ${widget.partita.data.toIso8601String().split('T')[1].split('.')[0]}' ??
-                              '',
+                          '${widget.partita.data.toIso8601String().split('T')[0]} - ${widget.partita.data.toIso8601String().split('T')[1].split('.')[0]}',
                           style: TextStyle(fontSize: 12, color: Colors.white),
                         ),
                         Row(
@@ -108,14 +107,17 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                     height: 80,
                                     width: 80,
                                   ),
-                                  Text(
-                                    widget.partita.teamHome,
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      color: Colors.white,
+                                  SizedBox(
+                                    height: 20,
+                                    child: Text(
+                                      widget.partita.teamHome,
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        color: Colors.white,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      overflow: TextOverflow.visible,
                                     ),
-                                    textAlign: TextAlign.center,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
                               ),
@@ -144,15 +146,17 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                     height: 80,
                                     width: 80,
                                   ),
-                                  Text(
-                                    widget.partita.teamAway,
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      color: Colors.white,
+                                  SizedBox(
+                                    height: 20,
+                                    child: Text(
+                                      widget.partita.teamAway,
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        color: Colors.white,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      overflow: TextOverflow.visible,
                                     ),
-                                    textAlign: TextAlign.center,
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 2,
                                   ),
                                 ],
                               ),
@@ -166,6 +170,116 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
               ),
             ),
           ),
+        ),
+      ),
+      body: buildPartitaData(),
+    );
+  }
+
+  Widget buildPartitaData() {
+    bool isWide = MediaQuery.of(context).size.width > 600;
+    return isWide
+        ? Scaffold(body: Center(child: Text('Dettagli partita in arrivo...')))
+        : DefaultTabController(
+            length: 3,
+            child: Column(
+              children: [
+                TabBar(
+                  labelColor: Color(
+                    competizione!.colori.isNotEmpty
+                        ? int.parse(
+                            competizione!.colori[0].replaceFirst('#', 'FF'),
+                            radix: 16,
+                          )
+                        : 0xFF000000,
+                  ),
+                  unselectedLabelColor: Colors.grey,
+                  indicatorColor: Color(
+                    competizione!.colori.isNotEmpty
+                        ? int.parse(
+                            competizione!.colori[0].replaceFirst('#', 'FF'),
+                            radix: 16,
+                          )
+                        : 0xFF000000,
+                  ),
+                  tabs: [
+                    Tab(text: 'Tabellino'),
+                    Tab(text: 'Formazioni'),
+                    Tab(text: 'Info Partita'),
+                  ],
+                ),
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      buildTabellino(),
+                      Center(child: Text('Statistiche Partita')),
+                      Center(child: Text('Info Partita')),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+  }
+
+  Widget buildTabellino() {
+    widget.partita.tabellino.sort((a, b) => a.minuto.compareTo(b.minuto));
+    return ListView(
+      children: [
+        for (var evento in widget.partita.tabellino) buildTabellinoRow(evento),
+      ],
+    );
+  }
+
+  Widget buildTabellinoRow(evento) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    return Container(
+      width: screenWidth * 1,
+      height: 40,
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.grey[350] ?? Colors.grey,
+            width: 1.0,
+          ),
+        ),
+      ),
+      child: Padding(
+        padding: evento.idTeam == widget.partita.idTeamHome
+            ? EdgeInsets.only(left: 20)
+            : EdgeInsets.only(right: 20),
+        child: Row(
+          mainAxisAlignment: evento.idTeam == widget.partita.idTeamHome
+              ? MainAxisAlignment.start
+              : MainAxisAlignment.end,
+          children: [
+            evento.idTeam == widget.partita.idTeamHome
+                ? Text(
+                    '${evento.idAzione == 1
+                        ? ' ⚽'
+                        : evento.idAzione == 2
+                        ? ' 🅰️'
+                        : evento.idAzione == 3
+                        ? ' 🟥'
+                        : evento.idAzione == 4
+                        ? ' 🟨'
+                        : ''} ${evento.minuto}\' ${evento.idGiocatore}',
+                    style: TextStyle(fontSize: 16, color: Colors.black),
+                  )
+                : Text(
+                    '${evento.minuto}\' ${evento.idGiocatore} ${evento.idAzione == 1
+                        ? ' ⚽'
+                        : evento.idAzione == 2
+                        ? ' 🅰️'
+                        : evento.idAzione == 3
+                        ? ' 🟥'
+                        : evento.idAzione == 4
+                        ? ' 🟨'
+                        : ''}',
+                    style: TextStyle(fontSize: 16, color: Colors.black),
+                  ),
+          ],
         ),
       ),
     );

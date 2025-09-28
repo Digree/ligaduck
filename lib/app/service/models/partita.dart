@@ -103,14 +103,16 @@ class GiocatoreFormazione {
 }
 
 class Evento {
-  final int idGiocatore;
+  final String idGiocatore;
   final int minuto;
   final int idAzione;
+  final int idTeam;
 
   Evento({
     required this.idGiocatore,
     required this.minuto,
     required this.idAzione,
+    required this.idTeam,
   });
 
   factory Evento.fromJson(Map<String, dynamic> json) {
@@ -118,6 +120,7 @@ class Evento {
       idGiocatore: json['idGiocatore'],
       minuto: json['minuto'],
       idAzione: json['idAzione'],
+      idTeam: json['idTeam'],
     );
   }
 
