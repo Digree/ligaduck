@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:ligaduck/app/config/models/global.dart' as globals;
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:oktoast/oktoast.dart';
 
@@ -25,6 +26,64 @@ class _SquadrePageState extends State<SquadrePage> {
     }
   }
 
+  void _showEditModal(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.0),
+          ),
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.8,
+            height: MediaQuery.of(context).size.height * 0.3,
+            padding: EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Modifica Squadra',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.close),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
+                Expanded(
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ListView(
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {},
+                          child: Text(
+                            'Aggiungi Giocatore',
+                            style: TextStyle(color: getColor('primary')),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -35,6 +94,23 @@ class _SquadrePageState extends State<SquadrePage> {
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(kToolbarHeight),
         child: AppBar(
+          actions: [
+            globals.admin
+                ? Row(
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: IconButton(
+                          icon: Icon(Icons.edit, color: getIconColor()),
+                          onPressed: () {
+                            _showEditModal(context);
+                          },
+                        ),
+                      ),
+                    ],
+                  )
+                : SizedBox(),
+          ],
           flexibleSpace: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -47,14 +123,14 @@ class _SquadrePageState extends State<SquadrePage> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: Colors.white),
+            icon: Icon(Icons.arrow_back, color: getIconColor()),
             onPressed: () {
               Navigator.pop(context);
             },
           ),
           title: Text(
             widget.squadra.nome,
-            style: TextStyle(color: Colors.white),
+            style: TextStyle(color: getIconColor()),
           ),
         ),
       ),
@@ -65,7 +141,6 @@ class _SquadrePageState extends State<SquadrePage> {
           children: [
             headerTeam(context, isWide, screenWidth, screenHeight),
             infoTeam(context, isWide, screenWidth, screenHeight),
-            // Add more widgets here as needed
           ],
         ),
       ),
@@ -606,7 +681,7 @@ class _SquadrePageState extends State<SquadrePage> {
       'nero': Colors.black,
       'bianco': Colors.white,
       'grigio': Colors.grey,
-      'fucsia': ?Colors.pink[700],
+      'fucsia': Colors.pink[700]!,
       'ciano': Colors.cyan,
       'marrone': Colors.brown,
     };
@@ -626,5 +701,19 @@ class _SquadrePageState extends State<SquadrePage> {
     } else {
       return Colors.grey;
     }
+  }
+
+  bool isLightColor(Color color) {
+    final brightness = color.computeLuminance();
+    return brightness > 0.5;
+  }
+
+  Color getIconColor() {
+    final secondaryColor = getColor('secondary');
+
+    if (isLightColor(secondaryColor)) {
+      return Colors.black;
+    }
+    return Colors.white;
   }
 }
