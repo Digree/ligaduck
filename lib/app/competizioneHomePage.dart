@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:ligaduck/app/campionatoHomePage.dart';
+import 'package:ligaduck/app/campionato/campionatoHomePage.dart';
 import 'package:ligaduck/app/models/campionato/campionatoMatchModel.dart';
 import 'package:ligaduck/app/service/competizioniProvider.dart';
 import 'package:ligaduck/app/service/giornateProvider.dart';
@@ -1020,6 +1020,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
       idTeamAway: 0,
       codHome: '',
       codAway: '',
+      moduloHome: '',
+      moduloAway: '',
       risultatoHome: 0,
       risultatoAway: 0,
       formazioneHome: [],

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ligaduck/app/campionatoHomePage.dart';
+import 'package:ligaduck/app/campionato/campionatoHomePage.dart';
 import 'package:ligaduck/app/config/models/config.dart';
 import 'package:ligaduck/app/config/models/service/configProvider.dart';
 import 'package:ligaduck/app/models/campionato/campionatoButtonModel.dart';

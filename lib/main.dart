@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ligaduck/app/campionatoHomePage.dart';
+import 'package:ligaduck/app/campionato/campionatoHomePage.dart';
 import 'package:ligaduck/app/config/models/config.dart';
 import 'package:ligaduck/app/config/models/service/configProvider.dart';
 import 'package:ligaduck/app/service/competizioniProvider.dart';
@@ -21,9 +21,14 @@ void main() => runApp(
   ),
 );
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -40,7 +45,21 @@ class MyApp extends StatelessWidget {
             final configs = snapshot.data!;
             if (configs.isEmpty) {
               return Scaffold(
-                body: Center(child: Text('Nessun dato disponibile')),
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Nessun dato disponibile'),
+                      SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: () {
+                          setState(() {});
+                        },
+                        child: Icon(Icons.refresh, color: Colors.blueAccent),
+                      ),
+                    ],
+                  ),
+                ),
               );
             } else {
               List<Config> filteredConfigs = snapshot.data ?? [];

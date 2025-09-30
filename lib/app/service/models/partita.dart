@@ -9,6 +9,8 @@ class Partita {
   final String codAway;
   final int risultatoHome;
   final int risultatoAway;
+  final String? moduloHome;
+  final String? moduloAway;
   final List<GiocatoreFormazione> formazioneHome;
   final List<GiocatoreFormazione> formazioneAway;
   final int divisaHome;
@@ -25,6 +27,8 @@ class Partita {
     required this.teamAway,
     required this.codHome,
     required this.codAway,
+    required this.moduloHome,
+    required this.moduloAway,
     required this.risultatoHome,
     required this.risultatoAway,
     required this.formazioneHome,
@@ -45,6 +49,8 @@ class Partita {
       teamAway: json['teamAway'],
       codHome: json['codHome'],
       codAway: json['codAway'],
+      moduloHome: json['moduloHome'],
+      moduloAway: json['moduloAway'],
       risultatoHome: json['risultatoHome'],
       risultatoAway: json['risultatoAway'],
       formazioneHome: (json['formazioneHome'] as List)
@@ -86,7 +92,7 @@ class Partita {
 
 class GiocatoreFormazione {
   final int pos;
-  final int idGiocatore;
+  final String idGiocatore;
 
   GiocatoreFormazione({required this.pos, required this.idGiocatore});
 

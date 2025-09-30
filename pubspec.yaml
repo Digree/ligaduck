@@ -17,6 +17,7 @@ dependencies:
   smooth_page_indicator: ^1.1.0
   csv: ^6.0.0
   mongo_dart: ^0.10.0
+  font_awesome_flutter: ^10.7.0
 
 dev_dependencies:
   flutter_test:

@@ -3,14 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:ligaduck/app/competizioneHomePage.dart';
 import 'package:ligaduck/app/homePage.dart';
 import 'package:ligaduck/app/models/campionato/campionatoMatchModel.dart';
+import 'package:ligaduck/app/models/campionato/listaSquadreModel.dart';
 import 'package:ligaduck/app/models/competizione/competizioneButtonModel.dart';
 import 'package:ligaduck/app/service/competizioniProvider.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
-import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/service/partiteProvider.dart';
-import 'package:ligaduck/app/service/squadreProvider.dart';
-import 'package:ligaduck/app/squadrePage.dart';
 import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
@@ -31,16 +29,12 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
   final ScrollController _scrollController = ScrollController();
   final PageController _pageController = PageController();
   final partitaCompList = [];
+  int _selectedIndex = 0;
 
   @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
-  }
-
-  Future<List<Squadra>> getSquadre(SquadreProvider provider) async {
-    List<Squadra> squadre = await provider.fetchSquadre(widget.campionato);
-    return squadre;
   }
 
   Future<List<Competizione>> getCompetizioni(
@@ -71,109 +65,156 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
         ),
         title: Text(widget.title, style: TextStyle(color: Colors.white)),
       ),
-      body: Align(
-        alignment: Alignment.topCenter,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(top: 15.0, bottom: 8.0),
-                child: Padding(
-                  padding: EdgeInsets.only(left: 16.0, top: 8.0),
-                  child: Align(
-                    alignment: Alignment.topLeft,
-                    child: Text(
-                      'Competizioni:',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+      bottomNavigationBar: !isWide
+          ? BottomNavigationBar(
+              type: BottomNavigationBarType.fixed,
+              backgroundColor: Colors.blueAccent.withOpacity(0.8),
+              selectedItemColor: Colors.white,
+              unselectedItemColor: Colors.white70,
+              currentIndex: _selectedIndex,
+              items: [
+                BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.shield),
+                  label: 'Squadre',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.compare_arrows_outlined),
+                  label: 'Mercato',
+                ),
+              ],
+              onTap: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
+              },
+            )
+          : null,
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: [
+          Align(
+            alignment: Alignment.topCenter,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(top: 15.0, bottom: 8.0),
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 16.0, top: 8.0),
+                      child: Align(
+                        alignment: Alignment.topLeft,
+                        child: Text(
+                          'Competizioni:',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ),
-              Listener(
-                onPointerSignal: (pointerSignal) {
-                  if (pointerSignal is PointerScrollEvent) {
-                    _scrollController.jumpTo(
-                      _scrollController.offset + pointerSignal.scrollDelta.dy,
-                    );
-                  }
-                },
-                child: Padding(
-                  padding: EdgeInsets.only(left: 16.0),
-                  child: SingleChildScrollView(
-                    controller: _scrollController,
-                    scrollDirection: Axis.horizontal,
-                    child: FutureBuilder(
-                      future: getCompetizioni(provider),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return Center(child: CircularProgressIndicator());
-                        }
-
-                        if (snapshot.hasError) {
-                          return Center(
-                            child: Text('Errore: ${snapshot.error}'),
-                          );
-                        }
-
-                        final competizioni = snapshot.data ?? [];
-
-                        competizioni.removeWhere(
-                          (comp) => comp.attiva == false,
+                  Listener(
+                    onPointerSignal: (pointerSignal) {
+                      if (pointerSignal is PointerScrollEvent) {
+                        _scrollController.jumpTo(
+                          _scrollController.offset +
+                              pointerSignal.scrollDelta.dy,
                         );
+                      }
+                    },
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 16.0),
+                      child: SingleChildScrollView(
+                        controller: _scrollController,
+                        scrollDirection: Axis.horizontal,
+                        child: FutureBuilder(
+                          future: getCompetizioni(provider),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return Center(child: CircularProgressIndicator());
+                            }
 
-                        return Row(
-                          children: [
-                            for (var competizione in competizioni)
-                              buildCompetizioneButton(
-                                CompetizioneButtonModel(
-                                  text: competizione.nome,
-                                  imagePath:
-                                      'assets/logos/logo_${competizione.cod}.png',
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            CompetizioneHomePage(
-                                              title: competizione.nome,
-                                              campionato: widget.campionato,
-                                              competizione: competizione,
-                                            ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                                context,
-                              ),
-                          ],
-                        );
-                      },
+                            if (snapshot.hasError) {
+                              return Center(
+                                child: Text('Errore: ${snapshot.error}'),
+                              );
+                            }
+
+                            final competizioni = snapshot.data ?? [];
+
+                            competizioni.removeWhere(
+                              (comp) => comp.attiva == false,
+                            );
+
+                            return Row(
+                              children: [
+                                for (var competizione in competizioni)
+                                  buildCompetizioneButton(
+                                    CompetizioneButtonModel(
+                                      text: competizione.nome,
+                                      imagePath:
+                                          'assets/logos/logo_${competizione.cod}.png',
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                CompetizioneHomePage(
+                                                  title: competizione.nome,
+                                                  campionato: widget.campionato,
+                                                  competizione: competizione,
+                                                ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    context,
+                                  ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  isWide
+                      ? Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Column(children: [buildProssimePartite(context)]),
+                            Column(
+                              children: [
+                                buildListaSquadre(
+                                  ListaSquadreModel(
+                                    campionato: widget.campionato,
+                                  ),
+                                  context,
+                                ),
+                              ],
+                            ),
+                          ],
+                        )
+                      : Column(children: [buildProssimePartite(context)]),
+                ],
               ),
-              isWide
-                  ? Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Column(children: [buildProssimePartite(context)]),
-                        Column(children: [buildListaSquadre()]),
-                      ],
-                    )
-                  : Column(
-                      children: [
-                        buildProssimePartite(context),
-                        buildListaSquadre(),
-                      ],
-                    ),
-            ],
+            ),
           ),
-        ),
+          SingleChildScrollView(
+            child: buildListaSquadre(
+              ListaSquadreModel(campionato: widget.campionato),
+              context,
+            ),
+          ),
+          Center(
+            child: Text(
+              'Mercato in arrivo...',
+              style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -349,7 +390,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                                                 : 55,
                                             child: buildCampionatoMatch(
                                               CampionatoMatchModel(
-                                                match: partita.id ?? 'unknown',
+                                                match: partita.id,
                                                 partita: partita,
                                                 campionato: widget.campionato,
                                               ),
@@ -433,168 +474,6 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
           ],
         ),
       ),
-    );
-  }
-
-  /* buildCampionatoMatch(
-                      CampionatoMatchModel(match: '4', null),
-                      context,
-                    ), */
-  Widget buildListaSquadre() {
-    final provider = Provider.of<SquadreProvider>(context, listen: false);
-    bool isWide = MediaQuery.of(context).size.width > 600;
-    final screenHeight = isWide
-        ? MediaQuery.of(context).size.height * 1.2
-        : MediaQuery.of(context).size.height * 0.9;
-    return SizedBox(
-      width: isWide
-          ? MediaQuery.of(context).size.width * 0.5
-          : MediaQuery.of(context).size.width,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 16.0),
-            child: Text(
-              'Squadre:',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-          ),
-          DefaultTabController(
-            length: 3,
-            child: SizedBox(
-              height: screenHeight * 0.5,
-              child: Column(
-                children: [
-                  Container(
-                    constraints: BoxConstraints(maxHeight: 50, maxWidth: 900),
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                        right: 16.0,
-                        left: isWide ? 16.0 : 8.0,
-                      ),
-                      child: TabBar(
-                        labelColor: Colors.blueAccent,
-                        unselectedLabelColor: Colors.grey,
-                        indicatorColor: Colors.blueAccent,
-                        tabs: [
-                          Tab(text: 'Serie A'),
-                          Tab(text: 'Serie B'),
-                          Tab(text: 'Serie C'),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 1,
-                    child: SizedBox(
-                      width: MediaQuery.of(context).size.width * 1,
-                      child: TabBarView(
-                        children: [
-                          showSquadre(provider, 'Serie A'),
-                          showSquadre(provider, 'Serie B'),
-                          showSquadre(provider, 'Serie C'),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Squadra addCompetizioni(Squadra squadra, List<Competizione> competizioni) {
-    if (squadra.trofei == null) {
-      return squadra;
-    }
-    for (var competizione in competizioni) {
-      for (var i = 0; i < squadra.trofei!.length; i++) {
-        if (squadra.trofei?[i].idCompetizione == competizione.id) {
-          squadra.trofei?[i].nome = competizione.nome;
-          squadra.trofei?[i].cod = competizione.cod;
-        }
-      }
-    }
-    return squadra;
-  }
-
-  Widget showSquadre(SquadreProvider provider, String categoria) {
-    return FutureBuilder<List<Squadra>>(
-      future: getSquadre(provider),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
-        }
-
-        if (snapshot.hasError) {
-          return Center(child: Text('Errore: ${snapshot.error}'));
-        }
-        final squadre = snapshot.data ?? [];
-        final provider = Provider.of<CompetizioniProvider>(
-          context,
-          listen: false,
-        );
-
-        final filteredSquadre = squadre.where((squadra) {
-          return squadra.categoria == categoria;
-        }).toList();
-
-        filteredSquadre.sort((a, b) => a.nome.compareTo(b.nome));
-
-        return SingleChildScrollView(
-          child: FutureBuilder<List<Competizione>>(
-            future: getCompetizioni(provider),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
-              }
-
-              if (snapshot.hasError) {
-                return Center(child: Text('Errore: ${snapshot.error}'));
-              }
-              final competizioni = snapshot.data ?? [];
-
-              for (var squadra in squadre) {
-                squadra = addCompetizioni(squadra, competizioni);
-              }
-
-              return Column(
-                children: [
-                  for (var squadra in filteredSquadre)
-                    SizedBox(
-                      width: 1000,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0,
-                          vertical: 4.0,
-                        ),
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    SquadrePage(squadra: squadra),
-                              ),
-                            );
-                          },
-                          child: Text(
-                            squadra.nome,
-                            style: TextStyle(color: Colors.blueAccent),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
-        );
-      },
     );
   }
 
