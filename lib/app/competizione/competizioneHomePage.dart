@@ -13,7 +13,7 @@ import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/service/partiteProvider.dart';
 import 'package:ligaduck/app/service/squadreProvider.dart';
-import 'package:ligaduck/app/squadrePage.dart';
+import 'package:ligaduck/app/squadre/squadrePage.dart';
 import 'package:mongo_dart/mongo_dart.dart' as mongo;
 import 'package:provider/provider.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
@@ -661,7 +661,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => SquadrePage(squadra: squadra),
+              builder: (context) =>
+                  SquadrePage(squadra: squadra, campionato: widget.campionato),
             ),
           );
         },

@@ -3,7 +3,7 @@ import 'package:ligaduck/app/service/competizioniProvider.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/service/squadreProvider.dart';
-import 'package:ligaduck/app/squadrePage.dart';
+import 'package:ligaduck/app/squadre/squadrePage.dart';
 import 'package:provider/provider.dart';
 
 class ListaSquadreModel {
@@ -138,8 +138,10 @@ Widget showSquadre(
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  SquadrePage(squadra: squadra),
+                              builder: (context) => SquadrePage(
+                                squadra: squadra,
+                                campionato: campionato,
+                              ),
                             ),
                           );
                         },

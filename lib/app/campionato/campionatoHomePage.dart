@@ -1,6 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:ligaduck/app/competizioneHomePage.dart';
+import 'package:ligaduck/app/competizione/competizioneHomePage.dart';
 import 'package:ligaduck/app/homePage.dart';
 import 'package:ligaduck/app/models/campionato/campionatoMatchModel.dart';
 import 'package:ligaduck/app/models/campionato/listaSquadreModel.dart';
@@ -344,60 +344,63 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                                         page['competizione'];
                                     final List<Partita> pagePartite =
                                         page['partite'];
-                                    return Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: [
-                                        // Titolo della giornata
-                                        Padding(
-                                          padding: EdgeInsets.only(
-                                            bottom: 8.0,
-                                            top: 4.0,
-                                            left: 16.0,
-                                          ),
-                                          child: Align(
-                                            alignment: Alignment.centerLeft,
-                                            child: Row(
-                                              children: [
-                                                Image.asset(
-                                                  'assets/logos/logo_${page['cod']}_comp.png',
-                                                  height: 24,
-                                                  width: 24,
-                                                ),
-                                                SizedBox(width: 8),
-                                                Text(
-                                                  competizione,
-                                                  style: TextStyle(
-                                                    fontSize: 15,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.blueAccent,
+                                    return SingleChildScrollView(
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        children: [
+                                          // Titolo della giornata
+                                          Padding(
+                                            padding: EdgeInsets.only(
+                                              bottom: 8.0,
+                                              top: 4.0,
+                                              left: 16.0,
+                                            ),
+                                            child: Align(
+                                              alignment: Alignment.centerLeft,
+                                              child: Row(
+                                                children: [
+                                                  Image.asset(
+                                                    'assets/logos/logo_${page['cod']}_comp.png',
+                                                    height: 24,
+                                                    width: 24,
                                                   ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                        // Partite della giornata
-                                        for (var partita in pagePartite)
-                                          SizedBox(
-                                            width: MediaQuery.of(
-                                              context,
-                                            ).size.width,
-                                            height: isWide
-                                                ? isTall
-                                                      ? 60
-                                                      : 70
-                                                : 55,
-                                            child: buildCampionatoMatch(
-                                              CampionatoMatchModel(
-                                                match: partita.id,
-                                                partita: partita,
-                                                campionato: widget.campionato,
+                                                  SizedBox(width: 8),
+                                                  Text(
+                                                    competizione,
+                                                    style: TextStyle(
+                                                      fontSize: 15,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Colors.blueAccent,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
-                                              context,
                                             ),
                                           ),
-                                      ],
+                                          // Partite della giornata
+                                          for (var partita in pagePartite)
+                                            SizedBox(
+                                              width: MediaQuery.of(
+                                                context,
+                                              ).size.width,
+                                              height: isWide
+                                                  ? isTall
+                                                        ? 60
+                                                        : 70
+                                                  : 55,
+                                              child: buildCampionatoMatch(
+                                                CampionatoMatchModel(
+                                                  match: partita.id,
+                                                  partita: partita,
+                                                  campionato: widget.campionato,
+                                                ),
+                                                context,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
                                     );
                                   },
                                 ),

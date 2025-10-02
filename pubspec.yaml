@@ -13,6 +13,7 @@ dependencies:
   http: ^0.13.6
   provider: ^6.1.1
   oktoast: ^3.3.1
+  translator: ^0.1.7
   file_picker: ^5.2.5
   smooth_page_indicator: ^1.1.0
   csv: ^6.0.0

@@ -55,7 +55,7 @@ class _HomePage extends State<HomePage> {
                                   Spacer(),
                                   Switch(
                                     value: isAdmin,
-                                    activeThumbColor: Colors.white,
+                                    activeTrackColor: Colors.white,
                                     onChanged: (value) {
                                       setModalState(() {
                                         isAdmin = value;

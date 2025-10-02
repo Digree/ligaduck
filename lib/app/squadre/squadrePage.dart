@@ -1,21 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
+import 'package:ligaduck/app/service/giocatoriProvider.dart';
+import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
+import 'package:ligaduck/app/squadre/addGiocatoriPage.dart';
 import 'package:oktoast/oktoast.dart';
 
 class SquadrePage extends StatefulWidget {
   final Squadra squadra;
-  const SquadrePage({super.key, required this.squadra});
+  final String campionato;
+
+  const SquadrePage({
+    super.key,
+    required this.squadra,
+    required this.campionato,
+  });
 
   @override
   State<SquadrePage> createState() => _SquadrePageState();
 }
 
 class _SquadrePageState extends State<SquadrePage> {
+  List<Giocatore> giocatori = [];
+  bool _isLoadingGiocatori = false;
+
   @override
   void initState() {
     super.initState();
+    _loadGiocatori();
+  }
+
+  Future<void> _loadGiocatori() async {
+    setState(() {
+      _isLoadingGiocatori = true;
+    });
+    await fetchGiocatori();
+    if (mounted) {
+      setState(() {
+        _isLoadingGiocatori = false;
+      });
+    }
   }
 
   List<dynamic>? getTrofeiSquadra(Squadra squadra) {
@@ -24,6 +49,10 @@ class _SquadrePageState extends State<SquadrePage> {
     } else {
       return null;
     }
+  }
+
+  void getGiocatoriSquadra(Squadra squadra) {
+    fetchGiocatori();
   }
 
   void _showEditModal(BuildContext context) {
@@ -35,7 +64,7 @@ class _SquadrePageState extends State<SquadrePage> {
             borderRadius: BorderRadius.circular(16.0),
           ),
           child: Container(
-            width: MediaQuery.of(context).size.width * 0.8,
+            width: MediaQuery.of(context).size.width * 0.2,
             height: MediaQuery.of(context).size.height * 0.3,
             padding: EdgeInsets.all(20.0),
             child: Column(
@@ -66,9 +95,20 @@ class _SquadrePageState extends State<SquadrePage> {
                     child: ListView(
                       children: [
                         ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AddGiocatoriPage(
+                                  squadra: widget.squadra,
+                                  campionato: widget.campionato,
+                                ),
+                              ),
+                            );
+                          },
                           child: Text(
-                            'Aggiungi Giocatore',
+                            'Aggiungi Giocatori',
                             style: TextStyle(color: getColor('primary')),
                           ),
                         ),
@@ -101,7 +141,10 @@ class _SquadrePageState extends State<SquadrePage> {
                       Padding(
                         padding: EdgeInsets.all(8.0),
                         child: IconButton(
-                          icon: Icon(Icons.edit, color: getIconColor()),
+                          icon: Icon(
+                            Icons.edit,
+                            color: getIconColor('secondary'),
+                          ),
                           onPressed: () {
                             _showEditModal(context);
                           },
@@ -123,14 +166,14 @@ class _SquadrePageState extends State<SquadrePage> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: getIconColor()),
+            icon: Icon(Icons.arrow_back, color: getIconColor('primary')),
             onPressed: () {
               Navigator.pop(context);
             },
           ),
           title: Text(
             widget.squadra.nome,
-            style: TextStyle(color: getIconColor()),
+            style: TextStyle(color: getIconColor('primary')),
           ),
         ),
       ),
@@ -463,43 +506,118 @@ class _SquadrePageState extends State<SquadrePage> {
     double screenWidth,
     double screenHeight,
   ) {
-    return ListView(
-      children: [
-        teamListHeader(
-          context,
-          isWide,
-          screenWidth,
-          screenHeight,
-          'Allenatore',
-        ),
-        for (var i = 0; i < 1; i++)
-          teamListPlayer(context, isWide, screenWidth, screenHeight),
-        teamListHeader(context, isWide, screenWidth, screenHeight, 'Portieri'),
-        for (var i = 0; i < 3; i++)
-          teamListPlayer(context, isWide, screenWidth, screenHeight),
-        teamListHeader(context, isWide, screenWidth, screenHeight, 'Difensori'),
-        for (var i = 0; i < 7; i++)
-          teamListPlayer(context, isWide, screenWidth, screenHeight),
-        teamListHeader(
-          context,
-          isWide,
-          screenWidth,
-          screenHeight,
-          'Centrocampisti',
-        ),
-        for (var i = 0; i < 8; i++)
-          teamListPlayer(context, isWide, screenWidth, screenHeight),
-        teamListHeader(
-          context,
-          isWide,
-          screenWidth,
-          screenHeight,
-          'Attaccanti',
-        ),
-        for (var i = 0; i < 4; i++)
-          teamListPlayer(context, isWide, screenWidth, screenHeight),
-      ],
-    );
+    List<Giocatore> allenatori = giocatori
+        .where((giocatore) => giocatore.ruolo == 'Allenatore')
+        .toList();
+    List<Giocatore> portieri = giocatori
+        .where((giocatore) => giocatore.ruolo == 'Portiere')
+        .toList();
+    List<Giocatore> difensori = giocatori
+        .where((giocatore) => giocatore.ruolo == 'Difensore')
+        .toList();
+    List<Giocatore> centrocampisti = giocatori
+        .where((giocatore) => giocatore.ruolo == 'Centrocampista')
+        .toList();
+    List<Giocatore> attaccanti = giocatori
+        .where((giocatore) => giocatore.ruolo == 'Attaccante')
+        .toList();
+    return _isLoadingGiocatori
+        ? Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    getColor("primary"),
+                  ),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Caricamento giocatori...',
+                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          )
+        : ListView(
+            children: [
+              teamListHeader(
+                context,
+                isWide,
+                screenWidth,
+                screenHeight,
+                'Allenatore',
+              ),
+              for (var i = 0; i < allenatori.length; i++)
+                teamListPlayer(
+                  context,
+                  isWide,
+                  screenWidth,
+                  screenHeight,
+                  allenatori[i],
+                ),
+              teamListHeader(
+                context,
+                isWide,
+                screenWidth,
+                screenHeight,
+                'Portieri',
+              ),
+              for (var i = 0; i < portieri.length; i++)
+                teamListPlayer(
+                  context,
+                  isWide,
+                  screenWidth,
+                  screenHeight,
+                  portieri[i],
+                ),
+              teamListHeader(
+                context,
+                isWide,
+                screenWidth,
+                screenHeight,
+                'Difensori',
+              ),
+              for (var i = 0; i < difensori.length; i++)
+                teamListPlayer(
+                  context,
+                  isWide,
+                  screenWidth,
+                  screenHeight,
+                  difensori[i],
+                ),
+              teamListHeader(
+                context,
+                isWide,
+                screenWidth,
+                screenHeight,
+                'Centrocampisti',
+              ),
+              for (var i = 0; i < centrocampisti.length; i++)
+                teamListPlayer(
+                  context,
+                  isWide,
+                  screenWidth,
+                  screenHeight,
+                  centrocampisti[i],
+                ),
+              teamListHeader(
+                context,
+                isWide,
+                screenWidth,
+                screenHeight,
+                'Attaccanti',
+              ),
+              for (var i = 0; i < attaccanti.length; i++)
+                teamListPlayer(
+                  context,
+                  isWide,
+                  screenWidth,
+                  screenHeight,
+                  attaccanti[i],
+                ),
+            ],
+          );
   }
 
   Widget teamListHeader(
@@ -545,6 +663,7 @@ class _SquadrePageState extends State<SquadrePage> {
     bool isWide,
     double screenWidth,
     double screenHeight,
+    Giocatore giocatore,
   ) {
     return Container(
       width: screenWidth * 1,
@@ -560,18 +679,64 @@ class _SquadrePageState extends State<SquadrePage> {
       ),
       child: Row(
         children: [
-          Padding(
-            padding: EdgeInsets.only(left: 20),
-            child: Image.asset(
-              'assets/miscellaneous/divisa_1.png',
-              fit: BoxFit.contain,
-              height: 40,
+          if (giocatore.ruolo == 'Allenatore')
+            Padding(
+              padding: EdgeInsets.only(left: 28, right: 6),
+              child: Icon(Icons.cases, color: getColor("primary")),
             ),
-          ),
+          if (giocatore.ruolo != 'Allenatore')
+            Padding(
+              padding: EdgeInsets.only(left: 20),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage(
+                      'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_1.png',
+                    ),
+                    fit: BoxFit.cover,
+                  ),
+                  color: Colors.transparent,
+                ),
+                child: Center(
+                  child: Text(
+                    '${giocatore.numero}',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16,
+                      shadows: [
+                        Shadow(
+                          offset: Offset(-1.0, -1.0),
+                          blurRadius: 0.0,
+                          color: Colors.black,
+                        ),
+                        Shadow(
+                          offset: Offset(1.0, -1.0),
+                          blurRadius: 0.0,
+                          color: Colors.black,
+                        ),
+                        Shadow(
+                          offset: Offset(1.0, 1.0),
+                          blurRadius: 0.0,
+                          color: Colors.black,
+                        ),
+                        Shadow(
+                          offset: Offset(-1.0, 1.0),
+                          blurRadius: 0.0,
+                          color: Colors.black,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
           Padding(
             padding: EdgeInsets.only(left: 20),
             child: Text(
-              'Allenatore',
+              giocatore.nome,
               style: TextStyle(
                 color: Colors.black,
                 fontSize: 14,
@@ -586,7 +751,9 @@ class _SquadrePageState extends State<SquadrePage> {
                 padding: EdgeInsets.only(right: 20),
                 child: CircleAvatar(
                   radius: 15,
-                  backgroundImage: AssetImage('assets/nations/italy.png'),
+                  backgroundImage: AssetImage(
+                    'assets/nations/${giocatore.nazione}.png',
+                  ),
                 ),
               ),
             ),
@@ -670,13 +837,72 @@ class _SquadrePageState extends State<SquadrePage> {
     );
   }
 
+  Widget teamListPlayerWithData(
+    BuildContext context,
+    bool isWide,
+    double screenWidth,
+    double screenHeight,
+    Giocatore giocatore,
+  ) {
+    return Container(
+      width: screenWidth * 1,
+      height: 60,
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.grey[350] ?? Colors.grey,
+            width: 1.0,
+          ),
+        ),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              '${giocatore.numero}',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: getColor("primary"),
+              ),
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    giocatore.nome,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    '${giocatore.eta} anni • ${giocatore.nazione}',
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Color getColor(String type) {
     final Map<String, Color> colorMap = {
       'rosso': Colors.red,
       'verde': Colors.green,
       'blu': Colors.blueAccent,
-      'giallo': Colors.yellow,
-      'arancione': Colors.orange,
+      'giallo': Colors.yellow[600]!,
+      'arancione': Colors.orange[900]!,
       'viola': Colors.purple,
       'nero': Colors.black,
       'bianco': Colors.white,
@@ -708,12 +934,34 @@ class _SquadrePageState extends State<SquadrePage> {
     return brightness > 0.5;
   }
 
-  Color getIconColor() {
-    final secondaryColor = getColor('secondary');
+  Color getIconColor(String type) {
+    final secondaryColor = getColor(type);
 
     if (isLightColor(secondaryColor)) {
       return Colors.black;
     }
     return Colors.white;
+  }
+
+  Future<void> fetchGiocatori() async {
+    final provider = GiocatoriProvider();
+    try {
+      final fetchedGiocatori = await provider.fetchGiocatori(
+        widget.campionato,
+        widget.squadra.id,
+      );
+      if (mounted) {
+        setState(() {
+          giocatori = fetchedGiocatori;
+        });
+      }
+    } catch (e) {
+      print('Errore nel recupero dei giocatori: $e');
+      if (mounted) {
+        setState(() {
+          giocatori = [];
+        });
+      }
+    }
   }
 }

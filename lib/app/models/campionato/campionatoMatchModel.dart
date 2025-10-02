@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ligaduck/app/partitaHomePage.dart';
+import 'package:ligaduck/app/partita/partitaHomePage.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 
 class CampionatoMatchModel {
