@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:ligaduck/app/models/country.dart';
 import 'package:ligaduck/app/service/countryService.dart';
 import 'package:ligaduck/app/service/giocatoriProvider.dart';
@@ -50,12 +51,9 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
   List<Giocatore> giocatori = [];
   final translator = GoogleTranslator();
 
-  // Cache per le traduzioni per velocizzare il caricamento
   static final Map<String, String> _translationCache = {};
 
-  // Metodo per tradurre una nazione in italiano con cache
   Future<String> traduciNazione(String nazione) async {
-    // Controlla prima nella cache
     if (_translationCache.containsKey(nazione)) {
       return _translationCache[nazione]!;
     }
@@ -115,7 +113,10 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: getIconColor()),
           onPressed: () {
-            Navigator.pop(context);
+            Navigator.pop(
+              context,
+              true,
+            ); // Passa true per indicare refresh necessario
           },
         ),
       ),
@@ -464,6 +465,8 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
         ),
         SizedBox(height: 20),
         buildCSVButton(),
+        SizedBox(height: 10),
+        buildCSVTemplateButton(),
       ],
     );
   }
@@ -517,6 +520,18 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
     );
   }
 
+  Widget buildCSVTemplateButton() {
+    return ElevatedButton.icon(
+      onPressed: _downloadCsvTemplate,
+      icon: Icon(Icons.download),
+      label: Text('Scarica Modello CSV'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: getColor("primary"),
+        foregroundColor: getIconColor(),
+      ),
+    );
+  }
+
   Color getColor(String type) {
     final Map<String, Color> colorMap = {
       'rosso': Colors.red,
@@ -524,13 +539,13 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
       'blu': Colors.blueAccent,
       'giallo': Colors.yellow[600]!,
       'arancione': Colors.orange[900]!,
-      'viola': Colors.purple,
+      'viola': Colors.purple[800]!,
       'nero': Colors.black,
       'bianco': Colors.white,
       'grigio': Colors.grey,
       'fucsia': Colors.pink[700]!,
-      'ciano': Colors.cyan,
-      'marrone': Colors.brown,
+      'ciano': Colors.lightBlue[300]!,
+      'marrone': Colors.brown[900]!,
     };
 
     if (type.contains('primary')) {
@@ -834,5 +849,267 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
     } catch (e) {
       _showMessage('Errore nell\'aggiunta dei giocatori: $e');
     }
+  }
+
+  void _downloadCsvTemplate() {
+    try {
+      // Crea l'intestazione del CSV
+      List<List<dynamic>> csvData = [
+        ['Nome', 'Numero', 'Ruolo', 'Nazione'],
+      ];
+
+      // Converte in stringa CSV
+      String csv = const ListToCsvConverter(
+        fieldDelimiter: ';',
+        eol: '\n',
+      ).convert(csvData);
+
+      // Mostra dialog con opzioni di salvataggio
+      _showCsvDownloadOptions(csv);
+    } catch (e) {
+      _showMessage('Errore nella creazione del template CSV: $e');
+    }
+  }
+
+  void _showCsvDownloadOptions(String csvContent) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Scarica Template CSV',
+            style: TextStyle(color: getColor("primary")),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Come vuoi ottenere il template CSV?',
+                style: TextStyle(color: getColor("primary")),
+              ),
+              SizedBox(height: 20),
+
+              // Pulsante per salvare il file
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _saveTemplateToFile(csvContent);
+                  },
+                  icon: Icon(Icons.save_alt),
+                  label: Text('Salva come file'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: getColor("primary"),
+                    foregroundColor: getIconColor(),
+                  ),
+                ),
+              ),
+
+              SizedBox(height: 10),
+
+              // Pulsante per copiare negli appunti
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _copyToClipboard(csvContent);
+                  },
+                  icon: Icon(Icons.content_copy),
+                  label: Text('Copia negli appunti'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+
+              SizedBox(height: 10),
+
+              // Pulsante per visualizzare le istruzioni
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _showTemplateInstructions(csvContent);
+                  },
+                  icon: Icon(Icons.info),
+                  label: Text('Mostra istruzioni'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.grey[600],
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Annulla',
+                style: TextStyle(color: getColor("primary")),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _saveTemplateToFile(String csvContent) async {
+    try {
+      // Usa FilePicker per salvare il file
+      String? outputFile = await FilePicker.platform.saveFile(
+        dialogTitle: 'Salva template CSV',
+        fileName: 'template_giocatori.csv',
+        type: FileType.custom,
+        allowedExtensions: ['csv'],
+      );
+
+      if (outputFile != null) {
+        // Scrivi il contenuto nel file
+        final file = File(outputFile);
+        await file.writeAsString(csvContent, encoding: utf8);
+        _showMessage('Template salvato con successo in: ${file.path}');
+      }
+    } catch (e) {
+      _showMessage('Errore nel salvataggio del file: $e');
+    }
+  }
+
+  void _copyToClipboard(String csvContent) {
+    Clipboard.setData(ClipboardData(text: csvContent));
+    _showMessage('Template copiato negli appunti! Incollalo in un file .csv');
+  }
+
+  void _showTemplateInstructions(String csvContent) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Template CSV - Istruzioni',
+            style: TextStyle(color: getColor("primary")),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Template CSV:',
+                  style: TextStyle(color: getColor("primary")),
+                ),
+                SizedBox(height: 10),
+                Container(
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(5),
+                    border: Border.all(color: Colors.grey),
+                  ),
+                  child: SelectableText(
+                    csvContent,
+                    style: TextStyle(fontFamily: 'monospace'),
+                  ),
+                ),
+                SizedBox(height: 15),
+                Text(
+                  'Come utilizzare:',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: getColor("primary"),
+                  ),
+                ),
+                SizedBox(height: 5),
+                Text(
+                  '1. Copia il contenuto sopra',
+                  style: TextStyle(color: getColor("primary")),
+                ),
+                Text(
+                  '2. Incolla in un nuovo file .csv',
+                  style: TextStyle(color: getColor("primary")),
+                ),
+                Text(
+                  '3. Aggiungi i giocatori sotto l\'intestazione',
+                  style: TextStyle(color: getColor("primary")),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  'Formato ruoli:',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: getColor("primary"),
+                  ),
+                ),
+                Text(
+                  '• P = Portiere',
+                  style: TextStyle(color: getColor("primary")),
+                ),
+                Text(
+                  '• D = Difensore',
+                  style: TextStyle(color: getColor("primary")),
+                ),
+                Text(
+                  '• C = Centrocampista',
+                  style: TextStyle(color: getColor("primary")),
+                ),
+                Text(
+                  '• A = Attaccante',
+                  style: TextStyle(color: getColor("primary")),
+                ),
+                Text(
+                  '• M = Allenatore',
+                  style: TextStyle(color: getColor("primary")),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  'Note importanti:',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: getColor("primary"),
+                  ),
+                ),
+                Text(
+                  '• Nazione: nome completo in italiano',
+                  style: TextStyle(color: getColor("primary")),
+                ),
+                Text(
+                  '• Separatore: punto e virgola (;)',
+                  style: TextStyle(color: getColor("primary")),
+                ),
+                Text(
+                  '• Salva il file con estensione .csv',
+                  style: TextStyle(color: getColor("primary")),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _copyToClipboard(csvContent);
+              },
+              child: Text(
+                'Copia e Chiudi',
+                style: TextStyle(color: getColor("primary")),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Chiudi',
+                style: TextStyle(color: getColor("primary")),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

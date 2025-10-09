@@ -583,13 +583,136 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                               formazione: widget.partita.formazioneHome,
                               modulo: widget.partita.moduloHome,
                               campionato: widget.campionato,
+                              coloriSquadra:
+                                  null, // TODO: Aggiungere colori squadra
+                              giocatoriDisponibili:
+                                  (team == 0
+                                          ? widget.partita.formazioneHome
+                                          : widget.partita.formazioneAway)
+                                      .where(
+                                        (g) => g.pos != 0,
+                                      ) // Filtra gli allenatori
+                                      .toList(),
+                              onGiocatoreChanged: (pos, nuovoGiocatore) {
+                                setState(() {
+                                  // La posizione corrisponde all'indice nell'array
+                                  int index = pos - 1;
+                                  List<GiocatoreFormazione> formazione =
+                                      team == 0
+                                      ? widget.partita.formazioneHome
+                                      : widget.partita.formazioneAway;
+
+                                  if (index >= 0 && index < formazione.length) {
+                                    // Verifica se il giocatore selezionato è già in formazione
+                                    int indexGiocatoreSelezionato = formazione
+                                        .indexWhere(
+                                          (g) =>
+                                              g.idGiocatore ==
+                                              nuovoGiocatore.idGiocatore,
+                                        );
+
+                                    if (indexGiocatoreSelezionato != -1 &&
+                                        indexGiocatoreSelezionato != index) {
+                                      // Il giocatore è già in formazione in un'altra posizione, fai uno swap
+                                      GiocatoreFormazione giocatoreAttuale =
+                                          formazione[index];
+
+                                      // Swap i giocatori
+                                      formazione[index] = GiocatoreFormazione(
+                                        idGiocatore: nuovoGiocatore.idGiocatore,
+                                        pos: nuovoGiocatore.pos,
+                                        nome: nuovoGiocatore.nome,
+                                      );
+
+                                      formazione[indexGiocatoreSelezionato] =
+                                          GiocatoreFormazione(
+                                            idGiocatore:
+                                                giocatoreAttuale.idGiocatore,
+                                            pos: giocatoreAttuale.pos,
+                                            nome: giocatoreAttuale.nome,
+                                          );
+                                    } else if (indexGiocatoreSelezionato ==
+                                        -1) {
+                                      // Il giocatore non è in formazione, sostituisci normalmente
+                                      formazione[index] = GiocatoreFormazione(
+                                        idGiocatore: nuovoGiocatore.idGiocatore,
+                                        pos: nuovoGiocatore.pos,
+                                        nome: nuovoGiocatore.nome,
+                                      );
+                                    }
+                                    // Se indexGiocatoreSelezionato == index, il giocatore è già in quella posizione, non fare nulla
+                                  }
+                                });
+                              },
                             )
                           : PartitaFormazioneModel(
                               codSquadra: widget.partita.codAway,
                               formazione: widget.partita.formazioneAway,
                               modulo: widget.partita.moduloAway,
                               campionato: widget.campionato,
+                              coloriSquadra:
+                                  null, // TODO: Aggiungere colori squadra
+                              giocatoriDisponibili:
+                                  (team == 1
+                                          ? widget.partita.formazioneAway
+                                          : widget.partita.formazioneHome)
+                                      .where(
+                                        (g) => g.pos != 0,
+                                      ) // Filtra gli allenatori
+                                      .toList(),
+                              onGiocatoreChanged: (pos, nuovoGiocatore) {
+                                setState(() {
+                                  // La posizione corrisponde all'indice nell'array
+                                  int index = pos - 1;
+                                  List<GiocatoreFormazione> formazione =
+                                      team == 1
+                                      ? widget.partita.formazioneAway
+                                      : widget.partita.formazioneHome;
+
+                                  if (index >= 0 && index < formazione.length) {
+                                    // Verifica se il giocatore selezionato è già in formazione
+                                    int indexGiocatoreSelezionato = formazione
+                                        .indexWhere(
+                                          (g) =>
+                                              g.idGiocatore ==
+                                              nuovoGiocatore.idGiocatore,
+                                        );
+
+                                    if (indexGiocatoreSelezionato != -1 &&
+                                        indexGiocatoreSelezionato != index) {
+                                      // Il giocatore è già in formazione in un'altra posizione, fai uno swap
+                                      GiocatoreFormazione giocatoreAttuale =
+                                          formazione[index];
+
+                                      // Swap i giocatori
+                                      formazione[index] = GiocatoreFormazione(
+                                        idGiocatore: nuovoGiocatore.idGiocatore,
+                                        pos: nuovoGiocatore.pos,
+                                        nome: nuovoGiocatore.nome,
+                                      );
+
+                                      formazione[indexGiocatoreSelezionato] =
+                                          GiocatoreFormazione(
+                                            idGiocatore:
+                                                giocatoreAttuale.idGiocatore,
+                                            pos: giocatoreAttuale.pos,
+                                            nome: giocatoreAttuale.nome,
+                                          );
+                                    } else if (indexGiocatoreSelezionato ==
+                                        -1) {
+                                      // Il giocatore non è in formazione, sostituisci normalmente
+                                      formazione[index] = GiocatoreFormazione(
+                                        idGiocatore: nuovoGiocatore.idGiocatore,
+                                        pos: nuovoGiocatore.pos,
+                                        nome: nuovoGiocatore.nome,
+                                      );
+                                    }
+                                    // Se indexGiocatoreSelezionato == index, il giocatore è già in quella posizione, non fare nulla
+                                  }
+                                });
+                              },
                             ),
+                      context,
                     )
                   : Center(),
             ),

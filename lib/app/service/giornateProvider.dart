@@ -22,7 +22,17 @@ class GiornateProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        _giornate = data.map((item) => Giornata.fromJson(item)).toList();
+        _giornate = [];
+
+        for (var item in data) {
+          try {
+            _giornate.add(Giornata.fromJson(item));
+          } catch (parseError) {
+            print('Errore parsing giornata: $parseError');
+            print('Dato problematico: $item');
+          }
+        }
+
         notifyListeners();
         return _giornate;
       } else {
@@ -73,9 +83,17 @@ class GiornateProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        _classifica = data
-            .map((item) => PosizioneClassifica.fromJson(item))
-            .toList();
+        _classifica = [];
+
+        for (var item in data) {
+          try {
+            _classifica.add(PosizioneClassifica.fromJson(item));
+          } catch (parseError) {
+            print('Errore parsing classifica: $parseError');
+            print('Dato problematico: $item');
+          }
+        }
+
         notifyListeners();
         return _classifica;
       } else {

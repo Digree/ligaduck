@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
+import 'package:ligaduck/app/models/partita/partitaFormazioneModel.dart';
 import 'package:ligaduck/app/service/giocatoriProvider.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
+import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
+import 'package:ligaduck/app/squadre/addFormazionePage.dart';
 import 'package:ligaduck/app/squadre/addGiocatoriPage.dart';
 import 'package:oktoast/oktoast.dart';
 
@@ -95,9 +98,9 @@ class _SquadrePageState extends State<SquadrePage> {
                     child: ListView(
                       children: [
                         ElevatedButton(
-                          onPressed: () {
+                          onPressed: () async {
                             Navigator.of(context).pop();
-                            Navigator.push(
+                            final result = await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => AddGiocatoriPage(
@@ -106,9 +109,39 @@ class _SquadrePageState extends State<SquadrePage> {
                                 ),
                               ),
                             );
+
+                            // Se i dati sono stati modificati, ricarica i giocatori
+                            if (result == true) {
+                              await _loadGiocatori();
+                            }
                           },
                           child: Text(
                             'Aggiungi Giocatori',
+                            style: TextStyle(color: getColor('primary')),
+                          ),
+                        ),
+                        SizedBox(height: 10),
+                        ElevatedButton(
+                          onPressed: () async {
+                            Navigator.of(context).pop();
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AddFormazionePage(
+                                  squadra: widget.squadra,
+                                  campionato: widget.campionato,
+                                  giocatori: giocatori,
+                                ),
+                              ),
+                            );
+
+                            // Se i dati sono stati modificati, ricarica i giocatori
+                            if (result == true) {
+                              await _loadGiocatori();
+                            }
+                          },
+                          child: Text(
+                            'Inserisci Formazione',
                             style: TextStyle(color: getColor('primary')),
                           ),
                         ),
@@ -464,7 +497,7 @@ class _SquadrePageState extends State<SquadrePage> {
       child: Padding(
         padding: EdgeInsets.only(top: 20),
         child: DefaultTabController(
-          length: 3,
+          length: 4,
           child: Column(
             children: [
               TabBar(
@@ -474,6 +507,7 @@ class _SquadrePageState extends State<SquadrePage> {
                 tabs: [
                   Tab(text: 'Squadra'),
                   Tab(text: 'Palmarès'),
+                  Tab(text: 'Formazione'),
                   Tab(text: 'Statistiche'),
                 ],
               ),
@@ -488,6 +522,9 @@ class _SquadrePageState extends State<SquadrePage> {
                         screenWidth,
                         screenHeight,
                       ),
+                    ),
+                    SingleChildScrollView(
+                      child: Column(children: [showFormazione()]),
                     ),
                     Center(child: Text('Statistiche')),
                   ],
@@ -682,7 +719,7 @@ class _SquadrePageState extends State<SquadrePage> {
           if (giocatore.ruolo == 'Allenatore')
             Padding(
               padding: EdgeInsets.only(left: 28, right: 6),
-              child: Icon(Icons.cases, color: getColor("primary")),
+              child: Icon(Icons.person_4, color: getColor("primary")),
             ),
           if (giocatore.ruolo != 'Allenatore')
             Padding(
@@ -736,7 +773,7 @@ class _SquadrePageState extends State<SquadrePage> {
           Padding(
             padding: EdgeInsets.only(left: 20),
             child: Text(
-              giocatore.nome,
+              _decodePlayerName(giocatore.nome),
               style: TextStyle(
                 color: Colors.black,
                 fontSize: 14,
@@ -751,8 +788,13 @@ class _SquadrePageState extends State<SquadrePage> {
                 padding: EdgeInsets.only(right: 20),
                 child: CircleAvatar(
                   radius: 15,
-                  backgroundImage: AssetImage(
-                    'assets/nations/${giocatore.nazione}.png',
+                  backgroundImage: NetworkImage(_getFlagUrl(giocatore.nazione)),
+                  onBackgroundImageError: (_, __) {},
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.grey[300]!, width: 1),
+                    ),
                   ),
                 ),
               ),
@@ -876,7 +918,7 @@ class _SquadrePageState extends State<SquadrePage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    giocatore.nome,
+                    _decodePlayerName(giocatore.nome),
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -903,13 +945,13 @@ class _SquadrePageState extends State<SquadrePage> {
       'blu': Colors.blueAccent,
       'giallo': Colors.yellow[600]!,
       'arancione': Colors.orange[900]!,
-      'viola': Colors.purple,
+      'viola': Colors.purple[800]!,
       'nero': Colors.black,
       'bianco': Colors.white,
       'grigio': Colors.grey,
       'fucsia': Colors.pink[700]!,
-      'ciano': Colors.cyan,
-      'marrone': Colors.brown,
+      'ciano': Colors.lightBlue[300]!,
+      'marrone': Colors.brown[900]!,
     };
 
     if (type.contains('primary')) {
@@ -963,5 +1005,288 @@ class _SquadrePageState extends State<SquadrePage> {
         });
       }
     }
+  }
+
+  // Genera l'URL della bandiera da FlagCDN
+  String _getFlagUrl(String nazioneNome) {
+    String countryCode = _getCountryCode(nazioneNome.toLowerCase());
+    return 'https://flagcdn.com/w80/$countryCode.png';
+  }
+
+  // Decodifica completa i caratteri speciali nei nomi dei giocatori
+  String _decodePlayerName(String playerName) {
+    // Prima rimuove eventuali null bytes o caratteri invisibili
+    String clean = playerName.replaceAll(RegExp(r'[\x00-\x1F\x7F]'), '');
+
+    return clean
+        // Caratteri accentati minuscoli
+        .replaceAll('Ã¡', 'á')
+        .replaceAll('Ã©', 'é')
+        .replaceAll('Ã­', 'í')
+        .replaceAll('Ã³', 'ó')
+        .replaceAll('Ãº', 'ú')
+        .replaceAll('Ã½', 'ý')
+        // Caratteri gravi minuscoli
+        .replaceAll('Ã ', 'à')
+        .replaceAll('Ã¨', 'è')
+        .replaceAll('Ã¬', 'ì')
+        .replaceAll('Ã²', 'ò')
+        .replaceAll('Ã¹', 'ù')
+        // Caratteri circonflessi minuscoli
+        .replaceAll('Ã¢', 'â')
+        .replaceAll('Ãª', 'ê')
+        .replaceAll('Ã®', 'î')
+        .replaceAll('Ã´', 'ô')
+        .replaceAll('Ã»', 'û')
+        // Altri caratteri speciali minuscoli
+        .replaceAll('Ã£', 'ã')
+        .replaceAll('Ã±', 'ñ')
+        .replaceAll('Ã§', 'ç')
+        .replaceAll('Ã¤', 'ä')
+        .replaceAll('Ã«', 'ë')
+        .replaceAll('Ã¯', 'ï')
+        .replaceAll('Ã¶', 'ö')
+        .replaceAll('Ã¼', 'ü')
+        .replaceAll('Ã¥', 'å')
+        .replaceAll('Ã¸', 'ø')
+        // Altri caratteri speciali
+        .replaceAll('Ã†', 'Æ')
+        .replaceAll('ÃŸ', 'ß')
+        .replaceAll('Ã°', 'ð')
+        .replaceAll('Ã¾', 'þ')
+        // Caratteri dell'Europa dell'Est
+        .replaceAll('Å¡', 'š')
+        .replaceAll('Å¾', 'ž')
+        .replaceAll('Ä‡', 'ć')
+        .replaceAll('Äč', 'č')
+        .replaceAll('Å™', 'ř')
+        .replaceAll('Åˆ', 'ň')
+        .replaceAll('Ä›', 'ě')
+        .replaceAll('Å¯', 'ů')
+        .replaceAll('Ä…', 'ą')
+        .replaceAll('Ä™', 'ę')
+        .replaceAll('Å‚', 'ł')
+        .replaceAll('Åƒ', 'ń')
+        .replaceAll('Å›', 'ś')
+        .replaceAll('Åº', 'ź')
+        .replaceAll('Å¼', 'ż');
+  }
+
+  // Converte il nome della nazione in codice ISO del paese
+  String _getCountryCode(String nazioneNome) {
+    final Map<String, String> countryMap = {
+      // Nazioni europee principali
+      'italia': 'it',
+      'france': 'fr',
+      'francia': 'fr',
+      'spain': 'es',
+      'spagna': 'es',
+      'germany': 'de',
+      'germania': 'de',
+      'england': 'gb-eng',
+      'inghilterra': 'gb-eng',
+      'portugal': 'pt',
+      'portogallo': 'pt',
+      'netherlands': 'nl',
+      'paesi bassi': 'nl',
+      'olanda': 'nl',
+      'belgium': 'be',
+      'belgio': 'be',
+      'austria': 'at',
+      'switzerland': 'ch',
+      'svizzera': 'ch',
+      'croatia': 'hr',
+      'croazia': 'hr',
+      'poland': 'pl',
+      'polonia': 'pl',
+      'sweden': 'se',
+      'svezia': 'se',
+      'norway': 'no',
+      'norvegia': 'no',
+      'denmark': 'dk',
+      'danimarca': 'dk',
+      'greece': 'gr',
+      'grecia': 'gr',
+      'turkey': 'tr',
+      'turchia': 'tr',
+      'russia': 'ru',
+      'ucraina': 'ua',
+      'ukraine': 'ua',
+
+      // Nazioni americane
+      'brazil': 'br',
+      'brasile': 'br',
+      'argentina': 'ar',
+      'uruguay': 'uy',
+      'colombia': 'co',
+      'chile': 'cl',
+      'peru': 'pe',
+      'perù': 'pe',
+      'ecuador': 'ec',
+      'venezuela': 've',
+      'mexico': 'mx',
+      'messico': 'mx',
+      'united states': 'us',
+      'stati uniti': 'us',
+      'usa': 'us',
+      'canada': 'ca',
+
+      // Nazioni africane
+      'morocco': 'ma',
+      'marocco': 'ma',
+      'algeria': 'dz',
+      'tunisia': 'tn',
+      'egypt': 'eg',
+      'egitto': 'eg',
+      'nigeria': 'ng',
+      'ghana': 'gh',
+      'senegal': 'sn',
+      'cameroon': 'cm',
+      'camerun': 'cm',
+      'ivory coast': 'ci',
+      'costa d\'avorio': 'ci',
+      'south africa': 'za',
+      'sudafrica': 'za',
+
+      // Nazioni asiatiche
+      'japan': 'jp',
+      'giappone': 'jp',
+      'south korea': 'kr',
+      'corea del sud': 'kr',
+      'china': 'cn',
+      'cina': 'cn',
+      'india': 'in',
+      'australia': 'au',
+      'iran': 'ir',
+      'saudi arabia': 'sa',
+      'arabia saudita': 'sa',
+
+      // Altri paesi europei
+      'czech republic': 'cz',
+      'repubblica ceca': 'cz',
+      'slovakia': 'sk',
+      'slovacchia': 'sk',
+      'hungary': 'hu',
+      'ungheria': 'hu',
+      'romania': 'ro',
+      'bulgaria': 'bg',
+      'serbia': 'rs',
+      'bosnia and herzegovina': 'ba',
+      'bosnia': 'ba',
+      'slovenia': 'si',
+      'north macedonia': 'mk',
+      'macedonia': 'mk',
+      'albania': 'al',
+      'montenegro': 'me',
+      'finland': 'fi',
+      'finlandia': 'fi',
+      'estonia': 'ee',
+      'latvia': 'lv',
+      'lithuania': 'lt',
+      'lituania': 'lt',
+      'ireland': 'ie',
+      'irlanda': 'ie',
+      'scotland': 'gb-sct',
+      'scozia': 'gb-sct',
+      'wales': 'gb-wls',
+      'galles': 'gb-wls',
+      'iceland': 'is',
+      'islanda': 'is',
+    };
+
+    if (countryMap.containsKey(nazioneNome)) {
+      return countryMap[nazioneNome]!;
+    }
+
+    for (String key in countryMap.keys) {
+      if (nazioneNome.contains(key) || key.contains(nazioneNome)) {
+        return countryMap[key]!;
+      }
+    }
+
+    if (nazioneNome.length >= 2) {
+      return nazioneNome.substring(0, 2);
+    }
+
+    return 'it';
+  }
+
+  Widget showFormazione() {
+    final isWide = MediaQuery.of(context).size.width > 600;
+    return Column(
+      children: [
+        SizedBox(
+          height: isWide ? 80 : 40,
+          child: Padding(
+            padding: isWide
+                ? EdgeInsets.symmetric(horizontal: 490)
+                : EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Modulo: ${widget.squadra.modulo}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: getColor('primary'),
+                  ),
+                ),
+                Text(
+                  () {
+                    final allenatori = giocatori.where(
+                      (g) => g.ruolo == 'Allenatore',
+                    );
+                    return allenatori.isNotEmpty
+                        ? 'All: ${_decodePlayerName(allenatori.first.nome)}'
+                        : 'All: N/A';
+                  }(),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: getColor('primary'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        Container(
+          width: isWide ? 400 : double.infinity,
+          height: isWide ? 400 : MediaQuery.of(context).size.height * 0.6,
+          padding: EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/miscellaneous/pitch.png'),
+              fit: BoxFit.cover,
+            ),
+            color: Colors.grey[50],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey[200]!, width: 1),
+          ),
+          child: Center(
+            child: widget.squadra.formazione.isEmpty
+                ? Center()
+                : buildPartitaFormazione(
+                    PartitaFormazioneModel(
+                      codSquadra: widget.squadra.cod,
+                      formazione: widget.squadra.formazione,
+                      campionato: widget.campionato,
+                      modulo: widget.squadra.modulo,
+                      coloriSquadra: widget.squadra.colori,
+                      giocatoriDisponibili: giocatori
+                          .where((g) => g.numero != 0)
+                          .map(
+                            (g) => GiocatoreFormazione(
+                              idGiocatore: g.id,
+                              pos: g.numero,
+                              nome: _decodePlayerName(g.nome),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+          ),
+        ),
+      ],
+    );
   }
 }

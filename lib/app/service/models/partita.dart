@@ -93,18 +93,24 @@ class Partita {
 class GiocatoreFormazione {
   final int pos;
   final String idGiocatore;
+  final String nome;
 
-  GiocatoreFormazione({required this.pos, required this.idGiocatore});
+  GiocatoreFormazione({
+    required this.pos,
+    required this.idGiocatore,
+    required this.nome,
+  });
 
   factory GiocatoreFormazione.fromJson(Map<String, dynamic> json) {
     return GiocatoreFormazione(
       pos: json['pos'],
       idGiocatore: json['idGiocatore'],
+      nome: json['nome'],
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {'pos': pos, 'idGiocatore': idGiocatore};
+    return {'pos': pos, 'idGiocatore': idGiocatore, 'nome': nome};
   }
 }
 

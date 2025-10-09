@@ -17,10 +17,10 @@ class Giornata {
 
   factory Giornata.fromJson(Map<String, dynamic> json) {
     return Giornata(
-      id: json['id'],
-      idCompetizione: json['idCompetizione'],
-      giornata: json['giornata'],
-      fase: json['fase'],
+      id: json['id'] ?? '',
+      idCompetizione: json['idCompetizione'] ?? 0,
+      giornata: json['giornata'] ?? '',
+      fase: json['fase'] ?? '',
       classifica: json['classifica'] != null
           ? (json['classifica'] as List)
                 .map(
@@ -29,7 +29,7 @@ class Giornata {
                 )
                 .toList()
           : null,
-      conclusa: json['conclusa'],
+      conclusa: json['conclusa'] ?? false,
     );
   }
 
@@ -76,17 +76,17 @@ class PosizioneClassifica {
 
   factory PosizioneClassifica.fromJson(Map<String, dynamic> json) {
     return PosizioneClassifica(
-      posizione: json['posizione'],
-      idSquadra: json['idSquadra'],
+      posizione: json['posizione'] ?? 0,
+      idSquadra: json['idSquadra'] ?? 0,
       nomeSquadra: json['nomeSquadra'],
       codSquadra: json['codSquadra'],
-      win: json['win'],
-      draw: json['draw'],
-      loss: json['loss'],
-      punti: json['punti'],
-      gFatti: json['gFatti'],
-      gSubiti: json['gSubiti'],
-      diff: json['diff'],
+      win: json['win'] ?? 0,
+      draw: json['draw'] ?? 0,
+      loss: json['loss'] ?? 0,
+      punti: json['punti'] ?? 0,
+      gFatti: json['gFatti'] ?? 0,
+      gSubiti: json['gSubiti'] ?? 0,
+      diff: json['diff'] ?? 0,
       girone: json['girone'],
     );
   }
