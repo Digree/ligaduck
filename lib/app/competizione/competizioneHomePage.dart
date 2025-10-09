@@ -446,6 +446,11 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
       }
     }
 
+    // Controlla se la giornata è stata trovata
+    if (giornata == null) {
+      return Center(child: Text('Giornata non trovata'));
+    }
+
     if (giornata.classifica == null || giornata.classifica.isEmpty) {
       return Center(child: Text('Nessuna classifica disponibile'));
     }
@@ -483,6 +488,14 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
     int index,
   ) {
     List<PosizioneClassifica>? classifica = [];
+
+    // Verifica che la classifica della giornata non sia null
+    if (giornata.classifica == null) {
+      return Center(
+        child: Text('Nessuna classifica disponibile per questa giornata'),
+      );
+    }
+
     if (widget.competizione.classifica == "Gironi") {
       giornata.classifica?.sort((a, b) => a.posizione.compareTo(b.posizione));
       for (var pos in giornata.classifica!) {
