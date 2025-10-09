@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
+import '../../../services/commonService.dart';
 
 class PartitaFormazioneModel {
   final String campionato;
@@ -21,65 +22,6 @@ class PartitaFormazioneModel {
     this.onGiocatoreChanged,
     this.coloriSquadra,
   });
-}
-
-// Decodifica completa i caratteri speciali nei nomi dei giocatori
-String _decodePlayerName(String playerName) {
-  // Prima rimuove eventuali null bytes o caratteri invisibili
-  String clean = playerName.replaceAll(RegExp(r'[\x00-\x1F\x7F]'), '');
-
-  return clean
-      // Caratteri accentati minuscoli
-      .replaceAll('Ã¡', 'á')
-      .replaceAll('Ã©', 'é')
-      .replaceAll('Ã­', 'í')
-      .replaceAll('Ã³', 'ó')
-      .replaceAll('Ãº', 'ú')
-      .replaceAll('Ã½', 'ý')
-      // Caratteri gravi minuscoli
-      .replaceAll('Ã ', 'à')
-      .replaceAll('Ã¨', 'è')
-      .replaceAll('Ã¬', 'ì')
-      .replaceAll('Ã²', 'ò')
-      .replaceAll('Ã¹', 'ù')
-      // Caratteri circonflessi minuscoli
-      .replaceAll('Ã¢', 'â')
-      .replaceAll('Ãª', 'ê')
-      .replaceAll('Ã®', 'î')
-      .replaceAll('Ã´', 'ô')
-      .replaceAll('Ã»', 'û')
-      // Altri caratteri speciali minuscoli
-      .replaceAll('Ã£', 'ã')
-      .replaceAll('Ã±', 'ñ')
-      .replaceAll('Ã§', 'ç')
-      .replaceAll('Ã¤', 'ä')
-      .replaceAll('Ã«', 'ë')
-      .replaceAll('Ã¯', 'ï')
-      .replaceAll('Ã¶', 'ö')
-      .replaceAll('Ã¼', 'ü')
-      .replaceAll('Ã¥', 'å')
-      .replaceAll('Ã¸', 'ø')
-      // Altri caratteri speciali
-      .replaceAll('Ã†', 'Æ')
-      .replaceAll('ÃŸ', 'ß')
-      .replaceAll('Ã°', 'ð')
-      .replaceAll('Ã¾', 'þ')
-      // Caratteri dell'Europa dell'Est
-      .replaceAll('Å¡', 'š')
-      .replaceAll('Å¾', 'ž')
-      .replaceAll('Ä‡', 'ć')
-      .replaceAll('Äč', 'č')
-      .replaceAll('Å™', 'ř')
-      .replaceAll('Åˆ', 'ň')
-      .replaceAll('Ä›', 'ě')
-      .replaceAll('Å¯', 'ů')
-      .replaceAll('Ä…', 'ą')
-      .replaceAll('Ä™', 'ę')
-      .replaceAll('Å‚', 'ł')
-      .replaceAll('Åƒ', 'ń')
-      .replaceAll('Å›', 'ś')
-      .replaceAll('Åº', 'ź')
-      .replaceAll('Å¼', 'ż');
 }
 
 Widget buildPartitaFormazione(
@@ -105,7 +47,9 @@ Widget buildPartitaFormazione(
                     padding: EdgeInsets.only(bottom: 12),
                     child: Center(
                       child: Text(
-                        _decodePlayerName(model.formazione[0].nome),
+                        CommonService.decodePlayerName(
+                          model.formazione[0].nome,
+                        ),
                         style: TextStyle(color: Colors.white),
                       ),
                     ),
@@ -145,7 +89,7 @@ Widget buildPartitaFormazione(
                                   child: SizedBox(
                                     width: 80,
                                     child: Text(
-                                      _decodePlayerName(
+                                      CommonService.decodePlayerName(
                                         model.formazione[j].nome,
                                       ),
                                       style: TextStyle(color: Colors.white),
@@ -288,13 +232,13 @@ void _showGiocatoreDropdown(
 
               return ListTile(
                 title: Text(
-                  _decodePlayerName(giocatore.nome),
+                  CommonService.decodePlayerName(giocatore.nome),
                   style: TextStyle(
                     fontWeight: isInFormazione
                         ? FontWeight.bold
                         : FontWeight.normal,
                     color: isInFormazione
-                        ? getSquadraColor(model, 'primary')
+                        ? CommonService.getSquadraColor(model, 'primary')
                         : Colors.black,
                   ),
                 ),
@@ -304,14 +248,14 @@ void _showGiocatoreDropdown(
                       : 'Numero: ${giocatore.pos}',
                   style: TextStyle(
                     color: isInFormazione
-                        ? getSquadraColor(model, 'primary')
+                        ? CommonService.getSquadraColor(model, 'primary')
                         : Colors.grey[600],
                   ),
                 ),
                 trailing: isInFormazione
                     ? Icon(
                         Icons.sports_soccer,
-                        color: getSquadraColor(model, 'primary'),
+                        color: CommonService.getSquadraColor(model, 'primary'),
                         size: 20,
                       )
                     : null,
@@ -343,32 +287,4 @@ void _handleGiocatoreSelection(
   if (model.onGiocatoreChanged != null) {
     model.onGiocatoreChanged!(pos, giocatoreSelezionato);
   }
-}
-
-Color getSquadraColor(PartitaFormazioneModel model, String type) {
-  final Map<String, Color> colorMap = {
-    'rosso': Colors.red,
-    'verde': Colors.green,
-    'blu': Colors.blueAccent,
-    'giallo': Colors.yellow[600]!,
-    'arancione': Colors.orange[900]!,
-    'viola': Colors.purple[800]!,
-    'nero': Colors.black,
-    'bianco': Colors.white,
-    'grigio': Colors.grey,
-    'fucsia': Colors.pink[700]!,
-    'ciano': Colors.lightBlue[300]!,
-    'marrone': Colors.brown[900]!,
-  };
-
-  if (model.coloriSquadra == null || model.coloriSquadra!.isEmpty) {
-    return Colors.blueAccent; // Colore di default
-  }
-
-  if (type.contains('primary')) {
-    final primaryColorName = model.coloriSquadra![0].toLowerCase();
-    return colorMap[primaryColorName] ?? Colors.blueAccent;
-  }
-
-  return Colors.blueAccent; // Default
 }

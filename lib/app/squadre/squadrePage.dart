@@ -9,6 +9,7 @@ import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/squadre/addFormazionePage.dart';
 import 'package:ligaduck/app/squadre/addGiocatoriPage.dart';
 import 'package:oktoast/oktoast.dart';
+import '../../services/commonService.dart';
 
 class SquadrePage extends StatefulWidget {
   final Squadra squadra;
@@ -773,7 +774,7 @@ class _SquadrePageState extends State<SquadrePage> {
           Padding(
             padding: EdgeInsets.only(left: 20),
             child: Text(
-              _decodePlayerName(giocatore.nome),
+              CommonService.decodePlayerName(giocatore.nome),
               style: TextStyle(
                 color: Colors.black,
                 fontSize: 14,
@@ -918,7 +919,7 @@ class _SquadrePageState extends State<SquadrePage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    _decodePlayerName(giocatore.nome),
+                    CommonService.decodePlayerName(giocatore.nome),
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -1011,65 +1012,6 @@ class _SquadrePageState extends State<SquadrePage> {
   String _getFlagUrl(String nazioneNome) {
     String countryCode = _getCountryCode(nazioneNome.toLowerCase());
     return 'https://flagcdn.com/w80/$countryCode.png';
-  }
-
-  // Decodifica completa i caratteri speciali nei nomi dei giocatori
-  String _decodePlayerName(String playerName) {
-    // Prima rimuove eventuali null bytes o caratteri invisibili
-    String clean = playerName.replaceAll(RegExp(r'[\x00-\x1F\x7F]'), '');
-
-    return clean
-        // Caratteri accentati minuscoli
-        .replaceAll('Ã¡', 'á')
-        .replaceAll('Ã©', 'é')
-        .replaceAll('Ã­', 'í')
-        .replaceAll('Ã³', 'ó')
-        .replaceAll('Ãº', 'ú')
-        .replaceAll('Ã½', 'ý')
-        // Caratteri gravi minuscoli
-        .replaceAll('Ã ', 'à')
-        .replaceAll('Ã¨', 'è')
-        .replaceAll('Ã¬', 'ì')
-        .replaceAll('Ã²', 'ò')
-        .replaceAll('Ã¹', 'ù')
-        // Caratteri circonflessi minuscoli
-        .replaceAll('Ã¢', 'â')
-        .replaceAll('Ãª', 'ê')
-        .replaceAll('Ã®', 'î')
-        .replaceAll('Ã´', 'ô')
-        .replaceAll('Ã»', 'û')
-        // Altri caratteri speciali minuscoli
-        .replaceAll('Ã£', 'ã')
-        .replaceAll('Ã±', 'ñ')
-        .replaceAll('Ã§', 'ç')
-        .replaceAll('Ã¤', 'ä')
-        .replaceAll('Ã«', 'ë')
-        .replaceAll('Ã¯', 'ï')
-        .replaceAll('Ã¶', 'ö')
-        .replaceAll('Ã¼', 'ü')
-        .replaceAll('Ã¥', 'å')
-        .replaceAll('Ã¸', 'ø')
-        // Altri caratteri speciali
-        .replaceAll('Ã†', 'Æ')
-        .replaceAll('ÃŸ', 'ß')
-        .replaceAll('Ã°', 'ð')
-        .replaceAll('Ã¾', 'þ')
-        // Caratteri dell'Europa dell'Est
-        .replaceAll('Å¡', 'š')
-        .replaceAll('Å¾', 'ž')
-        .replaceAll('Ä‡', 'ć')
-        .replaceAll('Äč', 'č')
-        .replaceAll('Å™', 'ř')
-        .replaceAll('Åˆ', 'ň')
-        .replaceAll('Ä›', 'ě')
-        .replaceAll('Å¯', 'ů')
-        .replaceAll('Ä…', 'ą')
-        .replaceAll('Ä™', 'ę')
-        .replaceAll('Å‚', 'ł')
-        .replaceAll('Åƒ', 'ń')
-        .replaceAll('Å›', 'ś')
-        .replaceAll('Åº', 'ź')
-        .replaceAll('Å¼', 'ż');
   }
 
   // Converte il nome della nazione in codice ISO del paese
@@ -1237,7 +1179,7 @@ class _SquadrePageState extends State<SquadrePage> {
                       (g) => g.ruolo == 'Allenatore',
                     );
                     return allenatori.isNotEmpty
-                        ? 'All: ${_decodePlayerName(allenatori.first.nome)}'
+                        ? 'All: ${CommonService.decodePlayerName(allenatori.first.nome)}'
                         : 'All: N/A';
                   }(),
                   style: TextStyle(
@@ -1278,7 +1220,7 @@ class _SquadrePageState extends State<SquadrePage> {
                             (g) => GiocatoreFormazione(
                               idGiocatore: g.id,
                               pos: g.numero,
-                              nome: _decodePlayerName(g.nome),
+                              nome: CommonService.decodePlayerName(g.nome),
                             ),
                           )
                           .toList(),
