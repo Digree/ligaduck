@@ -190,7 +190,7 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
               : MediaQuery.of(context).size.width * 0.95,
           height: isWide
               ? MediaQuery.of(context).size.height * 0.7
-              : MediaQuery.of(context).size.height * 0.65,
+              : MediaQuery.of(context).size.height * 0.45,
           padding: EdgeInsets.all(24),
           decoration: BoxDecoration(
             image: DecorationImage(
