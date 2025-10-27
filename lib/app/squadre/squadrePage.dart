@@ -1193,7 +1193,7 @@ class _SquadrePageState extends State<SquadrePage> {
         ),
         Container(
           width: isWide ? 400 : double.infinity,
-          height: isWide ? 400 : MediaQuery.of(context).size.height * 0.45,
+          height: isWide ? 400 : MediaQuery.of(context).size.height * 0.46,
           padding: EdgeInsets.all(24),
           decoration: BoxDecoration(
             image: DecorationImage(

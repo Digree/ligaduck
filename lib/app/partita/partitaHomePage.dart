@@ -5,6 +5,7 @@ import 'package:ligaduck/app/service/competizioniProvider.dart';
 import 'package:ligaduck/app/service/giocatoriProvider.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
+import 'package:ligaduck/app/squadre/squadrePage.dart';
 import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../services/commonService.dart';
@@ -201,30 +202,44 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            SizedBox(
-                              width: 80,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Image.asset(
-                                    'assets/squadre/${widget.partita.codHome}.png',
-                                    height: 80,
-                                    width: 80,
-                                  ),
-                                  SizedBox(
-                                    height: 20,
-                                    child: Text(
-                                      widget.partita.teamHome,
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        color: Colors.white,
+                            InkWell(
+                              child: SizedBox(
+                                width: 80,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Image.asset(
+                                      'assets/squadre/${widget.partita.codHome}.png',
+                                      height: 80,
+                                      width: 80,
+                                    ),
+                                    SizedBox(
+                                      height: 20,
+                                      child: Text(
+                                        widget.partita.teamHome,
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          color: Colors.white,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                        overflow: TextOverflow.visible,
                                       ),
-                                      textAlign: TextAlign.center,
-                                      overflow: TextOverflow.visible,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              onTap: () async {
+                                print('SQUADRA');
+                                /* Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => SquadrePage(
+                                      squadra: squadra,
+                                      campionato: widget.campionato,
                                     ),
                                   ),
-                                ],
-                              ),
+                                ); */
+                              },
                             ),
                             SizedBox(width: 40),
                             SizedBox(
@@ -526,6 +541,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   }
 
   Widget buildFormazione(int team) {
+    final isWide = MediaQuery.of(context).size.width > 600;
     return Container(
       padding: EdgeInsets.all(16),
       child: Column(
@@ -665,7 +681,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
           SizedBox(height: 20),
           Container(
             width: double.infinity,
-            height: 430,
+            height: isWide ? 400 : MediaQuery.of(context).size.height * 0.46,
             padding: EdgeInsets.all(24),
             decoration: BoxDecoration(
               image: DecorationImage(

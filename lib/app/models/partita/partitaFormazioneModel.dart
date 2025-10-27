@@ -50,7 +50,31 @@ Widget buildPartitaFormazione(
                         CommonService.decodePlayerName(
                           model.formazione[0].nome,
                         ),
-                        style: TextStyle(color: Colors.white),
+                        style: TextStyle(
+                          color: Colors.white,
+                          shadows: [
+                            Shadow(
+                              offset: Offset(-1.0, -1.0),
+                              blurRadius: 0.0,
+                              color: Colors.black,
+                            ),
+                            Shadow(
+                              offset: Offset(1.0, -1.0),
+                              blurRadius: 0.0,
+                              color: Colors.black,
+                            ),
+                            Shadow(
+                              offset: Offset(1.0, 1.0),
+                              blurRadius: 0.0,
+                              color: Colors.black,
+                            ),
+                            Shadow(
+                              offset: Offset(-1.0, 1.0),
+                              blurRadius: 0.0,
+                              color: Colors.black,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -92,7 +116,31 @@ Widget buildPartitaFormazione(
                                       CommonService.decodePlayerName(
                                         model.formazione[j].nome,
                                       ),
-                                      style: TextStyle(color: Colors.white),
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        shadows: [
+                                          Shadow(
+                                            offset: Offset(-1.0, -1.0),
+                                            blurRadius: 0.0,
+                                            color: Colors.black,
+                                          ),
+                                          Shadow(
+                                            offset: Offset(1.0, -1.0),
+                                            blurRadius: 0.0,
+                                            color: Colors.black,
+                                          ),
+                                          Shadow(
+                                            offset: Offset(1.0, 1.0),
+                                            blurRadius: 0.0,
+                                            color: Colors.black,
+                                          ),
+                                          Shadow(
+                                            offset: Offset(-1.0, 1.0),
+                                            blurRadius: 0.0,
+                                            color: Colors.black,
+                                          ),
+                                        ],
+                                      ),
                                       textAlign: TextAlign.center,
                                       overflow: TextOverflow.ellipsis,
                                       maxLines: 1,
