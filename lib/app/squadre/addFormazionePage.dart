@@ -148,7 +148,7 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
 
       giocatoriSenzaAllenatore.sort((a, b) => a.numero.compareTo(b.numero));
       widget.squadra.formazione.addAll(
-        giocatoriSenzaAllenatore.take(11).map((g) {
+        giocatoriSenzaAllenatore.map((g) {
           return GiocatoreFormazione(
             idGiocatore: g.id,
             pos: g.numero,
@@ -322,6 +322,28 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
   }
 
   void caricaFormazione() {
+    // Trova i giocatori che sono in widget.giocatori ma non in widget.squadra.formazione
+    List<Giocatore> giocatoriMancanti = widget.giocatori
+        .where(
+          (giocatore) =>
+              giocatore.numero != 0 && // Esclude gli allenatori
+              !widget.squadra.formazione.any(
+                (gf) => gf.idGiocatore == giocatore.id,
+              ),
+        )
+        .toList();
+
+    // Aggiungi i giocatori mancanti in coda alla formazione
+    for (var giocatore in giocatoriMancanti) {
+      widget.squadra.formazione.add(
+        GiocatoreFormazione(
+          idGiocatore: giocatore.id,
+          pos: giocatore.numero,
+          nome: giocatore.nome,
+        ),
+      );
+    }
+
     final provider = SquadreProvider();
     provider.caricaFormazione(
       widget.campionato,

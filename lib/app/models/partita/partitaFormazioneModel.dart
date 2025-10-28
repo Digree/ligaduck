@@ -32,7 +32,8 @@ Widget buildPartitaFormazione(
   int j = 1;
 
   return Column(
-    mainAxisAlignment: MainAxisAlignment.start,
+    mainAxisAlignment: MainAxisAlignment.spaceAround,
+    mainAxisSize: MainAxisSize.max,
     children: [
       Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -44,12 +45,10 @@ Widget buildPartitaFormazione(
                 children: [
                   buildGiocatore(model, 1, context),
                   Padding(
-                    padding: EdgeInsets.only(bottom: 12),
+                    padding: EdgeInsets.only(bottom: 4),
                     child: Center(
                       child: Text(
-                        CommonService.decodePlayerName(
-                          model.formazione[0].nome,
-                        ),
+                        _formatPlayerName(model.formazione[0].nome),
                         style: TextStyle(
                           color: Colors.white,
                           shadows: [
@@ -98,8 +97,8 @@ Widget buildPartitaFormazione(
                   Flexible(
                     child: Padding(
                       padding: EdgeInsets.symmetric(
-                        horizontal: int.parse(modulo[i]) >= 4 ? 4.0 : 8.0,
-                        vertical: modulo.length > 3 ? 0.0 : 8.0,
+                        horizontal: int.parse(modulo[i]) >= 4 ? 2.0 : 6.0,
+                        vertical: modulo.length > 3 ? 0.0 : 2.0,
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.start,
@@ -108,12 +107,12 @@ Widget buildPartitaFormazione(
                             children: [
                               buildGiocatore(model, j + 1, context),
                               Padding(
-                                padding: EdgeInsets.only(bottom: 16),
+                                padding: EdgeInsets.only(bottom: 4),
                                 child: Center(
                                   child: SizedBox(
                                     width: 80,
                                     child: Text(
-                                      CommonService.decodePlayerName(
+                                      _formatPlayerName(
                                         model.formazione[j].nome,
                                       ),
                                       style: TextStyle(
@@ -335,4 +334,21 @@ void _handleGiocatoreSelection(
   if (model.onGiocatoreChanged != null) {
     model.onGiocatoreChanged!(pos, giocatoreSelezionato);
   }
+}
+
+String _formatPlayerName(String nomeCompleto) {
+  String nomeDecodificato = CommonService.decodePlayerName(nomeCompleto);
+
+  List<String> parole = nomeDecodificato.split(' ');
+  if (parole.length >= 2) {
+    if (parole[0] != 'Van' &&
+        parole[0] != 'La' &&
+        parole[0] != 'Ze' &&
+        parole[0] != 'Mc' &&
+        parole[0] != 'De') {
+      nomeDecodificato =
+          '${parole[0][0].toUpperCase()}. ${parole.sublist(1).join(' ')}';
+    }
+  }
+  return nomeDecodificato;
 }

@@ -5,6 +5,8 @@ import 'package:ligaduck/app/service/competizioniProvider.dart';
 import 'package:ligaduck/app/service/giocatoriProvider.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
+import 'package:ligaduck/app/service/models/squadra.dart';
+import 'package:ligaduck/app/service/squadreProvider.dart';
 import 'package:ligaduck/app/squadre/squadrePage.dart';
 import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -142,6 +144,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<SquadreProvider>(context, listen: false);
     if (competizione == null) {
       return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -229,8 +232,11 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                 ),
                               ),
                               onTap: () async {
-                                print('SQUADRA');
-                                /* Navigator.push(
+                                var squadra = await getSquadra(
+                                  provider,
+                                  widget.partita.idTeamHome,
+                                );
+                                Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => SquadrePage(
@@ -238,7 +244,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                       campionato: widget.campionato,
                                     ),
                                   ),
-                                ); */
+                                );
                               },
                             ),
                             SizedBox(width: 40),
@@ -255,30 +261,47 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                               ),
                             ),
                             SizedBox(width: 40),
-                            SizedBox(
-                              width: 80,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Image.asset(
-                                    'assets/squadre/${widget.partita.codAway}.png',
-                                    height: 80,
-                                    width: 80,
-                                  ),
-                                  SizedBox(
-                                    height: 20,
-                                    child: Text(
-                                      widget.partita.teamAway,
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        color: Colors.white,
+                            InkWell(
+                              child: SizedBox(
+                                width: 80,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Image.asset(
+                                      'assets/squadre/${widget.partita.codAway}.png',
+                                      height: 80,
+                                      width: 80,
+                                    ),
+                                    SizedBox(
+                                      height: 20,
+                                      child: Text(
+                                        widget.partita.teamAway,
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          color: Colors.white,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                        overflow: TextOverflow.visible,
                                       ),
-                                      textAlign: TextAlign.center,
-                                      overflow: TextOverflow.visible,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              onTap: () async {
+                                var squadra = await getSquadra(
+                                  provider,
+                                  widget.partita.idTeamAway,
+                                );
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => SquadrePage(
+                                      squadra: squadra,
+                                      campionato: widget.campionato,
                                     ),
                                   ),
-                                ],
-                              ),
+                                );
+                              },
                             ),
                           ],
                         ),
@@ -536,6 +559,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
           ),
         ),
         buildFormazione(selectedFormazione),
+        buildPanchina(selectedFormazione),
       ],
     );
   }
@@ -762,11 +786,121 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     );
   }
 
+  Widget buildPanchina(int team) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Panchina',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 12),
+          for (var giocatore
+              in (team == 0
+                  ? widget.partita.formazioneHome
+                  : widget.partita.formazioneAway))
+            Container(
+              //width: screenWidth * 1,
+              height: 60,
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                border: Border(
+                  bottom: BorderSide(
+                    color: Colors.grey[350] ?? Colors.grey,
+                    width: 1.0,
+                  ),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(left: 20),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        image: DecorationImage(
+                          image: AssetImage(
+                            team == 0
+                                ? 'assets/divise/divise_${widget.campionato}/${widget.partita.codHome}_${widget.partita.divisaHome}.png'
+                                : 'assets/divise/divise_${widget.campionato}/${widget.partita.codAway}_${widget.partita.divisaAway}.png',
+                          ),
+                          fit: BoxFit.cover,
+                        ),
+                        color: Colors.transparent,
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${giocatore.pos}',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 16,
+                            shadows: [
+                              Shadow(
+                                offset: Offset(-1.0, -1.0),
+                                blurRadius: 0.0,
+                                color: Colors.black,
+                              ),
+                              Shadow(
+                                offset: Offset(1.0, -1.0),
+                                blurRadius: 0.0,
+                                color: Colors.black,
+                              ),
+                              Shadow(
+                                offset: Offset(1.0, 1.0),
+                                blurRadius: 0.0,
+                                color: Colors.black,
+                              ),
+                              Shadow(
+                                offset: Offset(-1.0, 1.0),
+                                blurRadius: 0.0,
+                                color: Colors.black,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(left: 20),
+                    child: Text(
+                      CommonService.decodePlayerName(giocatore.nome),
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   Future<Competizione> getCompetizione(CompetizioniProvider provider) async {
     Competizione competizione = await provider.getCompetizione(
       widget.campionato,
       widget.partita.idGiornata,
     );
     return competizione;
+  }
+
+  Future<Squadra> getSquadra(SquadreProvider provider, int idSquadra) async {
+    List<Squadra> squadre = await provider.fetchSquadre(widget.campionato);
+
+    for (var squadra in squadre) {
+      print(squadra.id);
+      if (squadra.id == idSquadra) {
+        return squadra;
+      }
+    }
+    throw Exception('Squadra non trovata');
   }
 }

@@ -789,7 +789,9 @@ class _SquadrePageState extends State<SquadrePage> {
                 padding: EdgeInsets.only(right: 20),
                 child: CircleAvatar(
                   radius: 15,
-                  backgroundImage: NetworkImage(_getFlagUrl(giocatore.nazione)),
+                  backgroundImage: NetworkImage(
+                    CommonService.getFlagUrl(giocatore.nazione),
+                  ),
                   onBackgroundImageError: (_, __) {},
                   child: Container(
                     decoration: BoxDecoration(
@@ -1006,151 +1008,6 @@ class _SquadrePageState extends State<SquadrePage> {
         });
       }
     }
-  }
-
-  // Genera l'URL della bandiera da FlagCDN
-  String _getFlagUrl(String nazioneNome) {
-    String countryCode = _getCountryCode(nazioneNome.toLowerCase());
-    return 'https://flagcdn.com/w80/$countryCode.png';
-  }
-
-  // Converte il nome della nazione in codice ISO del paese
-  String _getCountryCode(String nazioneNome) {
-    final Map<String, String> countryMap = {
-      // Nazioni europee principali
-      'italia': 'it',
-      'france': 'fr',
-      'francia': 'fr',
-      'spain': 'es',
-      'spagna': 'es',
-      'germany': 'de',
-      'germania': 'de',
-      'england': 'gb-eng',
-      'inghilterra': 'gb-eng',
-      'portugal': 'pt',
-      'portogallo': 'pt',
-      'netherlands': 'nl',
-      'paesi bassi': 'nl',
-      'olanda': 'nl',
-      'belgium': 'be',
-      'belgio': 'be',
-      'austria': 'at',
-      'switzerland': 'ch',
-      'svizzera': 'ch',
-      'croatia': 'hr',
-      'croazia': 'hr',
-      'poland': 'pl',
-      'polonia': 'pl',
-      'sweden': 'se',
-      'svezia': 'se',
-      'norway': 'no',
-      'norvegia': 'no',
-      'denmark': 'dk',
-      'danimarca': 'dk',
-      'greece': 'gr',
-      'grecia': 'gr',
-      'turkey': 'tr',
-      'turchia': 'tr',
-      'russia': 'ru',
-      'ucraina': 'ua',
-      'ukraine': 'ua',
-
-      // Nazioni americane
-      'brazil': 'br',
-      'brasile': 'br',
-      'argentina': 'ar',
-      'uruguay': 'uy',
-      'colombia': 'co',
-      'chile': 'cl',
-      'peru': 'pe',
-      'perù': 'pe',
-      'ecuador': 'ec',
-      'venezuela': 've',
-      'mexico': 'mx',
-      'messico': 'mx',
-      'united states': 'us',
-      'stati uniti': 'us',
-      'usa': 'us',
-      'canada': 'ca',
-
-      // Nazioni africane
-      'morocco': 'ma',
-      'marocco': 'ma',
-      'algeria': 'dz',
-      'tunisia': 'tn',
-      'egypt': 'eg',
-      'egitto': 'eg',
-      'nigeria': 'ng',
-      'ghana': 'gh',
-      'senegal': 'sn',
-      'cameroon': 'cm',
-      'camerun': 'cm',
-      'ivory coast': 'ci',
-      'costa d\'avorio': 'ci',
-      'south africa': 'za',
-      'sudafrica': 'za',
-
-      // Nazioni asiatiche
-      'japan': 'jp',
-      'giappone': 'jp',
-      'south korea': 'kr',
-      'corea del sud': 'kr',
-      'china': 'cn',
-      'cina': 'cn',
-      'india': 'in',
-      'australia': 'au',
-      'iran': 'ir',
-      'saudi arabia': 'sa',
-      'arabia saudita': 'sa',
-
-      // Altri paesi europei
-      'czech republic': 'cz',
-      'repubblica ceca': 'cz',
-      'slovakia': 'sk',
-      'slovacchia': 'sk',
-      'hungary': 'hu',
-      'ungheria': 'hu',
-      'romania': 'ro',
-      'bulgaria': 'bg',
-      'serbia': 'rs',
-      'bosnia and herzegovina': 'ba',
-      'bosnia': 'ba',
-      'slovenia': 'si',
-      'north macedonia': 'mk',
-      'macedonia': 'mk',
-      'albania': 'al',
-      'montenegro': 'me',
-      'finland': 'fi',
-      'finlandia': 'fi',
-      'estonia': 'ee',
-      'latvia': 'lv',
-      'lithuania': 'lt',
-      'lituania': 'lt',
-      'ireland': 'ie',
-      'irlanda': 'ie',
-      'scotland': 'gb-sct',
-      'scozia': 'gb-sct',
-      'wales': 'gb-wls',
-      'galles': 'gb-wls',
-      'iceland': 'is',
-      'islanda': 'is',
-    };
-
-    if (countryMap.containsKey(nazioneNome)) {
-      return countryMap[nazioneNome]!;
-    }
-
-    for (String key in countryMap.keys) {
-      if (nazioneNome.contains(key) || key.contains(nazioneNome)) {
-        return countryMap[key]!;
-      }
-    }
-
-    if (nazioneNome.length >= 2) {
-      return nazioneNome.substring(0, 2);
-    }
-
-    return 'it';
   }
 
   Widget showFormazione() {
