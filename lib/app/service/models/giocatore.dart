@@ -1,6 +1,6 @@
 class Giocatore {
   final String id;
-  final String nome;
+  String nome;
   final int numero;
   final int eta;
   final String ruolo;

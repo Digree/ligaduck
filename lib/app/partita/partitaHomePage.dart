@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:intl/intl.dart';
+import 'package:ligaduck/app/config/models/global.dart';
 import 'package:ligaduck/app/models/partita/partitaFormazioneModel.dart';
 import 'package:ligaduck/app/service/competizioniProvider.dart';
 import 'package:ligaduck/app/service/giocatoriProvider.dart';
@@ -145,6 +147,10 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<SquadreProvider>(context, listen: false);
+    final competizioniProvider = Provider.of<CompetizioniProvider>(
+      context,
+      listen: false,
+    );
     if (competizione == null) {
       return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -198,9 +204,157 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
-                          '${widget.partita.data.toIso8601String().split('T')[0]} - ${widget.partita.data.toIso8601String().split('T')[1].split('.')[0]}',
-                          style: TextStyle(fontSize: 12, color: Colors.white),
+                        InkWell(
+                          child: Text(
+                            DateFormat(
+                              'dd/MM/yyyy - HH:mm',
+                            ).format(widget.partita.data),
+                            style: TextStyle(fontSize: 12, color: Colors.white),
+                          ),
+                          onTap: () {
+                            if (admin) {
+                              showModalBottomSheet(
+                                backgroundColor: Colors.blueAccent.withOpacity(
+                                  0.8,
+                                ),
+                                context: context,
+                                builder: (BuildContext context) {
+                                  DateTime selectedDate = widget.partita.data;
+
+                                  return StatefulBuilder(
+                                    builder: (context, setModalState) {
+                                      return Container(
+                                        padding: EdgeInsets.all(16),
+                                        height: 400,
+                                        width: 500,
+                                        child: Column(
+                                          children: [
+                                            Padding(
+                                              padding: EdgeInsets.only(
+                                                top: 16,
+                                                bottom: 16,
+                                              ),
+                                              child: Center(
+                                                child: Text(
+                                                  'Inserisci la data della partita',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            Container(
+                                              height: 200,
+                                              decoration: BoxDecoration(
+                                                color: Colors.blueAccent
+                                                    .withOpacity(0.8),
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                              child: CupertinoTheme(
+                                                data: CupertinoThemeData(
+                                                  brightness: Brightness.dark,
+                                                  primaryColor: Colors.white,
+                                                  textTheme:
+                                                      CupertinoTextThemeData(
+                                                        dateTimePickerTextStyle:
+                                                            TextStyle(
+                                                              color:
+                                                                  Colors.white,
+                                                              fontSize: 20,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .normal,
+                                                            ),
+                                                        pickerTextStyle:
+                                                            TextStyle(
+                                                              color:
+                                                                  Colors.white,
+                                                              fontSize: 20,
+                                                            ),
+                                                      ),
+                                                ),
+                                                child: CupertinoDatePicker(
+                                                  backgroundColor:
+                                                      Colors.transparent,
+                                                  mode: CupertinoDatePickerMode
+                                                      .dateAndTime,
+                                                  initialDateTime: selectedDate,
+                                                  dateOrder:
+                                                      DatePickerDateOrder.dmy,
+                                                  use24hFormat: true,
+                                                  onDateTimeChanged:
+                                                      (DateTime newDate) {
+                                                        setModalState(() {
+                                                          selectedDate =
+                                                              newDate;
+                                                        });
+                                                      },
+                                                ),
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding: EdgeInsets.only(
+                                                top: 24.0,
+                                              ),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceEvenly,
+                                                children: [
+                                                  ElevatedButton(
+                                                    onPressed: () {
+                                                      Navigator.pop(context);
+                                                    },
+                                                    style:
+                                                        ElevatedButton.styleFrom(
+                                                          backgroundColor:
+                                                              Colors.grey[300],
+                                                        ),
+                                                    child: Text(
+                                                      'Annulla',
+                                                      style: TextStyle(
+                                                        color: Colors.black,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  ElevatedButton(
+                                                    onPressed: () {
+                                                      setState(() {
+                                                        widget.partita.data =
+                                                            selectedDate;
+                                                      });
+                                                      print(
+                                                        'Nuova data selezionata: $selectedDate',
+                                                      );
+                                                      Navigator.pop(context);
+                                                    },
+                                                    style:
+                                                        ElevatedButton.styleFrom(
+                                                          backgroundColor:
+                                                              Colors.green[600],
+                                                        ),
+                                                    child: Text(
+                                                      'Salva',
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                              );
+                            }
+                          },
                         ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -235,6 +389,12 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                 var squadra = await getSquadra(
                                   provider,
                                   widget.partita.idTeamHome,
+                                );
+                                squadra = addCompetizioni(
+                                  squadra,
+                                  await competizioniProvider.fetchCompetizioni(
+                                    widget.campionato,
+                                  ),
                                 );
                                 Navigator.push(
                                   context,
@@ -388,10 +548,134 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
 
   Widget buildTabellino() {
     widget.partita.tabellino.sort((a, b) => a.minuto.compareTo(b.minuto));
-    return ListView(
-      children: [
-        for (var evento in widget.partita.tabellino) buildTabellinoRow(evento),
-      ],
+    return SizedBox.expand(
+      child: Stack(
+        children: [
+          ListView(
+            children: [
+              for (var evento in widget.partita.tabellino)
+                buildTabellinoRow(evento),
+            ],
+          ),
+          if (admin)
+            Positioned(
+              bottom: 16,
+              right: 16,
+              child: FloatingActionButton(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return Dialog(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16.0),
+                        ),
+                        child: Container(
+                          constraints: BoxConstraints(
+                            minWidth: 300,
+                            maxWidth: MediaQuery.of(context).size.width * 0.8,
+                            minHeight: 200,
+                            maxHeight: MediaQuery.of(context).size.height * 0.6,
+                          ),
+                          padding: EdgeInsets.all(20.0),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Aggiungi Evento',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.close),
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 20),
+                              DefaultTabController(
+                                length: 2,
+                                child: Column(
+                                  children: [
+                                    TabBar(
+                                      labelColor: Color(
+                                        competizione!.colori.isNotEmpty
+                                            ? int.parse(
+                                                competizione!.colori[0]
+                                                    .replaceFirst('#', 'FF'),
+                                                radix: 16,
+                                              )
+                                            : 0xFF000000,
+                                      ),
+                                      unselectedLabelColor: Colors.grey,
+                                      indicatorColor: Color(
+                                        competizione!.colori.isNotEmpty
+                                            ? int.parse(
+                                                competizione!.colori[0]
+                                                    .replaceFirst('#', 'FF'),
+                                                radix: 16,
+                                              )
+                                            : 0xFF000000,
+                                      ),
+                                      tabs: [
+                                        Tab(text: widget.partita.teamHome),
+                                        Tab(text: widget.partita.teamAway),
+                                      ],
+                                    ),
+                                    SizedBox(
+                                      height: 200,
+                                      child: TabBarView(
+                                        children: [
+                                          Padding(
+                                            padding: EdgeInsets.all(16.0),
+                                            child: Text(
+                                              'Contenuto Tabellino in arrivo...',
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: EdgeInsets.all(16.0),
+                                            child: Text(
+                                              'Contenuto Formazioni in arrivo...',
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                  print('Admin button pressed - Tabellino');
+                },
+                backgroundColor: Color(
+                  competizione!.colori.isNotEmpty
+                      ? int.parse(
+                          competizione!.colori[0].replaceFirst('#', 'FF'),
+                          radix: 16,
+                        )
+                      : 0xFF007AFF,
+                ),
+                child: Icon(Icons.add, color: Colors.white),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -724,7 +1008,9 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                       team == 0
                           ? PartitaFormazioneModel(
                               codSquadra: widget.partita.codHome,
-                              formazione: widget.partita.formazioneHome,
+                              formazione: widget.partita.formazioneHome
+                                  .take(11)
+                                  .toList(), // Solo i primi 11 titolari
                               modulo: widget.partita.moduloHome,
                               campionato: widget.campionato,
                               coloriSquadra:
@@ -734,7 +1020,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                   .formazioneHome
                                   .where(
                                     (g) => g.pos != 0,
-                                  ) // Filtra gli allenatori
+                                  ) // Filtra gli allenatori da tutti i giocatori
                                   .map(
                                     (g) => GiocatoreFormazione(
                                       idGiocatore: g.idGiocatore,
@@ -751,7 +1037,9 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                             )
                           : PartitaFormazioneModel(
                               codSquadra: widget.partita.codAway,
-                              formazione: widget.partita.formazioneAway,
+                              formazione: widget.partita.formazioneAway
+                                  .take(11)
+                                  .toList(), // Solo i primi 11 titolari
                               modulo: widget.partita.moduloAway,
                               campionato: widget.campionato,
                               coloriSquadra:
@@ -761,7 +1049,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                   .formazioneAway
                                   .where(
                                     (g) => g.pos != 0,
-                                  ) // Filtra gli allenatori
+                                  ) // Filtra gli allenatori da tutti i giocatori
                                   .map(
                                     (g) => GiocatoreFormazione(
                                       idGiocatore: g.idGiocatore,
@@ -799,8 +1087,12 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
           SizedBox(height: 12),
           for (var giocatore
               in (team == 0
-                  ? widget.partita.formazioneHome
-                  : widget.partita.formazioneAway))
+                  ? widget.partita.formazioneHome.skip(
+                      11,
+                    ) // Solo giocatori dalla panchina
+                  : widget.partita.formazioneAway.skip(
+                      11,
+                    ))) // Solo giocatori dalla panchina
             Container(
               //width: screenWidth * 1,
               height: 60,
@@ -902,5 +1194,20 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       }
     }
     throw Exception('Squadra non trovata');
+  }
+
+  Squadra addCompetizioni(Squadra squadra, List<Competizione> competizioni) {
+    if (squadra.trofei == null) {
+      return squadra;
+    }
+    for (var competizione in competizioni) {
+      for (var i = 0; i < squadra.trofei!.length; i++) {
+        if (squadra.trofei?[i].idCompetizione == competizione.id) {
+          squadra.trofei?[i].nome = competizione.nome;
+          squadra.trofei?[i].cod = competizione.cod;
+        }
+      }
+    }
+    return squadra;
   }
 }

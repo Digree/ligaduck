@@ -16,7 +16,7 @@ class Partita {
   final int divisaHome;
   final int divisaAway;
   final List<Evento> tabellino;
-  final DateTime data;
+  DateTime data;
 
   Partita({
     required this.idGiornata,
@@ -91,9 +91,9 @@ class Partita {
 }
 
 class GiocatoreFormazione {
-  final int pos;
-  final String idGiocatore;
-  final String nome;
+  int pos;
+  String idGiocatore;
+  String nome;
 
   GiocatoreFormazione({
     required this.pos,

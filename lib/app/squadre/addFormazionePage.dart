@@ -4,6 +4,7 @@ import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/service/squadreProvider.dart';
+import 'package:ligaduck/services/commonService.dart';
 import 'package:provider/provider.dart';
 
 class AddFormazionePage extends StatefulWidget {
@@ -248,7 +249,9 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
                                   GiocatoreFormazione(
                                     idGiocatore: nuovoGiocatore.idGiocatore,
                                     pos: nuovoGiocatore.pos,
-                                    nome: nuovoGiocatore.nome,
+                                    nome: CommonService.decodePlayerName(
+                                      nuovoGiocatore.nome,
+                                    ),
                                   );
 
                               widget
@@ -265,7 +268,9 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
                                   GiocatoreFormazione(
                                     idGiocatore: nuovoGiocatore.idGiocatore,
                                     pos: nuovoGiocatore.pos,
-                                    nome: nuovoGiocatore.nome,
+                                    nome: CommonService.decodePlayerName(
+                                      nuovoGiocatore.nome,
+                                    ),
                                   );
                             }
                             // Se indexGiocatoreSelezionato == index, il giocatore è già in quella posizione, non fare nulla
@@ -339,12 +344,17 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
         GiocatoreFormazione(
           idGiocatore: giocatore.id,
           pos: giocatore.numero,
-          nome: giocatore.nome,
+          nome: CommonService.decodePlayerName(giocatore.nome),
         ),
       );
     }
 
     final provider = SquadreProvider();
+    for (var giocatore in widget.squadra.formazione) {
+      giocatore.nome = CommonService.decodePlayerName(
+        CommonService.decodePlayerName(giocatore.nome),
+      );
+    }
     provider.caricaFormazione(
       widget.campionato,
       widget.squadra.id,
