@@ -94,11 +94,13 @@ class GiocatoreFormazione {
   int pos;
   String idGiocatore;
   String nome;
+  bool inCampo;
 
   GiocatoreFormazione({
     required this.pos,
     required this.idGiocatore,
     required this.nome,
+    required this.inCampo,
   });
 
   factory GiocatoreFormazione.fromJson(Map<String, dynamic> json) {
@@ -106,37 +108,72 @@ class GiocatoreFormazione {
       pos: json['pos'],
       idGiocatore: json['idGiocatore'],
       nome: json['nome'],
+      inCampo: json['inCampo'] ?? true,
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {'pos': pos, 'idGiocatore': idGiocatore, 'nome': nome};
+    return {
+      'pos': pos,
+      'idGiocatore': idGiocatore,
+      'nome': nome,
+      'inCampo': inCampo,
+    };
   }
 }
 
 class Evento {
+  final String id;
   final String idGiocatore;
   final int minuto;
-  final int idAzione;
+  final int recupero;
+  final String codAzione;
   final int idTeam;
 
   Evento({
+    required this.id,
     required this.idGiocatore,
     required this.minuto,
-    required this.idAzione,
+    required this.recupero,
+    required this.codAzione,
     required this.idTeam,
   });
 
   factory Evento.fromJson(Map<String, dynamic> json) {
     return Evento(
+      id: json['id'],
       idGiocatore: json['idGiocatore'],
       minuto: json['minuto'],
-      idAzione: json['idAzione'],
+      recupero: json['recupero'] ?? 0,
+      codAzione: json['codAzione'],
       idTeam: json['idTeam'],
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {'idGiocatore': idGiocatore, 'minuto': minuto, 'idAzione': idAzione};
+    return {
+      'id': id,
+      'idGiocatore': idGiocatore,
+      'minuto': minuto,
+      'recupero': recupero,
+      'codAzione': codAzione,
+      'idTeam': idTeam,
+    };
+  }
+}
+
+class TipoEvento {
+  final int id;
+  final String cod;
+  final String nome;
+
+  TipoEvento({required this.id, required this.cod, required this.nome});
+
+  factory TipoEvento.fromJson(Map<String, dynamic> json) {
+    return TipoEvento(id: json['id'], cod: json['cod'], nome: json['nome']);
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'id': id, 'cod': cod, 'nome': nome};
   }
 }

@@ -1078,6 +1078,8 @@ class _SquadrePageState extends State<SquadrePage> {
                               idGiocatore: g.id,
                               pos: g.numero,
                               nome: CommonService.decodePlayerName(g.nome),
+                              inCampo:
+                                  true, // Inizialmente false, verrà impostato correttamente quando assegnato
                             ),
                           )
                           .toList(),

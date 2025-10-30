@@ -6,8 +6,9 @@ import 'package:ligaduck/app/service/models/partita.dart';
 
 class PartiteProvider with ChangeNotifier {
   List<Partita> _partite = [];
-
+  List<TipoEvento> _eventi = [];
   List<Partita> get partite => _partite;
+  List<TipoEvento> get eventi => _eventi;
 
   Future<List<Partita>> fetchPartite(
     String campionato,
@@ -76,6 +77,77 @@ class PartiteProvider with ChangeNotifier {
       }
     } catch (e) {
       print('Errore POST: $e');
+      return false;
+    }
+  }
+
+  Future<List<TipoEvento>> fetchEventi() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${Env.apiUrl}/partita/eventi'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        _eventi = data.map((item) => TipoEvento.fromJson(item)).toList();
+        notifyListeners();
+        return _eventi;
+      } else {
+        throw Exception('Errore nel caricamento: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Tipo errore: ${e.runtimeType}');
+      print('Dettaglio errore: $e');
+      return [];
+    }
+  }
+
+  Future<bool> putEvento(
+    String campionato,
+    String idPartita,
+    Evento evento,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${Env.apiUrl}/$campionato/partita/$idPartita/evento'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(evento.toJson()),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        print('Errore POST: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Errore POST: $e');
+      return false;
+    }
+  }
+
+  Future<bool> deleteEvento(
+    String campionato,
+    String idPartita,
+    Evento evento,
+  ) async {
+    try {
+      final response = await http.delete(
+        Uri.parse(
+          '${Env.apiUrl}/$campionato/partita/$idPartita/evento/${evento.id}',
+        ),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(evento.toJson()),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        print('Errore DELETE: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Errore DELETE: $e');
       return false;
     }
   }

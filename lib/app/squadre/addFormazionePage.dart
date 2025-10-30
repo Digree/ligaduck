@@ -150,10 +150,14 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
       giocatoriSenzaAllenatore.sort((a, b) => a.numero.compareTo(b.numero));
       widget.squadra.formazione.addAll(
         giocatoriSenzaAllenatore.map((g) {
+          int currentIndex = widget.squadra.formazione.length;
           return GiocatoreFormazione(
             idGiocatore: g.id,
             pos: g.numero,
             nome: g.nome,
+            inCampo:
+                currentIndex <
+                11, // true se in formazione (primi 11), false se in panchina
           );
         }).toList(),
       );
@@ -214,13 +218,22 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
                       coloriSquadra: widget.squadra.colori,
                       giocatoriDisponibili: widget.giocatori
                           .where((g) => g.numero != 0) // Filtra gli allenatori
-                          .map(
-                            (g) => GiocatoreFormazione(
+                          .map((g) {
+                            // Verifica se il giocatore è nei primi 11 della formazione
+                            int indexInFormazione = widget.squadra.formazione
+                                .indexWhere((gf) => gf.idGiocatore == g.id);
+                            bool isInPrimi11 =
+                                indexInFormazione != -1 &&
+                                indexInFormazione < 11;
+
+                            return GiocatoreFormazione(
                               idGiocatore: g.id,
                               pos: g.numero,
                               nome: g.nome,
-                            ),
-                          )
+                              inCampo:
+                                  isInPrimi11, // true se il giocatore rientra nei primi 11
+                            );
+                          })
                           .toList(),
                       onGiocatoreChanged: (pos, nuovoGiocatore) {
                         setState(() {
@@ -245,14 +258,18 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
                                   widget.squadra.formazione[index];
 
                               // Swap i giocatori
-                              widget.squadra.formazione[index] =
-                                  GiocatoreFormazione(
-                                    idGiocatore: nuovoGiocatore.idGiocatore,
-                                    pos: nuovoGiocatore.pos,
-                                    nome: CommonService.decodePlayerName(
-                                      nuovoGiocatore.nome,
-                                    ),
-                                  );
+                              widget
+                                  .squadra
+                                  .formazione[index] = GiocatoreFormazione(
+                                idGiocatore: nuovoGiocatore.idGiocatore,
+                                pos: nuovoGiocatore.pos,
+                                nome: CommonService.decodePlayerName(
+                                  nuovoGiocatore.nome,
+                                ),
+                                inCampo:
+                                    index <
+                                    11, // true se in formazione (primi 11), false se in panchina
+                              );
 
                               widget
                                       .squadra
@@ -261,17 +278,24 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
                                     idGiocatore: giocatoreAttuale.idGiocatore,
                                     pos: giocatoreAttuale.pos,
                                     nome: giocatoreAttuale.nome,
+                                    inCampo:
+                                        indexGiocatoreSelezionato <
+                                        11, // true se in formazione (primi 11), false se in panchina
                                   );
                             } else if (indexGiocatoreSelezionato == -1) {
                               // Il giocatore non è in formazione, sostituisci normalmente
-                              widget.squadra.formazione[index] =
-                                  GiocatoreFormazione(
-                                    idGiocatore: nuovoGiocatore.idGiocatore,
-                                    pos: nuovoGiocatore.pos,
-                                    nome: CommonService.decodePlayerName(
-                                      nuovoGiocatore.nome,
-                                    ),
-                                  );
+                              widget
+                                  .squadra
+                                  .formazione[index] = GiocatoreFormazione(
+                                idGiocatore: nuovoGiocatore.idGiocatore,
+                                pos: nuovoGiocatore.pos,
+                                nome: CommonService.decodePlayerName(
+                                  nuovoGiocatore.nome,
+                                ),
+                                inCampo:
+                                    index <
+                                    11, // true se in formazione (primi 11), false se in panchina
+                              );
                             }
                             // Se indexGiocatoreSelezionato == index, il giocatore è già in quella posizione, non fare nulla
                           }
@@ -340,21 +364,30 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
 
     // Aggiungi i giocatori mancanti in coda alla formazione
     for (var giocatore in giocatoriMancanti) {
+      int currentIndex = widget.squadra.formazione.length;
       widget.squadra.formazione.add(
         GiocatoreFormazione(
           idGiocatore: giocatore.id,
           pos: giocatore.numero,
           nome: CommonService.decodePlayerName(giocatore.nome),
+          inCampo:
+              currentIndex <
+              11, // true se in formazione (primi 11), false se in panchina
         ),
       );
     }
 
-    final provider = SquadreProvider();
-    for (var giocatore in widget.squadra.formazione) {
+    // Aggiorna il parametro inCampo per tutti i giocatori prima del salvataggio
+    for (int i = 0; i < widget.squadra.formazione.length; i++) {
+      var giocatore = widget.squadra.formazione[i];
       giocatore.nome = CommonService.decodePlayerName(
         CommonService.decodePlayerName(giocatore.nome),
       );
+      // Imposta inCampo: true per i primi 11, false per gli altri
+      giocatore.inCampo = i < 11;
     }
+
+    final provider = SquadreProvider();
     provider.caricaFormazione(
       widget.campionato,
       widget.squadra.id,

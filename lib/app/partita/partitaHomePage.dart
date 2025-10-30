@@ -3,11 +3,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:ligaduck/app/config/models/global.dart';
 import 'package:ligaduck/app/models/partita/partitaFormazioneModel.dart';
+import 'package:ligaduck/app/partita/addEventoModalPage.dart';
 import 'package:ligaduck/app/service/competizioniProvider.dart';
 import 'package:ligaduck/app/service/giocatoriProvider.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
+import 'package:ligaduck/app/service/partiteProvider.dart';
 import 'package:ligaduck/app/service/squadreProvider.dart';
 import 'package:ligaduck/app/squadre/squadrePage.dart';
 import 'package:provider/provider.dart';
@@ -62,12 +64,18 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             idGiocatore: nuovoGiocatore.idGiocatore,
             pos: nuovoGiocatore.pos,
             nome: CommonService.decodePlayerName(nuovoGiocatore.nome),
+            inCampo:
+                index <
+                11, // true se in formazione (primi 11), false se in panchina
           );
 
           formazione[indexGiocatoreSelezionato] = GiocatoreFormazione(
             idGiocatore: giocatoreAttuale.idGiocatore,
             pos: giocatoreAttuale.pos,
             nome: CommonService.decodePlayerName(giocatoreAttuale.nome),
+            inCampo:
+                indexGiocatoreSelezionato <
+                11, // true se in formazione (primi 11), false se in panchina
           );
         } else if (indexGiocatoreSelezionato == -1) {
           // Il giocatore non è in formazione, sostituisci normalmente
@@ -75,6 +83,9 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             idGiocatore: nuovoGiocatore.idGiocatore,
             pos: nuovoGiocatore.pos,
             nome: CommonService.decodePlayerName(nuovoGiocatore.nome),
+            inCampo:
+                index <
+                11, // true se in formazione (primi 11), false se in panchina
           );
         }
         // Se indexGiocatoreSelezionato == index, il giocatore è già in quella posizione, non fare nulla
@@ -553,114 +564,56 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
         children: [
           ListView(
             children: [
+              if (widget.partita.tabellino.isEmpty)
+                Padding(
+                  padding: EdgeInsets.all(32),
+                  child: Center(
+                    child: Text(
+                      'Nessun evento registrato per questa partita.',
+                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                    ),
+                  ),
+                ),
               for (var evento in widget.partita.tabellino)
                 buildTabellinoRow(evento),
             ],
           ),
           if (admin)
             Positioned(
-              bottom: 16,
-              right: 16,
+              bottom: 32,
+              right: 32,
               child: FloatingActionButton(
-                onPressed: () {
-                  showDialog(
+                onPressed: () async {
+                  final result = await showDialog<Evento>(
                     context: context,
                     builder: (BuildContext context) {
-                      return Dialog(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16.0),
-                        ),
-                        child: Container(
-                          constraints: BoxConstraints(
-                            minWidth: 300,
-                            maxWidth: MediaQuery.of(context).size.width * 0.8,
-                            minHeight: 200,
-                            maxHeight: MediaQuery.of(context).size.height * 0.6,
-                          ),
-                          padding: EdgeInsets.all(20.0),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Aggiungi Evento',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: Icon(Icons.close),
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 20),
-                              DefaultTabController(
-                                length: 2,
-                                child: Column(
-                                  children: [
-                                    TabBar(
-                                      labelColor: Color(
-                                        competizione!.colori.isNotEmpty
-                                            ? int.parse(
-                                                competizione!.colori[0]
-                                                    .replaceFirst('#', 'FF'),
-                                                radix: 16,
-                                              )
-                                            : 0xFF000000,
-                                      ),
-                                      unselectedLabelColor: Colors.grey,
-                                      indicatorColor: Color(
-                                        competizione!.colori.isNotEmpty
-                                            ? int.parse(
-                                                competizione!.colori[0]
-                                                    .replaceFirst('#', 'FF'),
-                                                radix: 16,
-                                              )
-                                            : 0xFF000000,
-                                      ),
-                                      tabs: [
-                                        Tab(text: widget.partita.teamHome),
-                                        Tab(text: widget.partita.teamAway),
-                                      ],
-                                    ),
-                                    SizedBox(
-                                      height: 200,
-                                      child: TabBarView(
-                                        children: [
-                                          Padding(
-                                            padding: EdgeInsets.all(16.0),
-                                            child: Text(
-                                              'Contenuto Tabellino in arrivo...',
-                                              textAlign: TextAlign.center,
-                                            ),
-                                          ),
-                                          Padding(
-                                            padding: EdgeInsets.all(16.0),
-                                            child: Text(
-                                              'Contenuto Formazioni in arrivo...',
-                                              textAlign: TextAlign.center,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
+                      return StatefulBuilder(
+                        builder:
+                            (BuildContext context, StateSetter setDialogState) {
+                              return Dialog(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16.0),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
+                                child: AddEventoModalPage(
+                                  competizione: competizione,
+                                  partita: widget.partita,
+                                  dialogState: setDialogState,
+                                  campionato: widget.campionato,
+                                ),
+                              );
+                            },
                       );
                     },
                   );
+
+                  // Se l'evento è stato salvato con successo, aggiorna la pagina
+                  if (result != null) {
+                    // Aggiungi il nuovo evento al tabellino locale
+                    setState(() {
+                      widget.partita.tabellino.add(result);
+                    });
+                  }
+
                   print('Admin button pressed - Tabellino');
                 },
                 backgroundColor: Color(
@@ -681,7 +634,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
 
   Widget buildTabellinoRow(evento) {
     double screenWidth = MediaQuery.of(context).size.width;
-    return Container(
+
+    Widget rowContent = Container(
       width: screenWidth * 1,
       height: 40,
       decoration: BoxDecoration(
@@ -705,25 +659,37 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             evento.idTeam == widget.partita.idTeamHome
                 ? Row(
                     children: [
-                      if (evento.idAzione == 1)
+                      if (evento.codAzione == 'gol')
                         FaIcon(
                           FontAwesomeIcons.futbol,
                           size: 20,
                           color: Colors.black,
                         )
-                      else if (evento.idAzione == 2)
+                      else if (evento.codAzione == 'gol_ann')
                         FaIcon(
                           FontAwesomeIcons.handshake,
                           size: 16,
                           color: Colors.blue,
                         )
-                      else if (evento.idAzione == 3)
+                      else if (evento.codAzione == 'rig_sb')
                         FaIcon(
                           FontAwesomeIcons.squareFull,
                           size: 16,
                           color: Colors.red,
                         )
-                      else if (evento.idAzione == 4)
+                      else if (evento.codAzione == 'esp')
+                        FaIcon(
+                          FontAwesomeIcons.squareFull,
+                          size: 16,
+                          color: Colors.yellow[700],
+                        )
+                      else if (evento.codAzione == 'sos')
+                        FaIcon(
+                          FontAwesomeIcons.squareFull,
+                          size: 16,
+                          color: Colors.yellow[700],
+                        )
+                      else if (evento.codAzione == 'rig')
                         FaIcon(
                           FontAwesomeIcons.squareFull,
                           size: 16,
@@ -731,7 +697,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                         ),
                       SizedBox(width: 8),
                       Text(
-                        '${evento.minuto}\' ${evento.idGiocatore}',
+                        '${evento.minuto}\' ${setNomeTabellino(evento.idGiocatore, widget.partita.formazioneHome)}',
                         style: TextStyle(fontSize: 16, color: Colors.black),
                       ),
                     ],
@@ -740,29 +706,41 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Text(
-                        '${evento.minuto}\' ${evento.idGiocatore}',
+                        '${evento.minuto}\' ${setNomeTabellino(evento.idGiocatore, widget.partita.formazioneAway)}',
                         style: TextStyle(fontSize: 16, color: Colors.black),
                       ),
                       SizedBox(width: 8),
-                      if (evento.idAzione == 1)
+                      if (evento.codAzione == 'gol')
                         FaIcon(
                           FontAwesomeIcons.futbol,
                           size: 20,
                           color: Colors.black,
                         )
-                      else if (evento.idAzione == 2)
+                      else if (evento.codAzione == 'gol_ann')
                         FaIcon(
                           FontAwesomeIcons.handshake,
                           size: 16,
                           color: Colors.blue,
                         )
-                      else if (evento.idAzione == 3)
+                      else if (evento.codAzione == 'rig_sb')
                         FaIcon(
                           FontAwesomeIcons.squareFull,
                           size: 16,
                           color: Colors.red,
                         )
-                      else if (evento.idAzione == 4)
+                      else if (evento.codAzione == 'esp')
+                        FaIcon(
+                          FontAwesomeIcons.squareFull,
+                          size: 16,
+                          color: Colors.yellow[700],
+                        )
+                      else if (evento.codAzione == 'sos')
+                        FaIcon(
+                          FontAwesomeIcons.squareFull,
+                          size: 16,
+                          color: Colors.yellow[700],
+                        )
+                      else if (evento.codAzione == 'rig')
                         FaIcon(
                           FontAwesomeIcons.squareFull,
                           size: 16,
@@ -774,6 +752,91 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
         ),
       ),
     );
+
+    // Se admin è true, avvolgi con Dismissible per permettere la cancellazione
+    if (admin) {
+      return Dismissible(
+        key: Key(
+          'evento_${evento.minuto}_${evento.idGiocatore}_${evento.codAzione}',
+        ),
+        direction: DismissDirection.endToStart,
+        background: Container(
+          color: Colors.red,
+          alignment: Alignment.centerRight,
+          padding: EdgeInsets.only(right: 16),
+          child: Icon(Icons.delete, color: Colors.white, size: 24),
+        ),
+        confirmDismiss: (direction) async {
+          return await showDialog<bool>(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text('Conferma'),
+                content: Text('Sei sicuro di voler cancellare questo evento?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: Text('Annulla'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: Text('Cancella'),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+        onDismissed: (direction) {
+          _cancellaEvento(evento);
+        },
+        child: rowContent,
+      );
+    } else {
+      return rowContent;
+    }
+  }
+
+  void _cancellaEvento(Evento evento) async {
+    // Prima rimuovi dall'interfaccia locale
+    setState(() {
+      widget.partita.tabellino.removeWhere(
+        (e) =>
+            e.minuto == evento.minuto &&
+            e.idGiocatore == evento.idGiocatore &&
+            e.codAzione == evento.codAzione,
+      );
+    });
+
+    // Poi invia la richiesta al backend
+    bool success = await Provider.of<PartiteProvider>(
+      context,
+      listen: false,
+    ).deleteEvento(widget.campionato, widget.partita.id, evento);
+
+    if (success) {
+      // Mostra un messaggio di conferma
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Evento cancellato con successo'),
+          duration: Duration(seconds: 2),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      // Se la cancellazione sul backend fallisce, ripristina l'evento
+      setState(() {
+        widget.partita.tabellino.add(evento);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Errore nella cancellazione dell\'evento'),
+          duration: Duration(seconds: 2),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Widget buildFormazioni() {
@@ -1028,6 +1091,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                       nome: CommonService.decodePlayerName(
                                         g.nome,
                                       ),
+                                      inCampo: g.inCampo,
                                     ),
                                   )
                                   .toList(),
@@ -1057,6 +1121,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                       nome: CommonService.decodePlayerName(
                                         g.nome,
                                       ),
+                                      inCampo: g.inCampo,
                                     ),
                                   )
                                   .toList(),
@@ -1209,5 +1274,17 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       }
     }
     return squadra;
+  }
+
+  String setNomeTabellino(
+    String idGiocatore,
+    List<GiocatoreFormazione> formazione,
+  ) {
+    for (var giocatore in formazione) {
+      if (giocatore.idGiocatore == idGiocatore) {
+        return CommonService.decodePlayerName(giocatore.nome);
+      }
+    }
+    return '';
   }
 }
