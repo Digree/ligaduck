@@ -6,11 +6,13 @@ class CampionatoMatchModel {
   final String match;
   final Partita partita;
   final String campionato;
+  final VoidCallback? onRefreshRequired;
 
   CampionatoMatchModel({
     required this.match,
     required this.partita,
     required this.campionato,
+    this.onRefreshRequired,
   });
 }
 
@@ -31,16 +33,21 @@ Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
         heroTag: model.match,
         backgroundColor: Colors.blueGrey.withOpacity(0.3),
         elevation: 0,
-        onPressed: () => {
-          Navigator.push(
+        onPressed: () async {
+          final shouldRefresh = await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => PartitaHomePage(
-                partita: model.partita,
+                partitaId: model.partita.id,
                 campionato: model.campionato,
               ),
             ),
-          ),
+          );
+
+          // Se viene restituito true, richiama la callback per fare refresh
+          if (shouldRefresh == true && model.onRefreshRequired != null) {
+            model.onRefreshRequired!();
+          }
         },
         child: FittedBox(
           fit: BoxFit.scaleDown,

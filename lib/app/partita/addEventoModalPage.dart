@@ -25,7 +25,8 @@ class AddEventoModalPage extends StatefulWidget {
   State<AddEventoModalPage> createState() => _AddEventoModalPageState();
 }
 
-class _AddEventoModalPageState extends State<AddEventoModalPage> {
+class _AddEventoModalPageState extends State<AddEventoModalPage>
+    with SingleTickerProviderStateMixin {
   List<TipoEvento> eventi = [];
   TipoEvento? eventoSelezionato;
   String giocatoreSelezionato = '';
@@ -37,10 +38,31 @@ class _AddEventoModalPageState extends State<AddEventoModalPage> {
   final _recuperoControllerHome = TextEditingController();
   final _recuperoControllerAway = TextEditingController();
 
+  late TabController _tabController;
+
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(_onTabChanged);
     fetchEventi();
+  }
+
+  void _onTabChanged() {
+    if (_tabController.indexIsChanging) {
+      _clearForm();
+    }
+  }
+
+  @override
+  void dispose() {
+    _tabController.removeListener(_onTabChanged);
+    _tabController.dispose();
+    _minutoControllerHome.dispose();
+    _minutoControllerAway.dispose();
+    _recuperoControllerHome.dispose();
+    _recuperoControllerAway.dispose();
+    super.dispose();
   }
 
   void fetchEventi() async {
@@ -83,114 +105,113 @@ class _AddEventoModalPageState extends State<AddEventoModalPage> {
             ],
           ),
           SizedBox(height: 10),
-          DefaultTabController(
-            length: 2,
-            child: Column(
-              children: [
-                TabBar(
-                  labelColor: Color(
-                    widget.competizione!.colori.isNotEmpty
-                        ? int.parse(
-                            widget.competizione!.colori[0].replaceFirst(
-                              '#',
-                              'FF',
-                            ),
-                            radix: 16,
-                          )
-                        : 0xFF000000,
-                  ),
-                  unselectedLabelColor: Colors.grey,
-                  indicatorColor: Color(
-                    widget.competizione!.colori.isNotEmpty
-                        ? int.parse(
-                            widget.competizione!.colori[0].replaceFirst(
-                              '#',
-                              'FF',
-                            ),
-                            radix: 16,
-                          )
-                        : 0xFF000000,
-                  ),
-                  tabs: [
-                    Tab(text: widget.partita.teamHome),
-                    Tab(text: widget.partita.teamAway),
+          Column(
+            children: [
+              TabBar(
+                controller: _tabController,
+                labelColor: Color(
+                  widget.competizione!.colori.isNotEmpty
+                      ? int.parse(
+                          widget.competizione!.colori[0].replaceFirst(
+                            '#',
+                            'FF',
+                          ),
+                          radix: 16,
+                        )
+                      : 0xFF000000,
+                ),
+                unselectedLabelColor: Colors.grey,
+                indicatorColor: Color(
+                  widget.competizione!.colori.isNotEmpty
+                      ? int.parse(
+                          widget.competizione!.colori[0].replaceFirst(
+                            '#',
+                            'FF',
+                          ),
+                          radix: 16,
+                        )
+                      : 0xFF000000,
+                ),
+                tabs: [
+                  Tab(text: widget.partita.teamHome),
+                  Tab(text: widget.partita.teamAway),
+                ],
+              ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.only(top: 16.0),
+                      child: eventi.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Color(
+                                        widget.competizione!.colori.isNotEmpty
+                                            ? int.parse(
+                                                widget.competizione!.colori[0]
+                                                    .replaceFirst('#', 'FF'),
+                                                radix: 16,
+                                              )
+                                            : 0xFF000000,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 16),
+                                  Text(
+                                    'Caricamento eventi...',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : buildAddEvento(0, widget.dialogState),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.only(top: 16.0),
+                      child: eventi.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Color(
+                                        widget.competizione!.colori.isNotEmpty
+                                            ? int.parse(
+                                                widget.competizione!.colori[0]
+                                                    .replaceFirst('#', 'FF'),
+                                                radix: 16,
+                                              )
+                                            : 0xFF000000,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 16),
+                                  Text(
+                                    'Caricamento eventi...',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : buildAddEvento(1, widget.dialogState),
+                    ),
                   ],
                 ),
-                SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.5,
-                  child: TabBarView(
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.only(top: 16.0),
-                        child: eventi.isEmpty
-                            ? Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    CircularProgressIndicator(
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Color(
-                                          widget.competizione!.colori.isNotEmpty
-                                              ? int.parse(
-                                                  widget.competizione!.colori[0]
-                                                      .replaceFirst('#', 'FF'),
-                                                  radix: 16,
-                                                )
-                                              : 0xFF000000,
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(height: 16),
-                                    Text(
-                                      'Caricamento eventi...',
-                                      style: TextStyle(
-                                        color: Colors.grey[600],
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : buildAddEvento(0, widget.dialogState),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(top: 16.0),
-                        child: eventi.isEmpty
-                            ? Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    CircularProgressIndicator(
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Color(
-                                          widget.competizione!.colori.isNotEmpty
-                                              ? int.parse(
-                                                  widget.competizione!.colori[0]
-                                                      .replaceFirst('#', 'FF'),
-                                                  radix: 16,
-                                                )
-                                              : 0xFF000000,
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(height: 16),
-                                    Text(
-                                      'Caricamento eventi...',
-                                      style: TextStyle(
-                                        color: Colors.grey[600],
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : buildAddEvento(1, widget.dialogState),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),

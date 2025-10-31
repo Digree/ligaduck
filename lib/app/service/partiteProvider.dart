@@ -151,4 +151,50 @@ class PartiteProvider with ChangeNotifier {
       return false;
     }
   }
+
+  Future<Partita> fetchPartitaById(String campionato, String idPartita) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${Env.apiUrl}/$campionato/partita/$idPartita'),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        return Partita.fromJson(data);
+      } else {
+        throw Exception('Errore nel caricamento: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Tipo errore: ${e.runtimeType}');
+      print('Dettaglio errore: $e');
+      rethrow;
+    }
+  }
+
+  Future<bool> putFormazione(
+    campionato,
+    idPartita,
+    formazione,
+    idSquadra,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse(
+          '${Env.apiUrl}/$campionato/partita/$idPartita/formazione/$idSquadra',
+        ),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(formazione.map((p) => p.toJson()).toList()),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        print('Errore POST: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Errore POST: $e');
+      return false;
+    }
+  }
 }

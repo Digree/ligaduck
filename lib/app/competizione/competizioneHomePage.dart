@@ -418,6 +418,12 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                       match: partite[index].id,
                       partita: partite[index],
                       campionato: widget.campionato,
+                      onRefreshRequired: () {
+                        setState(() {
+                          // Forza il refresh della pagina richiamando initState logic
+                        });
+                        caricaGiornate();
+                      },
                     ),
                     context,
                   );

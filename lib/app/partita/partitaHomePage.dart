@@ -17,12 +17,12 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../services/commonService.dart';
 
 class PartitaHomePage extends StatefulWidget {
-  final Partita partita;
+  final String partitaId;
   final String campionato;
 
   const PartitaHomePage({
     super.key,
-    required this.partita,
+    required this.partitaId,
     required this.campionato,
   });
 
@@ -35,6 +35,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   int selectedFormazione = 0; // 0 = Casa, 1 = Trasferta
   String? allenatoreCasa;
   String? allenatoreTrasferta;
+  Partita? partita;
 
   void _handleGiocatoreChanged(
     int team,
@@ -45,8 +46,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       // La posizione corrisponde all'indice nell'array
       int index = pos - 1;
       List<GiocatoreFormazione> formazione = team == 0
-          ? widget.partita.formazioneHome
-          : widget.partita.formazioneAway;
+          ? partita!.formazioneHome
+          : partita!.formazioneAway;
 
       if (index >= 0 && index < formazione.length) {
         // Verifica se il giocatore selezionato è già in formazione
@@ -96,8 +97,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   @override
   void initState() {
     super.initState();
-    caricaCompetizione();
-    caricaAllenatori();
+    fetchPartita().then((fetchedPartita) {
+      setState(() {
+        partita = fetchedPartita;
+      });
+      // Carica competizione e allenatori solo dopo aver caricato la partita
+      caricaCompetizione();
+      caricaAllenatori();
+    });
   }
 
   void caricaCompetizione() async {
@@ -118,7 +125,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       // Carica i giocatori della squadra di casa
       final giocatoriCasa = await giocatoriProvider.fetchGiocatori(
         widget.campionato,
-        widget.partita.idTeamHome,
+        partita!.idTeamHome,
       );
       final allenatoriCasa = giocatoriCasa
           .where(
@@ -131,7 +138,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       // Carica i giocatori della squadra in trasferta
       final giocatoriTrasferta = await giocatoriProvider.fetchGiocatori(
         widget.campionato,
-        widget.partita.idTeamAway,
+        partita!.idTeamAway,
       );
       final allenatoriTrasferta = giocatoriTrasferta
           .where(
@@ -162,7 +169,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       context,
       listen: false,
     );
-    if (competizione == null) {
+    if (partita == null || competizione == null) {
       return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     return Scaffold(
@@ -172,7 +179,10 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
           leading: IconButton(
             icon: Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(
+                context,
+                true,
+              ); // Restituisce true per indicare che bisogna fare refresh
             },
           ),
           flexibleSpace: Container(
@@ -219,7 +229,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                           child: Text(
                             DateFormat(
                               'dd/MM/yyyy - HH:mm',
-                            ).format(widget.partita.data),
+                            ).format(partita!.data),
                             style: TextStyle(fontSize: 12, color: Colors.white),
                           ),
                           onTap: () {
@@ -230,7 +240,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                 ),
                                 context: context,
                                 builder: (BuildContext context) {
-                                  DateTime selectedDate = widget.partita.data;
+                                  DateTime selectedDate = partita!.data;
 
                                   return StatefulBuilder(
                                     builder: (context, setModalState) {
@@ -334,7 +344,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                                   ElevatedButton(
                                                     onPressed: () {
                                                       setState(() {
-                                                        widget.partita.data =
+                                                        partita!.data =
                                                             selectedDate;
                                                       });
                                                       print(
@@ -377,20 +387,31 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Image.asset(
-                                      'assets/squadre/${widget.partita.codHome}.png',
+                                      'assets/squadre/${partita!.codHome}.png',
                                       height: 80,
                                       width: 80,
                                     ),
                                     SizedBox(
                                       height: 20,
                                       child: Text(
-                                        widget.partita.teamHome,
+                                        partita!.teamHome.length > 12
+                                            ? () {
+                                                List<String> nomeSquadra =
+                                                    partita!.teamHome.split(
+                                                      ' ',
+                                                    );
+                                                if (nomeSquadra.length >= 2) {
+                                                  return '${nomeSquadra[0]} ${nomeSquadra[1][0]}.';
+                                                } else {
+                                                  return '${partita!.teamHome.substring(0, 10)}...';
+                                                }
+                                              }()
+                                            : partita!.teamHome,
                                         style: TextStyle(
-                                          fontSize: 15,
+                                          fontSize: 13,
                                           color: Colors.white,
                                         ),
                                         textAlign: TextAlign.center,
-                                        overflow: TextOverflow.visible,
                                       ),
                                     ),
                                   ],
@@ -399,7 +420,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                               onTap: () async {
                                 var squadra = await getSquadra(
                                   provider,
-                                  widget.partita.idTeamHome,
+                                  partita!.idTeamHome,
                                 );
                                 squadra = addCompetizioni(
                                   squadra,
@@ -422,7 +443,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                             SizedBox(
                               width: 80,
                               child: Text(
-                                '${widget.partita.risultatoHome} - ${widget.partita.risultatoAway}',
+                                '${partita!.risultatoHome} - ${partita!.risultatoAway}',
                                 style: TextStyle(
                                   fontSize: 40,
                                   color: Colors.white,
@@ -439,20 +460,31 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Image.asset(
-                                      'assets/squadre/${widget.partita.codAway}.png',
+                                      'assets/squadre/${partita!.codAway}.png',
                                       height: 80,
                                       width: 80,
                                     ),
                                     SizedBox(
                                       height: 20,
                                       child: Text(
-                                        widget.partita.teamAway,
+                                        partita!.teamAway.length > 12
+                                            ? () {
+                                                List<String> nomeSquadra =
+                                                    partita!.teamAway.split(
+                                                      ' ',
+                                                    );
+                                                if (nomeSquadra.length >= 2) {
+                                                  return '${nomeSquadra[0]} ${nomeSquadra[1][0]}.';
+                                                } else {
+                                                  return '${partita!.teamAway.substring(0, 10)}...';
+                                                }
+                                              }()
+                                            : partita!.teamAway,
                                         style: TextStyle(
-                                          fontSize: 15,
+                                          fontSize: 13,
                                           color: Colors.white,
                                         ),
                                         textAlign: TextAlign.center,
-                                        overflow: TextOverflow.visible,
                                       ),
                                     ),
                                   ],
@@ -461,7 +493,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                               onTap: () async {
                                 var squadra = await getSquadra(
                                   provider,
-                                  widget.partita.idTeamAway,
+                                  partita!.idTeamAway,
                                 );
                                 Navigator.push(
                                   context,
@@ -558,13 +590,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   }
 
   Widget buildTabellino() {
-    widget.partita.tabellino.sort((a, b) => a.minuto.compareTo(b.minuto));
+    partita!.tabellino.sort((a, b) => a.minuto.compareTo(b.minuto));
     return SizedBox.expand(
       child: Stack(
         children: [
           ListView(
             children: [
-              if (widget.partita.tabellino.isEmpty)
+              if (partita!.tabellino.isEmpty)
                 Padding(
                   padding: EdgeInsets.all(32),
                   child: Center(
@@ -574,8 +606,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     ),
                   ),
                 ),
-              for (var evento in widget.partita.tabellino)
-                buildTabellinoRow(evento),
+              for (var evento in partita!.tabellino) buildTabellinoRow(evento),
             ],
           ),
           if (admin)
@@ -596,7 +627,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                 ),
                                 child: AddEventoModalPage(
                                   competizione: competizione,
-                                  partita: widget.partita,
+                                  partita: partita!,
                                   dialogState: setDialogState,
                                   campionato: widget.campionato,
                                 ),
@@ -610,7 +641,12 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                   if (result != null) {
                     // Aggiungi il nuovo evento al tabellino locale
                     setState(() {
-                      widget.partita.tabellino.add(result);
+                      partita!.tabellino.add(result);
+                      fetchPartita().then((fetchedPartita) {
+                        setState(() {
+                          partita = fetchedPartita;
+                        });
+                      });
                     });
                   }
 
@@ -648,15 +684,15 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
         ),
       ),
       child: Padding(
-        padding: evento.idTeam == widget.partita.idTeamHome
+        padding: evento.idTeam == partita!.idTeamHome
             ? EdgeInsets.only(left: 16)
             : EdgeInsets.only(right: 16),
         child: Row(
-          mainAxisAlignment: evento.idTeam == widget.partita.idTeamHome
+          mainAxisAlignment: evento.idTeam == partita!.idTeamHome
               ? MainAxisAlignment.start
               : MainAxisAlignment.end,
           children: [
-            evento.idTeam == widget.partita.idTeamHome
+            evento.idTeam == partita!.idTeamHome
                 ? Row(
                     children: [
                       if (evento.codAzione == 'gol')
@@ -697,7 +733,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                         ),
                       SizedBox(width: 8),
                       Text(
-                        '${evento.minuto}\' ${setNomeTabellino(evento.idGiocatore, widget.partita.formazioneHome)}',
+                        '${evento.minuto}\' ${setNomeTabellino(evento.idGiocatore, partita!.formazioneHome)}',
                         style: TextStyle(fontSize: 16, color: Colors.black),
                       ),
                     ],
@@ -706,7 +742,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Text(
-                        '${evento.minuto}\' ${setNomeTabellino(evento.idGiocatore, widget.partita.formazioneAway)}',
+                        '${evento.minuto}\' ${setNomeTabellino(evento.idGiocatore, partita!.formazioneAway)}',
                         style: TextStyle(fontSize: 16, color: Colors.black),
                       ),
                       SizedBox(width: 8),
@@ -776,11 +812,41 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(false),
-                    child: Text('Annulla'),
+                    child: Text(
+                      'Annulla',
+                      style: TextStyle(
+                        color: Color(
+                          competizione!.colori.isNotEmpty
+                              ? int.parse(
+                                  competizione!.colori[0].replaceFirst(
+                                    '#',
+                                    'FF',
+                                  ),
+                                  radix: 16,
+                                )
+                              : 0xFF007AFF,
+                        ),
+                      ),
+                    ),
                   ),
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(true),
-                    child: Text('Cancella'),
+                    child: Text(
+                      'Cancella',
+                      style: TextStyle(
+                        color: Color(
+                          competizione!.colori.isNotEmpty
+                              ? int.parse(
+                                  competizione!.colori[0].replaceFirst(
+                                    '#',
+                                    'FF',
+                                  ),
+                                  radix: 16,
+                                )
+                              : 0xFF007AFF,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               );
@@ -800,7 +866,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   void _cancellaEvento(Evento evento) async {
     // Prima rimuovi dall'interfaccia locale
     setState(() {
-      widget.partita.tabellino.removeWhere(
+      partita!.tabellino.removeWhere(
         (e) =>
             e.minuto == evento.minuto &&
             e.idGiocatore == evento.idGiocatore &&
@@ -812,10 +878,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     bool success = await Provider.of<PartiteProvider>(
       context,
       listen: false,
-    ).deleteEvento(widget.campionato, widget.partita.id, evento);
+    ).deleteEvento(widget.campionato, partita!.id, evento);
 
     if (success) {
-      // Mostra un messaggio di conferma
+      fetchPartita().then((fetchedPartita) {
+        setState(() {
+          partita = fetchedPartita;
+        });
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Evento cancellato con successo'),
@@ -826,7 +896,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     } else {
       // Se la cancellazione sul backend fallisce, ripristina l'evento
       setState(() {
-        widget.partita.tabellino.add(evento);
+        partita!.tabellino.add(evento);
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -861,16 +931,24 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Image.asset(
-                      'assets/squadre/${widget.partita.codHome}.png',
+                      'assets/squadre/${partita!.codHome}.png',
                       height: 20,
                       width: 20,
                     ),
                     SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        widget.partita.teamHome.length > 10
-                            ? '${widget.partita.teamHome.substring(0, 10)}...'
-                            : widget.partita.teamHome,
+                        partita!.teamHome.length > 15
+                            ? () {
+                                List<String> nomeSquadra = partita!.teamHome
+                                    .split(' ');
+                                if (nomeSquadra.length >= 2) {
+                                  return '${nomeSquadra[0]} ${nomeSquadra[1][0]}.';
+                                } else {
+                                  return '${partita!.teamHome.substring(0, 10)}...';
+                                }
+                              }()
+                            : partita!.teamHome,
                         style: TextStyle(fontSize: 14),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -885,16 +963,27 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Image.asset(
-                      'assets/squadre/${widget.partita.codAway}.png',
+                      'assets/squadre/${partita!.codAway}.png',
                       height: 20,
                       width: 20,
                     ),
                     SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        widget.partita.teamAway.length > 10
-                            ? '${widget.partita.teamAway.substring(0, 10)}...'
-                            : widget.partita.teamAway,
+                        partita!.teamAway.length > 15
+                            ? () {
+                                List<String> nomeSquadra = partita!.teamAway
+                                    .split(' ');
+                                print(
+                                  'Debug teamAway: "${partita!.teamAway}" - Length: ${partita!.teamAway.length} - Words: $nomeSquadra',
+                                );
+                                if (nomeSquadra.length >= 2) {
+                                  return '${nomeSquadra[0]} ${nomeSquadra[1][0]}.';
+                                } else {
+                                  return '${partita!.teamAway.substring(0, 10)}...';
+                                }
+                              }()
+                            : partita!.teamAway,
                         style: TextStyle(fontSize: 14),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -907,6 +996,40 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
         ),
         buildFormazione(selectedFormazione),
         buildPanchina(selectedFormazione),
+        if (admin == true) SizedBox(height: 8),
+        SizedBox(
+          width: MediaQuery.of(context).size.width * 0.9,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              saveFormazione(
+                widget.campionato,
+                partita!.id,
+                selectedFormazione == 0
+                    ? partita!.formazioneHome
+                    : partita!.formazioneAway,
+                selectedFormazione == 0
+                    ? partita!.idTeamHome
+                    : partita!.idTeamAway,
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color(
+                competizione!.colori.isNotEmpty
+                    ? int.parse(
+                        competizione!.colori[0].replaceFirst('#', 'FF'),
+                        radix: 16,
+                      )
+                    : 0xFF007AFF,
+              ),
+            ),
+            icon: Icon(Icons.save_as, color: Colors.white),
+            label: Text(
+              'Salva Formazione',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ),
+        SizedBox(height: 8),
       ],
     );
   }
@@ -960,8 +1083,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
               children: [
                 Image.asset(
                   team == 0
-                      ? 'assets/squadre/${widget.partita.codHome}.png'
-                      : 'assets/squadre/${widget.partita.codAway}.png',
+                      ? 'assets/squadre/${partita!.codHome}.png'
+                      : 'assets/squadre/${partita!.codAway}.png',
                   height: 50,
                   width: 50,
                 ),
@@ -971,9 +1094,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        team == 0
-                            ? widget.partita.teamHome
-                            : widget.partita.teamAway,
+                        team == 0 ? partita!.teamHome : partita!.teamAway,
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -991,9 +1112,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                         ),
                       ),
                       Text(
-                        team == 0
-                            ? widget.partita.moduloHome!
-                            : widget.partita.moduloAway!,
+                        team == 0 ? partita!.moduloHome! : partita!.moduloAway!,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -1026,8 +1145,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                   constraints: BoxConstraints(maxWidth: 115),
                   child: Image.asset(
                     team == 0
-                        ? 'assets/divise/divise_${widget.campionato}/${widget.partita.codHome}_${widget.partita.divisaHome}.png'
-                        : 'assets/divise/divise_${widget.campionato}/${widget.partita.codAway}_${widget.partita.divisaAway}.png',
+                        ? 'assets/divise/divise_${widget.campionato}/${partita!.codHome}_${partita!.divisaHome}.png'
+                        : 'assets/divise/divise_${widget.campionato}/${partita!.codAway}_${partita!.divisaAway}.png',
                     fit: BoxFit.fill,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
@@ -1065,22 +1184,20 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             ),
             child: Center(
               child:
-                  widget.partita.formazioneAway.isNotEmpty ||
-                      widget.partita.formazioneHome.isNotEmpty
+                  partita!.formazioneAway.isNotEmpty ||
+                      partita!.formazioneHome.isNotEmpty
                   ? buildPartitaFormazione(
                       team == 0
                           ? PartitaFormazioneModel(
-                              codSquadra: widget.partita.codHome,
-                              formazione: widget.partita.formazioneHome
+                              codSquadra: partita!.codHome,
+                              formazione: partita!.formazioneHome
                                   .take(11)
                                   .toList(), // Solo i primi 11 titolari
-                              modulo: widget.partita.moduloHome,
+                              modulo: partita!.moduloHome,
                               campionato: widget.campionato,
                               coloriSquadra:
                                   null, // TODO: Aggiungere colori squadra
-                              giocatoriDisponibili: widget
-                                  .partita
-                                  .formazioneHome
+                              giocatoriDisponibili: partita!.formazioneHome
                                   .where(
                                     (g) => g.pos != 0,
                                   ) // Filtra gli allenatori da tutti i giocatori
@@ -1100,17 +1217,15 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                               },
                             )
                           : PartitaFormazioneModel(
-                              codSquadra: widget.partita.codAway,
-                              formazione: widget.partita.formazioneAway
+                              codSquadra: partita!.codAway,
+                              formazione: partita!.formazioneAway
                                   .take(11)
                                   .toList(), // Solo i primi 11 titolari
-                              modulo: widget.partita.moduloAway,
+                              modulo: partita!.moduloAway,
                               campionato: widget.campionato,
                               coloriSquadra:
                                   null, // TODO: Aggiungere colori squadra
-                              giocatoriDisponibili: widget
-                                  .partita
-                                  .formazioneAway
+                              giocatoriDisponibili: partita!.formazioneAway
                                   .where(
                                     (g) => g.pos != 0,
                                   ) // Filtra gli allenatori da tutti i giocatori
@@ -1152,10 +1267,10 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
           SizedBox(height: 12),
           for (var giocatore
               in (team == 0
-                  ? widget.partita.formazioneHome.skip(
+                  ? partita!.formazioneHome.skip(
                       11,
                     ) // Solo giocatori dalla panchina
-                  : widget.partita.formazioneAway.skip(
+                  : partita!.formazioneAway.skip(
                       11,
                     ))) // Solo giocatori dalla panchina
             Container(
@@ -1181,8 +1296,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                         image: DecorationImage(
                           image: AssetImage(
                             team == 0
-                                ? 'assets/divise/divise_${widget.campionato}/${widget.partita.codHome}_${widget.partita.divisaHome}.png'
-                                : 'assets/divise/divise_${widget.campionato}/${widget.partita.codAway}_${widget.partita.divisaAway}.png',
+                                ? 'assets/divise/divise_${widget.campionato}/${partita!.codHome}_${partita!.divisaHome}.png'
+                                : 'assets/divise/divise_${widget.campionato}/${partita!.codAway}_${partita!.divisaAway}.png',
                           ),
                           fit: BoxFit.cover,
                         ),
@@ -1244,7 +1359,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   Future<Competizione> getCompetizione(CompetizioniProvider provider) async {
     Competizione competizione = await provider.getCompetizione(
       widget.campionato,
-      widget.partita.idGiornata,
+      partita!.idGiornata,
     );
     return competizione;
   }
@@ -1286,5 +1401,43 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       }
     }
     return '';
+  }
+
+  Future<Partita> fetchPartita() async {
+    Partita partita = await Provider.of<PartiteProvider>(
+      context,
+      listen: false,
+    ).fetchPartitaById(widget.campionato, widget.partitaId);
+    return partita;
+  }
+
+  Future<void> saveFormazione(
+    campionato,
+    idPartita,
+    formazione,
+    idSquadra,
+  ) async {
+    bool success = await Provider.of<PartiteProvider>(
+      context,
+      listen: false,
+    ).putFormazione(campionato, idPartita, formazione, idSquadra);
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Formazione salvata con successo'),
+          duration: Duration(seconds: 2),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Errore nel salvataggio della formazione'),
+          duration: Duration(seconds: 2),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }
