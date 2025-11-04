@@ -8,13 +8,35 @@ class CommonService {
     if (playerName.isEmpty) return playerName;
 
     try {
-      // Prova prima la decodifica corretta Latin1 -> UTF8
-      final bytes = latin1.encode(playerName);
-      final decoded = utf8.decode(bytes);
+      // Applica la decodifica iterativamente finché il risultato non si stabilizza
+      String current = playerName;
+      String previous = '';
+      int maxIterations = 3; // Limite per evitare loop infiniti
+      int iterations = 0;
 
-      // Verifica se la decodifica ha prodotto un risultato sensato
-      if (decoded.isNotEmpty && !decoded.contains('�')) {
-        return decoded;
+      while (current != previous && iterations < maxIterations) {
+        previous = current;
+
+        try {
+          final bytes = latin1.encode(current);
+          final decoded = utf8.decode(bytes);
+
+          // Se la decodifica produce caratteri di sostituzione, fermati
+          if (decoded.contains('�')) {
+            break;
+          }
+
+          current = decoded;
+          iterations++;
+        } catch (e) {
+          // Se la decodifica fallisce, fermati
+          break;
+        }
+      }
+
+      // Se abbiamo ottenuto un miglioramento, usalo
+      if (current != playerName && !current.contains('�')) {
+        return current;
       }
     } catch (e) {
       // Se fallisce, continua con la logica di fallback

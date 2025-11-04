@@ -154,9 +154,16 @@ class PartiteProvider with ChangeNotifier {
 
   Future<Partita> fetchPartitaById(String campionato, String idPartita) async {
     try {
-      final response = await http.get(
-        Uri.parse('${Env.apiUrl}/$campionato/partita/$idPartita'),
-      );
+      final url = '${Env.apiUrl}/$campionato/partita/$idPartita';
+      print('Tentativo di fetch partita da URL: $url');
+      print('Campionato: $campionato, ID Partita: $idPartita');
+
+      final response = await http.get(Uri.parse(url));
+
+      print('Status Code ricevuto: ${response.statusCode}');
+      if (response.statusCode != 200) {
+        print('Risposta del server: ${response.body}');
+      }
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
@@ -172,10 +179,10 @@ class PartiteProvider with ChangeNotifier {
   }
 
   Future<bool> putFormazione(
-    campionato,
-    idPartita,
-    formazione,
-    idSquadra,
+    String campionato,
+    String idPartita,
+    Formazione formazione,
+    int idSquadra,
   ) async {
     try {
       final response = await http.post(
@@ -183,7 +190,7 @@ class PartiteProvider with ChangeNotifier {
           '${Env.apiUrl}/$campionato/partita/$idPartita/formazione/$idSquadra',
         ),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode(formazione.map((p) => p.toJson()).toList()),
+        body: json.encode(formazione.toJson()),
       );
 
       if (response.statusCode == 200) {

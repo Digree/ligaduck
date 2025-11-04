@@ -9,10 +9,8 @@ class Partita {
   final String codAway;
   final int risultatoHome;
   final int risultatoAway;
-  final String? moduloHome;
-  final String? moduloAway;
-  final List<GiocatoreFormazione> formazioneHome;
-  final List<GiocatoreFormazione> formazioneAway;
+  final Formazione formazioneHome;
+  final Formazione formazioneAway;
   final int divisaHome;
   final int divisaAway;
   final List<Evento> tabellino;
@@ -27,8 +25,6 @@ class Partita {
     required this.teamAway,
     required this.codHome,
     required this.codAway,
-    required this.moduloHome,
-    required this.moduloAway,
     required this.risultatoHome,
     required this.risultatoAway,
     required this.formazioneHome,
@@ -49,16 +45,10 @@ class Partita {
       teamAway: json['teamAway'],
       codHome: json['codHome'],
       codAway: json['codAway'],
-      moduloHome: json['moduloHome'],
-      moduloAway: json['moduloAway'],
       risultatoHome: json['risultatoHome'],
       risultatoAway: json['risultatoAway'],
-      formazioneHome: (json['formazioneHome'] as List)
-          .map((e) => GiocatoreFormazione.fromJson(e))
-          .toList(),
-      formazioneAway: (json['formazioneAway'] as List)
-          .map((e) => GiocatoreFormazione.fromJson(e))
-          .toList(),
+      formazioneHome: Formazione.fromJson(json['formazioneHome']),
+      formazioneAway: Formazione.fromJson(json['formazioneAway']),
       divisaHome: json['divisaHome'],
       divisaAway: json['divisaAway'],
       tabellino: (json['tabellino'] as List)
@@ -80,12 +70,60 @@ class Partita {
       'codAway': codAway,
       'risultatoHome': risultatoHome,
       'risultatoAway': risultatoAway,
-      'formazioneHome': formazioneHome.map((e) => e.toJson()).toList(),
-      'formazioneAway': formazioneAway.map((e) => e.toJson()).toList(),
+      'formazioneHome': formazioneHome.toJson(),
+      'formazioneAway': formazioneAway.toJson(),
       'divisaHome': divisaHome,
       'divisaAway': divisaAway,
       'tabellino': tabellino.map((e) => e.toJson()).toList(),
       'data': data.toIso8601String(),
+    };
+  }
+}
+
+class Formazione {
+  final List<GiocatoreFormazione> titolari;
+  final List<GiocatoreFormazione> panchina;
+  final List<GiocatoreNonDisponibile> indisponibili;
+  final List<GiocatoreFormazione> nonConvocati;
+  String allenatore;
+  String modulo;
+
+  Formazione({
+    required this.titolari,
+    required this.panchina,
+    required this.indisponibili,
+    required this.nonConvocati,
+    required this.allenatore,
+    required this.modulo,
+  });
+
+  factory Formazione.fromJson(Map<String, dynamic> json) {
+    return Formazione(
+      titolari: (json['titolari'] as List)
+          .map((e) => GiocatoreFormazione.fromJson(e))
+          .toList(),
+      panchina: (json['panchina'] as List)
+          .map((e) => GiocatoreFormazione.fromJson(e))
+          .toList(),
+      indisponibili: (json['indisponibili'] as List)
+          .map((e) => GiocatoreNonDisponibile.fromJson(e))
+          .toList(),
+      nonConvocati: (json['nonConvocati'] as List)
+          .map((e) => GiocatoreFormazione.fromJson(e))
+          .toList(),
+      allenatore: json['allenatore'],
+      modulo: json['modulo'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'titolari': titolari.map((e) => e.toJson()).toList(),
+      'panchina': panchina.map((e) => e.toJson()).toList(),
+      'indisponibili': indisponibili.map((e) => e.toJson()).toList(),
+      'nonConvocati': nonConvocati.map((e) => e.toJson()).toList(),
+      'allenatore': allenatore,
+      'modulo': modulo,
     };
   }
 }
@@ -118,6 +156,46 @@ class GiocatoreFormazione {
       'idGiocatore': idGiocatore,
       'nome': nome,
       'inCampo': inCampo,
+    };
+  }
+}
+
+class GiocatoreNonDisponibile {
+  final String idGiocatore;
+  String nome;
+  final int pos;
+  final String motivo;
+  final int durata;
+  final int idCompetizione;
+
+  GiocatoreNonDisponibile({
+    required this.idGiocatore,
+    required this.nome,
+    required this.pos,
+    required this.motivo,
+    required this.durata,
+    required this.idCompetizione,
+  });
+
+  factory GiocatoreNonDisponibile.fromJson(Map<String, dynamic> json) {
+    return GiocatoreNonDisponibile(
+      idGiocatore: json['idGiocatore'],
+      nome: json['nome'],
+      pos: json['pos'],
+      motivo: json['motivo'],
+      durata: json['durata'],
+      idCompetizione: json['idCompetizione'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'idGiocatore': idGiocatore,
+      'nome': nome,
+      'pos': pos,
+      'motivo': motivo,
+      'durata': durata,
+      'idCompetizione': idCompetizione,
     };
   }
 }

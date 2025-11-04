@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:ligaduck/app/config/env.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
+import 'package:ligaduck/services/commonService.dart';
 
 class GiocatoriProvider with ChangeNotifier {
   List<Giocatore> _giocatori = [];
@@ -60,6 +61,11 @@ class GiocatoriProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         _giocatori = data.map((item) => Giocatore.fromJson(item)).toList();
+
+        for (var giocatore in _giocatori) {
+          giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
+        }
+
         notifyListeners();
         return _giocatori;
       } else {

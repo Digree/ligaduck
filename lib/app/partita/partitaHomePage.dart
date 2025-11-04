@@ -5,16 +5,15 @@ import 'package:ligaduck/app/config/models/global.dart';
 import 'package:ligaduck/app/models/partita/partitaFormazioneModel.dart';
 import 'package:ligaduck/app/partita/addEventoModalPage.dart';
 import 'package:ligaduck/app/service/competizioniProvider.dart';
-import 'package:ligaduck/app/service/giocatoriProvider.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/service/partiteProvider.dart';
 import 'package:ligaduck/app/service/squadreProvider.dart';
 import 'package:ligaduck/app/squadre/squadrePage.dart';
+import 'package:ligaduck/services/commonService.dart';
 import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../../services/commonService.dart';
 
 class PartitaHomePage extends StatefulWidget {
   final String partitaId;
@@ -36,6 +35,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   String? allenatoreCasa;
   String? allenatoreTrasferta;
   Partita? partita;
+  bool showFormazioni = false; // Controlla se mostrare le formazioni
 
   void _handleGiocatoreChanged(
     int team,
@@ -45,45 +45,45 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     setState(() {
       // La posizione corrisponde all'indice nell'array
       int index = pos - 1;
-      List<GiocatoreFormazione> formazione = team == 0
+      Formazione formazione = team == 0
           ? partita!.formazioneHome
           : partita!.formazioneAway;
 
-      if (index >= 0 && index < formazione.length) {
+      if (index >= 0 && index < formazione.titolari.length) {
         // Verifica se il giocatore selezionato è già in formazione
-        int indexGiocatoreSelezionato = formazione.indexWhere(
+        int indexGiocatoreSelezionato = formazione.titolari.indexWhere(
           (g) => g.idGiocatore == nuovoGiocatore.idGiocatore,
         );
 
         if (indexGiocatoreSelezionato != -1 &&
             indexGiocatoreSelezionato != index) {
           // Il giocatore è già in formazione in un'altra posizione, fai uno swap
-          GiocatoreFormazione giocatoreAttuale = formazione[index];
+          GiocatoreFormazione giocatoreAttuale = formazione.titolari[index];
 
           // Swap i giocatori
-          formazione[index] = GiocatoreFormazione(
+          formazione.titolari[index] = GiocatoreFormazione(
             idGiocatore: nuovoGiocatore.idGiocatore,
             pos: nuovoGiocatore.pos,
-            nome: CommonService.decodePlayerName(nuovoGiocatore.nome),
+            nome: nuovoGiocatore.nome,
             inCampo:
                 index <
                 11, // true se in formazione (primi 11), false se in panchina
           );
 
-          formazione[indexGiocatoreSelezionato] = GiocatoreFormazione(
+          formazione.titolari[indexGiocatoreSelezionato] = GiocatoreFormazione(
             idGiocatore: giocatoreAttuale.idGiocatore,
             pos: giocatoreAttuale.pos,
-            nome: CommonService.decodePlayerName(giocatoreAttuale.nome),
+            nome: giocatoreAttuale.nome,
             inCampo:
                 indexGiocatoreSelezionato <
                 11, // true se in formazione (primi 11), false se in panchina
           );
         } else if (indexGiocatoreSelezionato == -1) {
           // Il giocatore non è in formazione, sostituisci normalmente
-          formazione[index] = GiocatoreFormazione(
+          formazione.titolari[index] = GiocatoreFormazione(
             idGiocatore: nuovoGiocatore.idGiocatore,
             pos: nuovoGiocatore.pos,
-            nome: CommonService.decodePlayerName(nuovoGiocatore.nome),
+            nome: nuovoGiocatore.nome,
             inCampo:
                 index <
                 11, // true se in formazione (primi 11), false se in panchina
@@ -97,14 +97,28 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   @override
   void initState() {
     super.initState();
-    fetchPartita().then((fetchedPartita) {
-      setState(() {
-        partita = fetchedPartita;
-      });
-      // Carica competizione e allenatori solo dopo aver caricato la partita
-      caricaCompetizione();
-      caricaAllenatori();
-    });
+    fetchPartita()
+        .then((fetchedPartita) {
+          setState(() {
+            partita = fetchedPartita;
+          });
+          caricaCompetizione();
+        })
+        .catchError((error) {
+          print('Errore durante il caricamento della partita: $error');
+          // Mostra un messaggio di errore all'utente
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Errore nel caricamento della partita: ${error.toString()}',
+                ),
+                backgroundColor: Colors.red,
+                duration: Duration(seconds: 5),
+              ),
+            );
+          }
+        });
   }
 
   void caricaCompetizione() async {
@@ -115,50 +129,139 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     });
   }
 
-  void caricaAllenatori() async {
+  void caricaFormazioniDaSquadre(int selectedFormazione) async {
     try {
-      final giocatoriProvider = Provider.of<GiocatoriProvider>(
-        context,
-        listen: false,
-      );
+      final provider = Provider.of<SquadreProvider>(context, listen: false);
+      final Squadra squadra;
 
-      // Carica i giocatori della squadra di casa
-      final giocatoriCasa = await giocatoriProvider.fetchGiocatori(
-        widget.campionato,
-        partita!.idTeamHome,
-      );
-      final allenatoriCasa = giocatoriCasa
-          .where(
-            (g) =>
-                g.ruolo.toLowerCase() == 'allenatore' ||
-                g.ruolo.toLowerCase() == 'all',
-          )
-          .toList();
-
-      // Carica i giocatori della squadra in trasferta
-      final giocatoriTrasferta = await giocatoriProvider.fetchGiocatori(
-        widget.campionato,
-        partita!.idTeamAway,
-      );
-      final allenatoriTrasferta = giocatoriTrasferta
-          .where(
-            (g) =>
-                g.ruolo.toLowerCase() == 'allenatore' ||
-                g.ruolo.toLowerCase() == 'all',
-          )
-          .toList();
-
+      if (selectedFormazione == 0) {
+        squadra = await getSquadra(provider, partita!.idTeamHome);
+      } else {
+        squadra = await getSquadra(provider, partita!.idTeamAway);
+      }
       setState(() {
-        allenatoreCasa = allenatoriCasa.isNotEmpty
-            ? CommonService.decodePlayerName(allenatoriCasa.first.nome)
-            : null;
-        allenatoreTrasferta = allenatoriTrasferta.isNotEmpty
-            ? CommonService.decodePlayerName(allenatoriTrasferta.first.nome)
-            : null;
+        if (selectedFormazione == 0) {
+          partita!.formazioneHome.titolari.clear();
+          partita!.formazioneHome.titolari.addAll(
+            squadra.formazione.titolari
+                .map(
+                  (g) => GiocatoreFormazione(
+                    idGiocatore: g.idGiocatore,
+                    pos: g.pos,
+                    nome: g.nome,
+                    inCampo: g.inCampo,
+                  ),
+                )
+                .toList(),
+          );
+
+          partita!.formazioneHome.panchina.clear();
+          partita!.formazioneHome.panchina.addAll(
+            squadra.formazione.panchina
+                .map(
+                  (g) => GiocatoreFormazione(
+                    idGiocatore: g.idGiocatore,
+                    pos: g.pos,
+                    nome: g.nome,
+                    inCampo: g.inCampo,
+                  ),
+                )
+                .toList(),
+          );
+
+          if (squadra.formazione.indisponibili.isNotEmpty) {
+            partita!.formazioneHome.indisponibili.clear();
+            partita!.formazioneHome.indisponibili.addAll(
+              squadra.formazione.indisponibili
+                  .map(
+                    (g) => GiocatoreNonDisponibile(
+                      idGiocatore: g.idGiocatore,
+                      motivo: g.motivo,
+                      nome: g.nome,
+                      pos: g.pos,
+                      durata: g.durata,
+                      idCompetizione: g.idCompetizione,
+                    ),
+                  )
+                  .toList(),
+            );
+          }
+
+          partita!.formazioneHome.modulo = squadra.formazione.modulo;
+          partita!.formazioneHome.allenatore = squadra.formazione.allenatore;
+        } else {
+          partita!.formazioneAway.titolari.clear();
+          partita!.formazioneAway.titolari.addAll(
+            squadra.formazione.titolari
+                .map(
+                  (g) => GiocatoreFormazione(
+                    idGiocatore: g.idGiocatore,
+                    pos: g.pos,
+                    nome: g.nome,
+                    inCampo: g.inCampo,
+                  ),
+                )
+                .toList(),
+          );
+
+          partita!.formazioneAway.panchina.clear();
+          partita!.formazioneAway.panchina.addAll(
+            squadra.formazione.panchina
+                .map(
+                  (g) => GiocatoreFormazione(
+                    idGiocatore: g.idGiocatore,
+                    pos: g.pos,
+                    nome: g.nome,
+                    inCampo: g.inCampo,
+                  ),
+                )
+                .toList(),
+          );
+
+          if (squadra.indisponibili.isNotEmpty) {
+            partita!.formazioneAway.indisponibili.clear();
+            partita!.formazioneAway.indisponibili.addAll(
+              squadra.indisponibili
+                  .map(
+                    (g) => GiocatoreNonDisponibile(
+                      idGiocatore: g.idGiocatore,
+                      motivo: g.motivo,
+                      nome: g.nome,
+                      pos: g.pos,
+                      durata: g.durata,
+                      idCompetizione: g.idCompetizione,
+                    ),
+                  )
+                  .toList(),
+            );
+          }
+
+          partita!.formazioneAway.modulo = squadra.formazione.modulo;
+          partita!.formazioneAway.allenatore = squadra.formazione.allenatore;
+        }
+
+        showFormazioni = true;
       });
+
+      print('Formazioni caricate con successo dalle squadre');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Formazioni caricate con successo dalle squadre'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
     } catch (e) {
-      // Gestisci errore silenziosamente
-      print('Errore nel caricamento allenatori: $e');
+      print('Errore nel caricamento delle formazioni: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Errore nel caricamento delle formazioni: ${e.toString()}',
+          ),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
     }
   }
 
@@ -557,7 +660,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                   child: TabBarView(
                     children: [
                       buildTabellino(),
-                      SingleChildScrollView(child: buildFormazioni()),
+                      buildFormazioni(),
                       SingleChildScrollView(
                         padding: EdgeInsets.all(24),
                         child: Column(
@@ -994,42 +1097,140 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             },
           ),
         ),
-        buildFormazione(selectedFormazione),
-        buildPanchina(selectedFormazione),
-        if (admin == true) SizedBox(height: 8),
-        SizedBox(
-          width: MediaQuery.of(context).size.width * 0.9,
-          child: ElevatedButton.icon(
-            onPressed: () {
-              saveFormazione(
-                widget.campionato,
-                partita!.id,
-                selectedFormazione == 0
-                    ? partita!.formazioneHome
-                    : partita!.formazioneAway,
-                selectedFormazione == 0
-                    ? partita!.idTeamHome
-                    : partita!.idTeamAway,
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(
-                competizione!.colori.isNotEmpty
-                    ? int.parse(
-                        competizione!.colori[0].replaceFirst('#', 'FF'),
-                        radix: 16,
-                      )
-                    : 0xFF007AFF,
-              ),
-            ),
-            icon: Icon(Icons.save_as, color: Colors.white),
-            label: Text(
-              'Salva Formazione',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
+        Expanded(
+          child:
+              (selectedFormazione == 0 &&
+                      partita!.formazioneHome.titolari.isNotEmpty) ||
+                  (selectedFormazione == 1 &&
+                          partita!.formazioneAway.titolari.isNotEmpty ||
+                      showFormazioni)
+              ? SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      buildFormazione(selectedFormazione),
+                      buildPanchina(selectedFormazione),
+                      if (partita!.formazioneHome.indisponibili.isNotEmpty ||
+                          partita!.formazioneAway.indisponibili.isNotEmpty)
+                        buildIndisponibili(selectedFormazione),
+                      SizedBox(height: 8),
+                      if (admin == true)
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width * 0.9,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              saveFormazione(
+                                widget.campionato,
+                                partita!.id,
+                                selectedFormazione == 0
+                                    ? partita!.formazioneHome
+                                    : partita!.formazioneAway,
+                                selectedFormazione == 0
+                                    ? partita!.idTeamHome
+                                    : partita!.idTeamAway,
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(
+                                competizione!.colori.isNotEmpty
+                                    ? int.parse(
+                                        competizione!.colori[0].replaceFirst(
+                                          '#',
+                                          'FF',
+                                        ),
+                                        radix: 16,
+                                      )
+                                    : 0xFF007AFF,
+                              ),
+                            ),
+                            icon: Icon(Icons.save_as, color: Colors.white),
+                            label: Text(
+                              'Salva Formazione',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      if (admin == true)
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width * 0.9,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              setState(() {
+                                showFormazioni = false;
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red[600],
+                            ),
+                            icon: Icon(Icons.delete, color: Colors.white),
+                            label: Text(
+                              'Reset Formazione',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      SizedBox(height: 8),
+                    ],
+                  ),
+                )
+              : admin == true
+              ? Container(
+                  height: MediaQuery.of(context).size.height * 0.5,
+                  margin: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: CustomPaint(
+                    painter: DashedBorderPainter(),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Center(
+                            child: Text(
+                              'Inserisci Formazione',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 16),
+                          Center(
+                            child: FloatingActionButton(
+                              onPressed: () {
+                                caricaFormazioniDaSquadre(selectedFormazione);
+                              },
+                              backgroundColor: Color(
+                                competizione!.colori.isNotEmpty
+                                    ? int.parse(
+                                        competizione!.colori[0].replaceFirst(
+                                          '#',
+                                          'FF',
+                                        ),
+                                        radix: 16,
+                                      )
+                                    : 0xFF007AFF,
+                              ),
+                              child: Icon(
+                                Icons.add,
+                                color: Colors.white,
+                                size: 32,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+              : Center(
+                  child: Text(
+                    'Le formazioni non sono ancora state inserite.',
+                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                  ),
+                ),
         ),
-        SizedBox(height: 8),
       ],
     );
   }
@@ -1112,7 +1313,9 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                         ),
                       ),
                       Text(
-                        team == 0 ? partita!.moduloHome! : partita!.moduloAway!,
+                        team == 0
+                            ? partita!.formazioneHome.modulo
+                            : partita!.formazioneAway.modulo,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -1123,12 +1326,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                       SizedBox(height: 4),
                       Text(
                         team == 0
-                            ? (allenatoreCasa != null
-                                  ? 'All: $allenatoreCasa'
-                                  : 'All: ')
-                            : (allenatoreTrasferta != null
-                                  ? 'All: $allenatoreTrasferta'
-                                  : 'All: '),
+                            ? ('All: ${partita!.formazioneHome.allenatore}')
+                            : ('All: ${partita!.formazioneAway.allenatore}'),
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -1184,62 +1383,32 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             ),
             child: Center(
               child:
-                  partita!.formazioneAway.isNotEmpty ||
-                      partita!.formazioneHome.isNotEmpty
+                  partita!.formazioneAway.titolari.isNotEmpty ||
+                      partita!.formazioneHome.titolari.isNotEmpty
                   ? buildPartitaFormazione(
                       team == 0
                           ? PartitaFormazioneModel(
                               codSquadra: partita!.codHome,
-                              formazione: partita!.formazioneHome
-                                  .take(11)
-                                  .toList(), // Solo i primi 11 titolari
-                              modulo: partita!.moduloHome,
+                              formazione: partita!.formazioneHome.titolari,
+                              modulo: partita!.formazioneHome.modulo,
                               campionato: widget.campionato,
                               coloriSquadra:
                                   null, // TODO: Aggiungere colori squadra
-                              giocatoriDisponibili: partita!.formazioneHome
-                                  .where(
-                                    (g) => g.pos != 0,
-                                  ) // Filtra gli allenatori da tutti i giocatori
-                                  .map(
-                                    (g) => GiocatoreFormazione(
-                                      idGiocatore: g.idGiocatore,
-                                      pos: g.pos,
-                                      nome: CommonService.decodePlayerName(
-                                        g.nome,
-                                      ),
-                                      inCampo: g.inCampo,
-                                    ),
-                                  )
-                                  .toList(),
+                              giocatoriDisponibili:
+                                  partita!.formazioneHome.panchina,
                               onGiocatoreChanged: (pos, nuovoGiocatore) {
                                 _handleGiocatoreChanged(0, pos, nuovoGiocatore);
                               },
                             )
                           : PartitaFormazioneModel(
                               codSquadra: partita!.codAway,
-                              formazione: partita!.formazioneAway
-                                  .take(11)
-                                  .toList(), // Solo i primi 11 titolari
-                              modulo: partita!.moduloAway,
+                              formazione: partita!.formazioneAway.titolari,
+                              modulo: partita!.formazioneAway.modulo,
                               campionato: widget.campionato,
                               coloriSquadra:
                                   null, // TODO: Aggiungere colori squadra
-                              giocatoriDisponibili: partita!.formazioneAway
-                                  .where(
-                                    (g) => g.pos != 0,
-                                  ) // Filtra gli allenatori da tutti i giocatori
-                                  .map(
-                                    (g) => GiocatoreFormazione(
-                                      idGiocatore: g.idGiocatore,
-                                      pos: g.pos,
-                                      nome: CommonService.decodePlayerName(
-                                        g.nome,
-                                      ),
-                                      inCampo: g.inCampo,
-                                    ),
-                                  )
-                                  .toList(),
+                              giocatoriDisponibili:
+                                  partita!.formazioneAway.panchina,
                               onGiocatoreChanged: (pos, nuovoGiocatore) {
                                 _handleGiocatoreChanged(1, pos, nuovoGiocatore);
                               },
@@ -1267,12 +1436,106 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
           SizedBox(height: 12),
           for (var giocatore
               in (team == 0
-                  ? partita!.formazioneHome.skip(
-                      11,
-                    ) // Solo giocatori dalla panchina
-                  : partita!.formazioneAway.skip(
-                      11,
-                    ))) // Solo giocatori dalla panchina
+                  ? partita!.formazioneHome.panchina
+                  : partita!.formazioneAway.panchina))
+            Container(
+              //width: screenWidth * 1,
+              height: 60,
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                border: Border(
+                  bottom: BorderSide(
+                    color: Colors.grey[350] ?? Colors.grey,
+                    width: 1.0,
+                  ),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(left: 20),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        image: DecorationImage(
+                          image: AssetImage(
+                            team == 0
+                                ? 'assets/divise/divise_${widget.campionato}/${partita!.codHome}_${partita!.divisaHome}.png'
+                                : 'assets/divise/divise_${widget.campionato}/${partita!.codAway}_${partita!.divisaAway}.png',
+                          ),
+                          fit: BoxFit.cover,
+                        ),
+                        color: Colors.transparent,
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${giocatore.pos}',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 16,
+                            shadows: [
+                              Shadow(
+                                offset: Offset(-1.0, -1.0),
+                                blurRadius: 0.0,
+                                color: Colors.black,
+                              ),
+                              Shadow(
+                                offset: Offset(1.0, -1.0),
+                                blurRadius: 0.0,
+                                color: Colors.black,
+                              ),
+                              Shadow(
+                                offset: Offset(1.0, 1.0),
+                                blurRadius: 0.0,
+                                color: Colors.black,
+                              ),
+                              Shadow(
+                                offset: Offset(-1.0, 1.0),
+                                blurRadius: 0.0,
+                                color: Colors.black,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(left: 20),
+                    child: Text(
+                      CommonService.decodePlayerName(giocatore.nome),
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildIndisponibili(int team) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Non Disponibili',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 12),
+          for (var giocatore
+              in (team == 0
+                  ? partita!.formazioneHome.indisponibili
+                  : partita!.formazioneAway.indisponibili))
             Container(
               //width: screenWidth * 1,
               height: 60,
@@ -1391,19 +1654,19 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     return squadra;
   }
 
-  String setNomeTabellino(
-    String idGiocatore,
-    List<GiocatoreFormazione> formazione,
-  ) {
-    for (var giocatore in formazione) {
+  String setNomeTabellino(String idGiocatore, Formazione formazione) {
+    for (var giocatore in formazione.titolari) {
       if (giocatore.idGiocatore == idGiocatore) {
-        return CommonService.decodePlayerName(giocatore.nome);
+        return giocatore.nome;
       }
     }
     return '';
   }
 
   Future<Partita> fetchPartita() async {
+    print(
+      'Chiamando fetchPartitaById con campionato: ${widget.campionato}, partitaId: ${widget.partitaId}',
+    );
     Partita partita = await Provider.of<PartiteProvider>(
       context,
       listen: false,
@@ -1440,4 +1703,42 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       );
     }
   }
+}
+
+class DashedBorderPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.grey[400]!
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+
+    const dashWidth = 8;
+    const dashSpace = 4;
+    const cornerRadius = 12.0;
+
+    final path = Path();
+    path.addRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(0, 0, size.width, size.height),
+        Radius.circular(cornerRadius),
+      ),
+    );
+
+    // Calcola la lunghezza totale del percorso
+    final pathMetrics = path.computeMetrics();
+
+    for (final pathMetric in pathMetrics) {
+      double distance = 0;
+      while (distance < pathMetric.length) {
+        final length = dashWidth.clamp(0.0, pathMetric.length - distance);
+        final extractPath = pathMetric.extractPath(distance, distance + length);
+        canvas.drawPath(extractPath, paint);
+        distance += dashWidth + dashSpace;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

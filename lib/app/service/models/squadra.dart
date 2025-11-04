@@ -10,9 +10,9 @@ class Squadra {
   final String categoria;
   final List<String> colori;
   final List<Trofeo>? trofei;
-  final List<GiocatoreFormazione> formazione;
+  final Formazione formazione;
+  final List<GiocatoreNonDisponibile> indisponibili;
   final List<int> competizioni;
-  String modulo;
 
   Squadra({
     required this.id,
@@ -24,8 +24,8 @@ class Squadra {
     required this.colori,
     this.trofei,
     required this.formazione,
+    required this.indisponibili,
     required this.competizioni,
-    required this.modulo,
   });
 
   factory Squadra.fromJson(Map<String, dynamic> json) {
@@ -45,15 +45,10 @@ class Squadra {
       competizioni: json['competizioni'] != null
           ? List<int>.from(json['competizioni'])
           : [],
-      formazione: json['formazione'] != null
-          ? (json['formazione'] as List)
-                .map(
-                  (e) =>
-                      GiocatoreFormazione.fromJson(e as Map<String, dynamic>),
-                )
-                .toList()
-          : [],
-      modulo: json['modulo'] ?? "",
+      formazione: Formazione.fromJson(json['formazione']),
+      indisponibili: (json['indisponibili'] as List)
+          .map((e) => GiocatoreNonDisponibile.fromJson(e))
+          .toList(),
     );
   }
 
@@ -68,8 +63,8 @@ class Squadra {
       'colori': colori,
       'trofei': trofei?.map((t) => t.toJson()).toList(),
       'competizioni': competizioni,
-      'formazione': formazione.map((f) => f.toJson()).toList(),
-      'modulo': modulo,
+      'formazione': formazione.toJson(),
+      'indisponibili': indisponibili.map((e) => e.toJson()).toList(),
     };
   }
 }

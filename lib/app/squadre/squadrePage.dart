@@ -1024,7 +1024,7 @@ class _SquadrePageState extends State<SquadrePage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Modulo: ${widget.squadra.modulo}',
+                  'Modulo: ${widget.squadra.formazione.modulo}',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: getColor('primary'),
@@ -1062,27 +1062,16 @@ class _SquadrePageState extends State<SquadrePage> {
             border: Border.all(color: Colors.grey[200]!, width: 1),
           ),
           child: Center(
-            child: widget.squadra.formazione.isEmpty
+            child: widget.squadra.formazione.titolari.isEmpty
                 ? Center()
                 : buildPartitaFormazione(
                     PartitaFormazioneModel(
                       codSquadra: widget.squadra.cod,
-                      formazione: widget.squadra.formazione,
+                      formazione: widget.squadra.formazione.titolari,
                       campionato: widget.campionato,
-                      modulo: widget.squadra.modulo,
+                      modulo: widget.squadra.formazione.modulo,
                       coloriSquadra: widget.squadra.colori,
-                      giocatoriDisponibili: giocatori
-                          .where((g) => g.numero != 0)
-                          .map(
-                            (g) => GiocatoreFormazione(
-                              idGiocatore: g.id,
-                              pos: g.numero,
-                              nome: CommonService.decodePlayerName(g.nome),
-                              inCampo:
-                                  true, // Inizialmente false, verrà impostato correttamente quando assegnato
-                            ),
-                          )
-                          .toList(),
+                      giocatoriDisponibili: widget.squadra.formazione.panchina,
                     ),
                   ),
           ),

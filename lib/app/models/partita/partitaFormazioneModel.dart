@@ -43,40 +43,42 @@ Widget buildPartitaFormazione(
             children: [
               Column(
                 children: [
-                  buildGiocatore(model, 1, context),
-                  Padding(
-                    padding: EdgeInsets.only(bottom: 4),
-                    child: Center(
-                      child: Text(
-                        _formatPlayerName(model.formazione[0].nome),
-                        style: TextStyle(
-                          color: Colors.white,
-                          shadows: [
-                            Shadow(
-                              offset: Offset(-1.0, -1.0),
-                              blurRadius: 0.0,
-                              color: Colors.black,
-                            ),
-                            Shadow(
-                              offset: Offset(1.0, -1.0),
-                              blurRadius: 0.0,
-                              color: Colors.black,
-                            ),
-                            Shadow(
-                              offset: Offset(1.0, 1.0),
-                              blurRadius: 0.0,
-                              color: Colors.black,
-                            ),
-                            Shadow(
-                              offset: Offset(-1.0, 1.0),
-                              blurRadius: 0.0,
-                              color: Colors.black,
-                            ),
-                          ],
+                  if (model.formazione.isNotEmpty)
+                    buildGiocatore(model, 1, context),
+                  if (model.formazione.isNotEmpty)
+                    Padding(
+                      padding: EdgeInsets.only(bottom: 4),
+                      child: Center(
+                        child: Text(
+                          _formatPlayerName(model.formazione[0].nome),
+                          style: TextStyle(
+                            color: Colors.white,
+                            shadows: [
+                              Shadow(
+                                offset: Offset(-1.0, -1.0),
+                                blurRadius: 0.0,
+                                color: Colors.black,
+                              ),
+                              Shadow(
+                                offset: Offset(1.0, -1.0),
+                                blurRadius: 0.0,
+                                color: Colors.black,
+                              ),
+                              Shadow(
+                                offset: Offset(1.0, 1.0),
+                                blurRadius: 0.0,
+                                color: Colors.black,
+                              ),
+                              Shadow(
+                                offset: Offset(-1.0, 1.0),
+                                blurRadius: 0.0,
+                                color: Colors.black,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ],
@@ -91,7 +93,9 @@ Widget buildPartitaFormazione(
               if (model.formazione.length > 1)
                 for (
                   int count = 0;
-                  count < int.parse(modulo[i]) && j < 11;
+                  count < int.parse(modulo[i]) &&
+                      j < 11 &&
+                      j < model.formazione.length;
                   count++, j++
                 )
                   Flexible(
@@ -113,7 +117,9 @@ Widget buildPartitaFormazione(
                                     width: 80,
                                     child: Text(
                                       _formatPlayerName(
-                                        model.formazione[j].nome,
+                                        j < model.formazione.length
+                                            ? model.formazione[j].nome
+                                            : 'Giocatore $j',
                                       ),
                                       style: TextStyle(
                                         color: Colors.white,
@@ -247,9 +253,7 @@ void _showGiocatoreDropdown(
   int pos,
 ) {
   // Mostra tutti i giocatori (eccetto gli allenatori)
-  final giocatoriFiltered = model.giocatoriDisponibili!
-      .where((giocatore) => giocatore.pos != 0) // Solo non allenatori
-      .toList();
+  final giocatoriFiltered = model.formazione + model.giocatoriDisponibili!;
 
   showDialog(
     context: context,
@@ -268,16 +272,54 @@ void _showGiocatoreDropdown(
                 (g) => g.idGiocatore == giocatore.idGiocatore,
               );
               // Trova in quale posizione è il giocatore se è in formazione
-              int? posizioneAttuale;
-              if (isInFormazione) {
-                posizioneAttuale =
-                    model.formazione.indexWhere(
-                      (g) => g.idGiocatore == giocatore.idGiocatore,
-                    ) +
-                    1;
-              }
+              if (isInFormazione) {}
 
               return ListTile(
+                leading: Container(
+                  width: 35,
+                  height: 35,
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage(
+                        'assets/divise/divise_${model.campionato}/${model.codSquadra}_1.png',
+                      ),
+                      fit: BoxFit.cover,
+                    ),
+                    color: Colors.transparent,
+                  ),
+                  child: Center(
+                    child: Text(
+                      '${giocatore.pos}',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 14,
+                        shadows: [
+                          Shadow(
+                            offset: Offset(-1.0, -1.0),
+                            blurRadius: 0.0,
+                            color: Colors.black,
+                          ),
+                          Shadow(
+                            offset: Offset(1.0, -1.0),
+                            blurRadius: 0.0,
+                            color: Colors.black,
+                          ),
+                          Shadow(
+                            offset: Offset(1.0, 1.0),
+                            blurRadius: 0.0,
+                            color: Colors.black,
+                          ),
+                          Shadow(
+                            offset: Offset(-1.0, 1.0),
+                            blurRadius: 0.0,
+                            color: Colors.black,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
                 title: Text(
                   CommonService.decodePlayerName(giocatore.nome),
                   style: TextStyle(
@@ -290,9 +332,7 @@ void _showGiocatoreDropdown(
                   ),
                 ),
                 subtitle: Text(
-                  isInFormazione
-                      ? 'Numero: ${giocatore.pos} - In campo (pos. $posizioneAttuale)'
-                      : 'Numero: ${giocatore.pos}',
+                  isInFormazione ? 'In campo' : 'In panchina',
                   style: TextStyle(
                     color: isInFormazione
                         ? CommonService.getSquadraColor(model, 'primary')
