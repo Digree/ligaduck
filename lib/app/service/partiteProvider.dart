@@ -204,4 +204,33 @@ class PartiteProvider with ChangeNotifier {
       return false;
     }
   }
+
+  Future<bool> modificaDatiSquadra(
+    String campionato,
+    String idPartita,
+    int divisa,
+    String modulo,
+    int idSquadra,
+  ) async {
+    final body = {'divisa': divisa, 'modulo': modulo};
+    try {
+      final response = await http.post(
+        Uri.parse(
+          '${Env.apiUrl}/$campionato/partita/$idPartita/modifica/$idSquadra',
+        ),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(body),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        print('Errore POST: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Errore POST: $e');
+      return false;
+    }
+  }
 }

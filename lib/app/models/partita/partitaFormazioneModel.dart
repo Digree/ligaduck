@@ -9,9 +9,11 @@ class PartitaFormazioneModel {
   final List<GiocatoreFormazione> formazione;
   final String? modulo;
   final List<GiocatoreFormazione>? giocatoriDisponibili;
+  final List<GiocatoreNonDisponibile>? giocatoriNonDisponibili;
   final Function(int pos, GiocatoreFormazione nuovoGiocatore)?
   onGiocatoreChanged;
   final List<String>? coloriSquadra;
+  var divisa;
 
   PartitaFormazioneModel({
     required this.codSquadra,
@@ -19,8 +21,10 @@ class PartitaFormazioneModel {
     this.modulo,
     required this.campionato,
     this.giocatoriDisponibili,
+    this.giocatoriNonDisponibili,
     this.onGiocatoreChanged,
     this.coloriSquadra,
+    this.divisa,
   });
 }
 
@@ -175,10 +179,19 @@ Widget buildGiocatore(
   try {
     // La posizione sul campo corrisponde all'indice nell'array + 1
     // pos = 1 -> indice 0, pos = 2 -> indice 1, ecc.
-    if (pos <= model.formazione.length) {
-      final giocatore = model.formazione[pos - 1];
-      numeroMaglietta =
-          '${giocatore.pos}'; // pos contiene il numero di maglia del giocatore
+    if (model.giocatoriNonDisponibili!.isNotEmpty) {
+      for (var g in model.giocatoriNonDisponibili!) {
+        if (g.idGiocatore == model.formazione[pos - 1].idGiocatore) {
+          final giocatore = {};
+          numeroMaglietta = 'N/D';
+        }
+      }
+    } else {
+      if (pos <= model.formazione.length) {
+        final giocatore = model.formazione[pos - 1];
+        numeroMaglietta =
+            '${giocatore.pos}'; // pos contiene il numero di maglia del giocatore
+      }
     }
   } catch (e) {
     // Se non trova il giocatore, usa la posizione come fallback
@@ -191,7 +204,9 @@ Widget buildGiocatore(
     decoration: BoxDecoration(
       image: DecorationImage(
         image: AssetImage(
-          'assets/divise/divise_${model.campionato}/${model.codSquadra}_1.png',
+          model.divisa != null
+              ? 'assets/divise/divise_${model.campionato}/${model.codSquadra}_${model.divisa}.png'
+              : 'assets/divise/divise_${model.campionato}/${model.codSquadra}_1.png',
         ),
         fit: BoxFit.cover,
       ),

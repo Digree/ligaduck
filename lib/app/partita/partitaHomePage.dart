@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:ligaduck/app/config/models/global.dart';
 import 'package:ligaduck/app/models/partita/partitaFormazioneModel.dart';
 import 'package:ligaduck/app/partita/addEventoModalPage.dart';
+import 'package:ligaduck/app/partita/setInfoSquadraModalPage.dart';
 import 'package:ligaduck/app/service/competizioniProvider.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
@@ -36,6 +37,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   String? allenatoreTrasferta;
   Partita? partita;
   bool showFormazioni = false; // Controlla se mostrare le formazioni
+  int selectedDivisa = 1; // Divisa selezionata nel modal
 
   void _handleGiocatoreChanged(
     int team,
@@ -50,46 +52,64 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
           : partita!.formazioneAway;
 
       if (index >= 0 && index < formazione.titolari.length) {
-        // Verifica se il giocatore selezionato è già in formazione
-        int indexGiocatoreSelezionato = formazione.titolari.indexWhere(
+        // Verifica se il giocatore selezionato è già tra i titolari
+        int indexGiocatoreTitolare = formazione.titolari.indexWhere(
           (g) => g.idGiocatore == nuovoGiocatore.idGiocatore,
         );
 
-        if (indexGiocatoreSelezionato != -1 &&
-            indexGiocatoreSelezionato != index) {
-          // Il giocatore è già in formazione in un'altra posizione, fai uno swap
+        // Verifica se il giocatore selezionato è in panchina
+        int indexGiocatorePanchina = formazione.panchina.indexWhere(
+          (g) => g.idGiocatore == nuovoGiocatore.idGiocatore,
+        );
+
+        if (indexGiocatoreTitolare != -1 && indexGiocatoreTitolare != index) {
+          // Il giocatore è già tra i titolari in un'altra posizione, fai uno swap tra titolari
           GiocatoreFormazione giocatoreAttuale = formazione.titolari[index];
 
-          // Swap i giocatori
+          // Swap i giocatori titolari
           formazione.titolari[index] = GiocatoreFormazione(
             idGiocatore: nuovoGiocatore.idGiocatore,
             pos: nuovoGiocatore.pos,
             nome: nuovoGiocatore.nome,
-            inCampo:
-                index <
-                11, // true se in formazione (primi 11), false se in panchina
+            inCampo: true,
           );
 
-          formazione.titolari[indexGiocatoreSelezionato] = GiocatoreFormazione(
+          formazione.titolari[indexGiocatoreTitolare] = GiocatoreFormazione(
             idGiocatore: giocatoreAttuale.idGiocatore,
             pos: giocatoreAttuale.pos,
             nome: giocatoreAttuale.nome,
-            inCampo:
-                indexGiocatoreSelezionato <
-                11, // true se in formazione (primi 11), false se in panchina
+            inCampo: true,
           );
-        } else if (indexGiocatoreSelezionato == -1) {
-          // Il giocatore non è in formazione, sostituisci normalmente
+        } else if (indexGiocatorePanchina != -1) {
+          // Il giocatore è in panchina, fai lo scambio titolare <-> panchina
+          GiocatoreFormazione giocatoreAttuale = formazione.titolari[index];
+
+          // Sposta il nuovo giocatore dalla panchina ai titolari
           formazione.titolari[index] = GiocatoreFormazione(
             idGiocatore: nuovoGiocatore.idGiocatore,
             pos: nuovoGiocatore.pos,
             nome: nuovoGiocatore.nome,
-            inCampo:
-                index <
-                11, // true se in formazione (primi 11), false se in panchina
+            inCampo: true,
+          );
+
+          // Sposta il giocatore attuale dai titolari alla panchina
+          formazione.panchina[indexGiocatorePanchina] = GiocatoreFormazione(
+            idGiocatore: giocatoreAttuale.idGiocatore,
+            pos: giocatoreAttuale.pos,
+            nome: giocatoreAttuale.nome,
+            inCampo: false,
+          );
+        } else if (indexGiocatoreTitolare == -1 &&
+            indexGiocatorePanchina == -1) {
+          // Il giocatore non è né titolare né in panchina, sostituisci normalmente
+          formazione.titolari[index] = GiocatoreFormazione(
+            idGiocatore: nuovoGiocatore.idGiocatore,
+            pos: nuovoGiocatore.pos,
+            nome: nuovoGiocatore.nome,
+            inCampo: true,
           );
         }
-        // Se indexGiocatoreSelezionato == index, il giocatore è già in quella posizione, non fare nulla
+        // Se indexGiocatoreTitolare == index, il giocatore è già in quella posizione, non fare nulla
       }
     });
   }
@@ -1041,7 +1061,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        partita!.teamHome.length > 15
+                        partita!.teamHome.length > 18
                             ? () {
                                 List<String> nomeSquadra = partita!.teamHome
                                     .split(' ');
@@ -1073,7 +1093,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        partita!.teamAway.length > 15
+                        partita!.teamAway.length > 18
                             ? () {
                                 List<String> nomeSquadra = partita!.teamAway
                                     .split(' ');
@@ -1242,131 +1262,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Color(
-                    competizione!.colori.isNotEmpty
-                        ? int.parse(
-                            competizione!.colori[0].replaceFirst('#', 'FF'),
-                            radix: 16,
-                          )
-                        : 0xFF007AFF,
-                  ).withOpacity(0.1),
-                  Color(
-                    competizione!.colori.length > 1
-                        ? int.parse(
-                            competizione!.colori[1].replaceFirst('#', 'FF'),
-                            radix: 16,
-                          )
-                        : 0xFF007AFF,
-                  ).withOpacity(0.05),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Color(
-                  competizione!.colori.isNotEmpty
-                      ? int.parse(
-                          competizione!.colori[0].replaceFirst('#', 'FF'),
-                          radix: 16,
-                        )
-                      : 0xFF007AFF,
-                ).withOpacity(0.3),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              children: [
-                Image.asset(
-                  team == 0
-                      ? 'assets/squadre/${partita!.codHome}.png'
-                      : 'assets/squadre/${partita!.codAway}.png',
-                  height: 50,
-                  width: 50,
-                ),
-                SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        team == 0 ? partita!.teamHome : partita!.teamAway,
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Color(
-                            competizione!.colori.isNotEmpty
-                                ? int.parse(
-                                    competizione!.colori[0].replaceFirst(
-                                      '#',
-                                      'FF',
-                                    ),
-                                    radix: 16,
-                                  )
-                                : 0xFF007AFF,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        team == 0
-                            ? partita!.formazioneHome.modulo
-                            : partita!.formazioneAway.modulo,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey[600],
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        team == 0
-                            ? ('All: ${partita!.formazioneHome.allenatore}')
-                            : ('All: ${partita!.formazioneAway.allenatore}'),
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey[600],
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(width: 16),
-                Container(
-                  height: 100,
-                  constraints: BoxConstraints(maxWidth: 115),
-                  child: Image.asset(
-                    team == 0
-                        ? 'assets/divise/divise_${widget.campionato}/${partita!.codHome}_${partita!.divisaHome}.png'
-                        : 'assets/divise/divise_${widget.campionato}/${partita!.codAway}_${partita!.divisaAway}.png',
-                    fit: BoxFit.fill,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        height: 70,
-                        width: 50,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Icon(
-                          Icons.sports_soccer,
-                          color: Colors.grey[500],
-                          size: 32,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
+          buildInfoSquadra(team),
           SizedBox(height: 20),
           Container(
             width: double.infinity,
@@ -1392,10 +1288,15 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                               formazione: partita!.formazioneHome.titolari,
                               modulo: partita!.formazioneHome.modulo,
                               campionato: widget.campionato,
+                              divisa: team == 0
+                                  ? partita!.divisaHome
+                                  : partita!.divisaAway,
                               coloriSquadra:
                                   null, // TODO: Aggiungere colori squadra
                               giocatoriDisponibili:
                                   partita!.formazioneHome.panchina,
+                              giocatoriNonDisponibili:
+                                  partita!.formazioneHome.indisponibili,
                               onGiocatoreChanged: (pos, nuovoGiocatore) {
                                 _handleGiocatoreChanged(0, pos, nuovoGiocatore);
                               },
@@ -1527,11 +1428,12 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          SizedBox(height: 16),
           Text(
             'Non Disponibili',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 12),
+
           for (var giocatore
               in (team == 0
                   ? partita!.formazioneHome.indisponibili
@@ -1702,6 +1604,231 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
         ),
       );
     }
+  }
+
+  Widget buildInfoSquadra(int team) {
+    return InkWell(
+      onTap: (() async {
+        int selectedDivisaModal = team == 0
+            ? partita!.divisaHome
+            : partita!.divisaAway;
+
+        final result = await showModalBottomSheet<Map<String, dynamic>>(
+          context: context,
+          builder: (context) {
+            return SetInfoSquadraModalPage(
+              campionato: widget.campionato,
+              competizione: competizione!,
+              team: team,
+              partita: partita!,
+              selectedDivisaModal: selectedDivisaModal,
+            );
+          },
+        );
+
+        // Se l'utente ha confermato le modifiche
+        if (result != null && result.isNotEmpty) {
+          int nuovaDivisa = result['divisa'] ?? selectedDivisaModal;
+          String nuovoModulo = result['modulo'] ?? '';
+          int idSquadra = team == 0 ? partita!.idTeamHome : partita!.idTeamAway;
+
+          // Mostra loader
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  Color(
+                    competizione!.colori.isNotEmpty
+                        ? int.parse(
+                            competizione!.colori[0].replaceFirst('#', 'FF'),
+                            radix: 16,
+                          )
+                        : 0xFF007AFF,
+                  ),
+                ),
+              ),
+            ),
+          );
+
+          try {
+            // Salva le modifiche
+            bool success =
+                await Provider.of<PartiteProvider>(
+                  context,
+                  listen: false,
+                ).modificaDatiSquadra(
+                  widget.campionato,
+                  partita!.id,
+                  nuovaDivisa,
+                  nuovoModulo,
+                  idSquadra,
+                );
+
+            // Chiudi loader
+            Navigator.pop(context);
+
+            if (success) {
+              // Ricarica la partita
+              final updatedPartita = await fetchPartita();
+              setState(() {
+                partita = updatedPartita;
+              });
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Modifiche salvate con successo'),
+                  backgroundColor: Colors.green,
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Errore nel salvataggio delle modifiche'),
+                  backgroundColor: Colors.red,
+                  duration: Duration(seconds: 3),
+                ),
+              );
+            }
+          } catch (e) {
+            // Chiudi loader se ancora aperto
+            Navigator.pop(context);
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Errore: ${e.toString()}'),
+                backgroundColor: Colors.red,
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
+        }
+      }),
+      child: Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(
+                competizione!.colori.isNotEmpty
+                    ? int.parse(
+                        competizione!.colori[0].replaceFirst('#', 'FF'),
+                        radix: 16,
+                      )
+                    : 0xFF007AFF,
+              ).withOpacity(0.1),
+              Color(
+                competizione!.colori.length > 1
+                    ? int.parse(
+                        competizione!.colori[1].replaceFirst('#', 'FF'),
+                        radix: 16,
+                      )
+                    : 0xFF007AFF,
+              ).withOpacity(0.05),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Color(
+              competizione!.colori.isNotEmpty
+                  ? int.parse(
+                      competizione!.colori[0].replaceFirst('#', 'FF'),
+                      radix: 16,
+                    )
+                  : 0xFF007AFF,
+            ).withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Image.asset(
+              team == 0
+                  ? 'assets/squadre/${partita!.codHome}.png'
+                  : 'assets/squadre/${partita!.codAway}.png',
+              height: 50,
+              width: 50,
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    team == 0 ? partita!.teamHome : partita!.teamAway,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color(
+                        competizione!.colori.isNotEmpty
+                            ? int.parse(
+                                competizione!.colori[0].replaceFirst('#', 'FF'),
+                                radix: 16,
+                              )
+                            : 0xFF007AFF,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    team == 0
+                        ? partita!.formazioneHome.modulo
+                        : partita!.formazioneAway.modulo,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[600],
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    team == 0
+                        ? ('All: ${partita!.formazioneHome.allenatore}')
+                        : ('All: ${partita!.formazioneAway.allenatore}'),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[600],
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: 16),
+            Container(
+              height: 100,
+              constraints: BoxConstraints(maxWidth: 115),
+              child: Image.asset(
+                team == 0
+                    ? 'assets/divise/divise_${widget.campionato}/${partita!.codHome}_${partita!.divisaHome}.png'
+                    : 'assets/divise/divise_${widget.campionato}/${partita!.codAway}_${partita!.divisaAway}.png',
+                fit: BoxFit.fill,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    height: 70,
+                    width: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Icon(
+                      Icons.sports_soccer,
+                      color: Colors.grey[500],
+                      size: 32,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

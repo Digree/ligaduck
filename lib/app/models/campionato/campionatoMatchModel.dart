@@ -68,7 +68,17 @@ Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
                   width: isWide ? 120 : 80,
                   child: Center(
                     child: Text(
-                      model.partita.teamHome,
+                      model.partita.teamHome.length > 13
+                          ? () {
+                              List<String> nomeSquadra = model.partita.teamHome
+                                  .split(' ');
+                              if (nomeSquadra.length >= 2) {
+                                return '${nomeSquadra[0]} ${nomeSquadra[1][0]}.';
+                              } else {
+                                return '${model.partita.teamHome.substring(0, 10)}...';
+                              }
+                            }()
+                          : model.partita.teamHome,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
@@ -102,7 +112,17 @@ Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
                   width: isWide ? 120 : 80,
                   child: Center(
                     child: Text(
-                      model.partita.teamAway,
+                      model.partita.teamAway.length > 13
+                          ? () {
+                              List<String> nomeSquadra = model.partita.teamAway
+                                  .split(' ');
+                              if (nomeSquadra.length >= 2) {
+                                return '${nomeSquadra[0]} ${nomeSquadra[1][0]}.';
+                              } else {
+                                return '${model.partita.teamAway.substring(0, 10)}...';
+                              }
+                            }()
+                          : model.partita.teamAway,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,

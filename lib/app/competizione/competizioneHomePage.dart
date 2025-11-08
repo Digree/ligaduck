@@ -730,7 +730,14 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                 child: Padding(
                   padding: EdgeInsets.only(left: 8),
                   child: Text(
-                    '${posizione.nomeSquadra}',
+                    '${posizione.nomeSquadra!.length > 13 ? () {
+                            List<String> nomeSquadra = posizione.nomeSquadra!.split(' ');
+                            if (nomeSquadra.length >= 2) {
+                              return '${nomeSquadra[0]} ${nomeSquadra[1][0]}.';
+                            } else {
+                              return '${posizione.nomeSquadra?.substring(0, 10)}...';
+                            }
+                          }() : posizione.nomeSquadra}',
                     style: TextStyle(fontSize: 12, color: Colors.white),
                     overflow: TextOverflow.ellipsis,
                   ),
