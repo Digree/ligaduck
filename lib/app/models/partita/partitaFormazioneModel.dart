@@ -175,22 +175,43 @@ Widget buildGiocatore(
   BuildContext? context,
 ]) {
   // Trova il giocatore corrispondente alla posizione sul campo per ottenere il suo numero di maglia
-  String numeroMaglietta = '$pos'; // Default fallback
+  String numeroMaglietta = '$pos'; // Default fallback se non trova il giocatore
+
   try {
     // La posizione sul campo corrisponde all'indice nell'array + 1
     // pos = 1 -> indice 0, pos = 2 -> indice 1, ecc.
-    if (model.giocatoriNonDisponibili!.isNotEmpty) {
-      for (var g in model.giocatoriNonDisponibili!) {
-        if (g.idGiocatore == model.formazione[pos - 1].idGiocatore) {
-          final giocatore = {};
-          numeroMaglietta = 'N/D';
+    if (pos <= model.formazione.length) {
+      final giocatore = model.formazione[pos - 1];
+
+      // Controlla se il giocatore è non disponibile e sostituiscilo con N/D
+      bool isNonDisponibile = false;
+      if (model.giocatoriNonDisponibili != null &&
+          model.giocatoriNonDisponibili!.isNotEmpty) {
+        for (var g in model.giocatoriNonDisponibili!) {
+          if (g.idGiocatore == giocatore.idGiocatore) {
+            isNonDisponibile = true;
+            // Sostituisci il giocatore non disponibile con un placeholder N/D
+            int index = model.formazione.indexWhere(
+              (giocatore) => giocatore.idGiocatore == g.idGiocatore,
+            );
+            if (index != -1) {
+              model.formazione[index] = GiocatoreFormazione(
+                idGiocatore: "null",
+                nome: "N/D",
+                pos: 0,
+                inCampo: false,
+              );
+            }
+            break;
+          }
         }
       }
-    } else {
-      if (pos <= model.formazione.length) {
-        final giocatore = model.formazione[pos - 1];
-        numeroMaglietta =
-            '${giocatore.pos}'; // pos contiene il numero di maglia del giocatore
+
+      if (isNonDisponibile) {
+        numeroMaglietta = "N/D";
+      } else {
+        // Usa sempre il numero di maglia del giocatore (giocatore.pos), mai la posizione sul campo (pos)
+        numeroMaglietta = '${giocatore.pos}';
       }
     }
   } catch (e) {

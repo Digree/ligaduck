@@ -92,13 +92,20 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             inCampo: true,
           );
 
-          // Sposta il giocatore attuale dai titolari alla panchina
-          formazione.panchina[indexGiocatorePanchina] = GiocatoreFormazione(
-            idGiocatore: giocatoreAttuale.idGiocatore,
-            pos: giocatoreAttuale.pos,
-            nome: giocatoreAttuale.nome,
-            inCampo: false,
-          );
+          // Controlla se il giocatore attuale è "N/D" o ha id "null"
+          if (giocatoreAttuale.nome == "N/D" ||
+              giocatoreAttuale.idGiocatore == "null") {
+            // Se è N/D o null, rimuovilo completamente dalla panchina invece di aggiungerlo
+            formazione.panchina.removeAt(indexGiocatorePanchina);
+          } else {
+            // Sposta il giocatore attuale dai titolari alla panchina
+            formazione.panchina[indexGiocatorePanchina] = GiocatoreFormazione(
+              idGiocatore: giocatoreAttuale.idGiocatore,
+              pos: giocatoreAttuale.pos,
+              nome: giocatoreAttuale.nome,
+              inCampo: false,
+            );
+          }
         } else if (indexGiocatoreTitolare == -1 &&
             indexGiocatorePanchina == -1) {
           // Il giocatore non è né titolare né in panchina, sostituisci normalmente
@@ -1174,6 +1181,18 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                           width: MediaQuery.of(context).size.width * 0.9,
                           child: ElevatedButton.icon(
                             onPressed: () {
+                              if (partita?.formazioneAway.titolari.isNotEmpty ==
+                                      true ||
+                                  partita?.formazioneHome.titolari.isNotEmpty ==
+                                      true) {
+                                resetFormazione(
+                                  widget.campionato,
+                                  partita!.id,
+                                  selectedFormazione == 0
+                                      ? partita!.idTeamHome
+                                      : partita!.idTeamAway,
+                                );
+                              }
                               setState(() {
                                 showFormazioni = false;
                               });
@@ -1306,10 +1325,15 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                               formazione: partita!.formazioneAway.titolari,
                               modulo: partita!.formazioneAway.modulo,
                               campionato: widget.campionato,
+                              divisa: team == 0
+                                  ? partita!.divisaHome
+                                  : partita!.divisaAway,
                               coloriSquadra:
                                   null, // TODO: Aggiungere colori squadra
                               giocatoriDisponibili:
                                   partita!.formazioneAway.panchina,
+                              giocatoriNonDisponibili:
+                                  partita!.formazioneAway.indisponibili,
                               onGiocatoreChanged: (pos, nuovoGiocatore) {
                                 _handleGiocatoreChanged(1, pos, nuovoGiocatore);
                               },
@@ -1429,10 +1453,12 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(height: 16),
-          Text(
-            'Non Disponibili',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
+          if (team == 0 && partita!.formazioneHome.indisponibili.isNotEmpty ||
+              team == 1 && partita!.formazioneAway.indisponibili.isNotEmpty)
+            Text(
+              'Non Disponibili',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
 
           for (var giocatore
               in (team == 0
@@ -1829,6 +1855,37 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
         ),
       ),
     );
+  }
+
+  void resetFormazione(String campionato, String partitaId, int teamId) {
+    Provider.of<PartiteProvider>(
+      context,
+      listen: false,
+    ).deleteFormazioneById(campionato, partitaId, teamId).then((success) async {
+      if (success) {
+        // Ricarica la partita
+        final updatedPartita = await fetchPartita();
+        setState(() {
+          partita = updatedPartita;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Formazione resettata con successo'),
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Errore nel reset della formazione'),
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    });
   }
 }
 

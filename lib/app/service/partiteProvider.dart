@@ -233,4 +233,32 @@ class PartiteProvider with ChangeNotifier {
       return false;
     }
   }
+
+  Future<bool> deleteFormazioneById(
+    String campionato,
+    String idPartita,
+    int teamId,
+  ) async {
+    try {
+      final url =
+          '${Env.apiUrl}/$campionato/partita/$idPartita/formazione/$teamId';
+
+      final response = await http.delete(Uri.parse(url));
+
+      print('Status Code ricevuto: ${response.statusCode}');
+      if (response.statusCode != 200) {
+        print('Risposta del server: ${response.body}');
+      }
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        throw Exception('Errore nel caricamento: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Tipo errore: ${e.runtimeType}');
+      print('Dettaglio errore: $e');
+      rethrow;
+    }
+  }
 }
