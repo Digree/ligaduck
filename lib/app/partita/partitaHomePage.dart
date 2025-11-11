@@ -803,7 +803,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
 
     Widget rowContent = Container(
       width: screenWidth * 1,
-      height: 40,
+      height: evento.codAzione == 'sos' ? 60 : 40,
       decoration: BoxDecoration(
         color: Colors.transparent,
         border: Border(
@@ -826,91 +826,177 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                 ? Row(
                     children: [
                       if (evento.codAzione == 'gol')
-                        FaIcon(
-                          FontAwesomeIcons.futbol,
-                          size: 20,
-                          color: Colors.black,
+                        Image.asset(
+                          'assets/icon/gol.png',
+                          width: 20,
+                          height: 20,
                         )
                       else if (evento.codAzione == 'gol_ann')
-                        FaIcon(
-                          FontAwesomeIcons.handshake,
-                          size: 16,
-                          color: Colors.blue,
+                        Image.asset(
+                          'assets/icon/gol_ann.png',
+                          width: 20,
+                          height: 20,
                         )
                       else if (evento.codAzione == 'rig_sb')
-                        FaIcon(
-                          FontAwesomeIcons.squareFull,
-                          size: 16,
-                          color: Colors.red,
+                        Image.asset(
+                          'assets/icon/rig_sb.png',
+                          width: 20,
+                          height: 20,
                         )
                       else if (evento.codAzione == 'esp')
-                        FaIcon(
-                          FontAwesomeIcons.squareFull,
-                          size: 16,
-                          color: Colors.yellow[700],
+                        Image.asset(
+                          'assets/icon/red_card.png',
+                          width: 20,
+                          height: 20,
+                        )
+                      else if (evento.codAzione == 'aut')
+                        Image.asset(
+                          'assets/icon/aut.png',
+                          width: 20,
+                          height: 20,
                         )
                       else if (evento.codAzione == 'sos')
-                        FaIcon(
-                          FontAwesomeIcons.squareFull,
-                          size: 16,
-                          color: Colors.yellow[700],
+                        Image.asset(
+                          'assets/icon/arrow.png',
+                          width: 20,
+                          height: 20,
                         )
                       else if (evento.codAzione == 'rig')
-                        FaIcon(
-                          FontAwesomeIcons.squareFull,
-                          size: 16,
-                          color: Colors.yellow[700],
+                        Image.asset(
+                          'assets/icon/rig.png',
+                          width: 20,
+                          height: 20,
+                        )
+                      else if (evento.codAzione == 'pun')
+                        Image.asset(
+                          'assets/icon/pun.png',
+                          width: 20,
+                          height: 20,
                         ),
-                      SizedBox(width: 8),
-                      Text(
-                        '${evento.minuto}\' ${setNomeTabellino(evento.idGiocatore, partita!.formazioneHome)}',
-                        style: TextStyle(fontSize: 16, color: Colors.black),
-                      ),
+                      SizedBox(width: 16),
+                      if (evento.codAzione == 'sos')
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              '${evento.minuto}\'${evento.recupero > 0 ? '+${evento.recupero}\' ' : ' '}${setNomeTabellino(evento.idGiocatore, partita!.formazioneHome)}',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black,
+                              ),
+                            ),
+                            Text(
+                              'per ${setNomeTabellino(evento.idGiocatoreOut, partita!.formazioneHome)}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
+                        )
+                      else
+                        Text(
+                          '${evento.minuto}\'${evento.recupero > 0 ? '+${evento.recupero}\' ' : ' '}${setNomeTabellino(evento.idGiocatore, evento.codAzione == 'aut' ? partita!.formazioneAway : partita!.formazioneHome)}',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color:
+                                evento.codAzione == 'aut' ||
+                                    evento.codAzione == 'rig_sb' ||
+                                    evento.codAzione == 'gol_ann'
+                                ? Colors.red
+                                : Colors.black,
+                          ),
+                        ),
                     ],
                   )
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Text(
-                        '${evento.minuto}\' ${setNomeTabellino(evento.idGiocatore, partita!.formazioneAway)}',
-                        style: TextStyle(fontSize: 16, color: Colors.black),
-                      ),
-                      SizedBox(width: 8),
+                      if (evento.codAzione == 'sos')
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              '${evento.minuto}\'${evento.recupero > 0 ? '+${evento.recupero}\' ' : ' '}${setNomeTabellino(evento.idGiocatore, partita!.formazioneAway)}',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black,
+                              ),
+                            ),
+                            Text(
+                              'per ${setNomeTabellino(evento.idGiocatoreOut, partita!.formazioneAway)}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
+                        )
+                      else
+                        Text(
+                          '${evento.minuto}\'${evento.recupero > 0 ? '+${evento.recupero}\' ' : ' '} ${setNomeTabellino(evento.idGiocatore, evento.codAzione == 'aut' ? partita!.formazioneHome : partita!.formazioneAway)}',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color:
+                                evento.codAzione == 'aut' ||
+                                    evento.codAzione == 'rig_sb' ||
+                                    evento.codAzione == 'gol_ann'
+                                ? Colors.red
+                                : Colors.black,
+                          ),
+                        ),
+                      SizedBox(width: 16),
                       if (evento.codAzione == 'gol')
-                        FaIcon(
-                          FontAwesomeIcons.futbol,
-                          size: 20,
-                          color: Colors.black,
+                        Image.asset(
+                          'assets/icon/gol.png',
+                          width: 20,
+                          height: 20,
                         )
                       else if (evento.codAzione == 'gol_ann')
-                        FaIcon(
-                          FontAwesomeIcons.handshake,
-                          size: 16,
-                          color: Colors.blue,
+                        Image.asset(
+                          'assets/icon/gol_ann.png',
+                          width: 20,
+                          height: 20,
                         )
                       else if (evento.codAzione == 'rig_sb')
-                        FaIcon(
-                          FontAwesomeIcons.squareFull,
-                          size: 16,
-                          color: Colors.red,
+                        Image.asset(
+                          'assets/icon/rig_sb.png',
+                          width: 20,
+                          height: 20,
                         )
                       else if (evento.codAzione == 'esp')
-                        FaIcon(
-                          FontAwesomeIcons.squareFull,
-                          size: 16,
-                          color: Colors.yellow[700],
+                        Image.asset(
+                          'assets/icon/red_card.png',
+                          width: 20,
+                          height: 20,
+                        )
+                      else if (evento.codAzione == 'aut')
+                        Image.asset(
+                          'assets/icon/aut.png',
+                          width: 20,
+                          height: 20,
                         )
                       else if (evento.codAzione == 'sos')
-                        FaIcon(
-                          FontAwesomeIcons.squareFull,
-                          size: 16,
-                          color: Colors.yellow[700],
+                        Image.asset(
+                          'assets/icon/arrow.png',
+                          width: 20,
+                          height: 20,
                         )
                       else if (evento.codAzione == 'rig')
-                        FaIcon(
-                          FontAwesomeIcons.squareFull,
-                          size: 16,
-                          color: Colors.yellow[700],
+                        Image.asset(
+                          'assets/icon/rig.png',
+                          width: 20,
+                          height: 20,
+                        )
+                      else if (evento.codAzione == 'pun')
+                        Image.asset(
+                          'assets/icon/pun.png',
+                          width: 20,
+                          height: 20,
                         ),
                     ],
                   ),
@@ -1003,6 +1089,16 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             e.codAzione == evento.codAzione,
       );
     });
+
+    if (evento.codAzione == 'esp') {
+      final provider = Provider.of<SquadreProvider>(context, listen: false);
+      var squadra = await getSquadra(provider, evento.idTeam);
+      provider.deleteSqualifica(
+        widget.campionato,
+        evento.idGiocatore,
+        squadra.id,
+      );
+    }
 
     // Poi invia la richiesta al backend
     bool success = await Provider.of<PartiteProvider>(
@@ -1138,7 +1234,18 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                       buildPanchina(selectedFormazione),
                       if (partita!.formazioneHome.indisponibili.isNotEmpty ||
                           partita!.formazioneAway.indisponibili.isNotEmpty)
-                        buildIndisponibili(selectedFormazione),
+                        FutureBuilder<Widget>(
+                          future: buildIndisponibili(selectedFormazione),
+                          builder: (context, snapshot) {
+                            if (snapshot.hasData) {
+                              return snapshot.data!;
+                            }
+                            return Container();
+                          },
+                        ),
+                      if (partita!.formazioneHome.nonConvocati.isNotEmpty ||
+                          partita!.formazioneAway.nonConvocati.isNotEmpty)
+                        buildNonConvocati(selectedFormazione),
                       SizedBox(height: 8),
                       if (admin == true)
                         SizedBox(
@@ -1348,6 +1455,87 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     );
   }
 
+  Widget rowContent(team, giocatore) {
+    return Container(
+      //width: screenWidth * 1,
+      height: 60,
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.grey[350] ?? Colors.grey,
+            width: 1.0,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Padding(
+            padding: EdgeInsets.only(left: 20),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage(
+                    team == 0
+                        ? 'assets/divise/divise_${widget.campionato}/${partita!.codHome}_${partita!.divisaHome}.png'
+                        : 'assets/divise/divise_${widget.campionato}/${partita!.codAway}_${partita!.divisaAway}.png',
+                  ),
+                  fit: BoxFit.cover,
+                ),
+                color: Colors.transparent,
+              ),
+              child: Center(
+                child: Text(
+                  '${giocatore.pos}',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16,
+                    shadows: [
+                      Shadow(
+                        offset: Offset(-1.0, -1.0),
+                        blurRadius: 0.0,
+                        color: Colors.black,
+                      ),
+                      Shadow(
+                        offset: Offset(1.0, -1.0),
+                        blurRadius: 0.0,
+                        color: Colors.black,
+                      ),
+                      Shadow(
+                        offset: Offset(1.0, 1.0),
+                        blurRadius: 0.0,
+                        color: Colors.black,
+                      ),
+                      Shadow(
+                        offset: Offset(-1.0, 1.0),
+                        blurRadius: 0.0,
+                        color: Colors.black,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.only(left: 20),
+            child: Text(
+              CommonService.decodePlayerName(giocatore.nome),
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget buildPanchina(int team) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16),
@@ -1363,90 +1551,107 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
               in (team == 0
                   ? partita!.formazioneHome.panchina
                   : partita!.formazioneAway.panchina))
-            Container(
-              //width: screenWidth * 1,
-              height: 60,
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                border: Border(
-                  bottom: BorderSide(
-                    color: Colors.grey[350] ?? Colors.grey,
-                    width: 1.0,
-                  ),
+            if (admin)
+              Dismissible(
+                key: Key(giocatore.idGiocatore),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  color: Colors.red,
+                  alignment: Alignment.centerRight,
+                  padding: EdgeInsets.only(right: 16),
+                  child: Icon(Icons.delete, color: Colors.white, size: 24),
                 ),
-              ),
-              child: Row(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.only(left: 20),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        image: DecorationImage(
-                          image: AssetImage(
-                            team == 0
-                                ? 'assets/divise/divise_${widget.campionato}/${partita!.codHome}_${partita!.divisaHome}.png'
-                                : 'assets/divise/divise_${widget.campionato}/${partita!.codAway}_${partita!.divisaAway}.png',
-                          ),
-                          fit: BoxFit.cover,
+                confirmDismiss: (direction) async {
+                  return await showDialog<bool>(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text('Conferma'),
+                        content: Text(
+                          'Sei sicuro di voler rimuovere dalla panchina questo giocatore?',
                         ),
-                        color: Colors.transparent,
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${giocatore.pos}',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 16,
-                            shadows: [
-                              Shadow(
-                                offset: Offset(-1.0, -1.0),
-                                blurRadius: 0.0,
-                                color: Colors.black,
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: Text(
+                              'Annulla',
+                              style: TextStyle(
+                                color: Color(
+                                  competizione!.colori.isNotEmpty
+                                      ? int.parse(
+                                          competizione!.colori[0].replaceFirst(
+                                            '#',
+                                            'FF',
+                                          ),
+                                          radix: 16,
+                                        )
+                                      : 0xFF007AFF,
+                                ),
                               ),
-                              Shadow(
-                                offset: Offset(1.0, -1.0),
-                                blurRadius: 0.0,
-                                color: Colors.black,
-                              ),
-                              Shadow(
-                                offset: Offset(1.0, 1.0),
-                                blurRadius: 0.0,
-                                color: Colors.black,
-                              ),
-                              Shadow(
-                                offset: Offset(-1.0, 1.0),
-                                blurRadius: 0.0,
-                                color: Colors.black,
-                              ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(left: 20),
-                    child: Text(
-                      CommonService.decodePlayerName(giocatore.nome),
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            child: Text(
+                              'Cancella',
+                              style: TextStyle(
+                                color: Color(
+                                  competizione!.colori.isNotEmpty
+                                      ? int.parse(
+                                          competizione!.colori[0].replaceFirst(
+                                            '#',
+                                            'FF',
+                                          ),
+                                          radix: 16,
+                                        )
+                                      : 0xFF007AFF,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+                onDismissed: (direction) {
+                  rimuoviDallaPanchina(team, giocatore);
+                },
+                child: rowContent(team, giocatore),
               ),
-            ),
         ],
       ),
     );
   }
 
-  Widget buildIndisponibili(int team) {
+  void rimuoviDallaPanchina(team, giocatore) {
+    setState(() {
+      if (team == 0) {
+        partita!.formazioneHome.nonConvocati.add(giocatore);
+        partita!.formazioneHome.panchina.removeWhere(
+          (g) => g.idGiocatore == giocatore.idGiocatore,
+        );
+        partita!.formazioneHome.nonConvocati.sort(
+          (a, b) => a.pos.compareTo(b.pos),
+        );
+      } else {
+        partita!.formazioneHome.nonConvocati.add(giocatore);
+        partita!.formazioneAway.panchina.removeWhere(
+          (g) => g.idGiocatore == giocatore.idGiocatore,
+        );
+        partita!.formazioneAway.nonConvocati.sort(
+          (a, b) => a.pos.compareTo(b.pos),
+        );
+      }
+    });
+  }
+
+  Future<Widget> buildIndisponibili(int team) async {
+    final provider = Provider.of<SquadreProvider>(context, listen: false);
+    var squadra = await getSquadra(
+      provider,
+      team == 0 ? partita!.idTeamHome : partita!.idTeamAway,
+    );
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -1530,13 +1735,37 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                   ),
                   Padding(
                     padding: EdgeInsets.only(left: 20),
-                    child: Text(
-                      CommonService.decodePlayerName(giocatore.nome),
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          CommonService.decodePlayerName(giocatore.nome),
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          squadra.indisponibili
+                                      .firstWhere(
+                                        (g) =>
+                                            g.idGiocatore ==
+                                            giocatore.idGiocatore,
+                                      )
+                                      .motivo ==
+                                  'esp'
+                              ? 'Squalificato'
+                              : '',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 11,
+                            fontWeight: FontWeight.normal,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -1545,6 +1774,115 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
         ],
       ),
     );
+  }
+
+  Widget buildNonConvocati(int team) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(height: 16),
+          if (team == 0 && partita!.formazioneHome.nonConvocati.isNotEmpty ||
+              team == 1 && partita!.formazioneAway.nonConvocati.isNotEmpty)
+            Text(
+              'Non Convocati',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+
+          for (var giocatore
+              in (team == 0
+                  ? partita!.formazioneHome.nonConvocati
+                  : partita!.formazioneAway.nonConvocati))
+            if (admin)
+              Dismissible(
+                key: Key(giocatore.idGiocatore),
+                direction: DismissDirection.startToEnd,
+                background: Container(
+                  color: Colors.green,
+                  alignment: Alignment.centerLeft,
+                  padding: EdgeInsets.only(left: 16),
+                  child: Icon(Icons.check, color: Colors.white, size: 24),
+                ),
+                confirmDismiss: (direction) async {
+                  return await showDialog<bool>(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text('Conferma'),
+                        content: Text(
+                          'Sei sicuro di voler inserire in panchina questo giocatore?',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: Text(
+                              'Annulla',
+                              style: TextStyle(
+                                color: Color(
+                                  competizione!.colori.isNotEmpty
+                                      ? int.parse(
+                                          competizione!.colori[0].replaceFirst(
+                                            '#',
+                                            'FF',
+                                          ),
+                                          radix: 16,
+                                        )
+                                      : 0xFF007AFF,
+                                ),
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            child: Text(
+                              'Inserisci',
+                              style: TextStyle(
+                                color: Color(
+                                  competizione!.colori.isNotEmpty
+                                      ? int.parse(
+                                          competizione!.colori[0].replaceFirst(
+                                            '#',
+                                            'FF',
+                                          ),
+                                          radix: 16,
+                                        )
+                                      : 0xFF007AFF,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+                onDismissed: (direction) {
+                  aggiungiInPanchina(team, giocatore);
+                },
+                child: rowContent(team, giocatore),
+              ),
+        ],
+      ),
+    );
+  }
+
+  void aggiungiInPanchina(team, giocatore) {
+    setState(() {
+      if (team == 0) {
+        partita!.formazioneHome.panchina.add(giocatore);
+        partita!.formazioneHome.nonConvocati.removeWhere(
+          (g) => g.idGiocatore == giocatore.idGiocatore,
+        );
+        partita!.formazioneHome.panchina.sort((a, b) => a.pos.compareTo(b.pos));
+      } else {
+        partita!.formazioneAway.panchina.add(giocatore);
+        partita!.formazioneAway.nonConvocati.removeWhere(
+          (g) => g.idGiocatore == giocatore.idGiocatore,
+        );
+        partita!.formazioneAway.panchina.sort((a, b) => a.pos.compareTo(b.pos));
+      }
+    });
   }
 
   Future<Competizione> getCompetizione(CompetizioniProvider provider) async {
@@ -1583,7 +1921,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   }
 
   String setNomeTabellino(String idGiocatore, Formazione formazione) {
-    for (var giocatore in formazione.titolari) {
+    final formazioneCompleta = formazione.titolari + formazione.panchina;
+    for (var giocatore in formazioneCompleta) {
       if (giocatore.idGiocatore == idGiocatore) {
         return giocatore.nome;
       }
@@ -1599,6 +1938,21 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       context,
       listen: false,
     ).fetchPartitaById(widget.campionato, widget.partitaId);
+
+    // Decodifica i nomi dei giocatori come fa il SquadreProvider
+    for (var giocatore in partita.formazioneHome.titolari) {
+      giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
+    }
+    for (var giocatore in partita.formazioneHome.panchina) {
+      giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
+    }
+    for (var giocatore in partita.formazioneAway.titolari) {
+      giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
+    }
+    for (var giocatore in partita.formazioneAway.panchina) {
+      giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
+    }
+
     return partita;
   }
 
@@ -1614,6 +1968,12 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     ).putFormazione(campionato, idPartita, formazione, idSquadra);
 
     if (success) {
+      // Ricarica la partita per assicurarsi che i nomi siano decodificati correttamente
+      final updatedPartita = await fetchPartita();
+      setState(() {
+        partita = updatedPartita;
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Formazione salvata con successo'),

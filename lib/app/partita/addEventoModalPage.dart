@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
+import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/partiteProvider.dart';
 import 'package:ligaduck/app/service/squadreProvider.dart';
@@ -31,6 +32,8 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
   List<TipoEvento> eventi = [];
   TipoEvento? eventoSelezionato;
   String giocatoreSelezionato = '';
+  String giocatoreSelezionatoIn = '';
+  String giocatoreSelezionatoOut = '';
   String tipoGolSelezionato = 'no';
 
   final _formKeyHome = GlobalKey<FormState>();
@@ -231,6 +234,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
           child: SingleChildScrollView(
             child: Column(
               children: [
+                SizedBox(height: 4),
                 DropdownButtonFormField<String>(
                   initialValue: eventoSelezionato?.nome,
                   isExpanded: true,
@@ -249,20 +253,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                             : 0xFF000000,
                       ),
                     ),
-                    prefixIcon: Icon(
-                      getIconDropDown(eventoSelezionato?.cod),
-                      color: Color(
-                        widget.competizione!.colori.isNotEmpty
-                            ? int.parse(
-                                widget.competizione!.colori[0].replaceFirst(
-                                  '#',
-                                  'FF',
-                                ),
-                                radix: 16,
-                              )
-                            : 0xFF000000,
-                      ),
-                    ),
+                    icon: getIconDropDown(eventoSelezionato?.cod),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -367,6 +358,8 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
             buildWidgetSelectPlayer(team),
           ],
         );
+      case 'aut':
+        return buildWidgetSelectPlayer(team);
       case 'sos':
         return buildWidgetSostituzione(team);
       case 'rig':
@@ -377,6 +370,16 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
   }
 
   Widget buildWidgetSelectPlayer(int team) {
+    List<GiocatoreFormazione> formazione;
+    if (team == 0) {
+      formazione =
+          widget.partita.formazioneHome.panchina +
+          widget.partita.formazioneHome.titolari;
+    } else {
+      formazione =
+          widget.partita.formazioneAway.panchina +
+          widget.partita.formazioneAway.titolari;
+    }
     return Form(
       key: team == 0 ? _formKeyHome : _formKeyAway,
       child: Column(
@@ -565,10 +568,10 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
               ),
               items:
                   (team == 0
-                          ? widget.partita.formazioneHome.titolari.where(
+                          ? formazione.where(
                               (element) => element.inCampo == true,
                             )
-                          : widget.partita.formazioneAway.titolari.where(
+                          : formazione.where(
                               (element) => element.inCampo == true,
                             ))
                       .map(
@@ -599,7 +602,325 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
   }
 
   Widget buildWidgetSostituzione(int team) {
-    return Text(' Sostituzione Widget ');
+    List<GiocatoreFormazione> formazione;
+    if (team == 0) {
+      formazione =
+          widget.partita.formazioneHome.panchina +
+          widget.partita.formazioneHome.titolari;
+    } else {
+      formazione =
+          widget.partita.formazioneAway.panchina +
+          widget.partita.formazioneAway.titolari;
+    }
+    return Form(
+      key: team == 0 ? _formKeyHome : _formKeyAway,
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: team == 0
+                      ? _minutoControllerHome
+                      : _minutoControllerAway,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(3),
+                  ],
+                  decoration: InputDecoration(
+                    labelText: 'Minuto',
+                    labelStyle: TextStyle(
+                      color: Color(
+                        widget.competizione!.colori.isNotEmpty
+                            ? int.parse(
+                                widget.competizione!.colori[0].replaceFirst(
+                                  '#',
+                                  'FF',
+                                ),
+                                radix: 16,
+                              )
+                            : 0xFF000000,
+                      ),
+                    ),
+                    prefixIcon: Icon(
+                      Icons.timer,
+                      color: Color(
+                        widget.competizione!.colori.isNotEmpty
+                            ? int.parse(
+                                widget.competizione!.colori[0].replaceFirst(
+                                  '#',
+                                  'FF',
+                                ),
+                                radix: 16,
+                              )
+                            : 0xFF000000,
+                      ),
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                        color: Color(
+                          widget.competizione!.colori.isNotEmpty
+                              ? int.parse(
+                                  widget.competizione!.colori[0].replaceFirst(
+                                    '#',
+                                    'FF',
+                                  ),
+                                  radix: 16,
+                                )
+                              : 0xFF000000,
+                        ),
+                      ),
+                    ),
+                  ),
+                  validator: (value) {
+                    int minuto = int.tryParse(value ?? '') ?? 0;
+                    if (value == null || value.isEmpty) {
+                      if (minuto <= 0 || minuto > 120) {
+                        return 'Inserisci un minuto valido (1-120).';
+                      } else {
+                        return 'Inserisci il minuto';
+                      }
+                    }
+                    return null;
+                  },
+                ),
+              ),
+              SizedBox(width: 16),
+              Expanded(
+                child: TextFormField(
+                  controller: team == 0
+                      ? _recuperoControllerHome
+                      : _recuperoControllerAway,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(2),
+                  ],
+                  decoration: InputDecoration(
+                    labelText: 'Recupero',
+                    labelStyle: TextStyle(color: getColor()),
+                    prefixIcon: Icon(
+                      Icons.add,
+                      color: Color(
+                        widget.competizione!.colori.isNotEmpty
+                            ? int.parse(
+                                widget.competizione!.colori[0].replaceFirst(
+                                  '#',
+                                  'FF',
+                                ),
+                                radix: 16,
+                              )
+                            : 0xFF000000,
+                      ),
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                        color: Color(
+                          widget.competizione!.colori.isNotEmpty
+                              ? int.parse(
+                                  widget.competizione!.colori[0].replaceFirst(
+                                    '#',
+                                    'FF',
+                                  ),
+                                  radix: 16,
+                                )
+                              : 0xFF000000,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16),
+          Text('Entra', style: TextStyle(fontSize: 16)),
+          SizedBox(height: 8),
+          SizedBox(
+            height: 50,
+            child: DropdownButtonFormField<String>(
+              initialValue: null,
+              isExpanded: true,
+              decoration: InputDecoration(
+                labelText: 'Seleziona Giocatore',
+                labelStyle: TextStyle(
+                  color: Color(
+                    widget.competizione!.colori.isNotEmpty
+                        ? int.parse(
+                            widget.competizione!.colori[0].replaceFirst(
+                              '#',
+                              'FF',
+                            ),
+                            radix: 16,
+                          )
+                        : 0xFF000000,
+                  ),
+                ),
+                prefixIcon: Icon(
+                  Icons.person,
+                  color: Color(
+                    widget.competizione!.colori.isNotEmpty
+                        ? int.parse(
+                            widget.competizione!.colori[0].replaceFirst(
+                              '#',
+                              'FF',
+                            ),
+                            radix: 16,
+                          )
+                        : 0xFF000000,
+                  ),
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: Color(
+                      widget.competizione!.colori.isNotEmpty
+                          ? int.parse(
+                              widget.competizione!.colori[0].replaceFirst(
+                                '#',
+                                'FF',
+                              ),
+                              radix: 16,
+                            )
+                          : 0xFF000000,
+                    ),
+                    width: 2,
+                  ),
+                ),
+              ),
+              items:
+                  (team == 0
+                          ? formazione.where(
+                              (element) => element.inCampo == false,
+                            )
+                          : formazione.where(
+                              (element) => element.inCampo == false,
+                            ))
+                      .map(
+                        (giocatore) => DropdownMenuItem<String>(
+                          value: giocatore.idGiocatore,
+                          child: Text(
+                            "${giocatore.pos} ${CommonService.decodePlayerName(giocatore.nome)}",
+                          ),
+                        ),
+                      )
+                      .toList(),
+              onChanged: (String? newValue) {
+                setState(() {
+                  giocatoreSelezionatoIn = newValue ?? '';
+                });
+              },
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Inserisci il giocatore';
+                }
+                return null;
+              },
+            ),
+          ),
+          SizedBox(height: 16),
+          Text('Esce', style: TextStyle(fontSize: 16)),
+          SizedBox(height: 8),
+          SizedBox(
+            height: 100,
+            child: DropdownButtonFormField<String>(
+              initialValue: null,
+              isExpanded: true,
+              decoration: InputDecoration(
+                labelText: 'Seleziona Giocatore',
+                labelStyle: TextStyle(
+                  color: Color(
+                    widget.competizione!.colori.isNotEmpty
+                        ? int.parse(
+                            widget.competizione!.colori[0].replaceFirst(
+                              '#',
+                              'FF',
+                            ),
+                            radix: 16,
+                          )
+                        : 0xFF000000,
+                  ),
+                ),
+                prefixIcon: Icon(
+                  Icons.person,
+                  color: Color(
+                    widget.competizione!.colori.isNotEmpty
+                        ? int.parse(
+                            widget.competizione!.colori[0].replaceFirst(
+                              '#',
+                              'FF',
+                            ),
+                            radix: 16,
+                          )
+                        : 0xFF000000,
+                  ),
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: Color(
+                      widget.competizione!.colori.isNotEmpty
+                          ? int.parse(
+                              widget.competizione!.colori[0].replaceFirst(
+                                '#',
+                                'FF',
+                              ),
+                              radix: 16,
+                            )
+                          : 0xFF000000,
+                    ),
+                    width: 2,
+                  ),
+                ),
+              ),
+              items:
+                  (team == 0
+                          ? formazione.where(
+                              (element) => element.inCampo == true,
+                            )
+                          : formazione.where(
+                              (element) => element.inCampo == true,
+                            ))
+                      .map(
+                        (giocatore) => DropdownMenuItem<String>(
+                          value: giocatore.idGiocatore,
+                          child: Text(
+                            "${giocatore.pos} ${CommonService.decodePlayerName(giocatore.nome)}",
+                          ),
+                        ),
+                      )
+                      .toList(),
+              onChanged: (String? newValue) {
+                setState(() {
+                  giocatoreSelezionatoOut = newValue ?? '';
+                });
+              },
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Inserisci il giocatore';
+                }
+                return null;
+              },
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget buildWidgetGiornateSqualifica(int team) {
@@ -818,15 +1139,45 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
         }
       }
 
+      if (eventoSelezionato!.cod == 'sos') {
+        GiocatoreFormazione? giocatoreIn;
+        GiocatoreFormazione? giocatoreOut;
+
+        final formazione = team == 0
+            ? widget.partita.formazioneHome
+            : widget.partita.formazioneAway;
+
+        try {
+          giocatoreIn = formazione.panchina.firstWhere(
+            (g) => g.idGiocatore == giocatoreSelezionatoIn,
+          );
+          giocatoreOut = formazione.titolari.firstWhere(
+            (g) => g.idGiocatore == giocatoreSelezionatoOut,
+          );
+        } catch (e) {
+          print('Giocatore entrato non trovato nella panchina: $e');
+          return;
+        }
+      }
+
       evento = Evento(
         id: mongo.ObjectId().toHexString(),
         minuto: minuti,
         recupero: recupero,
-        idGiocatore: giocatoreSelezionato,
+        idGiocatore: eventoSelezionato!.cod == 'sos'
+            ? giocatoreSelezionatoIn
+            : giocatoreSelezionato,
+        idGiocatoreOut: eventoSelezionato!.cod == 'sos'
+            ? giocatoreSelezionatoOut
+            : null,
         codAzione: codAzione,
-        idTeam: team == 0
-            ? widget.partita.idTeamHome
-            : widget.partita.idTeamAway,
+        idTeam: eventoSelezionato!.cod == 'aut'
+            ? (team == 0
+                  ? widget.partita.idTeamAway
+                  : widget.partita.idTeamHome)
+            : (team == 0
+                  ? widget.partita.idTeamHome
+                  : widget.partita.idTeamAway),
       );
 
       bool success = await putEvento(evento);
@@ -853,6 +1204,8 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
       giocatoreSelezionato = '';
       eventoSelezionato = null;
       tipoGolSelezionato = 'no';
+      giocatoreSelezionatoIn = '';
+      giocatoreSelezionatoOut = '';
     });
   }
 
@@ -874,22 +1227,24 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
     ).putSqualifica(widget.campionato, idSquadra, squalifica, statoGiocatore);
   }
 
-  IconData getIconDropDown(String? eventoCod) {
+  Image getIconDropDown(String? eventoCod) {
     switch (eventoCod) {
       case 'gol':
-        return Icons.sports_soccer;
+        return Image.asset('assets/icon/gol.png', width: 20, height: 20);
       case 'gol_ann':
-        return Icons.sports_soccer;
+        return Image.asset('assets/icon/gol_ann.png', width: 20, height: 20);
       case 'rig_sb':
-        return Icons.sports_soccer;
+        return Image.asset('assets/icon/rig_sb.png', width: 20, height: 20);
       case 'esp':
-        return Icons.highlight_off;
+        return Image.asset('assets/icon/red_card.png', width: 20, height: 20);
+      case 'aut':
+        return Image.asset('assets/icon/aut.png', width: 20, height: 20);
       case 'sos':
-        return Icons.swap_vert;
+        return Image.asset('assets/icon/arrow.png', width: 20, height: 20);
       case 'rig':
-        return Icons.sports_soccer;
+        return Image.asset('assets/icon/rig.png', width: 20, height: 20);
       default:
-        return Icons.sports_soccer;
+        return Image.asset('assets/icon/gol.png', width: 20, height: 20);
     }
   }
 }

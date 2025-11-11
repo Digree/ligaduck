@@ -11,8 +11,8 @@ class Partita {
   final int risultatoAway;
   final Formazione formazioneHome;
   final Formazione formazioneAway;
-  final int divisaHome;
-  final int divisaAway;
+  int divisaHome;
+  int divisaAway;
   final List<Evento> tabellino;
   DateTime data;
 
@@ -203,6 +203,7 @@ class GiocatoreNonDisponibile {
 class Evento {
   final String id;
   final String idGiocatore;
+  String? idGiocatoreOut;
   final int minuto;
   final int recupero;
   final String codAzione;
@@ -211,6 +212,7 @@ class Evento {
   Evento({
     required this.id,
     required this.idGiocatore,
+    this.idGiocatoreOut,
     required this.minuto,
     required this.recupero,
     required this.codAzione,
@@ -221,6 +223,7 @@ class Evento {
     return Evento(
       id: json['id'],
       idGiocatore: json['idGiocatore'],
+      idGiocatoreOut: json['idGiocatoreOut'],
       minuto: json['minuto'],
       recupero: json['recupero'] ?? 0,
       codAzione: json['codAzione'],
@@ -232,6 +235,7 @@ class Evento {
     return {
       'id': id,
       'idGiocatore': idGiocatore,
+      'idGiocatoreOut': idGiocatoreOut,
       'minuto': minuto,
       'recupero': recupero,
       'codAzione': codAzione,

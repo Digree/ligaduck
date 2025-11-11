@@ -117,4 +117,28 @@ class SquadreProvider with ChangeNotifier {
       return false;
     }
   }
+
+  Future<void> deleteSqualifica(
+    String campionato,
+    String idGiocatore,
+    int idSquadra,
+  ) async {
+    try {
+      final response = await http.delete(
+        Uri.parse(
+          '${Env.apiUrl}/$campionato/squadra/$idSquadra/delete/$idGiocatore/squalifica',
+        ),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+      } else {
+        print(
+          'Errore DELETE squalifica: ${response.statusCode} - ${response.body}',
+        );
+      }
+    } catch (e) {
+      print('Errore DELETE squalifica: $e');
+    }
+  }
 }

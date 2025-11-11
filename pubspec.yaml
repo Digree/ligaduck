@@ -24,16 +24,21 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
-  flutter_launcher_icons: ^0.13.1
+  flutter_launcher_icons: ^0.14.4
   flutter_gen_runner: ^5.3.1
   build_runner: any
 
 flutter_icons:
   ios: true
   android: true
+  web:
+    generate: true
+    image_path: "assets/icon/gol.png"
+    background_color: "#ffffff"
+    theme_color: "#ffffff"
   macos:
     generate: true
-  image_path: "assets/icon/icon.png"
+  image_path: "assets/icon/gol.png"
 
 flutter:
   uses-material-design: true
@@ -42,6 +47,9 @@ flutter:
       fonts:
         - asset: assets/font/framd.ttf
   assets:
+    #icone
+    - assets/icon/
+
     #loghi competizione
     - assets/logos/
 
