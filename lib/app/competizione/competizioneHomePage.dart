@@ -44,6 +44,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
   List<Giornata> giornateToPush = [];
   List<Partita> partiteToPush = [];
   List<PosizioneClassifica> classifica = [];
+  int _refreshKey = 0; // Chiave per forzare il refresh del FutureBuilder
 
   @override
   void initState() {
@@ -397,6 +398,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
       listen: false,
     );
     return FutureBuilder(
+      key: ValueKey(
+        'partite_${idGiornata}_$_refreshKey',
+      ), // Chiave unica per forzare il rebuild
       future: getPartite(partiteProvider, idGiornata),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -421,6 +425,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                       onRefreshRequired: () {
                         setState(() {
                           // Forza il refresh della pagina richiamando initState logic
+                          _refreshKey++; // Incrementa la chiave per forzare il rebuild
                         });
                         caricaGiornate();
                       },
@@ -503,15 +508,15 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
     }
 
     if (widget.competizione.classifica == "Gironi") {
-      giornata.classifica?.sort((a, b) => a.posizione.compareTo(b.posizione));
+      giornata.classifica?.sort((b, a) => a.punti.compareTo(b.punti));
       for (var pos in giornata.classifica!) {
         if (pos.girone == String.fromCharCode(65 + index)) {
           classifica.add(pos);
         }
-        classifica.sort((a, b) => a.posizione.compareTo(b.posizione));
+        classifica.sort((b, a) => a.punti.compareTo(b.punti));
       }
     } else {
-      giornata.classifica?.sort((a, b) => a.posizione.compareTo(b.posizione));
+      giornata.classifica?.sort((b, a) => a.punti.compareTo(b.punti));
       classifica = giornata.classifica;
     }
     return Card(
@@ -614,6 +619,13 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
             padding: EdgeInsets.only(left: 8),
             child: Text(
               'Pti',
+              style: TextStyle(fontSize: 12, color: Colors.white),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.only(left: 16),
+            child: Text(
+              'PG',
               style: TextStyle(fontSize: 12, color: Colors.white),
             ),
           ),
@@ -745,7 +757,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
               ),
               Spacer(),
               Padding(
-                padding: EdgeInsets.only(left: 32),
+                padding: EdgeInsets.only(right: 16),
                 child: Text(
                   '${posizione.punti}',
                   style: TextStyle(
@@ -753,6 +765,13 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                     fontSize: 20,
                     color: Colors.white,
                   ),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.only(left: 8),
+                child: Text(
+                  '${posizione.partiteGiocate}',
+                  style: TextStyle(fontSize: 12, color: Colors.white),
                 ),
               ),
               Padding(
@@ -916,7 +935,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
           widget.competizione.classifica!,
         );
 
-        classifica.sort((a, b) => a.posizione.compareTo(b.posizione));
+        classifica.sort((b, a) => a.punti.compareTo(b.punti));
       } catch (e) {
         _showMessage('Errore nella generazione della classifica: $e');
         return;
@@ -1078,6 +1097,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
       divisaAway: 1,
       tabellino: [],
       data: DateTime.now(),
+      salvata: false,
     );
     partiteToPush.add(partita);
 

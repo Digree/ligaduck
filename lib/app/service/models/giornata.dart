@@ -57,6 +57,7 @@ class PosizioneClassifica {
   final int gFatti;
   final int gSubiti;
   final int diff;
+  final int partiteGiocate;
   final String? girone;
 
   PosizioneClassifica({
@@ -71,6 +72,7 @@ class PosizioneClassifica {
     required this.gFatti,
     required this.gSubiti,
     required this.diff,
+    required this.partiteGiocate,
     this.girone,
   });
 
@@ -87,6 +89,7 @@ class PosizioneClassifica {
       gFatti: json['gFatti'] ?? 0,
       gSubiti: json['gSubiti'] ?? 0,
       diff: json['diff'] ?? 0,
+      partiteGiocate: json['partiteGiocate'] ?? 0,
       girone: json['girone'],
     );
   }
@@ -104,6 +107,7 @@ class PosizioneClassifica {
       'gFatti': gFatti,
       'gSubiti': gSubiti,
       'diff': diff,
+      'partiteGiocate': partiteGiocate,
       'girone': girone,
     };
   }

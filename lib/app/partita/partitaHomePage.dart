@@ -14,7 +14,6 @@ import 'package:ligaduck/app/service/squadreProvider.dart';
 import 'package:ligaduck/app/squadre/squadrePage.dart';
 import 'package:ligaduck/services/commonService.dart';
 import 'package:provider/provider.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class PartitaHomePage extends StatefulWidget {
   final String partitaId;
@@ -36,7 +35,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   String? allenatoreCasa;
   String? allenatoreTrasferta;
   Partita? partita;
-  bool showFormazioni = false; // Controlla se mostrare le formazioni
+  bool showFormazioneHome = false; // Controlla se mostrare formazione casa
+  bool showFormazioneAway = false; // Controlla se mostrare formazione trasferta
   int selectedDivisa = 1; // Divisa selezionata nel modal
 
   void _handleGiocatoreChanged(
@@ -267,7 +267,11 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
           partita!.formazioneAway.allenatore = squadra.formazione.allenatore;
         }
 
-        showFormazioni = true;
+        if (selectedFormazione == 0) {
+          showFormazioneHome = true;
+        } else {
+          showFormazioneAway = true;
+        }
       });
 
       print('Formazioni caricate con successo dalle squadre');
@@ -315,6 +319,20 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
               ); // Restituisce true per indicare che bisogna fare refresh
             },
           ),
+          actions: [
+            admin && !partita!.salvata
+                ? Row(
+                    children: [
+                      IconButton(
+                        onPressed: (() {
+                          salvaPartita();
+                        }),
+                        icon: Icon(Icons.save, color: Colors.white),
+                      ),
+                    ],
+                  )
+                : SizedBox(),
+          ],
           flexibleSpace: Container(
             decoration: competizione == null
                 ? BoxDecoration(color: Colors.grey[800])
@@ -363,7 +381,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                             style: TextStyle(fontSize: 12, color: Colors.white),
                           ),
                           onTap: () {
-                            if (admin) {
+                            if (admin && !partita!.salvata) {
                               showModalBottomSheet(
                                 backgroundColor: Colors.blueAccent.withOpacity(
                                   0.8,
@@ -739,7 +757,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
               for (var evento in partita!.tabellino) buildTabellinoRow(evento),
             ],
           ),
-          if (admin)
+          if (admin && !partita!.salvata)
             Positioned(
               bottom: 32,
               right: 32,
@@ -1006,7 +1024,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     );
 
     // Se admin è true, avvolgi con Dismissible per permettere la cancellazione
-    if (admin) {
+    if (admin && !partita!.salvata) {
       return Dismissible(
         key: Key(
           'evento_${evento.minuto}_${evento.idGiocatore}_${evento.codAzione}',
@@ -1223,10 +1241,11 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
         Expanded(
           child:
               (selectedFormazione == 0 &&
-                      partita!.formazioneHome.titolari.isNotEmpty) ||
+                      (partita!.formazioneHome.titolari.isNotEmpty ||
+                          showFormazioneHome)) ||
                   (selectedFormazione == 1 &&
-                          partita!.formazioneAway.titolari.isNotEmpty ||
-                      showFormazioni)
+                      (partita!.formazioneAway.titolari.isNotEmpty ||
+                          showFormazioneAway))
               ? SingleChildScrollView(
                   child: Column(
                     children: [
@@ -1247,7 +1266,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                           partita!.formazioneAway.nonConvocati.isNotEmpty)
                         buildNonConvocati(selectedFormazione),
                       SizedBox(height: 8),
-                      if (admin == true)
+                      if (admin && !partita!.salvata)
                         SizedBox(
                           width: MediaQuery.of(context).size.width * 0.9,
                           child: ElevatedButton.icon(
@@ -1283,7 +1302,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                             ),
                           ),
                         ),
-                      if (admin == true)
+                      if (admin && !partita!.salvata)
                         SizedBox(
                           width: MediaQuery.of(context).size.width * 0.9,
                           child: ElevatedButton.icon(
@@ -1301,7 +1320,11 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                 );
                               }
                               setState(() {
-                                showFormazioni = false;
+                                if (selectedFormazione == 0) {
+                                  showFormazioneHome = false;
+                                } else {
+                                  showFormazioneAway = false;
+                                }
                               });
                             },
                             style: ElevatedButton.styleFrom(
@@ -1318,7 +1341,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     ],
                   ),
                 )
-              : admin == true
+              : admin && !partita!.salvata
               ? Container(
                   height: MediaQuery.of(context).size.height * 0.5,
                   margin: EdgeInsets.all(16),
@@ -1551,7 +1574,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
               in (team == 0
                   ? partita!.formazioneHome.panchina
                   : partita!.formazioneAway.panchina))
-            if (admin)
+            if (admin && !partita!.salvata)
               Dismissible(
                 key: Key(giocatore.idGiocatore),
                 direction: DismissDirection.endToStart,
@@ -1635,7 +1658,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
           (a, b) => a.pos.compareTo(b.pos),
         );
       } else {
-        partita!.formazioneHome.nonConvocati.add(giocatore);
+        partita!.formazioneAway.nonConvocati.add(giocatore);
         partita!.formazioneAway.panchina.removeWhere(
           (g) => g.idGiocatore == giocatore.idGiocatore,
         );
@@ -1794,7 +1817,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
               in (team == 0
                   ? partita!.formazioneHome.nonConvocati
                   : partita!.formazioneAway.nonConvocati))
-            if (admin)
+            if (admin && !partita!.salvata)
               Dismissible(
                 key: Key(giocatore.idGiocatore),
                 direction: DismissDirection.startToEnd,
@@ -2240,6 +2263,36 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Errore nel reset della formazione'),
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    });
+  }
+
+  void salvaPartita() {
+    Provider.of<PartiteProvider>(
+      context,
+      listen: false,
+    ).salvaPartita(widget.campionato, partita!).then((success) async {
+      if (success) {
+        final updatedPartita = await fetchPartita();
+        setState(() {
+          partita = updatedPartita;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Partita salvata con successo'),
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Errore nel salvataggio della partita'),
             duration: Duration(seconds: 2),
             backgroundColor: Colors.red,
           ),

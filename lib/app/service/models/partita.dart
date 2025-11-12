@@ -15,6 +15,7 @@ class Partita {
   int divisaAway;
   final List<Evento> tabellino;
   DateTime data;
+  final bool salvata;
 
   Partita({
     required this.idGiornata,
@@ -33,6 +34,7 @@ class Partita {
     required this.divisaAway,
     required this.tabellino,
     required this.data,
+    required this.salvata,
   });
 
   factory Partita.fromJson(Map<String, dynamic> json) {
@@ -55,6 +57,7 @@ class Partita {
           .map((e) => Evento.fromJson(e))
           .toList(),
       data: DateTime.parse(json['data']),
+      salvata: json['salvata'] ?? false,
     );
   }
 
@@ -76,6 +79,7 @@ class Partita {
       'divisaAway': divisaAway,
       'tabellino': tabellino.map((e) => e.toJson()).toList(),
       'data': data.toIso8601String(),
+      'salvata': salvata,
     };
   }
 }

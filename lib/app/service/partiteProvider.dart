@@ -261,4 +261,25 @@ class PartiteProvider with ChangeNotifier {
       rethrow;
     }
   }
+
+  Future<bool> salvaPartita(String campionato, Partita partita) async {
+    final body = partita.toJson();
+    try {
+      final response = await http.post(
+        Uri.parse('${Env.apiUrl}/$campionato/partita/${partita.id}/salva'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(body),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        print('Errore POST: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Errore POST: $e');
+      return false;
+    }
+  }
 }
