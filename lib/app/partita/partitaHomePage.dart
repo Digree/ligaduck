@@ -1904,7 +1904,9 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                   rimuoviDallaPanchina(team, giocatore);
                 },
                 child: rowContent(team, giocatore),
-              ),
+              )
+            else
+              rowContent(team, giocatore),
         ],
       ),
     );
@@ -2147,7 +2149,9 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                   aggiungiInPanchina(team, giocatore);
                 },
                 child: rowContent(team, giocatore),
-              ),
+              )
+            else
+              rowContent(team, giocatore),
         ],
       ),
     );
