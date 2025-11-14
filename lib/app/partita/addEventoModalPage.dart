@@ -236,7 +236,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
               children: [
                 SizedBox(height: 4),
                 DropdownButtonFormField<String>(
-                  initialValue: eventoSelezionato?.nome,
+                  //initialValue: eventoSelezionato?.nome,
                   isExpanded: true,
                   decoration: InputDecoration(
                     labelText: 'Evento',
@@ -514,7 +514,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
           SizedBox(
             height: 100,
             child: DropdownButtonFormField<String>(
-              initialValue: null,
+              //initialValue: null,
               isExpanded: true,
               decoration: InputDecoration(
                 labelText: 'Seleziona Giocatore',
@@ -748,7 +748,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
           SizedBox(
             height: 50,
             child: DropdownButtonFormField<String>(
-              initialValue: null,
+              //initialValue: null,
               isExpanded: true,
               decoration: InputDecoration(
                 labelText: 'Seleziona Giocatore',
@@ -836,7 +836,6 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
           SizedBox(
             height: 100,
             child: DropdownButtonFormField<String>(
-              initialValue: null,
               isExpanded: true,
               decoration: InputDecoration(
                 labelText: 'Seleziona Giocatore',
