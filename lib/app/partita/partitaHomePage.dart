@@ -196,10 +196,10 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                 .toList(),
           );
 
-          if (squadra.formazione.indisponibili.isNotEmpty) {
+          if (squadra.indisponibili.isNotEmpty) {
             partita!.formazioneHome.indisponibili.clear();
             partita!.formazioneHome.indisponibili.addAll(
-              squadra.formazione.indisponibili
+              squadra.indisponibili
                   .map(
                     (g) => GiocatoreNonDisponibile(
                       idGiocatore: g.idGiocatore,
