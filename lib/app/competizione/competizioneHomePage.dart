@@ -245,73 +245,165 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                     ), */
                 ],
               )
-            : Column(
-                children: [
-                  buildGiornateBox(),
-                  if (selectedGiornata != null)
-                    Expanded(
-                      child: Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Partite:',
-                                    style: TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.bold,
+            : SingleChildScrollView(
+                child: Column(
+                  children: [
+                    buildGiornateBox(),
+                    if (selectedGiornata != null)
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height - 200,
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Partite:',
+                                      style: TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.left,
                                     ),
-                                    textAlign: TextAlign.left,
-                                  ),
-                                  Expanded(
-                                    child: Padding(
-                                      padding: EdgeInsets.only(top: 16),
-                                      child: buildPartiteList(
-                                        selectedGiornata!,
+                                    Expanded(
+                                      child: Padding(
+                                        padding: EdgeInsets.only(top: 16),
+                                        child: buildPartiteList(
+                                          selectedGiornata!,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                            SizedBox(width: 32),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Classifica:',
-                                    style: TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.bold,
+                              SizedBox(width: 32),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Classifica:',
+                                      style: TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.left,
                                     ),
-                                    textAlign: TextAlign.left,
-                                  ),
-                                  Expanded(
-                                    child: Padding(
-                                      padding: EdgeInsets.only(top: 16),
-                                      child: buildClassifica(
-                                        context,
-                                        selectedGiornata!,
+                                    Expanded(
+                                      child: Padding(
+                                        padding: EdgeInsets.only(top: 16),
+                                        child: buildClassifica(
+                                          context,
+                                          selectedGiornata!,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
+                    // Row con ulteriori dati
+                    Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Expanded(
+                            child: Card(
+                              child: Padding(
+                                padding: EdgeInsets.all(12),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.sports_soccer, size: 24),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'Classifica Marcatori',
+                                      style: TextStyle(fontSize: 12),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    Text(
+                                      '24',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Card(
+                              child: Padding(
+                                padding: EdgeInsets.all(12),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.emoji_events, size: 24),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'Autogol',
+                                      style: TextStyle(fontSize: 12),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    Text(
+                                      '15',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Card(
+                              child: Padding(
+                                padding: EdgeInsets.all(12),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.trending_up, size: 24),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'Rigori Sbagliati',
+                                      style: TextStyle(fontSize: 12),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    Text(
+                                      '42',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  /* else
+                    /* else
                     const Expanded(
                       child: Center(child: CircularProgressIndicator()),
                     ), */
-                ],
+                  ],
+                ),
               ),
       ),
     );
@@ -564,6 +656,10 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
         ),
       ),
     );
+  }
+
+  Widget buildStatistiche() {
+    return Center(child: Text('Statistiche'));
   }
 
   Future<List<Giornata>> getGiornate(GiornateProvider provider) async {
