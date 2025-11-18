@@ -35,6 +35,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
   String giocatoreSelezionatoIn = '';
   String giocatoreSelezionatoOut = '';
   String tipoGolSelezionato = 'no';
+  String infortunioSelezionato = 'no';
 
   final _formKeyHome = GlobalKey<FormState>();
   final _formKeyAway = GlobalKey<FormState>();
@@ -44,6 +45,8 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
   final _recuperoControllerAway = TextEditingController();
   final _squalificaControllerHome = TextEditingController();
   final _squalificaControllerAway = TextEditingController();
+  final _infortunioControllerHome = TextEditingController();
+  final _infortunioControllerAway = TextEditingController();
 
   late TabController _tabController;
 
@@ -71,6 +74,8 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
     _recuperoControllerAway.dispose();
     _squalificaControllerHome.dispose();
     _squalificaControllerAway.dispose();
+    _infortunioControllerHome.dispose();
+    _infortunioControllerAway.dispose();
     super.dispose();
   }
 
@@ -834,7 +839,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
           Text('Esce', style: TextStyle(fontSize: 16)),
           SizedBox(height: 8),
           SizedBox(
-            height: 100,
+            height: 60,
             child: DropdownButtonFormField<String>(
               isExpanded: true,
               decoration: InputDecoration(
@@ -917,6 +922,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
               },
             ),
           ),
+          buildInfortunioRadioButton(),
         ],
       ),
     );
@@ -1047,6 +1053,111 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
     );
   }
 
+  Widget buildInfortunioRadioButton() {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: EdgeInsets.all(4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Infortunio',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: getColor(),
+            ),
+          ),
+          SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: RadioListTile<String>(
+                  title: Text('No', style: TextStyle(fontSize: 12)),
+                  value: 'no',
+                  groupValue: infortunioSelezionato,
+                  activeColor: getColor(),
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  onChanged: (String? value) {
+                    setState(() {
+                      infortunioSelezionato = value ?? 'no';
+                    });
+                  },
+                ),
+              ),
+              Expanded(
+                child: RadioListTile<String>(
+                  title: Text('Si', style: TextStyle(fontSize: 12)),
+                  value: 'si',
+                  groupValue: infortunioSelezionato,
+                  activeColor: getColor(),
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  onChanged: (String? value) {
+                    setState(() {
+                      infortunioSelezionato = value ?? 'no';
+                    });
+                  },
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          if (infortunioSelezionato == 'si')
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Giornate di Infortunio',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: getColor(),
+                  ),
+                ),
+                SizedBox(height: 8),
+                TextFormField(
+                  controller: _infortunioControllerHome,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(2),
+                  ],
+                  decoration: InputDecoration(
+                    labelText: 'Numero giornate',
+                    labelStyle: TextStyle(color: getColor()),
+                    hintStyle: TextStyle(color: Colors.grey[500]),
+                    prefixIcon: Icon(Icons.event_busy, color: getColor()),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: getColor(), width: 2),
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Inserisci il numero di giornate';
+                    }
+                    int giornate = int.tryParse(value) ?? 0;
+                    if (giornate <= 0 || giornate > 99) {
+                      return 'Inserisci un numero valido (1-99)';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
   Color getColor() {
     return Color(
       widget.competizione!.colori.isNotEmpty
@@ -1118,7 +1229,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
           idCompetizione: widget.competizione!.id,
         );
 
-        bool squalificaSuccess = await putSqualifica(
+        bool squalificaSuccess = await putIndisponibile(
           espulsione,
           team == 0 ? widget.partita.idTeamHome : widget.partita.idTeamAway,
           'espulsione',
@@ -1156,6 +1267,38 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
         } catch (e) {
           print('Giocatore entrato non trovato nella panchina: $e');
           return;
+        }
+
+        if (infortunioSelezionato == 'si') {
+          GiocatoreNonDisponibile espulsione = GiocatoreNonDisponibile(
+            idGiocatore: giocatoreOut.idGiocatore,
+            nome: giocatoreOut.nome,
+            pos: giocatoreOut.pos,
+            motivo: 'inf',
+            durata: _infortunioControllerHome.text.isNotEmpty
+                ? int.parse(_infortunioControllerHome.text)
+                : 0,
+            idCompetizione: widget.competizione!.id,
+          );
+
+          bool squalificaSuccess = await putIndisponibile(
+            espulsione,
+            team == 0 ? widget.partita.idTeamHome : widget.partita.idTeamAway,
+            'infortunio',
+          );
+
+          if (!squalificaSuccess) {
+            // Mostra errore se la squalifica non è stata salvata
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Errore nel salvare la squalifica'),
+                  backgroundColor: Colors.red,
+                  duration: Duration(seconds: 3),
+                ),
+              );
+            }
+          }
         }
       }
 
@@ -1215,15 +1358,20 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
     ).putEvento(widget.campionato, widget.partita.id, evento);
   }
 
-  Future<bool> putSqualifica(
-    GiocatoreNonDisponibile squalifica,
+  Future<bool> putIndisponibile(
+    GiocatoreNonDisponibile indisponibile,
     int idSquadra,
     String statoGiocatore,
   ) async {
     return await Provider.of<SquadreProvider>(
       context,
       listen: false,
-    ).putSqualifica(widget.campionato, idSquadra, squalifica, statoGiocatore);
+    ).putIndisponibile(
+      widget.campionato,
+      idSquadra,
+      indisponibile,
+      statoGiocatore,
+    );
   }
 
   Image getIconDropDown(String? eventoCod) {

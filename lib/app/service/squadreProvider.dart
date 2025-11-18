@@ -89,10 +89,10 @@ class SquadreProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> putSqualifica(
+  Future<bool> putIndisponibile(
     String campionato,
     int idSquadra,
-    GiocatoreNonDisponibile squalifica,
+    GiocatoreNonDisponibile indisponibile,
     String statoGiocatore,
   ) async {
     try {
@@ -101,7 +101,7 @@ class SquadreProvider with ChangeNotifier {
           '${Env.apiUrl}/$campionato/squadra/$idSquadra/$statoGiocatore',
         ),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode(squalifica.toJson()),
+        body: json.encode(indisponibile.toJson()),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -118,15 +118,16 @@ class SquadreProvider with ChangeNotifier {
     }
   }
 
-  Future<void> deleteSqualifica(
+  Future<void> deleteIndisponibile(
     String campionato,
     String idGiocatore,
     int idSquadra,
+    String statoGiocatore,
   ) async {
     try {
       final response = await http.delete(
         Uri.parse(
-          '${Env.apiUrl}/$campionato/squadra/$idSquadra/delete/$idGiocatore/squalifica',
+          '${Env.apiUrl}/$campionato/squadra/$idSquadra/delete/$idGiocatore/$statoGiocatore',
         ),
         headers: {'Content-Type': 'application/json'},
       );

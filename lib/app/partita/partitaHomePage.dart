@@ -1161,10 +1161,22 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     if (evento.codAzione == 'esp') {
       final provider = Provider.of<SquadreProvider>(context, listen: false);
       var squadra = await getSquadra(provider, evento.idTeam);
-      provider.deleteSqualifica(
+      provider.deleteIndisponibile(
         widget.campionato,
         evento.idGiocatore,
         squadra.id,
+        'squalifica',
+      );
+    }
+
+    if (evento.codAzione == 'sos') {
+      final provider = Provider.of<SquadreProvider>(context, listen: false);
+      var squadra = await getSquadra(provider, evento.idTeam);
+      provider.deleteIndisponibile(
+        widget.campionato,
+        evento.idGiocatoreOut!,
+        squadra.id,
+        'infortunio',
       );
     }
 
@@ -2046,6 +2058,15 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                       .motivo ==
                                   'esp'
                               ? 'Squalificato'
+                              : squadra.indisponibili
+                                        .firstWhere(
+                                          (g) =>
+                                              g.idGiocatore ==
+                                              giocatore.idGiocatore,
+                                        )
+                                        .motivo ==
+                                    'inf'
+                              ? 'Infortunato'
                               : '',
                           style: TextStyle(
                             color: Colors.grey[600],
