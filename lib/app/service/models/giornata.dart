@@ -4,6 +4,7 @@ class Giornata {
   final String giornata;
   final String fase;
   final List<PosizioneClassifica>? classifica;
+  final StatisticheGiornata? statistiche;
   final bool conclusa;
 
   Giornata({
@@ -12,6 +13,7 @@ class Giornata {
     required this.giornata,
     required this.fase,
     this.classifica,
+    this.statistiche,
     required this.conclusa,
   });
 
@@ -29,6 +31,11 @@ class Giornata {
                 )
                 .toList()
           : null,
+      statistiche: json['statistiche'] != null
+          ? StatisticheGiornata.fromJson(
+              json['statistiche'] as Map<String, dynamic>,
+            )
+          : null,
       conclusa: json['conclusa'] ?? false,
     );
   }
@@ -40,6 +47,7 @@ class Giornata {
       'giornata': giornata,
       'fase': fase,
       'classifica': classifica?.map((c) => c.toJson()).toList(),
+      'statistiche': statistiche?.toJson(),
       'conclusa': conclusa,
     };
   }
@@ -109,6 +117,178 @@ class PosizioneClassifica {
       'diff': diff,
       'partiteGiocate': partiteGiocate,
       'girone': girone,
+    };
+  }
+}
+
+class StatisticheGiornata {
+  final List<Marcatura> marcatori;
+  final List<Malus> espulsi;
+  final List<Malus> rigoriSbagliati;
+  final List<Malus> golAnnullati;
+  final List<Marcatura> cleanSheet;
+  final List<Autogol> autogol;
+
+  StatisticheGiornata({
+    required this.marcatori,
+    required this.espulsi,
+    required this.rigoriSbagliati,
+    required this.golAnnullati,
+    required this.cleanSheet,
+    required this.autogol,
+  });
+
+  factory StatisticheGiornata.fromJson(Map<String, dynamic> json) {
+    return StatisticheGiornata(
+      marcatori: json['marcatori'] != null
+          ? (json['marcatori'] as List)
+                .map((e) => Marcatura.fromJson(e as Map<String, dynamic>))
+                .toList()
+          : [],
+      espulsi: json['espulsi'] != null
+          ? (json['espulsi'] as List)
+                .map((e) => Malus.fromJson(e as Map<String, dynamic>))
+                .toList()
+          : [],
+      rigoriSbagliati: json['rigoriSbagliati'] != null
+          ? (json['rigoriSbagliati'] as List)
+                .map((e) => Malus.fromJson(e as Map<String, dynamic>))
+                .toList()
+          : [],
+      golAnnullati: json['golAnnullati'] != null
+          ? (json['golAnnullati'] as List)
+                .map((e) => Malus.fromJson(e as Map<String, dynamic>))
+                .toList()
+          : [],
+      cleanSheet: json['cleanSheet'] != null
+          ? (json['cleanSheet'] as List)
+                .map((e) => Marcatura.fromJson(e as Map<String, dynamic>))
+                .toList()
+          : [],
+      autogol: json['autogol'] != null
+          ? (json['autogol'] as List)
+                .map((e) => Autogol.fromJson(e as Map<String, dynamic>))
+                .toList()
+          : [],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'marcatori': marcatori.map((e) => e.toJson()).toList(),
+      'espulsi': espulsi.map((e) => e.toJson()).toList(),
+      'rigoriSbagliati': rigoriSbagliati.map((e) => e.toJson()).toList(),
+      'golAnnullati': golAnnullati.map((e) => e.toJson()).toList(),
+      'cleanSheet': cleanSheet.map((e) => e.toJson()).toList(),
+      'autogol': autogol.map((e) => e.toJson()).toList(),
+    };
+  }
+}
+
+class Marcatura {
+  final String idGiocatore;
+  final int idSquadra;
+  final int quantita;
+  final String nome;
+  final int rig;
+  final int pun;
+
+  Marcatura({
+    required this.idGiocatore,
+    required this.idSquadra,
+    required this.quantita,
+    required this.nome,
+    required this.rig,
+    required this.pun,
+  });
+
+  factory Marcatura.fromJson(Map<String, dynamic> json) {
+    return Marcatura(
+      idGiocatore: json['idGiocatore'] ?? '',
+      idSquadra: json['idSquadra'] ?? 0,
+      quantita: json['quantita'] ?? 0,
+      nome: json['nome'] ?? '',
+      rig: json['rig'] ?? 0,
+      pun: json['pun'] ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'idGiocatore': idGiocatore,
+      'idSquadra': idSquadra,
+      'quantita': quantita,
+      'nome': nome,
+      'rig': rig,
+      'pun': pun,
+    };
+  }
+}
+
+class Malus {
+  final String idGiocatore;
+  final int idSquadra;
+  final int quantita;
+  final String nome;
+
+  Malus({
+    required this.idGiocatore,
+    required this.idSquadra,
+    required this.quantita,
+    required this.nome,
+  });
+
+  factory Malus.fromJson(Map<String, dynamic> json) {
+    return Malus(
+      idGiocatore: json['idGiocatore'] ?? '',
+      idSquadra: json['idSquadra'] ?? 0,
+      quantita: json['quantita'] ?? 0,
+      nome: json['nome'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'idGiocatore': idGiocatore,
+      'idSquadra': idSquadra,
+      'quantita': quantita,
+      'nome': nome,
+    };
+  }
+}
+
+class Autogol {
+  final String idGiocatore;
+  final int idSquadra;
+  final String idGiornata;
+  final int idSquadraPro;
+  final String nome;
+
+  Autogol({
+    required this.idGiocatore,
+    required this.idSquadra,
+    required this.idGiornata,
+    required this.idSquadraPro,
+    required this.nome,
+  });
+
+  factory Autogol.fromJson(Map<String, dynamic> json) {
+    return Autogol(
+      idGiocatore: json['idGiocatore'] ?? '',
+      idSquadra: json['idSquadra'] ?? 0,
+      idGiornata: json['idGiornata'] ?? '',
+      idSquadraPro: json['idSquadraPro'] ?? 0,
+      nome: json['nome'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'idGiocatore': idGiocatore,
+      'idSquadra': idSquadra,
+      'idGiornata': idGiornata,
+      'idSquadraPro': idSquadraPro,
+      'nome': nome,
     };
   }
 }

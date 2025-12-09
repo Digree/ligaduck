@@ -4,7 +4,6 @@ import 'package:ligaduck/app/config/models/global.dart' as globals;
 import 'package:ligaduck/app/models/partita/partitaFormazioneModel.dart';
 import 'package:ligaduck/app/service/giocatoriProvider.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
-import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/squadre/addFormazionePage.dart';
 import 'package:ligaduck/app/squadre/addGiocatoriPage.dart';

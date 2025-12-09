@@ -6,6 +6,11 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ligaduck/app/campionato/campionatoHomePage.dart';
+import 'package:ligaduck/app/competizione/statistiche/GolAnnullatiPage.dart';
+import 'package:ligaduck/app/competizione/statistiche/autogolPage.dart';
+import 'package:ligaduck/app/competizione/statistiche/espulsiPage.dart';
+import 'package:ligaduck/app/competizione/statistiche/marcatoriPage.dart';
+import 'package:ligaduck/app/competizione/statistiche/rigoriSbagliatiPage.dart';
 import 'package:ligaduck/app/models/campionato/campionatoMatchModel.dart';
 import 'package:ligaduck/app/service/competizioniProvider.dart';
 import 'package:ligaduck/app/service/giornateProvider.dart';
@@ -16,6 +21,7 @@ import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/service/partiteProvider.dart';
 import 'package:ligaduck/app/service/squadreProvider.dart';
 import 'package:ligaduck/app/squadre/squadrePage.dart';
+import 'package:ligaduck/services/commonService.dart';
 import 'package:mongo_dart/mongo_dart.dart' as mongo;
 import 'package:provider/provider.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
@@ -67,6 +73,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
     giornataChiusa = giornate_.where((g) => g.id == selectedGiornata).isNotEmpty
         ? giornate_.firstWhere((g) => g.id == selectedGiornata).conclusa
         : false;
+
     return DefaultTabController(
       length: 3,
       child: Scaffold(
@@ -232,7 +239,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                               children: [
                                 buildPartiteList(selectedGiornata!),
                                 buildClassifica(context, selectedGiornata!),
-                                Center(child: Text('Statistiche')),
+                                buildStatistiche(),
                               ],
                             ),
                           ),
@@ -251,7 +258,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                     buildGiornateBox(),
                     if (selectedGiornata != null)
                       SizedBox(
-                        height: MediaQuery.of(context).size.height - 200,
+                        height: MediaQuery.of(context).size.height,
                         child: Padding(
                           padding: EdgeInsets.all(16),
                           child: Row(
@@ -309,95 +316,270 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                           ),
                         ),
                       ),
-                    // Row con ulteriori dati
-                    Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Expanded(
-                            child: Card(
-                              child: Padding(
-                                padding: EdgeInsets.all(12),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.sports_soccer, size: 24),
-                                    SizedBox(height: 8),
-                                    Text(
-                                      'Classifica Marcatori',
-                                      style: TextStyle(fontSize: 12),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    Text(
-                                      '24',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
+                    if (selectedGiornata != null)
+                      Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.only(bottom: 16),
+                              child: Text(
+                                'Statistiche:',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
                                 ),
+                                textAlign: TextAlign.left,
                               ),
                             ),
-                          ),
-                          SizedBox(width: 8),
-                          Expanded(
-                            child: Card(
-                              child: Padding(
-                                padding: EdgeInsets.all(12),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.emoji_events, size: 24),
-                                    SizedBox(height: 8),
-                                    Text(
-                                      'Autogol',
-                                      style: TextStyle(fontSize: 12),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    Text(
-                                      '15',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                Expanded(
+                                  flex: 1,
+                                  child: Card(
+                                    child: SizedBox(
+                                      height: 300,
+                                      child: Padding(
+                                        padding: EdgeInsets.all(12),
+                                        child: Column(
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Image.asset(
+                                                  'assets/icon/gol.png',
+                                                  width: 20,
+                                                  height: 20,
+                                                ),
+                                                SizedBox(width: 8),
+                                                Text(
+                                                  'Classifica Marcatori',
+                                                  style: TextStyle(
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                  textAlign: TextAlign.start,
+                                                ),
+                                              ],
+                                            ),
+                                            SizedBox(height: 8),
+                                            Expanded(
+                                              child: buildMarcatoriBox(
+                                                selectedGiornata!,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
-                                  ],
+                                  ),
                                 ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 8),
-                          Expanded(
-                            child: Card(
-                              child: Padding(
-                                padding: EdgeInsets.all(12),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.trending_up, size: 24),
-                                    SizedBox(height: 8),
-                                    Text(
-                                      'Rigori Sbagliati',
-                                      style: TextStyle(fontSize: 12),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    Text(
-                                      '42',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Card(
+                                    child: SizedBox(
+                                      height: 300,
+                                      child: Padding(
+                                        padding: EdgeInsets.all(12),
+                                        child: Column(
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Image.asset(
+                                                  'assets/icon/aut.png',
+                                                  width: 20,
+                                                  height: 20,
+                                                ),
+                                                SizedBox(width: 8),
+                                                Text(
+                                                  'Autogol',
+                                                  style: TextStyle(
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                  textAlign: TextAlign.start,
+                                                ),
+                                              ],
+                                            ),
+                                            SizedBox(height: 8),
+                                            Expanded(
+                                              child: buildAutogolBox(
+                                                selectedGiornata!,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
-                                  ],
+                                  ),
                                 ),
-                              ),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Card(
+                                    child: SizedBox(
+                                      height: 300,
+                                      child: Padding(
+                                        padding: EdgeInsets.all(12),
+                                        child: Column(
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Image.asset(
+                                                  'assets/icon/rig_sb.png',
+                                                  width: 20,
+                                                  height: 20,
+                                                ),
+                                                SizedBox(width: 8),
+                                                Text(
+                                                  'Rigori Sbagliati',
+                                                  style: TextStyle(
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                  textAlign: TextAlign.start,
+                                                ),
+                                              ],
+                                            ),
+                                            SizedBox(height: 8),
+                                            Expanded(
+                                              child: buildRigSbBox(
+                                                selectedGiornata!,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                Expanded(
+                                  flex: 1,
+                                  child: Card(
+                                    child: SizedBox(
+                                      height: 300,
+                                      child: Padding(
+                                        padding: EdgeInsets.all(12),
+                                        child: Column(
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Image.asset(
+                                                  'assets/icon/gol_ann.png',
+                                                  width: 20,
+                                                  height: 20,
+                                                ),
+                                                SizedBox(width: 8),
+                                                Text(
+                                                  'Gol Annullati',
+                                                  style: TextStyle(
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                  textAlign: TextAlign.start,
+                                                ),
+                                              ],
+                                            ),
+                                            SizedBox(height: 8),
+                                            Expanded(
+                                              child: buildGolAnnullatiBox(
+                                                selectedGiornata!,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Card(
+                                    child: SizedBox(
+                                      height: 300,
+                                      child: Padding(
+                                        padding: EdgeInsets.all(12),
+                                        child: Column(
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Image.asset(
+                                                  'assets/icon/clean.png',
+                                                  width: 20,
+                                                  height: 20,
+                                                ),
+                                                SizedBox(width: 8),
+                                                Text(
+                                                  'Reti Inviolate',
+                                                  style: TextStyle(
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                  textAlign: TextAlign.start,
+                                                ),
+                                              ],
+                                            ),
+                                            SizedBox(height: 8),
+                                            Expanded(
+                                              child: buildCleanSheetBox(
+                                                selectedGiornata!,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Card(
+                                    child: SizedBox(
+                                      height: 300,
+                                      child: Padding(
+                                        padding: EdgeInsets.all(12),
+                                        child: Column(
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Image.asset(
+                                                  'assets/icon/red_card.png',
+                                                  width: 20,
+                                                  height: 20,
+                                                ),
+                                                SizedBox(width: 8),
+                                                Text(
+                                                  'Espulsioni',
+                                                  style: TextStyle(
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                  textAlign: TextAlign.start,
+                                                ),
+                                              ],
+                                            ),
+                                            SizedBox(height: 8),
+                                            Expanded(
+                                              child: buildEspulsioniBox(
+                                                selectedGiornata!,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
                     /* else
                     const Expanded(
                       child: Center(child: CircularProgressIndicator()),
@@ -407,6 +589,993 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
               ),
       ),
     );
+  }
+
+  Widget buildMarcatoriBox(selectedGiornata) {
+    Giornata? giornata;
+    for (var giornata_ in giornate_) {
+      if (giornata_.id == selectedGiornata) {
+        giornata = giornata_;
+        break;
+      }
+    }
+
+    if (giornata?.statistiche! != null) {
+      giornata?.statistiche!.marcatori.sort(
+        (a, b) => b.quantita.compareTo(a.quantita),
+      );
+      if (giornata?.statistiche!.marcatori.isEmpty ?? true) {
+        return Center(child: Text('Nessun marcatore disponibile'));
+      } else {
+        return Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    for (var marcatore in giornata!.statistiche!.marcatori.take(
+                      3,
+                    ))
+                      FutureBuilder<Squadra>(
+                        future: getSquadra(
+                          Provider.of<SquadreProvider>(context, listen: false),
+                          marcatore.idSquadra,
+                        ),
+                        builder: (context, snapshot) {
+                          return Container(
+                            padding: EdgeInsets.symmetric(
+                              vertical: 8,
+                              horizontal: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Colors.grey[300]!,
+                                  width: 1.0,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      if (snapshot.hasData)
+                                        Padding(
+                                          padding: EdgeInsets.only(right: 8),
+                                          child: Image.asset(
+                                            'assets/squadre/${snapshot.data!.cod}.png',
+                                            height: 40,
+                                            width: 40,
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                                  return Container(
+                                                    height: 20,
+                                                    width: 20,
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.grey[300],
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            10,
+                                                          ),
+                                                    ),
+                                                  );
+                                                },
+                                          ),
+                                        )
+                                      else
+                                        Padding(
+                                          padding: EdgeInsets.only(right: 8),
+                                          child: Container(
+                                            height: 20,
+                                            width: 20,
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[300],
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                        ),
+                                      // Nome del marcatore
+                                      Expanded(
+                                        child: Text(
+                                          CommonService.decodePlayerName(
+                                            marcatore.nome,
+                                          ),
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          textAlign: TextAlign.left,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  '${marcatore.quantita}',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.right,
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            if (giornata.statistiche!.marcatori.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: InkWell(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Vedi tutti i marcatori',
+                        style: TextStyle(
+                          color: Colors.blue,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                      Icon(Icons.arrow_right, color: Colors.blue),
+                    ],
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MarcatoriPage(
+                          campionato: widget.campionato,
+                          competizione: widget.competizione,
+                          marcatori: giornata!.statistiche!.marcatori,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        );
+      }
+    } else {
+      return Center(child: Text('Nessun marcatore disponibile'));
+    }
+  }
+
+  Widget buildAutogolBox(selectedGiornata) {
+    Giornata? giornata;
+    for (var giornata_ in giornate_) {
+      if (giornata_.id == selectedGiornata) {
+        giornata = giornata_;
+        break;
+      }
+    }
+
+    if (giornata?.statistiche! != null) {
+      if (giornata!.statistiche!.autogol.isEmpty) {
+        return Center(child: Text('Nessun autogol disponibile'));
+      } else {
+        return Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    for (var autogol in giornata.statistiche!.autogol.take(3))
+                      FutureBuilder<Squadra>(
+                        future: getSquadra(
+                          Provider.of<SquadreProvider>(context, listen: false),
+                          autogol.idSquadra,
+                        ),
+                        builder: (context, snapshot) {
+                          return Container(
+                            padding: EdgeInsets.symmetric(
+                              vertical: 8,
+                              horizontal: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Colors.grey[300]!,
+                                  width: 1.0,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      if (snapshot.hasData)
+                                        Padding(
+                                          padding: EdgeInsets.only(right: 8),
+                                          child: Image.asset(
+                                            'assets/squadre/${snapshot.data!.cod}.png',
+                                            height: 40,
+                                            width: 40,
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                                  return Container(
+                                                    height: 20,
+                                                    width: 20,
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.grey[300],
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            10,
+                                                          ),
+                                                    ),
+                                                  );
+                                                },
+                                          ),
+                                        )
+                                      else
+                                        Padding(
+                                          padding: EdgeInsets.only(right: 8),
+                                          child: Container(
+                                            height: 20,
+                                            width: 20,
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[300],
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                        ),
+                                      Expanded(
+                                        child: Text(
+                                          '${CommonService.decodePlayerName(autogol.nome)} - ${() {
+                                            for (var g in giornate_) {
+                                              if (g.id == autogol.idGiornata) {
+                                                return g.giornata;
+                                              }
+                                            }
+                                            return 'N/A';
+                                          }()}^ Giornata',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          textAlign: TextAlign.left,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Row(
+                                  children: [
+                                    Text(
+                                      'pro',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.right,
+                                    ),
+                                    SizedBox(width: 8),
+                                    FutureBuilder<Squadra>(
+                                      future: getSquadra(
+                                        Provider.of<SquadreProvider>(
+                                          context,
+                                          listen: false,
+                                        ),
+                                        autogol.idSquadraPro,
+                                      ),
+                                      builder: (context, proSnapshot) {
+                                        if (proSnapshot.hasData) {
+                                          return Image.asset(
+                                            'assets/squadre/${proSnapshot.data!.cod}.png',
+                                            height: 40,
+                                            width: 40,
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                                  return Container(
+                                                    height: 40,
+                                                    width: 40,
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.grey[300],
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            10,
+                                                          ),
+                                                    ),
+                                                  );
+                                                },
+                                          );
+                                        } else {
+                                          return Container(
+                                            height: 20,
+                                            width: 20,
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[300],
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            if (giornata.statistiche!.autogol.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: InkWell(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Vedi tutti gli autogol',
+                        style: TextStyle(
+                          color: Colors.blue,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                      Icon(Icons.arrow_right, color: Colors.blue),
+                    ],
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AutogolPage(
+                          campionato: widget.campionato,
+                          competizione: widget.competizione,
+                          autogol: giornata!.statistiche!.autogol,
+                          giornate: giornate_,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        );
+      }
+    } else {
+      return SizedBox.shrink();
+    }
+  }
+
+  Widget buildRigSbBox(selectedGiornata) {
+    Giornata? giornata;
+    for (var giornata_ in giornate_) {
+      if (giornata_.id == selectedGiornata) {
+        giornata = giornata_;
+        break;
+      }
+    }
+
+    if (giornata?.statistiche! != null) {
+      if (giornata?.statistiche!.rigoriSbagliati.isEmpty ?? true) {
+        return Center(child: Text('Nessun rigore sbagliato disponibile'));
+      } else {
+        return Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    for (var rigoreSbagliato
+                        in giornata!.statistiche!.rigoriSbagliati.take(3))
+                      FutureBuilder<Squadra>(
+                        future: getSquadra(
+                          Provider.of<SquadreProvider>(context, listen: false),
+                          rigoreSbagliato.idSquadra,
+                        ),
+                        builder: (context, snapshot) {
+                          return Container(
+                            padding: EdgeInsets.symmetric(
+                              vertical: 8,
+                              horizontal: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Colors.grey[300]!,
+                                  width: 1.0,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      if (snapshot.hasData)
+                                        Padding(
+                                          padding: EdgeInsets.only(right: 8),
+                                          child: Image.asset(
+                                            'assets/squadre/${snapshot.data!.cod}.png',
+                                            height: 40,
+                                            width: 40,
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                                  return Container(
+                                                    height: 20,
+                                                    width: 20,
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.grey[300],
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            10,
+                                                          ),
+                                                    ),
+                                                  );
+                                                },
+                                          ),
+                                        )
+                                      else
+                                        Padding(
+                                          padding: EdgeInsets.only(right: 8),
+                                          child: Container(
+                                            height: 20,
+                                            width: 20,
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[300],
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                        ),
+                                      // Nome del marcatore
+                                      Expanded(
+                                        child: Text(
+                                          CommonService.decodePlayerName(
+                                            rigoreSbagliato.nome,
+                                          ),
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          textAlign: TextAlign.left,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  '${rigoreSbagliato.quantita}',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.right,
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            if (giornata.statistiche!.rigoriSbagliati.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: InkWell(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Vedi tutti i rigori sbagliati',
+                        style: TextStyle(
+                          color: Colors.blue,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                      Icon(Icons.arrow_right, color: Colors.blue),
+                    ],
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => RigoriSbagliatiPage(
+                          campionato: widget.campionato,
+                          competizione: widget.competizione,
+                          rigSb: giornata!.statistiche!.rigoriSbagliati,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        );
+      }
+    } else {
+      return Center(child: Text('Nessun rigore sbagliato disponibile'));
+    }
+  }
+
+  Widget buildGolAnnullatiBox(selectedGiornata) {
+    Giornata? giornata;
+    for (var giornata_ in giornate_) {
+      if (giornata_.id == selectedGiornata) {
+        giornata = giornata_;
+        break;
+      }
+    }
+
+    if (giornata?.statistiche! != null) {
+      giornata?.statistiche!.marcatori.sort(
+        (a, b) => b.quantita.compareTo(a.quantita),
+      );
+      if (giornata?.statistiche!.golAnnullati.isEmpty ?? true) {
+        return Center(child: Text('Nessun gol annullato disponibile'));
+      } else {
+        return Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    for (var golAnnullato
+                        in giornata!.statistiche!.golAnnullati.take(3))
+                      FutureBuilder<Squadra>(
+                        future: getSquadra(
+                          Provider.of<SquadreProvider>(context, listen: false),
+                          golAnnullato.idSquadra,
+                        ),
+                        builder: (context, snapshot) {
+                          return Container(
+                            padding: EdgeInsets.symmetric(
+                              vertical: 8,
+                              horizontal: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Colors.grey[300]!,
+                                  width: 1.0,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      if (snapshot.hasData)
+                                        Padding(
+                                          padding: EdgeInsets.only(right: 8),
+                                          child: Image.asset(
+                                            'assets/squadre/${snapshot.data!.cod}.png',
+                                            height: 40,
+                                            width: 40,
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                                  return Container(
+                                                    height: 20,
+                                                    width: 20,
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.grey[300],
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            10,
+                                                          ),
+                                                    ),
+                                                  );
+                                                },
+                                          ),
+                                        )
+                                      else
+                                        Padding(
+                                          padding: EdgeInsets.only(right: 8),
+                                          child: Container(
+                                            height: 20,
+                                            width: 20,
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[300],
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                        ),
+                                      // Nome del marcatore
+                                      Expanded(
+                                        child: Text(
+                                          CommonService.decodePlayerName(
+                                            golAnnullato.nome,
+                                          ),
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          textAlign: TextAlign.left,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  '${golAnnullato.quantita}',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.right,
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            if (giornata.statistiche!.golAnnullati.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: InkWell(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Vedi tutti i gol annullati',
+                        style: TextStyle(
+                          color: Colors.blue,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                      Icon(Icons.arrow_right, color: Colors.blue),
+                    ],
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => GolAnnullatiPage(
+                          campionato: widget.campionato,
+                          competizione: widget.competizione,
+                          golAnnullati: giornata!.statistiche!.golAnnullati,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        );
+      }
+    } else {
+      return Center(child: Text('Nessun marcatore disponibile'));
+    }
+  }
+
+  Widget buildCleanSheetBox(selectedGiornata) {
+    Giornata? giornata;
+    for (var giornata_ in giornate_) {
+      if (giornata_.id == selectedGiornata) {
+        giornata = giornata_;
+        break;
+      }
+    }
+
+    if (giornata?.statistiche! != null) {
+      giornata?.statistiche!.cleanSheet.sort(
+        (a, b) => b.quantita.compareTo(a.quantita),
+      );
+      if (giornata?.statistiche!.cleanSheet.isEmpty ?? true) {
+        return Center(child: Text('Nessuna rete inviolata disponibile'));
+      } else {
+        return Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    for (var cleanSheet
+                        in giornata!.statistiche!.cleanSheet.take(3))
+                      FutureBuilder<Squadra>(
+                        future: getSquadra(
+                          Provider.of<SquadreProvider>(context, listen: false),
+                          cleanSheet.idSquadra,
+                        ),
+                        builder: (context, snapshot) {
+                          return Container(
+                            padding: EdgeInsets.symmetric(
+                              vertical: 8,
+                              horizontal: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Colors.grey[300]!,
+                                  width: 1.0,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      if (snapshot.hasData)
+                                        Padding(
+                                          padding: EdgeInsets.only(right: 8),
+                                          child: Image.asset(
+                                            'assets/squadre/${snapshot.data!.cod}.png',
+                                            height: 40,
+                                            width: 40,
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                                  return Container(
+                                                    height: 20,
+                                                    width: 20,
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.grey[300],
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            10,
+                                                          ),
+                                                    ),
+                                                  );
+                                                },
+                                          ),
+                                        )
+                                      else
+                                        Padding(
+                                          padding: EdgeInsets.only(right: 8),
+                                          child: Container(
+                                            height: 20,
+                                            width: 20,
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[300],
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                        ),
+                                      // Nome del marcatore
+                                      Expanded(
+                                        child: Text(
+                                          CommonService.decodePlayerName(
+                                            cleanSheet.nome,
+                                          ),
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          textAlign: TextAlign.left,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  '${cleanSheet.quantita}',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.right,
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            if (giornata.statistiche!.golAnnullati.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: InkWell(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Vedi tutte le reti inviolate',
+                        style: TextStyle(
+                          color: Colors.blue,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                      Icon(Icons.arrow_right, color: Colors.blue),
+                    ],
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => GolAnnullatiPage(
+                          campionato: widget.campionato,
+                          competizione: widget.competizione,
+                          golAnnullati: giornata!.statistiche!.golAnnullati,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        );
+      }
+    } else {
+      return Center(child: Text('Nessun marcatore disponibile'));
+    }
+  }
+
+  Widget buildEspulsioniBox(selectedGiornata) {
+    Giornata? giornata;
+    for (var giornata_ in giornate_) {
+      if (giornata_.id == selectedGiornata) {
+        giornata = giornata_;
+        break;
+      }
+    }
+
+    if (giornata?.statistiche! != null) {
+      giornata?.statistiche!.espulsi.sort(
+        (a, b) => b.quantita.compareTo(a.quantita),
+      );
+      if (giornata?.statistiche!.espulsi.isEmpty ?? true) {
+        return Center(child: Text('Nessun espulso disponibile'));
+      } else {
+        return Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    for (var espulso in giornata!.statistiche!.espulsi.take(3))
+                      FutureBuilder<Squadra>(
+                        future: getSquadra(
+                          Provider.of<SquadreProvider>(context, listen: false),
+                          espulso.idSquadra,
+                        ),
+                        builder: (context, snapshot) {
+                          return Container(
+                            padding: EdgeInsets.symmetric(
+                              vertical: 8,
+                              horizontal: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Colors.grey[300]!,
+                                  width: 1.0,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      if (snapshot.hasData)
+                                        Padding(
+                                          padding: EdgeInsets.only(right: 8),
+                                          child: Image.asset(
+                                            'assets/squadre/${snapshot.data!.cod}.png',
+                                            height: 40,
+                                            width: 40,
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                                  return Container(
+                                                    height: 20,
+                                                    width: 20,
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.grey[300],
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            10,
+                                                          ),
+                                                    ),
+                                                  );
+                                                },
+                                          ),
+                                        )
+                                      else
+                                        Padding(
+                                          padding: EdgeInsets.only(right: 8),
+                                          child: Container(
+                                            height: 20,
+                                            width: 20,
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[300],
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                        ),
+                                      // Nome del marcatore
+                                      Expanded(
+                                        child: Text(
+                                          CommonService.decodePlayerName(
+                                            espulso.nome,
+                                          ),
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          textAlign: TextAlign.left,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  '${espulso.quantita}',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.right,
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            if (giornata.statistiche!.espulsi.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: InkWell(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Vedi tutti gli espulsi',
+                        style: TextStyle(
+                          color: Colors.blue,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                      Icon(Icons.arrow_right, color: Colors.blue),
+                    ],
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EspulsiPage(
+                          campionato: widget.campionato,
+                          competizione: widget.competizione,
+                          espulsi: giornata!.statistiche!.espulsi,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        );
+      }
+    } else {
+      return Center(child: Text('Nessun marcatore disponibile'));
+    }
   }
 
   Widget buildGiornateBox() {
@@ -659,7 +1828,222 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
   }
 
   Widget buildStatistiche() {
-    return Center(child: Text('Statistiche'));
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.all(8),
+            child: Card(
+              child: Padding(
+                padding: EdgeInsets.all(12),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Image.asset(
+                          'assets/icon/gol.png',
+                          width: 20,
+                          height: 20,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Classifica Marcatori',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.start,
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    SizedBox(
+                      height: 200,
+                      child: buildMarcatoriBox(selectedGiornata!),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(8),
+            child: Card(
+              child: Padding(
+                padding: EdgeInsets.all(12),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Image.asset(
+                          'assets/icon/aut.png',
+                          width: 20,
+                          height: 20,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Autogol',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.start,
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    SizedBox(
+                      height: 200,
+                      child: buildAutogolBox(selectedGiornata!),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(8),
+            child: Card(
+              child: Padding(
+                padding: EdgeInsets.all(12),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Image.asset(
+                          'assets/icon/rig_sb.png',
+                          width: 20,
+                          height: 20,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Rigori Sbagliati',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.start,
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    SizedBox(
+                      height: 200,
+                      child: buildRigSbBox(selectedGiornata!),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(8),
+            child: Card(
+              child: Padding(
+                padding: EdgeInsets.all(12),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Image.asset(
+                          'assets/icon/gol_ann.png',
+                          width: 20,
+                          height: 20,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Gol Annullati',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.start,
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    SizedBox(
+                      height: 200,
+                      child: buildGolAnnullatiBox(selectedGiornata!),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(8),
+            child: Card(
+              child: Padding(
+                padding: EdgeInsets.all(12),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Image.asset(
+                          'assets/icon/clean.png',
+                          width: 20,
+                          height: 20,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Reti Inviolate',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.start,
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    SizedBox(
+                      height: 200,
+                      child: buildCleanSheetBox(selectedGiornata!),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(8),
+            child: Card(
+              child: Padding(
+                padding: EdgeInsets.all(12),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Image.asset(
+                          'assets/icon/red_card.png',
+                          width: 20,
+                          height: 20,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Espulsioni',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.start,
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    SizedBox(
+                      height: 200,
+                      child: buildEspulsioniBox(selectedGiornata!),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<List<Giornata>> getGiornate(GiornateProvider provider) async {
@@ -1158,6 +2542,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
         giornata: numeroGiornata,
         fase: fase.isNotEmpty ? fase : 'G',
         classifica: classifica,
+        statistiche: null,
         conclusa: false,
       );
       giornateToPush.add(giornata);
