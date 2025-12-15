@@ -105,87 +105,104 @@ class CleanSheetPage extends StatelessWidget {
       ),
       body: Column(
         children: [
-          for (var cleanSheet in cleanSheet)
-            FutureBuilder<Squadra>(
-              future: getSquadra(
-                Provider.of<SquadreProvider>(context, listen: false),
-                cleanSheet.idSquadra,
-              ),
-              builder: (context, snapshot) {
-                return Container(
-                  padding: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(color: Colors.grey[300]!, width: 1.0),
-                    ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: cleanSheet.length,
+              itemBuilder: (context, index) {
+                final cleanSheetItem = cleanSheet[index];
+                return FutureBuilder<Squadra>(
+                  future: getSquadra(
+                    Provider.of<SquadreProvider>(context, listen: false),
+                    cleanSheetItem.idSquadra,
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Row(
-                          children: [
-                            if (snapshot.hasData)
-                              Padding(
-                                padding: EdgeInsets.only(right: 8, left: 16),
-                                child: Image.asset(
-                                  'assets/squadre/${snapshot.data!.cod}.png',
-                                  height: 40,
-                                  width: 40,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
+                  builder: (context, snapshot) {
+                    return Container(
+                      padding: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Colors.grey[300]!,
+                            width: 1.0,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                if (snapshot.hasData)
+                                  Padding(
+                                    padding: EdgeInsets.only(
+                                      right: 8,
+                                      left: 16,
+                                    ),
+                                    child: Image.asset(
+                                      'assets/squadre/${snapshot.data!.cod}.png',
+                                      height: 40,
+                                      width: 40,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                            return Container(
+                                              height: 20,
+                                              width: 20,
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey[300],
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                            );
+                                          },
+                                    ),
+                                  )
+                                else
+                                  Padding(
+                                    padding: EdgeInsets.only(right: 8),
+                                    child: Container(
                                       height: 20,
                                       width: 20,
                                       decoration: BoxDecoration(
                                         color: Colors.grey[300],
                                         borderRadius: BorderRadius.circular(10),
                                       ),
-                                    );
-                                  },
-                                ),
-                              )
-                            else
-                              Padding(
-                                padding: EdgeInsets.only(right: 8),
-                                child: Container(
-                                  height: 20,
-                                  width: 20,
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[300],
-                                    borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                // Nome del marcatore
+                                Expanded(
+                                  child: Text(
+                                    CommonService.decodePlayerName(
+                                      cleanSheetItem.nome,
+                                    ),
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    textAlign: TextAlign.left,
                                   ),
                                 ),
-                              ),
-                            // Nome del marcatore
-                            Expanded(
-                              child: Text(
-                                CommonService.decodePlayerName(cleanSheet.nome),
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                textAlign: TextAlign.left,
-                              ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(right: 32),
-                        child: Text(
-                          '${cleanSheet.quantita}',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
                           ),
-                          textAlign: TextAlign.right,
-                        ),
+                          Padding(
+                            padding: EdgeInsets.only(right: 32),
+                            child: Text(
+                              '${cleanSheetItem.quantita}',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.right,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 );
               },
             ),
+          ),
         ],
       ),
     );
@@ -195,7 +212,6 @@ class CleanSheetPage extends StatelessWidget {
     List<Squadra> squadre = await provider.fetchSquadre(campionato);
 
     for (var squadra in squadre) {
-      print(squadra.id);
       if (squadra.id == idSquadra) {
         return squadra;
       }

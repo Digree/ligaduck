@@ -52,6 +52,11 @@ class Carriera {
   final int gol;
   final int presenze;
   final int espulsioni;
+  final int? autogol;
+  final int? rigoriSbagliati;
+  final int? golAnnullati;
+  final int? golSubiti;
+  final int? cleanSheet;
 
   Carriera({
     required this.campionato,
@@ -59,6 +64,11 @@ class Carriera {
     required this.gol,
     required this.presenze,
     required this.espulsioni,
+    this.autogol,
+    this.rigoriSbagliati,
+    this.golAnnullati,
+    this.golSubiti,
+    this.cleanSheet,
   });
 
   factory Carriera.fromJson(Map<String, dynamic> json) {
@@ -68,6 +78,11 @@ class Carriera {
       gol: json['gol'] ?? 0,
       presenze: json['presenze'] ?? 0,
       espulsioni: json['espulsioni'] ?? 0,
+      autogol: json['autogol'],
+      rigoriSbagliati: json['rigoriSbagliati'],
+      golAnnullati: json['golAnnullati'],
+      golSubiti: json['golSubiti'],
+      cleanSheet: json['cleanSheet'],
     );
   }
 
@@ -78,6 +93,11 @@ class Carriera {
       'gol': gol,
       'presenze': presenze,
       'espulsioni': espulsioni,
+      'autogol': autogol,
+      'rigoriSbagliati': rigoriSbagliati,
+      'golAnnullati': golAnnullati,
+      'golSubiti': golSubiti,
+      'cleanSheet': cleanSheet,
     };
   }
 }

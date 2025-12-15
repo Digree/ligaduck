@@ -94,8 +94,11 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
 
   @override
   Widget build(BuildContext context) {
+    bool isWide = MediaQuery.of(context).size.width > 600;
     return Container(
-      width: MediaQuery.of(context).size.width * 0.9,
+      width: isWide
+          ? MediaQuery.of(context).size.width * 0.6
+          : MediaQuery.of(context).size.width * 0.9,
       height: MediaQuery.of(context).size.height * 0.7,
       padding: EdgeInsets.all(20.0),
       child: Column(

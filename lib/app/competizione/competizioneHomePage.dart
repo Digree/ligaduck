@@ -600,6 +600,10 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
       }
     }
 
+    if (giornata?.statistiche == null) {
+      return Center(child: Text('Nessuna statistica disponibile'));
+    }
+
     if (giornata?.statistiche! != null) {
       giornata?.statistiche!.marcatori.sort(
         (a, b) => b.quantita.compareTo(a.quantita),
@@ -758,7 +762,11 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
       }
     }
 
-    if (giornata?.statistiche! != null) {
+    if (giornata?.statistiche == null) {
+      return Center(child: Text('Nessuna statistica disponibile'));
+    }
+
+    if (giornata?.statistiche != null) {
       if (giornata!.statistiche!.autogol.isEmpty) {
         return Center(child: Text('Nessun autogol disponibile'));
       } else {
@@ -963,7 +971,11 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
       }
     }
 
-    if (giornata?.statistiche! != null) {
+    if (giornata?.statistiche == null) {
+      return Center(child: Text('Nessuna statistica disponibile'));
+    }
+
+    if (giornata?.statistiche != null) {
       if (giornata?.statistiche!.rigoriSbagliati.isEmpty ?? true) {
         return Center(child: Text('Nessun rigore sbagliato disponibile'));
       } else {
@@ -1117,7 +1129,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
       }
     }
 
-    if (giornata?.statistiche! != null) {
+    if (giornata?.statistiche != null) {
       giornata?.statistiche!.marcatori.sort(
         (a, b) => b.quantita.compareTo(a.quantita),
       );
@@ -1274,7 +1286,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
       }
     }
 
-    if (giornata?.statistiche! != null) {
+    if (giornata?.statistiche != null) {
       giornata?.statistiche!.cleanSheet.sort(
         (a, b) => b.quantita.compareTo(a.quantita),
       );
@@ -1431,7 +1443,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
       }
     }
 
-    if (giornata?.statistiche! != null) {
+    if (giornata?.statistiche != null) {
       giornata?.statistiche!.espulsi.sort(
         (a, b) => b.quantita.compareTo(a.quantita),
       );
@@ -1847,7 +1859,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                         ),
                         SizedBox(width: 8),
                         Text(
-                          'Classifica Marcatori',
+                          'Classifica uil',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,

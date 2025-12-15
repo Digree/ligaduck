@@ -107,37 +107,60 @@ class AutogolPage extends StatelessWidget {
       ),
       body: Column(
         children: [
-          for (var autogol in autogol.take(3))
-            FutureBuilder<Squadra>(
-              future: getSquadra(
-                Provider.of<SquadreProvider>(context, listen: false),
-                autogol.idSquadra,
-              ),
-              builder: (context, snapshot) {
-                return Container(
-                  padding: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(color: Colors.grey[300]!, width: 1.0),
-                    ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: autogol.length,
+              itemBuilder: (context, index) {
+                final autogolItem = autogol[index];
+                return FutureBuilder<Squadra>(
+                  future: getSquadra(
+                    Provider.of<SquadreProvider>(context, listen: false),
+                    autogolItem.idSquadra,
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Padding(
-                          padding: EdgeInsets.only(right: 8, left: 16),
-                          child: Row(
-                            children: [
-                              if (snapshot.hasData)
-                                Padding(
-                                  padding: EdgeInsets.only(right: 8),
-                                  child: Image.asset(
-                                    'assets/squadre/${snapshot.data!.cod}.png',
-                                    height: 40,
-                                    width: 40,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Container(
+                  builder: (context, snapshot) {
+                    return Container(
+                      padding: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Colors.grey[300]!,
+                            width: 1.0,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.only(right: 8, left: 16),
+                              child: Row(
+                                children: [
+                                  if (snapshot.hasData)
+                                    Padding(
+                                      padding: EdgeInsets.only(right: 8),
+                                      child: Image.asset(
+                                        'assets/squadre/${snapshot.data!.cod}.png',
+                                        height: 40,
+                                        width: 40,
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                              return Container(
+                                                height: 20,
+                                                width: 20,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey[300],
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                ),
+                                              );
+                                            },
+                                      ),
+                                    )
+                                  else
+                                    Padding(
+                                      padding: EdgeInsets.only(right: 8),
+                                      child: Container(
                                         height: 20,
                                         width: 20,
                                         decoration: BoxDecoration(
@@ -146,98 +169,89 @@ class AutogolPage extends StatelessWidget {
                                             10,
                                           ),
                                         ),
-                                      );
-                                    },
-                                  ),
-                                )
-                              else
-                                Padding(
-                                  padding: EdgeInsets.only(right: 8),
-                                  child: Container(
-                                    height: 20,
-                                    width: 20,
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[300],
-                                      borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                  Expanded(
+                                    child: Text(
+                                      '${CommonService.decodePlayerName(autogolItem.nome)} - ${() {
+                                        for (var g in giornate) {
+                                          if (g.id == autogolItem.idGiornata) {
+                                            return g.giornata;
+                                          }
+                                        }
+                                        return 'N/A';
+                                      }()}^ Giornata',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      textAlign: TextAlign.left,
                                     ),
                                   ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              Text(
+                                'pro',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                              Expanded(
-                                child: Text(
-                                  '${CommonService.decodePlayerName(autogol.nome)} - ${() {
-                                    for (var g in giornate) {
-                                      if (g.id == autogol.idGiornata) {
-                                        return g.giornata;
-                                      }
-                                    }
-                                    return 'N/A';
-                                  }()}^ Giornata',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
+                                textAlign: TextAlign.right,
+                              ),
+                              SizedBox(width: 8),
+                              FutureBuilder<Squadra>(
+                                future: getSquadra(
+                                  Provider.of<SquadreProvider>(
+                                    context,
+                                    listen: false,
                                   ),
-                                  textAlign: TextAlign.left,
+                                  autogolItem.idSquadraPro,
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Text(
-                            'pro',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.right,
-                          ),
-                          SizedBox(width: 8),
-                          FutureBuilder<Squadra>(
-                            future: getSquadra(
-                              Provider.of<SquadreProvider>(
-                                context,
-                                listen: false,
-                              ),
-                              autogol.idSquadraPro,
-                            ),
-                            builder: (context, proSnapshot) {
-                              if (proSnapshot.hasData) {
-                                return Image.asset(
-                                  'assets/squadre/${proSnapshot.data!.cod}.png',
-                                  height: 40,
-                                  width: 40,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
+                                builder: (context, proSnapshot) {
+                                  if (proSnapshot.hasData) {
+                                    return Image.asset(
+                                      'assets/squadre/${proSnapshot.data!.cod}.png',
                                       height: 40,
                                       width: 40,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                            return Container(
+                                              height: 40,
+                                              width: 40,
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey[300],
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                            );
+                                          },
+                                    );
+                                  } else {
+                                    return Container(
+                                      height: 20,
+                                      width: 20,
                                       decoration: BoxDecoration(
                                         color: Colors.grey[300],
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                     );
-                                  },
-                                );
-                              } else {
-                                return Container(
-                                  height: 20,
-                                  width: 20,
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[300],
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                );
-                              }
-                            },
+                                  }
+                                },
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 );
               },
             ),
+          ),
         ],
       ),
     );
@@ -247,7 +261,6 @@ class AutogolPage extends StatelessWidget {
     List<Squadra> squadre = await provider.fetchSquadre(campionato);
 
     for (var squadra in squadre) {
-      print(squadra.id);
       if (squadra.id == idSquadra) {
         return squadra;
       }
