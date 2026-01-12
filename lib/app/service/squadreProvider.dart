@@ -142,4 +142,26 @@ class SquadreProvider with ChangeNotifier {
       print('Errore DELETE squalifica: $e');
     }
   }
+
+  Future<bool> addSquadra(String campionato, Squadra squadra) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${Env.apiUrl}/$campionato/squadra/add'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(squadra.toJson()),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else {
+        print(
+          'Errore POST squalifica: ${response.statusCode} - ${response.body}',
+        );
+        return false;
+      }
+    } catch (e) {
+      print('Errore POST squalifica: $e');
+      return false;
+    }
+  }
 }

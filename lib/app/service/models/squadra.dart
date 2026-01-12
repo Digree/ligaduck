@@ -7,6 +7,7 @@ class Squadra {
   final String citta;
   final String stadio;
   final String cod;
+  final String campionato;
   final String categoria;
   final List<String> colori;
   final List<Trofeo>? trofei;
@@ -20,6 +21,7 @@ class Squadra {
     required this.citta,
     required this.stadio,
     required this.cod,
+    required this.campionato,
     required this.categoria,
     required this.colori,
     this.trofei,
@@ -35,6 +37,7 @@ class Squadra {
       citta: json['citta'],
       stadio: json['stadio'],
       cod: json['cod'],
+      campionato: json['campionato'],
       categoria: json['categoria'],
       colori: json['colori'] != null ? List<String>.from(json['colori']) : [],
       trofei: json['trofei'] != null

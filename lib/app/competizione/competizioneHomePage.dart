@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:ligaduck/app/campionato/campionatoHomePage.dart';
 import 'package:ligaduck/app/competizione/statistiche/GolAnnullatiPage.dart';
 import 'package:ligaduck/app/competizione/statistiche/autogolPage.dart';
+import 'package:ligaduck/app/competizione/statistiche/cleanSheetPage.dart';
 import 'package:ligaduck/app/competizione/statistiche/espulsiPage.dart';
 import 'package:ligaduck/app/competizione/statistiche/marcatoriPage.dart';
 import 'package:ligaduck/app/competizione/statistiche/rigoriSbagliatiPage.dart';
@@ -1395,7 +1396,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                 ),
               ),
             ),
-            if (giornata.statistiche!.golAnnullati.isNotEmpty)
+            if (giornata.statistiche!.cleanSheet.isNotEmpty)
               Padding(
                 padding: EdgeInsets.only(top: 8),
                 child: InkWell(
@@ -1416,10 +1417,10 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => GolAnnullatiPage(
+                        builder: (context) => CleanSheetPage(
                           campionato: widget.campionato,
                           competizione: widget.competizione,
-                          golAnnullati: giornata!.statistiche!.golAnnullati,
+                          cleanSheet: giornata!.statistiche!.cleanSheet,
                         ),
                       ),
                     );
@@ -1859,7 +1860,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                         ),
                         SizedBox(width: 8),
                         Text(
-                          'Classifica uil',
+                          'Classifica Marcatori',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,

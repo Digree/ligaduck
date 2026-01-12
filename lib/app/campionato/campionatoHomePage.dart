@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/competizione/competizioneHomePage.dart';
+import 'package:ligaduck/app/config/models/global.dart';
 import 'package:ligaduck/app/homePage.dart';
 import 'package:ligaduck/app/models/campionato/campionatoMatchModel.dart';
 import 'package:ligaduck/app/models/campionato/listaSquadreModel.dart';
@@ -9,6 +10,7 @@ import 'package:ligaduck/app/service/competizioniProvider.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/partiteProvider.dart';
+import 'package:ligaduck/app/squadre/inserisciSquadraPage.dart';
 import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
@@ -46,6 +48,72 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
     return competizioni;
   }
 
+  void _showAddSquadraModal(BuildContext context) {
+    bool isWide = MediaQuery.of(context).size.width > 600;
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            width: isWide ? 400 : null,
+            padding: EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Aggiungi Elemento',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      icon: Icon(Icons.close),
+                      padding: EdgeInsets.zero,
+                      constraints: BoxConstraints(),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => InserisciSquadraPage(
+                            campionato: widget.campionato,
+                          ),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: Text('Inserisci squadra'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     bool isWide = MediaQuery.of(context).size.width > 600;
@@ -64,6 +132,17 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
           },
         ),
         title: Text(widget.title, style: TextStyle(color: Colors.white)),
+        actions: [
+          if (admin &&
+              ((isWide && _selectedIndex == 0) ||
+                  (!isWide && _selectedIndex == 1)))
+            IconButton(
+              icon: Icon(Icons.add, color: Colors.white),
+              onPressed: () {
+                _showAddSquadraModal(context);
+              },
+            ),
+        ],
       ),
       bottomNavigationBar: !isWide
           ? BottomNavigationBar(

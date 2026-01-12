@@ -312,6 +312,28 @@ class _SquadrePageState extends State<SquadrePage> {
                   'assets/squadre/${widget.squadra.cod}.png',
                   fit: BoxFit.contain,
                   height: screenHeight * 0.70,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.grey.shade300, width: 2),
+                    ),
+                    child: ShaderMask(
+                      shaderCallback: (bounds) {
+                        return LinearGradient(
+                          colors: [
+                            getColor('primary'),
+                            getColor('secondary'),
+                            if (widget.squadra.colori.length > 2)
+                              getColor('tertiary'),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ).createShader(bounds);
+                      },
+                      child: Icon(Icons.shield, size: 120, color: Colors.white),
+                    ),
+                  ),
                 ),
               ),
               /*                 SizedBox(height: isWide ? 16 : 8),
@@ -379,6 +401,8 @@ class _SquadrePageState extends State<SquadrePage> {
                   child: Image.asset(
                     'assets/divise/divise_43/${widget.squadra.cod}_1.png',
                     fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) =>
+                        SizedBox.shrink(),
                   ),
                 ),
                 Flexible(
@@ -386,6 +410,8 @@ class _SquadrePageState extends State<SquadrePage> {
                   child: Image.asset(
                     'assets/divise/divise_43/${widget.squadra.cod}_2.png',
                     fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) =>
+                        SizedBox.shrink(),
                   ),
                 ),
                 Flexible(
@@ -393,6 +419,8 @@ class _SquadrePageState extends State<SquadrePage> {
                   child: Image.asset(
                     'assets/divise/divise_43/${widget.squadra.cod}_3.png',
                     fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) =>
+                        SizedBox.shrink(),
                   ),
                 ),
                 isWide ? moreInfo(context, isWide) : Container(),
@@ -727,44 +755,57 @@ class _SquadrePageState extends State<SquadrePage> {
               child: Container(
                 width: 40,
                 height: 40,
-                decoration: BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage(
-                      'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_1.png',
+                decoration: BoxDecoration(color: Colors.grey[300]),
+                child: Image.asset(
+                  'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_1.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [getColor('primary'), getColor('secondary')],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
                     ),
-                    fit: BoxFit.cover,
-                  ),
-                  color: Colors.transparent,
-                ),
-                child: Center(
-                  child: Text(
-                    '${giocatore.numero}',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 16,
-                      shadows: [
-                        Shadow(
-                          offset: Offset(-1.0, -1.0),
-                          blurRadius: 0.0,
-                          color: Colors.black,
+                    child: Center(
+                      child: Text(
+                        '${giocatore.numero}',
+                        style: TextStyle(
+                          color: getIconColor('primary'),
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                          shadows: [
+                            Shadow(
+                              offset: Offset(-1.0, -1.0),
+                              blurRadius: 0.0,
+                              color: isLightColor(getColor('primary'))
+                                  ? Colors.white
+                                  : Colors.black,
+                            ),
+                            Shadow(
+                              offset: Offset(1.0, -1.0),
+                              blurRadius: 0.0,
+                              color: isLightColor(getColor('primary'))
+                                  ? Colors.white
+                                  : Colors.black,
+                            ),
+                            Shadow(
+                              offset: Offset(1.0, 1.0),
+                              blurRadius: 0.0,
+                              color: isLightColor(getColor('primary'))
+                                  ? Colors.white
+                                  : Colors.black,
+                            ),
+                            Shadow(
+                              offset: Offset(-1.0, 1.0),
+                              blurRadius: 0.0,
+                              color: isLightColor(getColor('primary'))
+                                  ? Colors.white
+                                  : Colors.black,
+                            ),
+                          ],
                         ),
-                        Shadow(
-                          offset: Offset(1.0, -1.0),
-                          blurRadius: 0.0,
-                          color: Colors.black,
-                        ),
-                        Shadow(
-                          offset: Offset(1.0, 1.0),
-                          blurRadius: 0.0,
-                          color: Colors.black,
-                        ),
-                        Shadow(
-                          offset: Offset(-1.0, 1.0),
-                          blurRadius: 0.0,
-                          color: Colors.black,
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
