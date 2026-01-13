@@ -9,7 +9,9 @@ import 'package:ligaduck/app/models/competizione/competizioneButtonModel.dart';
 import 'package:ligaduck/app/service/competizioniProvider.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
+import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/service/partiteProvider.dart';
+import 'package:ligaduck/app/service/squadreProvider.dart';
 import 'package:ligaduck/app/squadre/inserisciSquadraPage.dart';
 import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
@@ -345,15 +347,19 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
 
                   // Raggruppa le partite per giornata/competizione
                   Map<String, Map<String, dynamic>> partitePerCompetizione = {};
+                  Map<String, Map<String, dynamic>> partiteDataMap = {};
+
+                  for (var pc in partitaCompList) {
+                    partiteDataMap[pc['idPartita']] = pc;
+                  }
+
                   for (var partita in partite) {
                     String competizione = '';
                     String cod = '';
-                    for (var pc in partitaCompList) {
-                      if (pc['idPartita'] == partita.id) {
-                        competizione = pc['nome'];
-                        cod = pc['cod'];
-                        break;
-                      }
+                    var partitaData = partiteDataMap[partita.id];
+                    if (partitaData != null) {
+                      competizione = partitaData['nome'];
+                      cod = partitaData['cod'];
                     }
 
                     if (!partitePerCompetizione.containsKey(competizione)) {
@@ -474,6 +480,12 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                                                   match: partita.id,
                                                   partita: partita,
                                                   campionato: widget.campionato,
+                                                  squadraHome:
+                                                      partiteDataMap[partita
+                                                          .id]?['squadraHome'],
+                                                  squadraAway:
+                                                      partiteDataMap[partita
+                                                          .id]?['squadraAway'],
                                                 ),
                                                 context,
                                               ),
@@ -572,16 +584,40 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
       context,
       listen: false,
     );
+    final squadreProvider = Provider.of<SquadreProvider>(
+      context,
+      listen: false,
+    );
+    List<Squadra> squadre = await squadreProvider.fetchSquadre(
+      widget.campionato,
+    );
+
     for (var partita in partite) {
       Competizione competizione = await getCompetizione(
         competizioneProvider,
         partita,
       );
+
+      Squadra? squadraHome;
+      Squadra? squadraAway;
+      try {
+        squadraHome = squadre.firstWhere((s) => s.cod == partita.codHome);
+      } catch (e) {
+        squadraHome = null;
+      }
+      try {
+        squadraAway = squadre.firstWhere((s) => s.cod == partita.codAway);
+      } catch (e) {
+        squadraAway = null;
+      }
+
       var partitaComp = {
         'idPartita': partita.id,
         'idCompetizione': competizione.id,
         'cod': competizione.cod,
         'nome': competizione.nome,
+        'squadraHome': squadraHome,
+        'squadraAway': squadraAway,
       };
       partitaCompList.add(partitaComp);
     }

@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/partita/partitaHomePage.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
+import 'package:ligaduck/app/service/models/squadra.dart';
+import 'package:ligaduck/app/widgets/squadra_logo_widget.dart';
 
 class CampionatoMatchModel {
   final String match;
   final Partita partita;
   final String campionato;
+  final Squadra? squadraHome;
+  final Squadra? squadraAway;
   final VoidCallback? onRefreshRequired;
 
   CampionatoMatchModel({
     required this.match,
     required this.partita,
     required this.campionato,
+    this.squadraHome,
+    this.squadraAway,
     this.onRefreshRequired,
   });
 }
@@ -56,10 +62,11 @@ Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
             children: [
               Padding(
                 padding: EdgeInsets.only(),
-                child: Image.asset(
-                  'assets/squadre/${model.partita.codHome}.png',
+                child: SquadraLogoWidget(
+                  codSquadra: model.partita.codHome,
+                  squadra: model.squadraHome,
+                  size: 50,
                   fit: BoxFit.contain,
-                  height: 50,
                 ),
               ),
               Padding(
@@ -135,10 +142,11 @@ Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
               ),
               Padding(
                 padding: EdgeInsets.only(),
-                child: Image.asset(
-                  'assets/squadre/${model.partita.codAway}.png',
+                child: SquadraLogoWidget(
+                  codSquadra: model.partita.codAway,
+                  squadra: model.squadraAway,
+                  size: 50,
                   fit: BoxFit.cover,
-                  height: 50,
                 ),
               ),
             ],

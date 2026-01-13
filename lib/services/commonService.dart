@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:ligaduck/app/service/models/squadra.dart';
 import '../app/models/partita/partitaFormazioneModel.dart';
 
 class CommonService {
@@ -278,5 +279,38 @@ class CommonService {
     }
 
     return 'it';
+  }
+
+  static Color getColor(String type, Squadra squadra) {
+    final Map<String, Color> colorMap = {
+      'rosso': Colors.red,
+      'verde': Colors.green,
+      'blu': Colors.blueAccent,
+      'giallo': Colors.yellow[600]!,
+      'arancione': Colors.orange[900]!,
+      'viola': Colors.purple[800]!,
+      'nero': Colors.black,
+      'bianco': Colors.white,
+      'grigio': Colors.grey,
+      'fucsia': Colors.pink[700]!,
+      'ciano': Colors.lightBlue[300]!,
+      'marrone': Colors.brown[900]!,
+    };
+
+    if (type.contains('primary')) {
+      final primaryColorName = squadra.colori[0].toLowerCase();
+      final primaryColor = colorMap[primaryColorName] ?? Colors.grey;
+      return primaryColor;
+    } else if (type.contains('secondary')) {
+      final secondaryColorName = squadra.colori[1].toLowerCase();
+      final secondaryColor = colorMap[secondaryColorName] ?? Colors.grey;
+      return secondaryColor;
+    } else if (type.contains('tertiary') && squadra.colori.length > 2) {
+      final tertiaryColorName = squadra.colori[2].toLowerCase();
+      final tertiaryColor = colorMap[tertiaryColorName] ?? Colors.grey;
+      return tertiaryColor;
+    } else {
+      return Colors.grey;
+    }
   }
 }

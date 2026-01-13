@@ -75,8 +75,21 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
         ? giornate_.firstWhere((g) => g.id == selectedGiornata).conclusa
         : false;
 
+    // Controlla se la giornata selezionata ha fase 'G' per mostrare la classifica
+    bool mostraClassifica = false;
+    if (selectedGiornata != null && giornate_.isNotEmpty) {
+      try {
+        final giornataSelezionata = giornate_.firstWhere(
+          (g) => g.id == selectedGiornata,
+        );
+        mostraClassifica = giornataSelezionata.fase == 'G';
+      } catch (e) {
+        mostraClassifica = false;
+      }
+    }
+
     return DefaultTabController(
-      length: 3,
+      length: mostraClassifica ? 3 : 2,
       child: Scaffold(
         appBar: PreferredSize(
           preferredSize: Size.fromHeight(200),
@@ -230,7 +243,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                               ),
                               tabs: [
                                 Tab(text: 'Partite'),
-                                Tab(text: 'Classifica'),
+                                if (mostraClassifica) Tab(text: 'Classifica'),
                                 Tab(text: 'Statistiche'),
                               ],
                             ),
@@ -239,7 +252,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                             child: TabBarView(
                               children: [
                                 buildPartiteList(selectedGiornata!),
-                                buildClassifica(context, selectedGiornata!),
+                                if (mostraClassifica)
+                                  buildClassifica(context, selectedGiornata!),
                                 buildStatistiche(),
                               ],
                             ),
@@ -262,11 +276,63 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                         height: MediaQuery.of(context).size.height,
                         child: Padding(
                           padding: EdgeInsets.all(16),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Column(
+                          child: mostraClassifica
+                              ? Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Partite:',
+                                            style: TextStyle(
+                                              fontSize: 22,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            textAlign: TextAlign.left,
+                                          ),
+                                          Expanded(
+                                            child: Padding(
+                                              padding: EdgeInsets.only(top: 16),
+                                              child: buildPartiteList(
+                                                selectedGiornata!,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    SizedBox(width: 32),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Classifica:',
+                                            style: TextStyle(
+                                              fontSize: 22,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            textAlign: TextAlign.left,
+                                          ),
+                                          Expanded(
+                                            child: Padding(
+                                              padding: EdgeInsets.only(top: 16),
+                                              child: buildClassifica(
+                                                context,
+                                                selectedGiornata!,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
@@ -287,34 +353,6 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                                     ),
                                   ],
                                 ),
-                              ),
-                              SizedBox(width: 32),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Classifica:',
-                                      style: TextStyle(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                      textAlign: TextAlign.left,
-                                    ),
-                                    Expanded(
-                                      child: Padding(
-                                        padding: EdgeInsets.only(top: 16),
-                                        child: buildClassifica(
-                                          context,
-                                          selectedGiornata!,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
                         ),
                       ),
                     if (selectedGiornata != null)
@@ -1612,7 +1650,17 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
               child: Center(child: Text('Nessuna giornata disponibile')),
             );
           } else {
-            giornate.sort((a, b) => a.giornata.compareTo(b.giornata));
+            giornate.sort((a, b) {
+              // Prova a convertire in numero per ordinamento numerico
+              final aNum = int.tryParse(a.giornata);
+              final bNum = int.tryParse(b.giornata);
+
+              if (aNum != null && bNum != null) {
+                return aNum.compareTo(bNum);
+              }
+              // Se non sono numeri, usa ordinamento alfabetico
+              return a.giornata.compareTo(b.giornata);
+            });
 
             if (selectedGiornata == null) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1645,7 +1693,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                         child: Text(
                           g.fase == 'G'
                               ? "${g.giornata}^ Giornata"
-                              : g.giornata,
+                              : CommonService.decodePlayerName(g.giornata),
                         ),
                       ),
                     )
@@ -1671,18 +1719,30 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
       context,
       listen: false,
     );
+    final squadreProvider = Provider.of<SquadreProvider>(
+      context,
+      listen: false,
+    );
+
     return FutureBuilder(
       key: ValueKey(
         'partite_${idGiornata}_$_refreshKey',
       ), // Chiave unica per forzare il rebuild
-      future: getPartite(partiteProvider, idGiornata),
+      future: _loadPartiteWithSquadre(
+        partiteProvider,
+        squadreProvider,
+        idGiornata,
+      ),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
           return Center(child: Text('Errore nel caricamento delle partite'));
         } else if (snapshot.hasData) {
-          final partite = snapshot.data ?? [];
+          final data = snapshot.data!;
+          final partite = data['partite'] as List<Partita>;
+          final squadre = data['squadre'] as List<Squadra>;
+
           if (partite.isEmpty) {
             return Center(child: Text('Nessuna partita disponibile'));
           } else {
@@ -1691,11 +1751,64 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
               child: ListView.builder(
                 itemCount: partite.length,
                 itemBuilder: (context, index) {
+                  // Trova le squadre per la partita corrente
+                  final partita = partite[index];
+                  final squadraHome = squadre.firstWhere(
+                    (s) => s.id == partita.idTeamHome,
+                    orElse: () => Squadra(
+                      id: partita.idTeamHome,
+                      nome: partita.teamHome,
+                      citta: '',
+                      stadio: '',
+                      cod: partita.codHome,
+                      campionato: widget.campionato,
+                      categoria: '',
+                      colori: [],
+                      trofei: [],
+                      formazione: Formazione(
+                        titolari: [],
+                        panchina: [],
+                        indisponibili: [],
+                        nonConvocati: [],
+                        allenatore: 'Allenatore',
+                        modulo: '4-4-2',
+                      ),
+                      indisponibili: [],
+                      competizioni: [],
+                    ),
+                  );
+                  final squadraAway = squadre.firstWhere(
+                    (s) => s.id == partita.idTeamAway,
+                    orElse: () => Squadra(
+                      id: partita.idTeamAway,
+                      nome: partita.teamAway,
+                      citta: '',
+                      stadio: '',
+                      cod: partita.codAway,
+                      campionato: widget.campionato,
+                      categoria: '',
+                      colori: [],
+                      trofei: [],
+                      formazione: Formazione(
+                        titolari: [],
+                        panchina: [],
+                        indisponibili: [],
+                        nonConvocati: [],
+                        allenatore: 'Allenatore',
+                        modulo: '4-4-2',
+                      ),
+                      indisponibili: [],
+                      competizioni: [],
+                    ),
+                  );
+
                   return buildCampionatoMatch(
                     CampionatoMatchModel(
-                      match: partite[index].id,
-                      partita: partite[index],
+                      match: partita.id,
+                      partita: partita,
                       campionato: widget.campionato,
+                      squadraHome: squadraHome,
+                      squadraAway: squadraAway,
                       onRefreshRequired: () {
                         setState(() {
                           // Forza il refresh della pagina richiamando initState logic
@@ -2078,6 +2191,23 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
     return partite;
   }
 
+  Future<Map<String, dynamic>> _loadPartiteWithSquadre(
+    PartiteProvider partiteProvider,
+    SquadreProvider squadreProvider,
+    String idGiornata,
+  ) async {
+    // Carica partite e squadre in parallelo
+    final futures = await Future.wait([
+      partiteProvider.fetchPartite(widget.campionato, idGiornata),
+      squadreProvider.fetchSquadre(widget.campionato),
+    ]);
+
+    final partite = futures[0] as List<Partita>;
+    final squadre = futures[1] as List<Squadra>;
+
+    return {'partite': partite, 'squadre': squadre};
+  }
+
   Widget buildHeader() {
     return Container(
       width: MediaQuery.of(context).size.width * 1,
@@ -2431,7 +2561,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
         classifica.sort((b, a) => a.punti.compareTo(b.punti));
       } catch (e) {
         _showMessage('Errore nella generazione della classifica: $e');
-        return;
+        //return;
       }
 
       List<List<dynamic>> csvData = const CsvToListConverter(
@@ -2538,17 +2668,43 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
     idToGiornataList,
   ) async {
     var id;
-    if (idToGiornataList.any(
+
+    // Controlla prima se la giornata esiste già nel database
+    Giornata? giornataEsistente;
+    try {
+      for (var g in giornate) {
+        if (CommonService.decodePlayerName(g.giornata.toString()) ==
+                numeroGiornata &&
+            g.idCompetizione == widget.competizione.id) {
+          giornataEsistente = g;
+        }
+      }
+    } catch (e) {
+      giornataEsistente = null;
+    }
+
+    if (giornataEsistente != null) {
+      // Se esiste nel database, usa l'id della giornata esistente
+      id = giornataEsistente.id;
+    } else if (idToGiornataList.any(
       (element) => element['giornata'] == numeroGiornata,
     )) {
+      // Se non esiste nel database ma è stata già creata in questa sessione, usa quell'id
       id = idToGiornataList.firstWhere(
         (element) => element['giornata'] == numeroGiornata,
       )['id'];
     } else {
+      // Se non esiste né nel database né in questa sessione, crea un nuovo id
       id = mongo.ObjectId().toHexString();
       idToGiornataList.add({'giornata': numeroGiornata, 'id': id});
     }
-    if (!giornateToPush.any((g) => g.giornata == numeroGiornata)) {
+
+    if (!giornateToPush.any(
+          (g) =>
+              g.giornata == numeroGiornata &&
+              g.idCompetizione == widget.competizione.id,
+        ) &&
+        giornataEsistente == null) {
       final giornata = Giornata(
         id: id,
         idCompetizione: widget.competizione.id,
@@ -2590,7 +2746,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
       divisaHome: 1,
       divisaAway: 1,
       tabellino: [],
-      data: DateTime.now(),
+      data: DateTime.parse('1970-01-01T00:00:00Z'),
       salvata: false,
     );
     partiteToPush.add(partita);

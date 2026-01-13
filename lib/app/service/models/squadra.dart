@@ -62,6 +62,7 @@ class Squadra {
       'citta': citta,
       'stadio': stadio,
       'cod': cod,
+      'campionato': campionato,
       'categoria': categoria,
       'colori': colori,
       'trofei': trofei?.map((t) => t.toJson()).toList(),

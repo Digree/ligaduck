@@ -534,10 +534,86 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Image.asset(
-                                      'assets/squadre/${partita!.codHome}.png',
-                                      height: 80,
-                                      width: 80,
+                                    FutureBuilder(
+                                      future: getSquadra(
+                                        provider,
+                                        partita!.idTeamHome,
+                                      ),
+                                      builder: (context, snapshot) {
+                                        if (snapshot.connectionState ==
+                                            ConnectionState.waiting) {
+                                          return Center(
+                                            child: CircularProgressIndicator(),
+                                          );
+                                        } else if (snapshot.hasError) {
+                                          return Center(
+                                            child: Text(
+                                              'Errore nel caricamento delle giornate',
+                                            ),
+                                          );
+                                        }
+                                        var squadra = snapshot.data!;
+                                        return Image.asset(
+                                          'assets/squadre/${partita!.codHome}.png',
+                                          height: 80,
+                                          width: 80,
+                                          errorBuilder:
+                                              (
+                                                context,
+                                                error,
+                                                stackTrace,
+                                              ) => Padding(
+                                                padding: EdgeInsets.only(
+                                                  bottom: 15,
+                                                  top: 15,
+                                                ),
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.white,
+                                                    shape: BoxShape.circle,
+                                                    border: Border.all(
+                                                      color:
+                                                          Colors.grey.shade300,
+                                                      width: 2,
+                                                    ),
+                                                  ),
+                                                  child: ShaderMask(
+                                                    shaderCallback: (bounds) {
+                                                      return LinearGradient(
+                                                        colors: [
+                                                          CommonService.getColor(
+                                                            'primary',
+                                                            squadra,
+                                                          ),
+                                                          CommonService.getColor(
+                                                            'secondary',
+                                                            squadra,
+                                                          ),
+                                                          if (squadra
+                                                                  .colori
+                                                                  .length >
+                                                              2)
+                                                            CommonService.getColor(
+                                                              'tertiary',
+                                                              squadra,
+                                                            ),
+                                                        ],
+                                                        begin:
+                                                            Alignment.topLeft,
+                                                        end: Alignment
+                                                            .bottomRight,
+                                                      ).createShader(bounds);
+                                                    },
+                                                    child: Icon(
+                                                      Icons.shield,
+                                                      size: 50,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                        );
+                                      },
                                     ),
                                     SizedBox(
                                       height: 20,
@@ -607,10 +683,86 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Image.asset(
-                                      'assets/squadre/${partita!.codAway}.png',
-                                      height: 80,
-                                      width: 80,
+                                    FutureBuilder(
+                                      future: getSquadra(
+                                        provider,
+                                        partita!.idTeamAway,
+                                      ),
+                                      builder: (context, snapshot) {
+                                        if (snapshot.connectionState ==
+                                            ConnectionState.waiting) {
+                                          return Center(
+                                            child: CircularProgressIndicator(),
+                                          );
+                                        } else if (snapshot.hasError) {
+                                          return Center(
+                                            child: Text(
+                                              'Errore nel caricamento delle giornate',
+                                            ),
+                                          );
+                                        }
+                                        var squadra = snapshot.data!;
+                                        return Image.asset(
+                                          'assets/squadre/${partita!.codAway}.png',
+                                          height: 80,
+                                          width: 80,
+                                          errorBuilder:
+                                              (
+                                                context,
+                                                error,
+                                                stackTrace,
+                                              ) => Padding(
+                                                padding: EdgeInsets.only(
+                                                  bottom: 15,
+                                                  top: 15,
+                                                ),
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.white,
+                                                    shape: BoxShape.circle,
+                                                    border: Border.all(
+                                                      color:
+                                                          Colors.grey.shade300,
+                                                      width: 2,
+                                                    ),
+                                                  ),
+                                                  child: ShaderMask(
+                                                    shaderCallback: (bounds) {
+                                                      return LinearGradient(
+                                                        colors: [
+                                                          CommonService.getColor(
+                                                            'primary',
+                                                            squadra,
+                                                          ),
+                                                          CommonService.getColor(
+                                                            'secondary',
+                                                            squadra,
+                                                          ),
+                                                          if (squadra
+                                                                  .colori
+                                                                  .length >
+                                                              2)
+                                                            CommonService.getColor(
+                                                              'tertiary',
+                                                              squadra,
+                                                            ),
+                                                        ],
+                                                        begin:
+                                                            Alignment.topLeft,
+                                                        end: Alignment
+                                                            .bottomRight,
+                                                      ).createShader(bounds);
+                                                    },
+                                                    child: Icon(
+                                                      Icons.shield,
+                                                      size: 50,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                        );
+                                      },
                                     ),
                                     SizedBox(
                                       height: 20,
