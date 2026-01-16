@@ -38,6 +38,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   bool showFormazioneHome = false; // Controlla se mostrare formazione casa
   bool showFormazioneAway = false; // Controlla se mostrare formazione trasferta
   int selectedDivisa = 1; // Divisa selezionata nel modal
+  late final Future<List<Squadra>> _squadreFuture;
 
   void _handleGiocatoreChanged(
     int team,
@@ -124,6 +125,11 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   @override
   void initState() {
     super.initState();
+    final squadreProvider = Provider.of<SquadreProvider>(
+      context,
+      listen: false,
+    );
+    _squadreFuture = squadreProvider.fetchSquadre(widget.campionato);
     fetchPartita()
         .then((fetchedPartita) {
           setState(() {
@@ -2357,10 +2363,9 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   }
 
   Future<Squadra> getSquadra(SquadreProvider provider, int idSquadra) async {
-    List<Squadra> squadre = await provider.fetchSquadre(widget.campionato);
+    List<Squadra> squadre = await _squadreFuture;
 
     for (var squadra in squadre) {
-      print(squadra.id);
       if (squadra.id == idSquadra) {
         return squadra;
       }

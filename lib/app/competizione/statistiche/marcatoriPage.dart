@@ -7,7 +7,7 @@ import 'package:ligaduck/app/service/squadreProvider.dart';
 import 'package:ligaduck/services/commonService.dart';
 import 'package:provider/provider.dart';
 
-class MarcatoriPage extends StatelessWidget {
+class MarcatoriPage extends StatefulWidget {
   final String campionato;
   final Competizione competizione;
   final List<Marcatura> marcatori;
@@ -18,6 +18,23 @@ class MarcatoriPage extends StatelessWidget {
     required this.competizione,
     required this.marcatori,
   });
+
+  @override
+  State<MarcatoriPage> createState() => _MarcatoriPageState();
+}
+
+class _MarcatoriPageState extends State<MarcatoriPage> {
+  late final Future<List<Squadra>> _squadreFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    final squadreProvider = Provider.of<SquadreProvider>(
+      context,
+      listen: false,
+    );
+    _squadreFuture = squadreProvider.fetchSquadre(widget.campionato);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,17 +48,23 @@ class MarcatoriPage extends StatelessWidget {
               gradient: LinearGradient(
                 colors: [
                   Color(
-                    competizione.colori.isNotEmpty
+                    widget.competizione.colori.isNotEmpty
                         ? int.parse(
-                            competizione.colori[0].replaceFirst('#', 'FF'),
+                            widget.competizione.colori[0].replaceFirst(
+                              '#',
+                              'FF',
+                            ),
                             radix: 16,
                           )
                         : 0xFF000000,
                   ),
                   Color(
-                    competizione.colori.length > 1
+                    widget.competizione.colori.length > 1
                         ? int.parse(
-                            competizione.colori[1].replaceFirst('#', 'FF'),
+                            widget.competizione.colori[1].replaceFirst(
+                              '#',
+                              'FF',
+                            ),
                             radix: 16,
                           )
                         : 0xFF000000,
@@ -64,9 +87,9 @@ class MarcatoriPage extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) => CompetizioneHomePage(
-                              campionato: campionato,
-                              competizione: competizione,
-                              title: competizione.nome,
+                              campionato: widget.campionato,
+                              competizione: widget.competizione,
+                              title: widget.competizione.nome,
                             ),
                           ),
                         );
@@ -80,7 +103,7 @@ class MarcatoriPage extends StatelessWidget {
                       children: [
                         const SizedBox(height: 16),
                         Image.asset(
-                          'assets/logos/logo_${competizione.cod}_comp.png',
+                          'assets/logos/logo_${widget.competizione.cod}_comp.png',
                           fit: BoxFit.contain,
                           height: 90,
                         ),
@@ -108,9 +131,9 @@ class MarcatoriPage extends StatelessWidget {
           buildHeader(context),
           Expanded(
             child: ListView.builder(
-              itemCount: marcatori.length,
+              itemCount: widget.marcatori.length,
               itemBuilder: (context, index) {
-                final marcatore = marcatori[index];
+                final marcatore = widget.marcatori[index];
                 return FutureBuilder<Squadra>(
                   future: getSquadra(
                     Provider.of<SquadreProvider>(context, listen: false),
@@ -237,9 +260,9 @@ class MarcatoriPage extends StatelessWidget {
       height: 45,
       decoration: BoxDecoration(
         color: Color(
-          competizione.colori.isNotEmpty
+          widget.competizione.colori.isNotEmpty
               ? int.parse(
-                  competizione.colori[0].replaceFirst('#', 'FF'),
+                  widget.competizione.colori[0].replaceFirst('#', 'FF'),
                   radix: 16,
                 )
               : 0xFF000000,
@@ -299,7 +322,7 @@ class MarcatoriPage extends StatelessWidget {
   }
 
   Future<Squadra> getSquadra(SquadreProvider provider, int idSquadra) async {
-    List<Squadra> squadre = await provider.fetchSquadre(campionato);
+    List<Squadra> squadre = await _squadreFuture;
 
     for (var squadra in squadre) {
       if (squadra.id == idSquadra) {

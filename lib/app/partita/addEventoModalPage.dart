@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
-import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/partiteProvider.dart';
 import 'package:ligaduck/app/service/squadreProvider.dart';
@@ -36,6 +35,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
   String giocatoreSelezionatoOut = '';
   String tipoGolSelezionato = 'no';
   String infortunioSelezionato = 'no';
+  bool isLoading = false;
 
   final _formKeyHome = GlobalKey<FormState>();
   final _formKeyAway = GlobalKey<FormState>();
@@ -320,9 +320,18 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () => _submitForm(team),
-              icon: Icon(Icons.add),
-              label: Text('Aggiungi'),
+              onPressed: isLoading ? null : () => _submitForm(team),
+              icon: isLoading
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Icon(Icons.add),
+              label: Text(isLoading ? 'Caricamento...' : 'Aggiungi'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Color(
                   widget.competizione!.colori.isNotEmpty
@@ -1174,6 +1183,16 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
 
   void _submitForm(int team) async {
     final formKey = team == 0 ? _formKeyHome : _formKeyAway;
+
+    // Valida prima di impostare isLoading
+    if (!formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
     final controllerMin = team == 0
         ? _minutoControllerHome
         : _minutoControllerAway;
@@ -1182,7 +1201,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
         : _recuperoControllerAway;
     Evento evento;
 
-    if (formKey.currentState!.validate()) {
+    try {
       int minuti = int.parse(controllerMin.text);
       if (controllerRec.text.isEmpty) {
         controllerRec.text = '0';
@@ -1218,6 +1237,11 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
           );
         } catch (e) {
           print('Giocatore espulso non trovato nella formazione: $e');
+          if (mounted) {
+            setState(() {
+              isLoading = false;
+            });
+          }
           return;
         }
 
@@ -1269,6 +1293,11 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
           );
         } catch (e) {
           print('Giocatore entrato non trovato nella panchina: $e');
+          if (mounted) {
+            setState(() {
+              isLoading = false;
+            });
+          }
           return;
         }
 
@@ -1326,15 +1355,42 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
       );
 
       bool success = await putEvento(evento);
-      if (success) {
-        Navigator.pop(
-          context,
-          evento,
-        ); // Passa l'evento se è stato salvato con successo
-      } else {
-        Navigator.pop(context, null); // Passa null se non è stato salvato
+
+      // Resetta isLoading prima di chiudere il dialog
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
       }
+
       _clearForm();
+
+      if (success) {
+        if (mounted) {
+          Navigator.pop(context, evento);
+        }
+      } else {
+        if (mounted) {
+          Navigator.pop(context, null);
+        }
+      }
+    } catch (e) {
+      print('Errore durante il submit: $e');
+
+      // Resetta isLoading in caso di errore
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Errore durante il salvataggio'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
 

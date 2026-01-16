@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:ligaduck/app/service/competizioniProvider.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
-import 'package:ligaduck/app/service/squadreProvider.dart';
 import 'package:ligaduck/app/squadre/squadrePage.dart';
-import 'package:provider/provider.dart';
 
 class ListaSquadreModel {
   final String campionato;
+  final Future<List<Squadra>> squadreFuture;
+  final Future<List<Competizione>> competizioniFuture;
 
-  ListaSquadreModel({required this.campionato});
+  ListaSquadreModel({
+    required this.campionato,
+    required this.squadreFuture,
+    required this.competizioniFuture,
+  });
 }
 
 Widget buildListaSquadre(ListaSquadreModel model, BuildContext context) {
-  final provider = Provider.of<SquadreProvider>(context, listen: false);
   bool isWide = MediaQuery.of(context).size.width > 600;
   final screenHeight = isWide
       ? MediaQuery.of(context).size.height * 1.2
@@ -63,9 +65,9 @@ Widget buildListaSquadre(ListaSquadreModel model, BuildContext context) {
                     width: MediaQuery.of(context).size.width * 1,
                     child: TabBarView(
                       children: [
-                        showSquadre(provider, 'Serie A', model.campionato),
-                        showSquadre(provider, 'Serie B', model.campionato),
-                        showSquadre(provider, 'Serie C', model.campionato),
+                        showSquadre(model, 'Serie A'),
+                        showSquadre(model, 'Serie B'),
+                        showSquadre(model, 'Serie C'),
                       ],
                     ),
                   ),
@@ -79,13 +81,9 @@ Widget buildListaSquadre(ListaSquadreModel model, BuildContext context) {
   );
 }
 
-Widget showSquadre(
-  SquadreProvider provider,
-  String categoria,
-  String campionato,
-) {
+Widget showSquadre(ListaSquadreModel model, String categoria) {
   return FutureBuilder<List<Squadra>>(
-    future: getSquadre(provider, campionato),
+    future: model.squadreFuture,
     builder: (context, snapshot) {
       if (snapshot.connectionState == ConnectionState.waiting) {
         return Center(child: CircularProgressIndicator());
@@ -95,10 +93,6 @@ Widget showSquadre(
         return Center(child: Text('Errore: ${snapshot.error}'));
       }
       final squadre = snapshot.data ?? [];
-      final provider = Provider.of<CompetizioniProvider>(
-        context,
-        listen: false,
-      );
 
       final filteredSquadre = squadre.where((squadra) {
         return squadra.categoria == categoria;
@@ -108,7 +102,7 @@ Widget showSquadre(
 
       return SingleChildScrollView(
         child: FutureBuilder<List<Competizione>>(
-          future: getCompetizioni(provider, campionato),
+          future: model.competizioniFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Center(child: CircularProgressIndicator());
@@ -140,7 +134,7 @@ Widget showSquadre(
                             MaterialPageRoute(
                               builder: (context) => SquadrePage(
                                 squadra: squadra,
-                                campionato: campionato,
+                                campionato: model.campionato,
                               ),
                             ),
                           );
@@ -174,22 +168,4 @@ Squadra addCompetizioni(Squadra squadra, List<Competizione> competizioni) {
     }
   }
   return squadra;
-}
-
-Future<List<Competizione>> getCompetizioni(
-  CompetizioniProvider provider,
-  String campionato,
-) async {
-  List<Competizione> competizioni = await provider.fetchCompetizioni(
-    campionato,
-  );
-  return competizioni;
-}
-
-Future<List<Squadra>> getSquadre(
-  SquadreProvider provider,
-  String campionato,
-) async {
-  List<Squadra> squadre = await provider.fetchSquadre(campionato);
-  return squadre;
 }

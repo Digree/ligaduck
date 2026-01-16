@@ -34,6 +34,9 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
   final PageController _pageController = PageController();
   final partitaCompList = [];
   int _selectedIndex = 0;
+  late final Future<List<Squadra>> _squadreFuture;
+  late final Future<List<Competizione>> _competizioniFuture;
+  late final Future<List<Partita>> _partiteFuture;
 
   @override
   void dispose() {
@@ -41,13 +44,27 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
     super.dispose();
   }
 
-  Future<List<Competizione>> getCompetizioni(
-    CompetizioniProvider provider,
-  ) async {
-    List<Competizione> competizioni = await provider.fetchCompetizioni(
+  @override
+  void initState() {
+    super.initState();
+    final squadreProvider = Provider.of<SquadreProvider>(
+      context,
+      listen: false,
+    );
+    final competizioniProvider = Provider.of<CompetizioniProvider>(
+      context,
+      listen: false,
+    );
+    final partiteProvider = Provider.of<PartiteProvider>(
+      context,
+      listen: false,
+    );
+
+    _squadreFuture = squadreProvider.fetchSquadre(widget.campionato);
+    _competizioniFuture = competizioniProvider.fetchCompetizioni(
       widget.campionato,
     );
-    return competizioni;
+    _partiteFuture = _loadPartite(partiteProvider);
   }
 
   void _showAddSquadraModal(BuildContext context) {
@@ -119,7 +136,6 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
   @override
   Widget build(BuildContext context) {
     bool isWide = MediaQuery.of(context).size.width > 600;
-    final provider = Provider.of<CompetizioniProvider>(context, listen: false);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blueAccent,
@@ -211,7 +227,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                         controller: _scrollController,
                         scrollDirection: Axis.horizontal,
                         child: FutureBuilder(
-                          future: getCompetizioni(provider),
+                          future: _competizioniFuture,
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
@@ -271,6 +287,8 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                                 buildListaSquadre(
                                   ListaSquadreModel(
                                     campionato: widget.campionato,
+                                    squadreFuture: _squadreFuture,
+                                    competizioniFuture: _competizioniFuture,
                                   ),
                                   context,
                                 ),
@@ -285,7 +303,11 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
           ),
           SingleChildScrollView(
             child: buildListaSquadre(
-              ListaSquadreModel(campionato: widget.campionato),
+              ListaSquadreModel(
+                campionato: widget.campionato,
+                squadreFuture: _squadreFuture,
+                competizioniFuture: _competizioniFuture,
+              ),
               context,
             ),
           ),
@@ -304,7 +326,6 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
     bool isWide = MediaQuery.of(context).size.width > 600;
     bool isTall = MediaQuery.of(context).size.height > 200;
 
-    final provider = Provider.of<PartiteProvider>(context, listen: false);
     return SizedBox(
       width: isWide
           ? MediaQuery.of(context).size.width * 0.5
@@ -323,7 +344,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
               ),
             ),
             FutureBuilder(
-              future: getPartiteByDate(provider),
+              future: _partiteFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
@@ -571,7 +592,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
     );
   }
 
-  Future<List<Partita>> getPartiteByDate(PartiteProvider provider) async {
+  Future<List<Partita>> _loadPartite(PartiteProvider provider) async {
     DateTime now = DateTime.now();
     DateTime da = DateTime(now.year, now.month, now.day);
     DateTime a = da.add(Duration(days: 7));
@@ -584,13 +605,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
       context,
       listen: false,
     );
-    final squadreProvider = Provider.of<SquadreProvider>(
-      context,
-      listen: false,
-    );
-    List<Squadra> squadre = await squadreProvider.fetchSquadre(
-      widget.campionato,
-    );
+    final squadre = await _squadreFuture;
 
     for (var partita in partite) {
       Competizione competizione = await getCompetizione(

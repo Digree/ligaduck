@@ -7,7 +7,7 @@ import 'package:ligaduck/app/service/squadreProvider.dart';
 import 'package:ligaduck/services/commonService.dart';
 import 'package:provider/provider.dart';
 
-class EspulsiPage extends StatelessWidget {
+class EspulsiPage extends StatefulWidget {
   final List<Malus> espulsi;
   final String campionato;
   final Competizione competizione;
@@ -18,6 +18,23 @@ class EspulsiPage extends StatelessWidget {
     required this.campionato,
     required this.competizione,
   });
+
+  @override
+  State<EspulsiPage> createState() => _EspulsiPageState();
+}
+
+class _EspulsiPageState extends State<EspulsiPage> {
+  late final Future<List<Squadra>> _squadreFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    final squadreProvider = Provider.of<SquadreProvider>(
+      context,
+      listen: false,
+    );
+    _squadreFuture = squadreProvider.fetchSquadre(widget.campionato);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,17 +48,23 @@ class EspulsiPage extends StatelessWidget {
               gradient: LinearGradient(
                 colors: [
                   Color(
-                    competizione.colori.isNotEmpty
+                    widget.competizione.colori.isNotEmpty
                         ? int.parse(
-                            competizione.colori[0].replaceFirst('#', 'FF'),
+                            widget.competizione.colori[0].replaceFirst(
+                              '#',
+                              'FF',
+                            ),
                             radix: 16,
                           )
                         : 0xFF000000,
                   ),
                   Color(
-                    competizione.colori.length > 1
+                    widget.competizione.colori.length > 1
                         ? int.parse(
-                            competizione.colori[1].replaceFirst('#', 'FF'),
+                            widget.competizione.colori[1].replaceFirst(
+                              '#',
+                              'FF',
+                            ),
                             radix: 16,
                           )
                         : 0xFF000000,
@@ -64,9 +87,9 @@ class EspulsiPage extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) => CompetizioneHomePage(
-                              campionato: campionato,
-                              competizione: competizione,
-                              title: competizione.nome,
+                              campionato: widget.campionato,
+                              competizione: widget.competizione,
+                              title: widget.competizione.nome,
                             ),
                           ),
                         );
@@ -80,7 +103,7 @@ class EspulsiPage extends StatelessWidget {
                       children: [
                         const SizedBox(height: 16),
                         Image.asset(
-                          'assets/logos/logo_${competizione.cod}_comp.png',
+                          'assets/logos/logo_${widget.competizione.cod}_comp.png',
                           fit: BoxFit.contain,
                           height: 90,
                         ),
@@ -107,9 +130,9 @@ class EspulsiPage extends StatelessWidget {
         children: [
           Expanded(
             child: ListView.builder(
-              itemCount: espulsi.length,
+              itemCount: widget.espulsi.length,
               itemBuilder: (context, index) {
-                final espulso = espulsi[index];
+                final espulso = widget.espulsi[index];
                 return FutureBuilder<Squadra>(
                   future: getSquadra(
                     Provider.of<SquadreProvider>(context, listen: false),
@@ -209,7 +232,7 @@ class EspulsiPage extends StatelessWidget {
   }
 
   Future<Squadra> getSquadra(SquadreProvider provider, int idSquadra) async {
-    List<Squadra> squadre = await provider.fetchSquadre(campionato);
+    List<Squadra> squadre = await _squadreFuture;
 
     for (var squadra in squadre) {
       if (squadra.id == idSquadra) {

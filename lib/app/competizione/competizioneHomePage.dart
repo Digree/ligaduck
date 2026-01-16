@@ -43,7 +43,8 @@ class CompetizioneHomePage extends StatefulWidget {
   State<CompetizioneHomePage> createState() => _CompetizioneHomePageState();
 }
 
-class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
+class _CompetizioneHomePageState extends State<CompetizioneHomePage>
+    with WidgetsBindingObserver {
   String? selectedGiornata;
   bool? giornataChiusa;
   List<Giornata> giornate = [];
@@ -51,20 +52,72 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
   List<Giornata> giornateToPush = [];
   List<Partita> partiteToPush = [];
   List<PosizioneClassifica> classifica = [];
-  int _refreshKey = 0; // Chiave per forzare il refresh del FutureBuilder
+  // Chiave _refreshKey rimossa in favore di _invalidateCacheKey
+  late final Future<List<Giornata>> _giornateFuture;
+  late final Future<List<Squadra>> _squadreFuture;
+  final Map<String, Future<Map<String, dynamic>>> _partiteCache = {};
+  final Map<String, Widget> _partiteWidgetCache =
+      {}; // Cache dei widget FutureBuilder
+  int _invalidateCacheKey = 0; // Chiave separata per invalidare cache
 
   @override
   void initState() {
     super.initState();
-    caricaGiornate();
+    WidgetsBinding.instance.addObserver(this);
+    final provider = Provider.of<GiornateProvider>(context, listen: false);
+    final squadreProvider = Provider.of<SquadreProvider>(
+      context,
+      listen: false,
+    );
+    _giornateFuture = getGiornate(provider);
+    _squadreFuture = squadreProvider.fetchSquadre(widget.campionato);
+    _caricaGiornate();
+    _caricaClassifica();
   }
 
-  void caricaGiornate() async {
-    final provider = Provider.of<GiornateProvider>(context, listen: false);
-    final result = await getGiornate(provider);
-    setState(() {
-      giornate_ = result;
-    });
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      if (ModalRoute.of(context)?.isCurrent ?? false) {
+        _caricaClassifica();
+      }
+    }
+  }
+
+  void _caricaGiornate() async {
+    final result = await _giornateFuture;
+    if (mounted) {
+      setState(() {
+        giornate_ = result;
+      });
+    }
+  }
+
+  void _caricaClassifica() async {
+    final giornateProvider = Provider.of<GiornateProvider>(
+      context,
+      listen: false,
+    );
+    try {
+      final result = await giornateProvider.generaClassifica(
+        widget.campionato,
+        widget.competizione.id,
+        widget.competizione.classifica!,
+      );
+      if (mounted) {
+        setState(() {
+          classifica = result;
+        });
+      }
+    } catch (e) {
+      print('Errore nel caricamento della classifica: $e');
+    }
   }
 
   @override
@@ -1631,12 +1684,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
 
   Widget buildGiornateBox() {
     bool isWide = MediaQuery.of(context).size.width > 1000;
-    final giornateProvider = Provider.of<GiornateProvider>(
-      context,
-      listen: false,
-    );
     return FutureBuilder<List<Giornata>>(
-      future: getGiornate(giornateProvider),
+      future: _giornateFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
@@ -1714,7 +1763,13 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
   }
 
   Widget buildPartiteList(String idGiornata) {
-    bool isWide = MediaQuery.of(context).size.width > 600;
+    final cacheKey = '${idGiornata}_$_invalidateCacheKey';
+
+    // Se il widget è già in cache, lo ritorna direttamente
+    if (_partiteWidgetCache.containsKey(cacheKey)) {
+      return _partiteWidgetCache[cacheKey]!;
+    }
+
     final partiteProvider = Provider.of<PartiteProvider>(
       context,
       listen: false,
@@ -1724,15 +1779,19 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
       listen: false,
     );
 
-    return FutureBuilder(
-      key: ValueKey(
-        'partite_${idGiornata}_$_refreshKey',
-      ), // Chiave unica per forzare il rebuild
-      future: _loadPartiteWithSquadre(
+    // Usa cache delle Future o crea nuova
+    if (!_partiteCache.containsKey(cacheKey)) {
+      _partiteCache[cacheKey] = _loadPartiteWithSquadre(
         partiteProvider,
         squadreProvider,
         idGiornata,
-      ),
+      );
+    }
+
+    // Crea il FutureBuilder e lo cachea
+    final partiteWidget = FutureBuilder(
+      key: ValueKey('partite_$cacheKey'),
+      future: _partiteCache[cacheKey]!,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
@@ -1811,10 +1870,10 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                       squadraAway: squadraAway,
                       onRefreshRequired: () {
                         setState(() {
-                          // Forza il refresh della pagina richiamando initState logic
-                          _refreshKey++; // Incrementa la chiave per forzare il rebuild
+                          _partiteCache.clear();
+                          _invalidateCacheKey++; // Invalida la cache
                         });
-                        caricaGiornate();
+                        _caricaGiornate();
                       },
                     ),
                     context,
@@ -1828,6 +1887,10 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
         }
       },
     );
+
+    // Cachea il widget e lo ritorna
+    _partiteWidgetCache[cacheKey] = partiteWidget;
+    return partiteWidget;
   }
 
   Widget buildClassifica(BuildContext context, String idGiornata) {
@@ -2199,7 +2262,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
     // Carica partite e squadre in parallelo
     final futures = await Future.wait([
       partiteProvider.fetchPartite(widget.campionato, idGiornata),
-      squadreProvider.fetchSquadre(widget.campionato),
+      _squadreFuture,
     ]);
 
     final partite = futures[0] as List<Partita>;
@@ -2315,7 +2378,6 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
       color: Colors.transparent,
       child: InkWell(
         onTap: () async {
-          print(posizione.idSquadra);
           var squadra = await getSquadra(provider, posizione.idSquadra);
           squadra = addCompetizioni(
             squadra,
@@ -2496,10 +2558,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
   }
 
   Future<Squadra> getSquadra(SquadreProvider provider, int idSquadra) async {
-    List<Squadra> squadre = await provider.fetchSquadre(widget.campionato);
+    List<Squadra> squadre = await _squadreFuture;
 
     for (var squadra in squadre) {
-      print(squadra.id);
       if (squadra.id == idSquadra) {
         return squadra;
       }
@@ -2608,7 +2669,10 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
 
       _showMessage('File CSV caricato con successo: ${dataRows.length} righe');
 
-      caricaGiornate();
+      _partiteCache.clear();
+      _partiteWidgetCache.clear();
+      _invalidateCacheKey++;
+      _caricaGiornate();
       setState(() {});
       Navigator.pop(context);
     } catch (e) {
@@ -2799,7 +2863,10 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage> {
                 duration: Duration(seconds: 3),
               ),
             );
-            caricaGiornate();
+            _partiteCache.clear();
+            _partiteWidgetCache.clear();
+            _invalidateCacheKey++;
+            _caricaGiornate();
             selectedGiornata = giornate_
                 .firstWhere(
                   (g) => giornataChiusa!

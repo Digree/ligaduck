@@ -752,62 +752,50 @@ class _SquadrePageState extends State<SquadrePage> {
           if (giocatore.ruolo != 'Allenatore')
             Padding(
               padding: EdgeInsets.only(left: 20),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(color: Colors.grey[300]),
-                child: Image.asset(
-                  'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_1.png',
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [getColor('primary'), getColor('secondary')],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+              child: SizedBox(
+                width: 60,
+                height: 60,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Image.asset(
+                      'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_1.png',
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        decoration: BoxDecoration(color: Colors.grey[300]),
                       ),
                     ),
-                    child: Center(
-                      child: Text(
-                        '${giocatore.numero}',
-                        style: TextStyle(
-                          color: getIconColor('primary'),
-                          fontWeight: FontWeight.w900,
-                          fontSize: 16,
-                          shadows: [
-                            Shadow(
-                              offset: Offset(-1.0, -1.0),
-                              blurRadius: 0.0,
-                              color: isLightColor(getColor('primary'))
-                                  ? Colors.white
-                                  : Colors.black,
-                            ),
-                            Shadow(
-                              offset: Offset(1.0, -1.0),
-                              blurRadius: 0.0,
-                              color: isLightColor(getColor('primary'))
-                                  ? Colors.white
-                                  : Colors.black,
-                            ),
-                            Shadow(
-                              offset: Offset(1.0, 1.0),
-                              blurRadius: 0.0,
-                              color: isLightColor(getColor('primary'))
-                                  ? Colors.white
-                                  : Colors.black,
-                            ),
-                            Shadow(
-                              offset: Offset(-1.0, 1.0),
-                              blurRadius: 0.0,
-                              color: isLightColor(getColor('primary'))
-                                  ? Colors.white
-                                  : Colors.black,
-                            ),
-                          ],
-                        ),
+                    Text(
+                      '${giocatore.numero}',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        shadows: [
+                          Shadow(
+                            offset: Offset(-1.0, -1.0),
+                            blurRadius: 1.0,
+                            color: Colors.black,
+                          ),
+                          Shadow(
+                            offset: Offset(1.0, -1.0),
+                            blurRadius: 1.0,
+                            color: Colors.black,
+                          ),
+                          Shadow(
+                            offset: Offset(1.0, 1.0),
+                            blurRadius: 1.0,
+                            color: Colors.black,
+                          ),
+                          Shadow(
+                            offset: Offset(-1.0, 1.0),
+                            blurRadius: 1.0,
+                            color: Colors.black,
+                          ),
+                        ],
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
