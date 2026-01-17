@@ -138,7 +138,7 @@ class _AutogolPageState extends State<AutogolPage> {
                 return FutureBuilder<Squadra>(
                   future: getSquadra(
                     Provider.of<SquadreProvider>(context, listen: false),
-                    autogolItem.idSquadra,
+                    autogolItem.idSquadraPro,
                   ),
                   builder: (context, snapshot) {
                     return Container(
@@ -232,7 +232,7 @@ class _AutogolPageState extends State<AutogolPage> {
                                     context,
                                     listen: false,
                                   ),
-                                  autogolItem.idSquadraPro,
+                                  autogolItem.idSquadra,
                                 ),
                                 builder: (context, proSnapshot) {
                                   if (proSnapshot.hasData) {

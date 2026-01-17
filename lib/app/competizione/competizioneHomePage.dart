@@ -95,6 +95,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     if (mounted) {
       setState(() {
         giornate_ = result;
+        giornate = result;
       });
     }
   }
@@ -872,7 +873,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                       FutureBuilder<Squadra>(
                         future: getSquadra(
                           Provider.of<SquadreProvider>(context, listen: false),
-                          autogol.idSquadra,
+                          autogol.idSquadraPro,
                         ),
                         builder: (context, snapshot) {
                           return Container(
@@ -967,7 +968,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                           context,
                                           listen: false,
                                         ),
-                                        autogol.idSquadraPro,
+                                        autogol.idSquadra,
                                       ),
                                       builder: (context, proSnapshot) {
                                         if (proSnapshot.hasData) {
@@ -2268,6 +2269,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     final partite = futures[0] as List<Partita>;
     final squadre = futures[1] as List<Squadra>;
 
+    // Mantieni l'ordine di inserimento (ObjectId è cronologico)
+    partite.sort((a, b) => a.id.compareTo(b.id));
+
     return {'partite': partite, 'squadre': squadre};
   }
 
@@ -2301,60 +2305,92 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
             ),
           ),
           Spacer(),
-          Padding(
-            padding: EdgeInsets.only(left: 8),
-            child: Text(
-              'Pti',
-              style: TextStyle(fontSize: 12, color: Colors.white),
+          SizedBox(
+            width: 32,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
+              child: Text(
+                'Pti',
+                style: TextStyle(fontSize: 12, color: Colors.white),
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
-          Padding(
-            padding: EdgeInsets.only(left: 16),
-            child: Text(
-              'PG',
-              style: TextStyle(fontSize: 12, color: Colors.white),
+          SizedBox(
+            width: 24,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
+              child: Text(
+                'PG',
+                style: TextStyle(fontSize: 12, color: Colors.white),
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
-          Padding(
-            padding: EdgeInsets.only(left: 16),
-            child: Text(
-              'V',
-              style: TextStyle(fontSize: 12, color: Colors.white),
+          SizedBox(
+            width: 20,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
+              child: Text(
+                'V',
+                style: TextStyle(fontSize: 12, color: Colors.white),
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
-          Padding(
-            padding: EdgeInsets.only(left: 16),
-            child: Text(
-              'P',
-              style: TextStyle(fontSize: 12, color: Colors.white),
+          SizedBox(
+            width: 20,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
+              child: Text(
+                'P',
+                style: TextStyle(fontSize: 12, color: Colors.white),
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
-          Padding(
-            padding: EdgeInsets.only(left: 16),
-            child: Text(
-              'S',
-              style: TextStyle(fontSize: 12, color: Colors.white),
+          SizedBox(
+            width: 20,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
+              child: Text(
+                'S',
+                style: TextStyle(fontSize: 12, color: Colors.white),
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
-          Padding(
-            padding: EdgeInsets.only(left: 8),
-            child: Text(
-              'GF',
-              style: TextStyle(fontSize: 12, color: Colors.white),
+          SizedBox(
+            width: 20,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
+              child: Text(
+                'GF',
+                style: TextStyle(fontSize: 12, color: Colors.white),
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
-          Padding(
-            padding: EdgeInsets.only(left: 8),
-            child: Text(
-              'GS',
-              style: TextStyle(fontSize: 12, color: Colors.white),
+          SizedBox(
+            width: 20,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
+              child: Text(
+                'GS',
+                style: TextStyle(fontSize: 12, color: Colors.white),
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
-          Padding(
-            padding: EdgeInsets.only(left: 8),
-            child: Text(
-              'DR',
-              style: TextStyle(fontSize: 12, color: Colors.white),
+          SizedBox(
+            width: 24,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
+              child: Text(
+                'DR',
+                style: TextStyle(fontSize: 12, color: Colors.white),
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
         ],
@@ -2441,64 +2477,96 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                 ),
               ),
               Spacer(),
-              Padding(
-                padding: EdgeInsets.only(right: 16),
-                child: Text(
-                  '${posizione.punti}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                    color: Colors.white,
+              SizedBox(
+                width: 32,
+                child: Padding(
+                  padding: EdgeInsets.only(right: 4),
+                  child: Text(
+                    '${posizione.punti}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                      color: Colors.white,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ),
-              Padding(
-                padding: EdgeInsets.only(left: 8),
-                child: Text(
-                  '${posizione.partiteGiocate}',
-                  style: TextStyle(fontSize: 12, color: Colors.white),
+              SizedBox(
+                width: 24,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 4),
+                  child: Text(
+                    '${posizione.partiteGiocate}',
+                    style: TextStyle(fontSize: 12, color: Colors.white),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
-              Padding(
-                padding: EdgeInsets.only(left: 16),
-                child: Text(
-                  '${posizione.win}',
-                  style: TextStyle(fontSize: 12, color: Colors.white),
+              SizedBox(
+                width: 20,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 4),
+                  child: Text(
+                    '${posizione.win}',
+                    style: TextStyle(fontSize: 12, color: Colors.white),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
-              Padding(
-                padding: EdgeInsets.only(left: 16),
-                child: Text(
-                  '${posizione.draw}',
-                  style: TextStyle(fontSize: 12, color: Colors.white),
+              SizedBox(
+                width: 20,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 4),
+                  child: Text(
+                    '${posizione.draw}',
+                    style: TextStyle(fontSize: 12, color: Colors.white),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
-              Padding(
-                padding: EdgeInsets.only(left: 16),
-                child: Text(
-                  '${posizione.loss}',
-                  style: TextStyle(fontSize: 12, color: Colors.white),
+              SizedBox(
+                width: 20,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 4),
+                  child: Text(
+                    '${posizione.loss}',
+                    style: TextStyle(fontSize: 12, color: Colors.white),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
-              Padding(
-                padding: EdgeInsets.only(left: 16),
-                child: Text(
-                  '${posizione.gFatti}',
-                  style: TextStyle(fontSize: 12, color: Colors.white),
+              SizedBox(
+                width: 20,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 4),
+                  child: Text(
+                    '${posizione.gFatti}',
+                    style: TextStyle(fontSize: 12, color: Colors.white),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
-              Padding(
-                padding: EdgeInsets.only(left: 16),
-                child: Text(
-                  '${posizione.gSubiti}',
-                  style: TextStyle(fontSize: 12, color: Colors.white),
+              SizedBox(
+                width: 20,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 4),
+                  child: Text(
+                    '${posizione.gSubiti}',
+                    style: TextStyle(fontSize: 12, color: Colors.white),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
-              Padding(
-                padding: EdgeInsets.only(left: 16),
-                child: Text(
-                  '${posizione.diff}',
-                  style: TextStyle(fontSize: 12, color: Colors.white),
+              SizedBox(
+                width: 24,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 4),
+                  child: Text(
+                    '${posizione.diff}',
+                    style: TextStyle(fontSize: 12, color: Colors.white),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
             ],
@@ -2609,7 +2677,6 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
         listen: false,
       );
 
-      final idToGiornata = {'giornata': '', 'id': ''};
       final idToGiornataList = [];
 
       try {
@@ -2638,7 +2705,6 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
 
       print('csvData: $csvData');
 
-      List<String> headers = csvData.first.map((e) => e.toString()).toList();
       List<List<dynamic>> dataRows = csvData.sublist(1);
 
       if (dataRows.isEmpty) {
@@ -2863,18 +2929,31 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                 duration: Duration(seconds: 3),
               ),
             );
+            // Invalida cache delle partite
             _partiteCache.clear();
             _partiteWidgetCache.clear();
             _invalidateCacheKey++;
-            _caricaGiornate();
-            selectedGiornata = giornate_
-                .firstWhere(
-                  (g) => giornataChiusa!
-                      ? g.id != selectedGiornata
-                      : g.id == selectedGiornata,
-                )
-                .id;
-            setState(() {});
+
+            // Ricarica le giornate dal backend per avere lo stato aggiornato
+            final updated = await giornateProvider.fetchGiornate(
+              widget.campionato,
+              widget.competizione.id,
+            );
+
+            // Seleziona la prima giornata non conclusa, altrimenti la prima disponibile
+            String? nuovaSelezione;
+            try {
+              nuovaSelezione = updated.firstWhere((g) => !g.conclusa).id;
+            } catch (_) {
+              nuovaSelezione = updated.isNotEmpty ? updated.first.id : null;
+            }
+
+            if (mounted) {
+              setState(() {
+                giornate_ = updated;
+                selectedGiornata = nuovaSelezione ?? selectedGiornata;
+              });
+            }
           })
           .catchError((error) {
             ScaffoldMessenger.of(context).showSnackBar(
