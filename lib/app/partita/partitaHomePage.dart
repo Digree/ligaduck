@@ -168,9 +168,17 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       final Squadra squadra;
 
       if (selectedFormazione == 0) {
-        squadra = await getSquadra(provider, partita!.idTeamHome);
+        squadra = await getSquadraById(
+          provider,
+          partita!.idTeamHome,
+          widget.campionato,
+        );
       } else {
-        squadra = await getSquadra(provider, partita!.idTeamAway);
+        squadra = await getSquadraById(
+          provider,
+          partita!.idTeamAway,
+          widget.campionato,
+        );
       }
       setState(() {
         if (selectedFormazione == 0) {
@@ -2371,6 +2379,15 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       }
     }
     throw Exception('Squadra non trovata');
+  }
+
+  Future<Squadra> getSquadraById(
+    SquadreProvider provider,
+    int idSquadra,
+    String campionato,
+  ) async {
+    Squadra squadra = await provider.fetchSquadraById(campionato, idSquadra);
+    return squadra;
   }
 
   Squadra addCompetizioni(Squadra squadra, List<Competizione> competizioni) {

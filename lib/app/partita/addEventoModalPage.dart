@@ -1251,8 +1251,8 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
           pos: giocatoreEspulso.pos,
           motivo: 'esp',
           durata: team == 0
-              ? int.parse(_squalificaControllerHome.text)
-              : int.parse(_squalificaControllerAway.text),
+              ? int.parse(_squalificaControllerHome.text) + 1
+              : int.parse(_squalificaControllerAway.text) + 1,
           idCompetizione: widget.competizione!.id,
         );
 
@@ -1308,7 +1308,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
             pos: giocatoreOut.pos,
             motivo: 'inf',
             durata: _infortunioControllerHome.text.isNotEmpty
-                ? int.parse(_infortunioControllerHome.text)
+                ? int.parse(_infortunioControllerHome.text) + 1
                 : 0,
             idCompetizione: widget.competizione!.id,
           );
