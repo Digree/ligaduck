@@ -49,6 +49,31 @@ class GiocatoriProvider with ChangeNotifier {
     }
   }
 
+  Future<bool> esoneraAllenatore(
+    String campionato,
+    String idAllenatore,
+    int idSquadra,
+  ) async {
+    try {
+      final response = await http.delete(
+        Uri.parse(
+          '${Env.apiUrl}/$campionato/allenatore/$idAllenatore/esonero/$idSquadra',
+        ),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return true;
+      } else {
+        print('Errore DELETE: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Errore DELETE: $e');
+      return false;
+    }
+  }
+
   Future<List<Giocatore>> fetchGiocatori(
     String campionato,
     int idSquadra,
@@ -68,6 +93,84 @@ class GiocatoriProvider with ChangeNotifier {
 
         notifyListeners();
         return _giocatori;
+      } else {
+        throw Exception('Errore nel caricamento: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Tipo errore: ${e.runtimeType}');
+      print('Dettaglio errore: $e');
+      return [];
+    }
+  }
+
+  Future<Giocatore?> getGiocatoreById(
+    String campionato,
+    String idGiocatore,
+  ) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${Env.apiUrl}/$campionato/giocatore/$idGiocatore'),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        Giocatore giocatore = Giocatore.fromJson(data);
+        giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
+        return giocatore;
+      } else {
+        throw Exception('Errore nel caricamento: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Tipo errore: ${e.runtimeType}');
+      print('Dettaglio errore: $e');
+      return null;
+    }
+  }
+
+  Future<List<Giocatore>> getGiocatoriInattivi() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${Env.apiUrl}/giocatori/inattivi'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        List<Giocatore> giocatori = data
+            .map((item) => Giocatore.fromJson(item))
+            .toList();
+
+        for (var giocatore in giocatori) {
+          giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
+        }
+
+        return giocatori;
+      } else {
+        throw Exception('Errore nel caricamento: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Tipo errore: ${e.runtimeType}');
+      print('Dettaglio errore: $e');
+      return [];
+    }
+  }
+
+  Future<List<Giocatore>> getAllenatoriLiberi() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${Env.apiUrl}/allenatori/liberi'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        List<Giocatore> giocatori = data
+            .map((item) => Giocatore.fromJson(item))
+            .toList();
+
+        for (var giocatore in giocatori) {
+          giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
+        }
+
+        return giocatori;
       } else {
         throw Exception('Errore nel caricamento: ${response.statusCode}');
       }

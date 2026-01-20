@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:ligaduck/app/campionato/mercato/models/esonero.dart';
 import 'package:ligaduck/app/config/env.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
@@ -196,6 +197,29 @@ class SquadreProvider with ChangeNotifier {
     } catch (e) {
       print('Errore POST squalifica: $e');
       return false;
+    }
+  }
+
+  Future<List<Esonero>> getEsoneri(String campionato, int idSquadra) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${Env.apiUrl}/$campionato/squadra/$idSquadra/esoneri'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        List<Esonero> moduli = data
+            .map((item) => Esonero.fromJson(item))
+            .toList();
+        notifyListeners();
+        return moduli;
+      } else {
+        throw Exception('Errore nel caricamento: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Tipo errore: ${e.runtimeType}');
+      print('Dettaglio errore: $e');
+      return [];
     }
   }
 }

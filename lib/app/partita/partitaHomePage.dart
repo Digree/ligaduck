@@ -809,6 +809,12 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                   provider,
                                   partita!.idTeamAway,
                                 );
+                                squadra = addCompetizioni(
+                                  squadra,
+                                  await competizioniProvider.fetchCompetizioni(
+                                    widget.campionato,
+                                  ),
+                                );
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(

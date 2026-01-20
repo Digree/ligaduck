@@ -5,6 +5,11 @@ import 'package:ligaduck/app/models/partita/partitaFormazioneModel.dart';
 import 'package:ligaduck/app/service/giocatoriProvider.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
+import 'package:ligaduck/app/service/competizioniProvider.dart';
+import 'package:ligaduck/app/service/models/competizione.dart';
+import 'package:ligaduck/app/service/squadreProvider.dart';
+import 'package:ligaduck/app/campionato/mercato/models/esonero.dart';
+import 'package:provider/provider.dart';
 import 'package:ligaduck/app/squadre/addFormazionePage.dart';
 import 'package:ligaduck/app/squadre/addGiocatoriPage.dart';
 import 'package:oktoast/oktoast.dart';
@@ -27,11 +32,57 @@ class SquadrePage extends StatefulWidget {
 class _SquadrePageState extends State<SquadrePage> {
   List<Giocatore> giocatori = [];
   bool _isLoadingGiocatori = false;
+  Squadra? _squadra;
+  Future<List<Esonero>>? _esoneriFuture;
 
   @override
   void initState() {
     super.initState();
+    _squadra = widget.squadra;
     _loadGiocatori();
+    _populateTrofeiCod();
+    _loadEsoneri();
+  }
+
+  void _loadEsoneri() {
+    final squadreProvider = Provider.of<SquadreProvider>(
+      context,
+      listen: false,
+    );
+    _esoneriFuture = squadreProvider.getEsoneri(
+      widget.campionato,
+      widget.squadra.id,
+    );
+  }
+
+  Future<void> _populateTrofeiCod() async {
+    final competizioniProvider = Provider.of<CompetizioniProvider>(
+      context,
+      listen: false,
+    );
+    final competizioni = await competizioniProvider.fetchCompetizioni(
+      widget.campionato,
+    );
+    if (_squadra != null) {
+      setState(() {
+        _squadra = _addCompetizioni(_squadra!, competizioni);
+      });
+    }
+  }
+
+  Squadra _addCompetizioni(Squadra squadra, List<Competizione> competizioni) {
+    if (squadra.trofei == null) {
+      return squadra;
+    }
+    for (var competizione in competizioni) {
+      for (var i = 0; i < squadra.trofei!.length; i++) {
+        if (squadra.trofei?[i].idCompetizione == competizione.id) {
+          squadra.trofei?[i].nome = competizione.nome;
+          squadra.trofei?[i].cod = competizione.cod;
+        }
+      }
+    }
+    return squadra;
   }
 
   Future<void> _loadGiocatori() async {
@@ -47,8 +98,9 @@ class _SquadrePageState extends State<SquadrePage> {
   }
 
   List<dynamic>? getTrofeiSquadra(Squadra squadra) {
-    if (squadra.trofei != null) {
-      return squadra.trofei;
+    final currentSquadra = _squadra ?? widget.squadra;
+    if (currentSquadra.trofei != null) {
+      return currentSquadra.trofei;
     } else {
       return null;
     }
@@ -536,7 +588,7 @@ class _SquadrePageState extends State<SquadrePage> {
                   Tab(text: 'Squadra'),
                   Tab(text: 'Palmarès'),
                   Tab(text: 'Formazione'),
-                  Tab(text: 'Statistiche'),
+                  Tab(text: 'Mercato'),
                 ],
               ),
               Expanded(
@@ -554,13 +606,178 @@ class _SquadrePageState extends State<SquadrePage> {
                     SingleChildScrollView(
                       child: Column(children: [showFormazione()]),
                     ),
-                    Center(child: Text('Statistiche')),
+                    buildMercatoTabs(
+                      context,
+                      isWide,
+                      screenWidth,
+                      screenHeight,
+                    ),
                   ],
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget buildMercatoTabs(
+    BuildContext context,
+    bool isWide,
+    double screenWidth,
+    double screenHeight,
+  ) {
+    return DefaultTabController(
+      length: 3,
+      child: Column(
+        children: [
+          TabBar(
+            labelColor: getColor('primary'),
+            unselectedLabelColor: Colors.grey,
+            indicatorColor: getColor('primary'),
+            tabs: [
+              Tab(text: 'Esoneri'),
+              Tab(text: 'Mercato Estivo'),
+              Tab(text: 'Mercato Invernale'),
+            ],
+          ),
+          Expanded(
+            child: TabBarView(
+              children: [
+                buildEsoneri(context, isWide, screenWidth, screenHeight),
+                buildMercatoEstivo(context, isWide, screenWidth, screenHeight),
+                buildMercatoInvernale(
+                  context,
+                  isWide,
+                  screenWidth,
+                  screenHeight,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildEsoneri(
+    BuildContext context,
+    bool isWide,
+    double screenWidth,
+    double screenHeight,
+  ) {
+    final giocatoriProvider = GiocatoriProvider();
+
+    return FutureBuilder<List<Esonero>>(
+      future: _esoneriFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(getColor('primary')),
+            ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Errore nel caricamento degli esoneri',
+              style: TextStyle(fontSize: 16, color: Colors.red),
+            ),
+          );
+        }
+
+        final esoneri = snapshot.data ?? [];
+
+        if (esoneri.isEmpty) {
+          return Center(
+            child: Text(
+              'Nessun esonero registrato',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          );
+        }
+
+        return ListView.builder(
+          itemCount: esoneri.length,
+          itemBuilder: (context, index) {
+            final esonero = esoneri[index];
+
+            return FutureBuilder<Giocatore?>(
+              future: giocatoriProvider.getGiocatoreById(
+                widget.campionato,
+                esonero.idAllenatore,
+              ),
+              builder: (context, giocatoreSnapshot) {
+                String nomeAllenatore = 'Caricamento...';
+
+                if (giocatoreSnapshot.connectionState == ConnectionState.done) {
+                  final giocatore = giocatoreSnapshot.data;
+                  nomeAllenatore = giocatore != null
+                      ? giocatore.nome
+                      : 'Sconosciuto';
+                }
+
+                return Container(
+                  margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: ListTile(
+                    leading: Icon(
+                      Icons.person_off,
+                      color: Colors.red,
+                      size: 32,
+                    ),
+                    title: Text(
+                      nomeAllenatore,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    subtitle: Text(
+                      'Esonerato alla ${esonero.giornataEsonero}^ Giornata',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget buildMercatoEstivo(
+    BuildContext context,
+    bool isWide,
+    double screenWidth,
+    double screenHeight,
+  ) {
+    return Center(
+      child: Text(
+        'Mercato Estivo in arrivo...',
+        style: TextStyle(fontSize: 16, color: Colors.grey),
+      ),
+    );
+  }
+
+  Widget buildMercatoInvernale(
+    BuildContext context,
+    bool isWide,
+    double screenWidth,
+    double screenHeight,
+  ) {
+    return Center(
+      child: Text(
+        'Mercato Invernale in arrivo...',
+        style: TextStyle(fontSize: 16, color: Colors.grey),
       ),
     );
   }
@@ -730,7 +947,7 @@ class _SquadrePageState extends State<SquadrePage> {
     double screenHeight,
     Giocatore giocatore,
   ) {
-    return Container(
+    Widget playerContent = Container(
       width: screenWidth * 1,
       height: 60,
       decoration: BoxDecoration(
@@ -834,6 +1051,71 @@ class _SquadrePageState extends State<SquadrePage> {
         ],
       ),
     );
+
+    // Wrap in Dismissible only for Allenatore when admin is true
+    if (giocatore.ruolo == 'Allenatore' && globals.admin) {
+      return Dismissible(
+        key: Key('allenatore_${giocatore.id}'),
+        direction: DismissDirection.endToStart,
+        background: Container(
+          alignment: Alignment.centerRight,
+          padding: EdgeInsets.only(right: 20),
+          color: Colors.red,
+          child: Icon(Icons.delete, color: Colors.white),
+        ),
+        confirmDismiss: (direction) async {
+          return await showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text('Conferma esonero'),
+                content: Text(
+                  'Sei sicuro di voler esonerare ${CommonService.decodePlayerName(giocatore.nome)}?',
+                ),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: Text(
+                      'Annulla',
+                      style: TextStyle(color: getColor('primary')),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: Text('Esonera', style: TextStyle(color: Colors.red)),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+        onDismissed: (direction) async {
+          final giocatoriProvider = GiocatoriProvider();
+          await giocatoriProvider.esoneraAllenatore(
+            widget.campionato,
+            giocatore.id,
+            widget.squadra.id,
+          );
+          await _loadGiocatori();
+
+          if (!mounted) return;
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Allenatore ${CommonService.decodePlayerName(giocatore.nome)} esonerato',
+              ),
+            ),
+          );
+
+          // Mostra popup per aggiungere nuovo allenatore
+          await _mostraDialogSceltaAllenatore();
+        },
+        child: playerContent,
+      );
+    }
+
+    return playerContent;
   }
 
   Widget buildPalmares(
@@ -1034,6 +1316,305 @@ class _SquadrePageState extends State<SquadrePage> {
         setState(() {
           giocatori = [];
         });
+      }
+    }
+  }
+
+  Future<void> _mostraDialogSceltaAllenatore() async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Aggiungi nuovo allenatore',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Come vuoi procedere?', style: TextStyle(fontSize: 16)),
+              SizedBox(height: 24),
+              InkWell(
+                onTap: () async {
+                  Navigator.of(context).pop();
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AddGiocatoriPage(
+                        squadra: widget.squadra,
+                        campionato: widget.campionato,
+                        soloAllenatori: true,
+                        disabilitaCsv: true,
+                      ),
+                    ),
+                  );
+                  if (result == true) {
+                    await _loadGiocatori();
+                  } else {
+                    // Se non ha aggiunto nessuno, torna al dialog di scelta
+                    await _mostraDialogSceltaAllenatore();
+                  }
+                },
+                child: Card(
+                  elevation: 4,
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: getColor('primary').withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.person_add,
+                            color: getColor('primary'),
+                            size: 32,
+                          ),
+                        ),
+                        SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Crea nuovo allenatore',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Aggiungi un nuovo allenatore personalizzato',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(Icons.arrow_forward_ios, size: 16),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 12),
+              InkWell(
+                onTap: () async {
+                  Navigator.of(context).pop();
+                  await _cercaAllenatoreEsistente();
+                },
+                child: Card(
+                  elevation: 4,
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: getColor('primary').withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.search,
+                            color: getColor('primary'),
+                            size: 32,
+                          ),
+                        ),
+                        SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Scegli allenatore esistente',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Seleziona da allenatori liberi',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(Icons.arrow_forward_ios, size: 16),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _cercaAllenatoreEsistente() async {
+    final giocatoriProvider = GiocatoriProvider();
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        String searchQuery = '';
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text('Cerca Allenatore Libero'),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 400,
+                child: Column(
+                  children: [
+                    TextField(
+                      decoration: InputDecoration(
+                        labelText: 'Cerca per nome',
+                        prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (value) {
+                        setDialogState(() {
+                          searchQuery = value.toLowerCase();
+                        });
+                      },
+                    ),
+                    SizedBox(height: 16),
+                    Expanded(
+                      child: FutureBuilder<List<Giocatore>>(
+                        future: giocatoriProvider.getAllenatoriLiberi(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return Center(
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  getColor('primary'),
+                                ),
+                              ),
+                            );
+                          }
+
+                          if (snapshot.hasError) {
+                            return Center(
+                              child: Text('Errore nel caricamento'),
+                            );
+                          }
+
+                          final allenatori = snapshot.data ?? [];
+                          final allenatoriFiltrati = allenatori
+                              .where(
+                                (a) =>
+                                    searchQuery.isEmpty ||
+                                    a.nome.toLowerCase().contains(searchQuery),
+                              )
+                              .toList();
+
+                          if (allenatoriFiltrati.isEmpty) {
+                            return Center(
+                              child: Text('Nessun allenatore libero trovato'),
+                            );
+                          }
+
+                          return ListView.builder(
+                            itemCount: allenatoriFiltrati.length,
+                            itemBuilder: (context, index) {
+                              final allenatore = allenatoriFiltrati[index];
+                              return ListTile(
+                                leading: Icon(
+                                  Icons.person_4,
+                                  color: getColor('primary'),
+                                ),
+                                title: Text(allenatore.nome),
+                                subtitle: Text(
+                                  'Nazione: ${allenatore.nazione}',
+                                ),
+                                onTap: () async {
+                                  Navigator.of(context).pop();
+                                  await _aggiungiAllenatoreEsistente(
+                                    allenatore,
+                                  );
+                                },
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    await _mostraDialogSceltaAllenatore();
+                  },
+                  child: Text(
+                    'Indietro',
+                    style: TextStyle(color: getColor('primary')),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _aggiungiAllenatoreEsistente(Giocatore allenatore) async {
+    final giocatoriProvider = GiocatoriProvider();
+
+    // Aggiorna l'allenatore con la nuova squadra
+    final allenatoraAggiornato = Giocatore(
+      id: allenatore.id,
+      nome: allenatore.nome,
+      numero: allenatore.numero,
+      eta: allenatore.eta,
+      ruolo: allenatore.ruolo,
+      nazione: allenatore.nazione,
+      carriera: allenatore.carriera,
+      idSquadraAttuale: widget.squadra.id,
+      ex: allenatore.ex,
+      attivo: allenatore.attivo,
+    );
+
+    bool success = await giocatoriProvider.aggiungiGiocatore(
+      allenatoraAggiornato,
+    );
+
+    if (success) {
+      await _loadGiocatori();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Allenatore ${allenatore.nome} aggiunto con successo',
+            ),
+          ),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Errore nell\'aggiunta dell\'allenatore'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }

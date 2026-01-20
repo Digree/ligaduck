@@ -6,6 +6,9 @@ class Giocatore {
   final String ruolo;
   final String nazione;
   final List<Carriera> carriera;
+  final int idSquadraAttuale;
+  final String? ex;
+  final bool attivo;
 
   Giocatore({
     required this.id,
@@ -15,14 +18,17 @@ class Giocatore {
     required this.ruolo,
     required this.nazione,
     this.carriera = const [],
+    required this.idSquadraAttuale,
+    this.ex,
+    required this.attivo,
   });
 
   factory Giocatore.fromJson(Map<String, dynamic> json) {
     return Giocatore(
       id: json['id'],
       nome: json['nome'],
-      numero: json['numero'],
-      eta: json['eta'],
+      numero: json['numero'] ?? 0,
+      eta: json['eta'] ?? 0,
       ruolo: json['ruolo'],
       nazione: json['nazione'],
       carriera:
@@ -30,6 +36,9 @@ class Giocatore {
               ?.map((e) => Carriera.fromJson(e))
               .toList() ??
           [],
+      idSquadraAttuale: json['idSquadraAttuale'] ?? 0,
+      ex: json['ex'],
+      attivo: json['attivo'] ?? true,
     );
   }
 
@@ -42,6 +51,9 @@ class Giocatore {
       'ruolo': ruolo,
       'nazione': nazione,
       'carriera': carriera.map((e) => e.toJson()).toList(),
+      'idSquadraAttuale': idSquadraAttuale,
+      'ex': ex,
+      'attivo': attivo,
     };
   }
 }
@@ -57,6 +69,7 @@ class Carriera {
   final int? golAnnullati;
   final int? golSubiti;
   final int? cleanSheet;
+  final bool? esonero;
 
   Carriera({
     required this.campionato,
@@ -69,12 +82,13 @@ class Carriera {
     this.golAnnullati,
     this.golSubiti,
     this.cleanSheet,
+    this.esonero,
   });
 
   factory Carriera.fromJson(Map<String, dynamic> json) {
     return Carriera(
       campionato: json['campionato'],
-      idSquadra: json['idSquadra'],
+      idSquadra: json['idSquadra'] ?? 0,
       gol: json['gol'] ?? 0,
       presenze: json['presenze'] ?? 0,
       espulsioni: json['espulsioni'] ?? 0,
@@ -83,6 +97,7 @@ class Carriera {
       golAnnullati: json['golAnnullati'],
       golSubiti: json['golSubiti'],
       cleanSheet: json['cleanSheet'],
+      esonero: json['esonero'],
     );
   }
 
@@ -98,6 +113,7 @@ class Carriera {
       'golAnnullati': golAnnullati,
       'golSubiti': golSubiti,
       'cleanSheet': cleanSheet,
+      'esonero': esonero,
     };
   }
 }

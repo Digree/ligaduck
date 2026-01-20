@@ -17,11 +17,15 @@ import 'package:translator/translator.dart';
 class AddGiocatoriPage extends StatefulWidget {
   final Squadra squadra;
   final String campionato;
+  final bool soloAllenatori;
+  final bool disabilitaCsv;
 
   const AddGiocatoriPage({
     super.key,
     required this.squadra,
     required this.campionato,
+    this.soloAllenatori = false,
+    this.disabilitaCsv = false,
   });
 
   @override
@@ -47,6 +51,10 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
     'Attaccante',
     'Allenatore',
   ];
+
+  bool _isEx = false;
+  String? _idGiocatoreEx;
+  String? _nomeGiocatoreEx;
 
   List<Giocatore> giocatori = [];
   final translator = GoogleTranslator();
@@ -81,6 +89,10 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
     if (_nazioni.length <= 1) {
       _isLoadingCountries = true;
       loadCountries();
+    }
+    // Se soloAllenatori, imposta automaticamente il ruolo
+    if (widget.soloAllenatori) {
+      _ruoloSelezionato = 'Allenatore';
     }
   }
 
@@ -233,38 +245,39 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
               ),
             ),
 
-            SizedBox(height: 16),
-
-            Padding(
-              padding: EdgeInsets.only(
-                left: isWide ? 0 : 16,
-                right: isWide ? 0 : 16,
-              ),
-              child: TextFormField(
-                controller: _numeroMagliaController,
-                decoration: InputDecoration(
-                  labelText: 'Numero',
-                  labelStyle: TextStyle(color: getColor("primary")),
-                  prefixIcon: Icon(Icons.numbers, color: getColor("primary")),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: getColor("primary"),
-                      width: 2,
+            if (_ruoloSelezionato != 'Allenatore') ...[
+              SizedBox(height: 16),
+              Padding(
+                padding: EdgeInsets.only(
+                  left: isWide ? 0 : 16,
+                  right: isWide ? 0 : 16,
+                ),
+                child: TextFormField(
+                  controller: _numeroMagliaController,
+                  decoration: InputDecoration(
+                    labelText: 'Numero',
+                    labelStyle: TextStyle(color: getColor("primary")),
+                    prefixIcon: Icon(Icons.numbers, color: getColor("primary")),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                        color: getColor("primary"),
+                        width: 2,
+                      ),
                     ),
                   ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Inserisci il numero';
+                    }
+                    return null;
+                  },
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Inserisci il numero';
-                  }
-                  return null;
-                },
               ),
-            ),
+            ],
 
             SizedBox(height: 16),
 
@@ -276,7 +289,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
               child: SizedBox(
                 width: double.infinity,
                 child: DropdownButtonFormField<String>(
-                  value: _ruoloSelezionato,
+                  initialValue: _ruoloSelezionato,
                   isExpanded: true,
                   decoration: InputDecoration(
                     labelText: 'Ruolo',
@@ -296,17 +309,21 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
                       ),
                     ),
                   ),
-                  items: _ruoli.map((String ruolo) {
+                  items: (widget.soloAllenatori ? ['Allenatore'] : _ruoli).map((
+                    String ruolo,
+                  ) {
                     return DropdownMenuItem<String>(
                       value: ruolo,
                       child: Text(ruolo),
                     );
                   }).toList(),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      _ruoloSelezionato = newValue!;
-                    });
-                  },
+                  onChanged: widget.soloAllenatori
+                      ? null
+                      : (String? newValue) {
+                          setState(() {
+                            _ruoloSelezionato = newValue!;
+                          });
+                        },
                 ),
               ),
             ),
@@ -362,7 +379,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
                         ),
                       )
                     : DropdownButtonFormField<String>(
-                        value: _nazioneSelezionata,
+                        initialValue: _nazioneSelezionata,
                         isExpanded: true,
                         menuMaxHeight: 300,
                         decoration: InputDecoration(
@@ -404,6 +421,72 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
                       ),
               ),
             ),
+            if (_ruoloSelezionato == 'Allenatore') ...[
+              SizedBox(height: 24),
+              Padding(
+                padding: EdgeInsets.only(
+                  left: isWide ? 0 : 16,
+                  right: isWide ? 0 : 16,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'È un ex giocatore?',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: getColor("primary"),
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Radio<bool>(
+                          value: false,
+                          groupValue: _isEx,
+                          onChanged: (value) {
+                            setState(() {
+                              _isEx = value!;
+                              _idGiocatoreEx = null;
+                              _nomeGiocatoreEx = null;
+                            });
+                          },
+                          activeColor: getColor("primary"),
+                        ),
+                        Text('No'),
+                        SizedBox(width: 20),
+                        Radio<bool>(
+                          value: true,
+                          groupValue: _isEx,
+                          onChanged: (value) {
+                            setState(() {
+                              _isEx = value!;
+                            });
+                          },
+                          activeColor: getColor("primary"),
+                        ),
+                        Text('Si'),
+                      ],
+                    ),
+                    if (_isEx) ...[
+                      SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _cercaGiocatoreEx,
+                          icon: Icon(Icons.search),
+                          label: Text(_nomeGiocatoreEx ?? 'Cerca giocatore ex'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: getColor("primary"),
+                            foregroundColor: getIconColor(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
             SizedBox(height: 24),
             Padding(
               padding: EdgeInsets.only(
@@ -464,9 +547,11 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
           textAlign: TextAlign.center,
         ),
         SizedBox(height: 20),
-        buildCSVButton(),
-        SizedBox(height: 10),
-        buildCSVTemplateButton(),
+        if (!widget.disabilitaCsv) ...[
+          buildCSVButton(),
+          SizedBox(height: 10),
+          buildCSVTemplateButton(),
+        ],
       ],
     );
   }
@@ -479,27 +564,151 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
     setState(() {
       _ruoloSelezionato = 'Portiere';
       _nazioneSelezionata = _nazioni.isNotEmpty ? _nazioni.first : 'Italia';
+      _isEx = false;
+      _idGiocatoreEx = null;
+      _nomeGiocatoreEx = null;
     });
+  }
+
+  Future<void> _cercaGiocatoreEx() async {
+    final giocatoriProvider = GiocatoriProvider();
+
+    // Mostra dialog di ricerca
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        String searchQuery = '';
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text('Cerca Giocatore Ex'),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 400,
+                child: Column(
+                  children: [
+                    TextField(
+                      decoration: InputDecoration(
+                        labelText: 'Cerca per nome',
+                        prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (value) {
+                        setDialogState(() {
+                          searchQuery = value.toLowerCase();
+                        });
+                      },
+                    ),
+                    SizedBox(height: 16),
+                    Expanded(
+                      child: FutureBuilder<List<Giocatore>>(
+                        future: giocatoriProvider.getGiocatoriInattivi(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return Center(
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  getColor('primary'),
+                                ),
+                              ),
+                            );
+                          }
+
+                          if (snapshot.hasError) {
+                            return Center(
+                              child: Text('Errore nel caricamento'),
+                            );
+                          }
+
+                          final tuttiGiocatori = snapshot.data ?? [];
+                          final giocatoriFiltrati = tuttiGiocatori
+                              .where(
+                                (g) =>
+                                    g.ruolo != 'Allenatore' &&
+                                    (searchQuery.isEmpty ||
+                                        g.nome.toLowerCase().contains(
+                                          searchQuery,
+                                        )),
+                              )
+                              .toList();
+
+                          if (giocatoriFiltrati.isEmpty) {
+                            return Center(
+                              child: Text('Nessun giocatore trovato'),
+                            );
+                          }
+
+                          return ListView.builder(
+                            itemCount: giocatoriFiltrati.length,
+                            itemBuilder: (context, index) {
+                              final giocatore = giocatoriFiltrati[index];
+                              return ListTile(
+                                title: Text(giocatore.nome),
+                                subtitle: Text(
+                                  '${giocatore.ruolo} - ${giocatore.nazione}',
+                                ),
+                                onTap: () {
+                                  setState(() {
+                                    _idGiocatoreEx = giocatore.id;
+                                    _nomeGiocatoreEx = giocatore.nome;
+                                  });
+                                  Navigator.of(context).pop();
+                                },
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('Annulla'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
-      Carriera nuovaCarriera = Carriera(
-        campionato: widget.campionato,
-        idSquadra: widget.squadra.id,
-        gol: 0,
-        presenze: 0,
-        espulsioni: 0,
-      );
+      Carriera nuovaCarriera = _ruoloSelezionato == 'Allenatore'
+          ? Carriera(
+              campionato: widget.campionato,
+              idSquadra: widget.squadra.id,
+              gol: 0,
+              presenze: 0,
+              espulsioni: 0,
+              esonero: false,
+            )
+          : Carriera(
+              campionato: widget.campionato,
+              idSquadra: widget.squadra.id,
+              gol: 0,
+              presenze: 0,
+              espulsioni: 0,
+            );
       int etaCasuale = Random().nextInt(3) + 18;
       Giocatore nuovoGiocatore = Giocatore(
         id: mongo.ObjectId().toHexString(),
         nome: _nomeController.text,
-        numero: int.tryParse(_numeroMagliaController.text) ?? 1,
+        numero: _ruoloSelezionato == 'Allenatore'
+            ? 0
+            : int.tryParse(_numeroMagliaController.text) ?? 1,
         eta: etaCasuale,
         ruolo: _ruoloSelezionato,
         nazione: _nazioneSelezionata.toLowerCase(),
         carriera: [nuovaCarriera],
+        idSquadraAttuale: widget.squadra.id,
+        ex: _isEx ? _idGiocatoreEx : null,
+        attivo: true,
       );
 
       addGiocatore(nuovoGiocatore);
@@ -783,13 +992,22 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
       return;
     }
 
-    Carriera nuovaCarriera = Carriera(
-      campionato: widget.campionato,
-      idSquadra: widget.squadra.id,
-      gol: 0,
-      presenze: 0,
-      espulsioni: 0,
-    );
+    Carriera nuovaCarriera = ruolo == 'Allenatore'
+        ? Carriera(
+            campionato: widget.campionato,
+            idSquadra: widget.squadra.id,
+            gol: 0,
+            presenze: 0,
+            espulsioni: 0,
+            esonero: false,
+          )
+        : Carriera(
+            campionato: widget.campionato,
+            idSquadra: widget.squadra.id,
+            gol: 0,
+            presenze: 0,
+            espulsioni: 0,
+          );
 
     Giocatore nuovoGiocatore = Giocatore(
       id: mongo.ObjectId().toHexString(),
@@ -799,6 +1017,8 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
       ruolo: ruolo,
       nazione: nazione.toLowerCase(),
       carriera: [nuovaCarriera],
+      idSquadraAttuale: widget.squadra.id,
+      attivo: true,
     );
 
     setState(() {
