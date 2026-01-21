@@ -211,6 +211,12 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
 
   Widget buildFormazione() {
     bool isWide = MediaQuery.of(context).size.width > 600;
+    if ((widget.squadra.formazione.panchina.length +
+            widget.squadra.formazione.titolari.length) <
+        widget.giocatori.length - 1) {
+      widget.squadra.formazione.titolari.clear();
+      widget.squadra.formazione.panchina.clear();
+    }
     if (widget.squadra.formazione.titolari.isEmpty) {
       List<Giocatore> giocatoriSenzaAllenatore = widget.giocatori
           .where((giocatore) => giocatore.numero != 0)
