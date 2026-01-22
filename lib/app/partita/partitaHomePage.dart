@@ -1472,7 +1472,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             },
           ),
         ),
-        buildFormazioneSquadra(selectedFormazione),
+        Expanded(child: buildFormazioneSquadra(selectedFormazione)),
       ],
     );
   }
