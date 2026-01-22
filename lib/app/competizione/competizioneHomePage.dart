@@ -91,12 +91,23 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
   }
 
   void _caricaGiornate() async {
-    final result = await _giornateFuture;
-    if (mounted) {
-      setState(() {
-        giornate_ = result;
-        giornate = result;
-      });
+    final giornateProvider = Provider.of<GiornateProvider>(
+      context,
+      listen: false,
+    );
+    try {
+      final result = await giornateProvider.fetchGiornate(
+        widget.campionato,
+        widget.competizione.id,
+      );
+      if (mounted) {
+        setState(() {
+          giornate_ = result;
+          giornate = result;
+        });
+      }
+    } catch (e) {
+      print('Errore nel caricamento delle giornate: $e');
     }
   }
 

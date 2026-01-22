@@ -1480,312 +1480,417 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   Widget buildFormazioneSquadra(int selectedFormazione) {
     final isWide = MediaQuery.of(context).size.width > 600;
 
-    return Expanded(
-      child:
-          (selectedFormazione == 0 &&
-                  (partita!.formazioneHome.titolari.isNotEmpty ||
-                      showFormazioneHome)) ||
-              (selectedFormazione == 1 &&
-                  (partita!.formazioneAway.titolari.isNotEmpty ||
-                      showFormazioneAway))
-          ? isWide
-                ? Column(
-                    children: [
-                      // Header fisso per isWide
-                      Container(
-                        padding: EdgeInsets.all(16),
-                        child: buildInfoSquadra(selectedFormazione),
-                      ),
-                      // Contenuto scrollabile
-                      Expanded(
-                        child: SingleChildScrollView(
-                          child: Column(
-                            children: [
-                              buildFormazioneContent(selectedFormazione),
-                              buildPanchina(selectedFormazione),
-                              if (partita!
-                                      .formazioneHome
-                                      .indisponibili
-                                      .isNotEmpty ||
-                                  partita!
-                                      .formazioneAway
-                                      .indisponibili
-                                      .isNotEmpty)
-                                FutureBuilder<Widget>(
-                                  future: buildIndisponibili(
-                                    selectedFormazione,
-                                  ),
-                                  builder: (context, snapshot) {
-                                    if (snapshot.hasData) {
-                                      return snapshot.data!;
-                                    }
-                                    return Container();
+    return (selectedFormazione == 0 &&
+                (partita!.formazioneHome.titolari.isNotEmpty ||
+                    showFormazioneHome)) ||
+            (selectedFormazione == 1 &&
+                (partita!.formazioneAway.titolari.isNotEmpty ||
+                    showFormazioneAway))
+        ? isWide
+              ? Column(
+                  children: [
+                    // Header fisso per isWide
+                    Container(
+                      padding: EdgeInsets.all(16),
+                      child: buildInfoSquadra(selectedFormazione),
+                    ),
+                    // Contenuto scrollabile
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            buildFormazioneContent(selectedFormazione),
+                            buildPanchina(selectedFormazione),
+                            if ((selectedFormazione == 0 &&
+                                    partita!
+                                        .formazioneHome
+                                        .indisponibili
+                                        .isNotEmpty) ||
+                                (selectedFormazione == 1 &&
+                                    partita!
+                                        .formazioneAway
+                                        .indisponibili
+                                        .isNotEmpty))
+                              FutureBuilder<Widget>(
+                                future: buildIndisponibili(selectedFormazione),
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState ==
+                                      ConnectionState.waiting) {
+                                    return Padding(
+                                      padding: EdgeInsets.all(16),
+                                      child: Center(
+                                        child: CircularProgressIndicator(),
+                                      ),
+                                    );
+                                  }
+                                  if (snapshot.hasData) {
+                                    return snapshot.data!;
+                                  }
+                                  if (snapshot.hasError) {
+                                    return SizedBox.shrink();
+                                  }
+                                  return SizedBox.shrink();
+                                },
+                              ),
+                            if (partita!
+                                    .formazioneHome
+                                    .nonConvocati
+                                    .isNotEmpty ||
+                                partita!.formazioneAway.nonConvocati.isNotEmpty)
+                              buildNonConvocati(selectedFormazione),
+                            SizedBox(height: 8),
+                            if (admin && !partita!.salvata) ...[
+                              SizedBox(
+                                width: isWide
+                                    ? MediaQuery.of(context).size.width * 0.3
+                                    : MediaQuery.of(context).size.width * 0.9,
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    saveFormazione(
+                                      widget.campionato,
+                                      partita!.id,
+                                      selectedFormazione == 0
+                                          ? partita!.formazioneHome
+                                          : partita!.formazioneAway,
+                                      selectedFormazione == 0
+                                          ? partita!.idTeamHome
+                                          : partita!.idTeamAway,
+                                    );
                                   },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Color(
+                                      competizione!.colori.isNotEmpty
+                                          ? int.parse(
+                                              competizione!.colori[0]
+                                                  .replaceFirst('#', 'FF'),
+                                              radix: 16,
+                                            )
+                                          : 0xFF007AFF,
+                                    ),
+                                  ),
+                                  icon: Icon(
+                                    Icons.save_as,
+                                    color: Colors.white,
+                                  ),
+                                  label: Text(
+                                    'Salva Formazione',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
                                 ),
-                              if (partita!
-                                      .formazioneHome
-                                      .nonConvocati
-                                      .isNotEmpty ||
-                                  partita!
-                                      .formazioneAway
-                                      .nonConvocati
-                                      .isNotEmpty)
-                                buildNonConvocati(selectedFormazione),
+                              ),
                               SizedBox(height: 8),
-                              if (admin && !partita!.salvata) ...[
-                                SizedBox(
-                                  width: isWide
-                                      ? MediaQuery.of(context).size.width * 0.3
-                                      : MediaQuery.of(context).size.width * 0.9,
-                                  child: ElevatedButton.icon(
-                                    onPressed: () {
-                                      saveFormazione(
+                              SizedBox(
+                                width: isWide
+                                    ? MediaQuery.of(context).size.width * 0.3
+                                    : MediaQuery.of(context).size.width * 0.9,
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    if (partita
+                                                ?.formazioneAway
+                                                .titolari
+                                                .isNotEmpty ==
+                                            true ||
+                                        partita
+                                                ?.formazioneHome
+                                                .titolari
+                                                .isNotEmpty ==
+                                            true) {
+                                      resetFormazione(
                                         widget.campionato,
                                         partita!.id,
-                                        selectedFormazione == 0
-                                            ? partita!.formazioneHome
-                                            : partita!.formazioneAway,
                                         selectedFormazione == 0
                                             ? partita!.idTeamHome
                                             : partita!.idTeamAway,
                                       );
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Color(
-                                        competizione!.colori.isNotEmpty
-                                            ? int.parse(
-                                                competizione!.colori[0]
-                                                    .replaceFirst('#', 'FF'),
-                                                radix: 16,
-                                              )
-                                            : 0xFF007AFF,
-                                      ),
-                                    ),
-                                    icon: Icon(
-                                      Icons.save_as,
-                                      color: Colors.white,
-                                    ),
-                                    label: Text(
-                                      'Salva Formazione',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(height: 8),
-                                SizedBox(
-                                  width: isWide
-                                      ? MediaQuery.of(context).size.width * 0.3
-                                      : MediaQuery.of(context).size.width * 0.9,
-                                  child: ElevatedButton.icon(
-                                    onPressed: () {
-                                      if (partita
-                                                  ?.formazioneAway
-                                                  .titolari
-                                                  .isNotEmpty ==
-                                              true ||
-                                          partita
-                                                  ?.formazioneHome
-                                                  .titolari
-                                                  .isNotEmpty ==
-                                              true) {
-                                        resetFormazione(
-                                          widget.campionato,
-                                          partita!.id,
-                                          selectedFormazione == 0
-                                              ? partita!.idTeamHome
-                                              : partita!.idTeamAway,
-                                        );
+                                    }
+                                    setState(() {
+                                      if (selectedFormazione == 0) {
+                                        showFormazioneHome = false;
+                                      } else {
+                                        showFormazioneAway = false;
                                       }
-                                      setState(() {
-                                        if (selectedFormazione == 0) {
-                                          showFormazioneHome = false;
-                                        } else {
-                                          showFormazioneAway = false;
-                                        }
-                                      });
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red[600],
-                                    ),
-                                    icon: Icon(
-                                      Icons.delete,
-                                      color: Colors.white,
-                                    ),
-                                    label: Text(
-                                      'Reset Formazione',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
+                                    });
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.red[600],
+                                  ),
+                                  icon: Icon(Icons.delete, color: Colors.white),
+                                  label: Text(
+                                    'Reset Formazione',
+                                    style: TextStyle(color: Colors.white),
                                   ),
                                 ),
-                              ],
-                              SizedBox(height: 8),
+                              ),
                             ],
-                          ),
+                            SizedBox(height: 8),
+                          ],
                         ),
                       ),
-                    ],
-                  )
-                : SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        buildFormazione(selectedFormazione),
-                        buildPanchina(selectedFormazione),
-                        if (partita!.formazioneHome.indisponibili.isNotEmpty ||
-                            partita!.formazioneAway.indisponibili.isNotEmpty)
-                          FutureBuilder<Widget>(
-                            future: buildIndisponibili(selectedFormazione),
-                            builder: (context, snapshot) {
-                              if (snapshot.hasData) {
-                                return snapshot.data!;
-                              }
-                              return Container();
+                    ),
+                  ],
+                )
+              : SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      buildFormazione(selectedFormazione),
+                      buildPanchina(selectedFormazione),
+                      if ((selectedFormazione == 0 &&
+                              partita!
+                                  .formazioneHome
+                                  .indisponibili
+                                  .isNotEmpty) ||
+                          (selectedFormazione == 1 &&
+                              partita!.formazioneAway.indisponibili.isNotEmpty))
+                        FutureBuilder<Widget>(
+                          future: buildIndisponibili(selectedFormazione),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return Padding(
+                                padding: EdgeInsets.all(16),
+                                child: Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            }
+                            if (snapshot.hasData) {
+                              return snapshot.data!;
+                            }
+                            if (snapshot.hasError) {
+                              return SizedBox.shrink();
+                            }
+                            return SizedBox.shrink();
+                          },
+                        ),
+                      if (partita!.formazioneHome.nonConvocati.isNotEmpty ||
+                          partita!.formazioneAway.nonConvocati.isNotEmpty)
+                        buildNonConvocati(selectedFormazione),
+                      SizedBox(height: 8),
+                      if (admin && !partita!.salvata)
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width * 0.9,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              saveFormazione(
+                                widget.campionato,
+                                partita!.id,
+                                selectedFormazione == 0
+                                    ? partita!.formazioneHome
+                                    : partita!.formazioneAway,
+                                selectedFormazione == 0
+                                    ? partita!.idTeamHome
+                                    : partita!.idTeamAway,
+                              );
                             },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(
+                                competizione!.colori.isNotEmpty
+                                    ? int.parse(
+                                        competizione!.colori[0].replaceFirst(
+                                          '#',
+                                          'FF',
+                                        ),
+                                        radix: 16,
+                                      )
+                                    : 0xFF007AFF,
+                              ),
+                            ),
+                            icon: Icon(Icons.save_as, color: Colors.white),
+                            label: Text(
+                              'Salva Formazione',
+                              style: TextStyle(color: Colors.white),
+                            ),
                           ),
-                        if (partita!.formazioneHome.nonConvocati.isNotEmpty ||
-                            partita!.formazioneAway.nonConvocati.isNotEmpty)
-                          buildNonConvocati(selectedFormazione),
-                        SizedBox(height: 8),
-                        if (admin && !partita!.salvata)
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.9,
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                saveFormazione(
+                        ),
+                      if (admin && !partita!.salvata)
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width * 0.9,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              if (partita?.formazioneAway.titolari.isNotEmpty ==
+                                      true ||
+                                  partita?.formazioneHome.titolari.isNotEmpty ==
+                                      true) {
+                                resetFormazione(
                                   widget.campionato,
                                   partita!.id,
-                                  selectedFormazione == 0
-                                      ? partita!.formazioneHome
-                                      : partita!.formazioneAway,
                                   selectedFormazione == 0
                                       ? partita!.idTeamHome
                                       : partita!.idTeamAway,
                                 );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(
-                                  competizione!.colori.isNotEmpty
-                                      ? int.parse(
-                                          competizione!.colori[0].replaceFirst(
-                                            '#',
-                                            'FF',
-                                          ),
-                                          radix: 16,
-                                        )
-                                      : 0xFF007AFF,
-                                ),
-                              ),
-                              icon: Icon(Icons.save_as, color: Colors.white),
-                              label: Text(
-                                'Salva Formazione',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ),
-                        if (admin && !partita!.salvata)
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.9,
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                if (partita
-                                            ?.formazioneAway
-                                            .titolari
-                                            .isNotEmpty ==
-                                        true ||
-                                    partita
-                                            ?.formazioneHome
-                                            .titolari
-                                            .isNotEmpty ==
-                                        true) {
-                                  resetFormazione(
-                                    widget.campionato,
-                                    partita!.id,
-                                    selectedFormazione == 0
-                                        ? partita!.idTeamHome
-                                        : partita!.idTeamAway,
-                                  );
+                              }
+                              setState(() {
+                                if (selectedFormazione == 0) {
+                                  showFormazioneHome = false;
+                                } else {
+                                  showFormazioneAway = false;
                                 }
-                                setState(() {
-                                  if (selectedFormazione == 0) {
-                                    showFormazioneHome = false;
-                                  } else {
-                                    showFormazioneAway = false;
-                                  }
-                                });
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red[600],
-                              ),
-                              icon: Icon(Icons.delete, color: Colors.white),
-                              label: Text(
-                                'Reset Formazione',
-                                style: TextStyle(color: Colors.white),
-                              ),
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red[600],
+                            ),
+                            icon: Icon(Icons.delete, color: Colors.white),
+                            label: Text(
+                              'Reset Formazione',
+                              style: TextStyle(color: Colors.white),
                             ),
                           ),
-                        SizedBox(height: 8),
-                      ],
-                    ),
-                  )
-          : admin && !partita!.salvata
-          ? Container(
-              height: MediaQuery.of(context).size.height * 0.5,
-              margin: EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: CustomPaint(
-                painter: DashedBorderPainter(),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Center(
-                        child: Text(
-                          'Inserisci Formazione',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
                         ),
-                      ),
-                      SizedBox(height: 16),
-                      Center(
-                        child: FloatingActionButton(
-                          heroTag: "formazione_fab",
-                          onPressed: () {
-                            caricaFormazioniDaSquadre(selectedFormazione);
-                          },
-                          backgroundColor: Color(
-                            competizione!.colori.isNotEmpty
-                                ? int.parse(
-                                    competizione!.colori[0].replaceFirst(
-                                      '#',
-                                      'FF',
-                                    ),
-                                    radix: 16,
-                                  )
-                                : 0xFF007AFF,
-                          ),
-                          child: Icon(Icons.add, color: Colors.white, size: 32),
-                        ),
-                      ),
+                      SizedBox(height: 8),
                     ],
                   ),
+                )
+        : admin && !partita!.salvata
+        ? Container(
+            height: MediaQuery.of(context).size.height * 0.5,
+            margin: EdgeInsets.all(16),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
+            child: CustomPaint(
+              painter: DashedBorderPainter(),
+              child: SizedBox(
+                width: double.infinity,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Center(
+                      child: Text(
+                        'Inserisci Formazione',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    Center(
+                      child: FloatingActionButton(
+                        heroTag: "formazione_fab",
+                        onPressed: () {
+                          caricaFormazioniDaSquadre(selectedFormazione);
+                        },
+                        backgroundColor: Color(
+                          competizione!.colori.isNotEmpty
+                              ? int.parse(
+                                  competizione!.colori[0].replaceFirst(
+                                    '#',
+                                    'FF',
+                                  ),
+                                  radix: 16,
+                                )
+                              : 0xFF007AFF,
+                        ),
+                        child: Icon(Icons.add, color: Colors.white, size: 32),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            )
-          : Center(
-              child: Text(
-                'Le formazioni non sono ancora state inserite.',
-                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-              ),
             ),
-    );
+          )
+        : Center(
+            child: Text(
+              'Le formazioni non sono ancora state inserite.',
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            ),
+          );
   }
 
   Widget buildFormazione(int team) {
     final isWide = MediaQuery.of(context).size.width > 600;
+
+    // Estrai i marcatori dal tabellino per la squadra specifica
+    final marcatoriHome = partita!.tabellino
+        .where(
+          (evento) =>
+              (evento.codAzione == 'gol' ||
+                  evento.codAzione == 'rig' ||
+                  evento.codAzione == 'pun') &&
+              evento.idTeam == partita!.idTeamHome,
+        )
+        .map((evento) => evento.idGiocatore)
+        .toList();
+
+    final marcatoriAway = partita!.tabellino
+        .where(
+          (evento) =>
+              (evento.codAzione == 'gol' ||
+                  evento.codAzione == 'rig' ||
+                  evento.codAzione == 'pun') &&
+              evento.idTeam == partita!.idTeamAway,
+        )
+        .map((evento) => evento.idGiocatore)
+        .toList();
+
+    // Estrai gli autogol dal tabellino (gli autogol sono segnati CONTRO la squadra del giocatore)
+    final autogolHome = partita!.tabellino
+        .where(
+          (evento) =>
+              evento.codAzione == 'aut' &&
+              evento.idTeam ==
+                  partita!.idTeamAway, // Autogol dell'Away favorisce l'Home
+        )
+        .map((evento) => evento.idGiocatore)
+        .toList();
+
+    final autogolAway = partita!.tabellino
+        .where(
+          (evento) =>
+              evento.codAzione == 'aut' &&
+              evento.idTeam ==
+                  partita!.idTeamHome, // Autogol dell'Home favorisce l'Away
+        )
+        .map((evento) => evento.idGiocatore)
+        .toList();
+
+    // Estrai le sostituzioni (giocatori entrati E usciti) dal tabellino
+    final eventiSosHome = partita!.tabellino
+        .where(
+          (evento) =>
+              evento.codAzione == 'sos' && evento.idTeam == partita!.idTeamHome,
+        )
+        .toList();
+
+    final sostituzioniHome = <String>[];
+    for (var evento in eventiSosHome) {
+      sostituzioniHome.add(evento.idGiocatore); // Giocatore entrato
+      if (evento.idGiocatoreOut != null) {
+        sostituzioniHome.add(evento.idGiocatoreOut!); // Giocatore uscito
+      }
+    }
+
+    final eventiSosAway = partita!.tabellino
+        .where(
+          (evento) =>
+              evento.codAzione == 'sos' && evento.idTeam == partita!.idTeamAway,
+        )
+        .toList();
+
+    final sostituzioniAway = <String>[];
+    for (var evento in eventiSosAway) {
+      sostituzioniAway.add(evento.idGiocatore); // Giocatore entrato
+      if (evento.idGiocatoreOut != null) {
+        sostituzioniAway.add(evento.idGiocatoreOut!); // Giocatore uscito
+      }
+    }
+
+    // Estrai le espulsioni dal tabellino
+    final espulsiHome = partita!.tabellino
+        .where(
+          (evento) =>
+              evento.codAzione == 'esp' && evento.idTeam == partita!.idTeamHome,
+        )
+        .map((evento) => evento.idGiocatore)
+        .toList();
+
+    final espulsiAway = partita!.tabellino
+        .where(
+          (evento) =>
+              evento.codAzione == 'esp' && evento.idTeam == partita!.idTeamAway,
+        )
+        .map((evento) => evento.idGiocatore)
+        .toList();
+
     return Container(
       padding: EdgeInsets.all(16),
       child: Column(
@@ -1826,6 +1931,10 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                   partita!.formazioneHome.panchina,
                               giocatoriNonDisponibili:
                                   partita!.formazioneHome.indisponibili,
+                              marcatori: marcatoriHome,
+                              autogol: autogolHome,
+                              sostituzioni: sostituzioniHome,
+                              espulsi: espulsiHome,
                               onGiocatoreChanged: (pos, nuovoGiocatore) {
                                 _handleGiocatoreChanged(0, pos, nuovoGiocatore);
                               },
@@ -1844,6 +1953,10 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                   partita!.formazioneAway.panchina,
                               giocatoriNonDisponibili:
                                   partita!.formazioneAway.indisponibili,
+                              marcatori: marcatoriAway,
+                              autogol: autogolAway,
+                              sostituzioni: sostituzioniAway,
+                              espulsi: espulsiAway,
                               onGiocatoreChanged: (pos, nuovoGiocatore) {
                                 _handleGiocatoreChanged(1, pos, nuovoGiocatore);
                               },
@@ -1860,6 +1973,99 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
 
   Widget buildFormazioneContent(int team) {
     final isWide = MediaQuery.of(context).size.width > 600;
+
+    // Estrai i marcatori dal tabellino per la squadra specifica
+    final marcatoriHome = partita!.tabellino
+        .where(
+          (evento) =>
+              (evento.codAzione == 'gol' ||
+                  evento.codAzione == 'rig' ||
+                  evento.codAzione == 'pun') &&
+              evento.idTeam == partita!.idTeamHome,
+        )
+        .map((evento) => evento.idGiocatore)
+        .toList();
+
+    final marcatoriAway = partita!.tabellino
+        .where(
+          (evento) =>
+              (evento.codAzione == 'gol' ||
+                  evento.codAzione == 'rig' ||
+                  evento.codAzione == 'pun') &&
+              evento.idTeam == partita!.idTeamAway,
+        )
+        .map((evento) => evento.idGiocatore)
+        .toList();
+
+    // Estrai gli autogol dal tabellino (gli autogol sono segnati CONTRO la squadra del giocatore)
+    final autogolHome = partita!.tabellino
+        .where(
+          (evento) =>
+              evento.codAzione == 'aut' &&
+              evento.idTeam ==
+                  partita!.idTeamAway, // Autogol dell'Away favorisce l'Home
+        )
+        .map((evento) => evento.idGiocatore)
+        .toList();
+
+    final autogolAway = partita!.tabellino
+        .where(
+          (evento) =>
+              evento.codAzione == 'aut' &&
+              evento.idTeam ==
+                  partita!.idTeamHome, // Autogol dell'Home favorisce l'Away
+        )
+        .map((evento) => evento.idGiocatore)
+        .toList();
+
+    // Estrai le sostituzioni (giocatori entrati E usciti) dal tabellino
+    final eventiSosHome = partita!.tabellino
+        .where(
+          (evento) =>
+              evento.codAzione == 'sos' && evento.idTeam == partita!.idTeamHome,
+        )
+        .toList();
+
+    final sostituzioniHome = <String>[];
+    for (var evento in eventiSosHome) {
+      sostituzioniHome.add(evento.idGiocatore); // Giocatore entrato
+      if (evento.idGiocatoreOut != null) {
+        sostituzioniHome.add(evento.idGiocatoreOut!); // Giocatore uscito
+      }
+    }
+
+    final eventiSosAway = partita!.tabellino
+        .where(
+          (evento) =>
+              evento.codAzione == 'sos' && evento.idTeam == partita!.idTeamAway,
+        )
+        .toList();
+
+    final sostituzioniAway = <String>[];
+    for (var evento in eventiSosAway) {
+      sostituzioniAway.add(evento.idGiocatore); // Giocatore entrato
+      if (evento.idGiocatoreOut != null) {
+        sostituzioniAway.add(evento.idGiocatoreOut!); // Giocatore uscito
+      }
+    }
+
+    // Estrai le espulsioni dal tabellino
+    final espulsiHome = partita!.tabellino
+        .where(
+          (evento) =>
+              evento.codAzione == 'esp' && evento.idTeam == partita!.idTeamHome,
+        )
+        .map((evento) => evento.idGiocatore)
+        .toList();
+
+    final espulsiAway = partita!.tabellino
+        .where(
+          (evento) =>
+              evento.codAzione == 'esp' && evento.idTeam == partita!.idTeamAway,
+        )
+        .map((evento) => evento.idGiocatore)
+        .toList();
+
     return Container(
       padding: EdgeInsets.all(16),
       child: Container(
@@ -1895,6 +2101,10 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                               partita!.formazioneHome.panchina,
                           giocatoriNonDisponibili:
                               partita!.formazioneHome.indisponibili,
+                          marcatori: marcatoriHome,
+                          autogol: autogolHome,
+                          sostituzioni: sostituzioniHome,
+                          espulsi: espulsiHome,
                           onGiocatoreChanged: (pos, nuovoGiocatore) {
                             _handleGiocatoreChanged(0, pos, nuovoGiocatore);
                           },
@@ -1913,6 +2123,10 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                               partita!.formazioneAway.panchina,
                           giocatoriNonDisponibili:
                               partita!.formazioneAway.indisponibili,
+                          marcatori: marcatoriAway,
+                          autogol: autogolAway,
+                          sostituzioni: sostituzioniAway,
+                          espulsi: espulsiAway,
                           onGiocatoreChanged: (pos, nuovoGiocatore) {
                             _handleGiocatoreChanged(1, pos, nuovoGiocatore);
                           },
@@ -1926,6 +2140,98 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   }
 
   Widget rowContent(team, giocatore) {
+    // Determina se il giocatore è entrato come sostituto
+    final sostituzioni = team == 0
+        ? partita!.tabellino
+              .where(
+                (evento) =>
+                    evento.codAzione == 'sos' &&
+                    evento.idTeam == partita!.idTeamHome,
+              )
+              .map((evento) => evento.idGiocatore)
+              .toList()
+        : partita!.tabellino
+              .where(
+                (evento) =>
+                    evento.codAzione == 'sos' &&
+                    evento.idTeam == partita!.idTeamAway,
+              )
+              .map((evento) => evento.idGiocatore)
+              .toList();
+
+    final hasSostituito = sostituzioni.contains(giocatore.idGiocatore);
+
+    // Determina se il giocatore è stato espulso
+    final espulsi = team == 0
+        ? partita!.tabellino
+              .where(
+                (evento) =>
+                    evento.codAzione == 'esp' &&
+                    evento.idTeam == partita!.idTeamHome,
+              )
+              .map((evento) => evento.idGiocatore)
+              .toList()
+        : partita!.tabellino
+              .where(
+                (evento) =>
+                    evento.codAzione == 'esp' &&
+                    evento.idTeam == partita!.idTeamAway,
+              )
+              .map((evento) => evento.idGiocatore)
+              .toList();
+
+    final isEspulso = espulsi.contains(giocatore.idGiocatore);
+
+    // Conta i gol del giocatore
+    final marcatori = team == 0
+        ? partita!.tabellino
+              .where(
+                (evento) =>
+                    (evento.codAzione == 'gol' ||
+                        evento.codAzione == 'rig' ||
+                        evento.codAzione == 'pun') &&
+                    evento.idTeam == partita!.idTeamHome,
+              )
+              .map((evento) => evento.idGiocatore)
+              .toList()
+        : partita!.tabellino
+              .where(
+                (evento) =>
+                    (evento.codAzione == 'gol' ||
+                        evento.codAzione == 'rig' ||
+                        evento.codAzione == 'pun') &&
+                    evento.idTeam == partita!.idTeamAway,
+              )
+              .map((evento) => evento.idGiocatore)
+              .toList();
+
+    final numeroGol = marcatori
+        .where((id) => id == giocatore.idGiocatore)
+        .length;
+
+    // Conta gli autogol del giocatore
+    final autogol = team == 0
+        ? partita!.tabellino
+              .where(
+                (evento) =>
+                    evento.codAzione == 'aut' &&
+                    evento.idTeam == partita!.idTeamAway,
+              )
+              .map((evento) => evento.idGiocatore)
+              .toList()
+        : partita!.tabellino
+              .where(
+                (evento) =>
+                    evento.codAzione == 'aut' &&
+                    evento.idTeam == partita!.idTeamHome,
+              )
+              .map((evento) => evento.idGiocatore)
+              .toList();
+
+    final numeroAutogol = autogol
+        .where((id) => id == giocatore.idGiocatore)
+        .length;
+
     return Container(
       //width: screenWidth * 1,
       height: 60,
@@ -1992,13 +2298,85 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
           ),
           Padding(
             padding: EdgeInsets.only(left: 20),
-            child: Text(
-              CommonService.decodePlayerName(giocatore.nome),
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
+            child: Row(
+              children: [
+                Text(
+                  CommonService.decodePlayerName(giocatore.nome),
+                  style: TextStyle(
+                    color: isEspulso ? Colors.red : Colors.black,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (hasSostituito) ...[
+                  SizedBox(width: 8),
+                  Container(
+                    width: 18,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.black, width: 1),
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.all(2),
+                      child: Image.asset(
+                        'assets/icon/arrow.png',
+                        width: 14,
+                        height: 14,
+                      ),
+                    ),
+                  ),
+                ],
+                // Mostra icone gol
+                if (numeroGol > 0)
+                  ...List.generate(numeroGol, (index) {
+                    return Padding(
+                      padding: EdgeInsets.only(left: 8),
+                      child: Container(
+                        width: 18,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.black, width: 1),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.all(2),
+                          child: Image.asset(
+                            'assets/icon/gol.png',
+                            width: 14,
+                            height: 14,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                // Mostra icone autogol
+                if (numeroAutogol > 0)
+                  ...List.generate(numeroAutogol, (index) {
+                    return Padding(
+                      padding: EdgeInsets.only(left: 8),
+                      child: Container(
+                        width: 18,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.black, width: 1),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.all(2),
+                          child: Image.asset(
+                            'assets/icon/aut.png',
+                            width: 14,
+                            height: 14,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+              ],
             ),
           ),
         ],
@@ -2124,18 +2502,25 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       provider,
       team == 0 ? partita!.idTeamHome : partita!.idTeamAway,
     );
+
+    final indisponibili = team == 0
+        ? partita!.formazioneHome.indisponibili
+        : partita!.formazioneAway.indisponibili;
+
+    if (indisponibili.isEmpty) {
+      return SizedBox.shrink();
+    }
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(height: 16),
-          if (team == 0 && partita!.formazioneHome.indisponibili.isNotEmpty ||
-              team == 1 && partita!.formazioneAway.indisponibili.isNotEmpty)
-            Text(
-              'Non Disponibili',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+          Text(
+            'Non Disponibili',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
 
           for (var giocatore
               in (team == 0
@@ -2221,23 +2606,9 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                         ),
                         SizedBox(height: 2),
                         Text(
-                          squadra.indisponibili
-                                      .firstWhere(
-                                        (g) =>
-                                            g.idGiocatore ==
-                                            giocatore.idGiocatore,
-                                      )
-                                      .motivo ==
-                                  'esp'
+                          giocatore.motivo == 'esp'
                               ? 'Squalificato'
-                              : squadra.indisponibili
-                                        .firstWhere(
-                                          (g) =>
-                                              g.idGiocatore ==
-                                              giocatore.idGiocatore,
-                                        )
-                                        .motivo ==
-                                    'inf'
+                              : giocatore.motivo == 'inf'
                               ? 'Infortunato'
                               : '',
                           style: TextStyle(
@@ -2430,7 +2801,6 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       listen: false,
     ).fetchPartitaById(widget.campionato, widget.partitaId);
 
-    // Decodifica i nomi dei giocatori come fa il SquadreProvider
     for (var giocatore in partita.formazioneHome.titolari) {
       giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
     }
@@ -2453,13 +2823,36 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     formazione,
     idSquadra,
   ) async {
+    // Mostra il loader
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(
+              Color(
+                competizione!.colori.isNotEmpty
+                    ? int.parse(
+                        competizione!.colori[0].replaceFirst('#', 'FF'),
+                        radix: 16,
+                      )
+                    : 0xFF007AFF,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
     bool success = await Provider.of<PartiteProvider>(
       context,
       listen: false,
     ).putFormazione(campionato, idPartita, formazione, idSquadra);
 
+    Navigator.of(context).pop();
+
     if (success) {
-      // Ricarica la partita per assicurarsi che i nomi siano decodificati correttamente
       final updatedPartita = await fetchPartita();
       setState(() {
         partita = updatedPartita;
@@ -2747,10 +3140,33 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   }
 
   void salvaPartita() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(
+              Color(
+                competizione!.colori.isNotEmpty
+                    ? int.parse(
+                        competizione!.colori[0].replaceFirst('#', 'FF'),
+                        radix: 16,
+                      )
+                    : 0xFF007AFF,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
     Provider.of<PartiteProvider>(
       context,
       listen: false,
     ).salvaPartita(widget.campionato, partita!).then((success) async {
+      Navigator.of(context).pop();
+
       if (success) {
         final updatedPartita = await fetchPartita();
         setState(() {
@@ -2797,7 +3213,6 @@ class DashedBorderPainter extends CustomPainter {
       ),
     );
 
-    // Calcola la lunghezza totale del percorso
     final pathMetrics = path.computeMetrics();
 
     for (final pathMetric in pathMetrics) {

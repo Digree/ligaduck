@@ -14,6 +14,11 @@ class PartitaFormazioneModel {
   onGiocatoreChanged;
   final List<String>? coloriSquadra;
   var divisa;
+  final List<String>? marcatori; // Lista di ID giocatori che hanno segnato
+  final List<String>?
+  autogol; // Lista di ID giocatori che hanno segnato autogol
+  final List<String>? sostituzioni; // Lista di ID giocatori entrati in campo
+  final List<String>? espulsi; // Lista di ID giocatori espulsi
 
   PartitaFormazioneModel({
     required this.codSquadra,
@@ -25,6 +30,10 @@ class PartitaFormazioneModel {
     this.onGiocatoreChanged,
     this.coloriSquadra,
     this.divisa,
+    this.marcatori,
+    this.autogol,
+    this.sostituzioni,
+    this.espulsi,
   });
 }
 
@@ -56,29 +65,69 @@ Widget buildPartitaFormazione(
                         child: Text(
                           _formatPlayerName(model.formazione[0].nome),
                           style: TextStyle(
-                            color: Colors.white,
-                            shadows: [
-                              Shadow(
-                                offset: Offset(-1.0, -1.0),
-                                blurRadius: 0.0,
-                                color: Colors.black,
-                              ),
-                              Shadow(
-                                offset: Offset(1.0, -1.0),
-                                blurRadius: 0.0,
-                                color: Colors.black,
-                              ),
-                              Shadow(
-                                offset: Offset(1.0, 1.0),
-                                blurRadius: 0.0,
-                                color: Colors.black,
-                              ),
-                              Shadow(
-                                offset: Offset(-1.0, 1.0),
-                                blurRadius: 0.0,
-                                color: Colors.black,
-                              ),
-                            ],
+                            color:
+                                model.espulsi != null &&
+                                    model.espulsi!.contains(
+                                      model.formazione[0].idGiocatore,
+                                    )
+                                ? Color(0xFFFF0000)
+                                : Colors.white,
+                            fontWeight:
+                                model.espulsi != null &&
+                                    model.espulsi!.contains(
+                                      model.formazione[0].idGiocatore,
+                                    )
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                            shadows:
+                                model.espulsi != null &&
+                                    model.espulsi!.contains(
+                                      model.formazione[0].idGiocatore,
+                                    )
+                                ? [
+                                    Shadow(
+                                      offset: Offset(-1.5, -1.5),
+                                      blurRadius: 0.0,
+                                      color: Colors.black,
+                                    ),
+                                    Shadow(
+                                      offset: Offset(1.5, -1.5),
+                                      blurRadius: 0.0,
+                                      color: Colors.black,
+                                    ),
+                                    Shadow(
+                                      offset: Offset(1.5, 1.5),
+                                      blurRadius: 0.0,
+                                      color: Colors.black,
+                                    ),
+                                    Shadow(
+                                      offset: Offset(-1.5, 1.5),
+                                      blurRadius: 0.0,
+                                      color: Colors.black,
+                                    ),
+                                  ]
+                                : [
+                                    Shadow(
+                                      offset: Offset(-1.0, -1.0),
+                                      blurRadius: 0.0,
+                                      color: Colors.black,
+                                    ),
+                                    Shadow(
+                                      offset: Offset(1.0, -1.0),
+                                      blurRadius: 0.0,
+                                      color: Colors.black,
+                                    ),
+                                    Shadow(
+                                      offset: Offset(1.0, 1.0),
+                                      blurRadius: 0.0,
+                                      color: Colors.black,
+                                    ),
+                                    Shadow(
+                                      offset: Offset(-1.0, 1.0),
+                                      blurRadius: 0.0,
+                                      color: Colors.black,
+                                    ),
+                                  ],
                           ),
                         ),
                       ),
@@ -126,29 +175,78 @@ Widget buildPartitaFormazione(
                                             : 'Giocatore $j',
                                       ),
                                       style: TextStyle(
-                                        color: Colors.white,
-                                        shadows: [
-                                          Shadow(
-                                            offset: Offset(-1.0, -1.0),
-                                            blurRadius: 0.0,
-                                            color: Colors.black,
-                                          ),
-                                          Shadow(
-                                            offset: Offset(1.0, -1.0),
-                                            blurRadius: 0.0,
-                                            color: Colors.black,
-                                          ),
-                                          Shadow(
-                                            offset: Offset(1.0, 1.0),
-                                            blurRadius: 0.0,
-                                            color: Colors.black,
-                                          ),
-                                          Shadow(
-                                            offset: Offset(-1.0, 1.0),
-                                            blurRadius: 0.0,
-                                            color: Colors.black,
-                                          ),
-                                        ],
+                                        color:
+                                            j < model.formazione.length &&
+                                                model.espulsi != null &&
+                                                model.espulsi!.contains(
+                                                  model
+                                                      .formazione[j]
+                                                      .idGiocatore,
+                                                )
+                                            ? Color(0xFFFF0000)
+                                            : Colors.white,
+                                        fontWeight:
+                                            j < model.formazione.length &&
+                                                model.espulsi != null &&
+                                                model.espulsi!.contains(
+                                                  model
+                                                      .formazione[j]
+                                                      .idGiocatore,
+                                                )
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                        shadows:
+                                            j < model.formazione.length &&
+                                                model.espulsi != null &&
+                                                model.espulsi!.contains(
+                                                  model
+                                                      .formazione[j]
+                                                      .idGiocatore,
+                                                )
+                                            ? [
+                                                Shadow(
+                                                  offset: Offset(-1.5, -1.5),
+                                                  blurRadius: 0.0,
+                                                  color: Colors.black,
+                                                ),
+                                                Shadow(
+                                                  offset: Offset(1.5, -1.5),
+                                                  blurRadius: 0.0,
+                                                  color: Colors.black,
+                                                ),
+                                                Shadow(
+                                                  offset: Offset(1.5, 1.5),
+                                                  blurRadius: 0.0,
+                                                  color: Colors.black,
+                                                ),
+                                                Shadow(
+                                                  offset: Offset(-1.5, 1.5),
+                                                  blurRadius: 0.0,
+                                                  color: Colors.black,
+                                                ),
+                                              ]
+                                            : [
+                                                Shadow(
+                                                  offset: Offset(-1.0, -1.0),
+                                                  blurRadius: 0.0,
+                                                  color: Colors.black,
+                                                ),
+                                                Shadow(
+                                                  offset: Offset(1.0, -1.0),
+                                                  blurRadius: 0.0,
+                                                  color: Colors.black,
+                                                ),
+                                                Shadow(
+                                                  offset: Offset(1.0, 1.0),
+                                                  blurRadius: 0.0,
+                                                  color: Colors.black,
+                                                ),
+                                                Shadow(
+                                                  offset: Offset(-1.0, 1.0),
+                                                  blurRadius: 0.0,
+                                                  color: Colors.black,
+                                                ),
+                                              ],
                                       ),
                                       textAlign: TextAlign.center,
                                       overflow: TextOverflow.ellipsis,
@@ -219,52 +317,154 @@ Widget buildGiocatore(
     numeroMaglietta = '$pos';
   }
 
-  Widget giocatoreWidget = Container(
-    width: 40,
-    height: 40,
-    decoration: BoxDecoration(
-      image: DecorationImage(
-        image: AssetImage(
-          model.divisa != null
-              ? 'assets/divise/divise_${model.campionato}/${model.codSquadra}_${model.divisa}.png'
-              : 'assets/divise/divise_${model.campionato}/${model.codSquadra}_1.png',
+  // Conta quanti gol ha segnato il giocatore
+  int numeroGol = 0;
+  int numeroAutogol = 0;
+  String? idGiocatore;
+  if (pos <= model.formazione.length) {
+    idGiocatore = model.formazione[pos - 1].idGiocatore;
+    if (model.marcatori != null) {
+      numeroGol = model.marcatori!.where((id) => id == idGiocatore).length;
+    }
+    if (model.autogol != null) {
+      numeroAutogol = model.autogol!.where((id) => id == idGiocatore).length;
+    }
+  }
+
+  // Verifica se il giocatore è entrato come sostituzione
+  bool hasSostituito = false;
+  if (idGiocatore != null && model.sostituzioni != null) {
+    hasSostituito = model.sostituzioni!.contains(idGiocatore);
+  }
+
+  Widget giocatoreWidget = Stack(
+    clipBehavior: Clip.none,
+    children: [
+      Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage(
+              model.divisa != null
+                  ? 'assets/divise/divise_${model.campionato}/${model.codSquadra}_${model.divisa}.png'
+                  : 'assets/divise/divise_${model.campionato}/${model.codSquadra}_1.png',
+            ),
+            fit: BoxFit.cover,
+          ),
+          color: Colors.transparent,
         ),
-        fit: BoxFit.cover,
-      ),
-      color: Colors.transparent,
-    ),
-    child: Center(
-      child: Text(
-        numeroMaglietta,
-        style: TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w900,
-          fontSize: 16,
-          shadows: [
-            Shadow(
-              offset: Offset(-1.0, -1.0),
-              blurRadius: 0.0,
-              color: Colors.black,
+        child: Center(
+          child: Text(
+            numeroMaglietta,
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+              fontSize: 16,
+              shadows: [
+                Shadow(
+                  offset: Offset(-1.0, -1.0),
+                  blurRadius: 0.0,
+                  color: Colors.black,
+                ),
+                Shadow(
+                  offset: Offset(1.0, -1.0),
+                  blurRadius: 0.0,
+                  color: Colors.black,
+                ),
+                Shadow(
+                  offset: Offset(1.0, 1.0),
+                  blurRadius: 0.0,
+                  color: Colors.black,
+                ),
+                Shadow(
+                  offset: Offset(-1.0, 1.0),
+                  blurRadius: 0.0,
+                  color: Colors.black,
+                ),
+              ],
             ),
-            Shadow(
-              offset: Offset(1.0, -1.0),
-              blurRadius: 0.0,
-              color: Colors.black,
-            ),
-            Shadow(
-              offset: Offset(1.0, 1.0),
-              blurRadius: 0.0,
-              color: Colors.black,
-            ),
-            Shadow(
-              offset: Offset(-1.0, 1.0),
-              blurRadius: 0.0,
-              color: Colors.black,
-            ),
-          ],
+          ),
         ),
       ),
-    ),
+      // Mostra le icone del gol in base al numero di gol segnati
+      if (numeroGol > 0)
+        ...List.generate(numeroGol, (index) {
+          return Positioned(
+            top: -4,
+            right:
+                -4 - (index * 10.0), // Sfalsamento orizzontale per ogni icona
+            child: Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.black, width: 1),
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(2),
+                child: Image.asset(
+                  'assets/icon/gol.png',
+                  width: 14,
+                  height: 14,
+                ),
+              ),
+            ),
+          );
+        }),
+      // Mostra le icone degli autogol in base al numero di autogol segnati
+      if (numeroAutogol > 0)
+        ...List.generate(numeroAutogol, (index) {
+          return Positioned(
+            top: -4,
+            left:
+                -4 -
+                (index *
+                    10.0), // Sfalsamento orizzontale a sinistra per ogni icona
+            child: Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.black, width: 1),
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(2),
+                child: Image.asset(
+                  'assets/icon/aut.png',
+                  width: 14,
+                  height: 14,
+                ),
+              ),
+            ),
+          );
+        }),
+      // Mostra l'icona della sostituzione se il giocatore è entrato
+      if (hasSostituito)
+        Positioned(
+          bottom: -6,
+          right: -6,
+          child: Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.black, width: 1.5),
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(2),
+              child: Image.asset(
+                'assets/icon/arrow.png',
+                width: 16,
+                height: 16,
+              ),
+            ),
+          ),
+        ),
+    ],
   );
 
   if (globals.admin &&
