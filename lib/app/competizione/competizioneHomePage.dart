@@ -26,6 +26,7 @@ import 'package:ligaduck/services/commonService.dart';
 import 'package:mongo_dart/mongo_dart.dart' as mongo;
 import 'package:provider/provider.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
+import 'package:ligaduck/app/widgets/settingsIcon.dart';
 
 class CompetizioneHomePage extends StatefulWidget {
   final String title;
@@ -190,6 +191,15 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                       ],
                     )
                   : SizedBox(),
+              SettingsIcon(
+                iconColor: Colors.white,
+                onDismiss: () {
+                  setState(() {
+                    _invalidateCacheKey++;
+                  });
+                  _caricaClassifica();
+                },
+              ),
             ],
             flexibleSpace: Container(
               decoration: BoxDecoration(

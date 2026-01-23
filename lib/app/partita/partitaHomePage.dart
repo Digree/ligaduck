@@ -8,12 +8,15 @@ import 'package:ligaduck/app/partita/setInfoSquadraModalPage.dart';
 import 'package:ligaduck/app/service/competizioniProvider.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
+import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/service/partiteProvider.dart';
 import 'package:ligaduck/app/service/squadreProvider.dart';
+import 'package:ligaduck/app/service/giocatoriProvider.dart';
 import 'package:ligaduck/app/squadre/squadrePage.dart';
 import 'package:ligaduck/services/commonService.dart';
 import 'package:provider/provider.dart';
+import 'package:ligaduck/app/widgets/settingsIcon.dart';
 
 class PartitaHomePage extends StatefulWidget {
   final String partitaId;
@@ -39,6 +42,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   bool showFormazioneAway = false; // Controlla se mostrare formazione trasferta
   int selectedDivisa = 1; // Divisa selezionata nel modal
   late final Future<List<Squadra>> _squadreFuture;
+  List<Giocatore> giocatoriHome = []; // Giocatori completi casa
+  List<Giocatore> giocatoriAway = []; // Giocatori completi trasferta
 
   void _handleGiocatoreChanged(
     int team,
@@ -136,6 +141,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             partita = fetchedPartita;
           });
           caricaCompetizione();
+          caricaGiocatori();
         })
         .catchError((error) {
           print('Errore durante il caricamento della partita: $error');
@@ -160,6 +166,31 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     setState(() {
       competizione = result;
     });
+  }
+
+  void caricaGiocatori() async {
+    if (partita == null) return;
+
+    try {
+      final giocatoriProvider = GiocatoriProvider();
+
+      final giocatoriHomeData = await giocatoriProvider.fetchGiocatori(
+        widget.campionato,
+        partita!.idTeamHome,
+      );
+
+      final giocatoriAwayData = await giocatoriProvider.fetchGiocatori(
+        widget.campionato,
+        partita!.idTeamAway,
+      );
+
+      setState(() {
+        giocatoriHome = giocatoriHomeData;
+        giocatoriAway = giocatoriAwayData;
+      });
+    } catch (e) {
+      print('Errore nel caricamento dei giocatori: $e');
+    }
   }
 
   void caricaFormazioniDaSquadre(int selectedFormazione) async {
@@ -346,6 +377,20 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     ],
                   )
                 : SizedBox(),
+            SettingsIcon(
+              iconColor: Colors.white,
+              onDismiss: () async {
+                try {
+                  final fetchedPartita = await fetchPartita();
+                  setState(() {
+                    partita = fetchedPartita;
+                  });
+                  caricaGiocatori();
+                } catch (e) {
+                  print('Errore nel ricaricamento della partita: $e');
+                }
+              },
+            ),
           ],
           flexibleSpace: Container(
             decoration: competizione == null
@@ -2385,6 +2430,50 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   }
 
   Widget buildPanchina(int team) {
+    // Ottieni la panchina e i giocatori completi
+    final panchina = team == 0
+        ? partita!.formazioneHome.panchina
+        : partita!.formazioneAway.panchina;
+
+    final giocatoriCompleti = team == 0 ? giocatoriHome : giocatoriAway;
+
+    // Dividi la panchina per ruoli
+    final portieri = <GiocatoreFormazione>[];
+    final difensori = <GiocatoreFormazione>[];
+    final centrocampisti = <GiocatoreFormazione>[];
+    final attaccanti = <GiocatoreFormazione>[];
+
+    for (var giocatorePanchina in panchina) {
+      final giocatoreCompleto = giocatoriCompleti.firstWhere(
+        (g) => g.id == giocatorePanchina.idGiocatore,
+        orElse: () => Giocatore(
+          id: '',
+          nome: '',
+          numero: 0,
+          eta: 0,
+          ruolo: 'Attaccante',
+          nazione: '',
+          idSquadraAttuale: 0,
+          attivo: true,
+        ),
+      );
+
+      switch (giocatoreCompleto.ruolo) {
+        case 'Portiere':
+          portieri.add(giocatorePanchina);
+          break;
+        case 'Difensore':
+          difensori.add(giocatorePanchina);
+          break;
+        case 'Centrocampista':
+          centrocampisti.add(giocatorePanchina);
+          break;
+        case 'Attaccante':
+          attaccanti.add(giocatorePanchina);
+          break;
+      }
+    }
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -2395,81 +2484,314 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 12),
-          for (var giocatore
-              in (team == 0
-                  ? partita!.formazioneHome.panchina
-                  : partita!.formazioneAway.panchina))
-            if (admin && !partita!.salvata)
-              Dismissible(
-                key: Key(giocatore.idGiocatore),
-                direction: DismissDirection.endToStart,
-                background: Container(
-                  color: Colors.red,
-                  alignment: Alignment.centerRight,
-                  padding: EdgeInsets.only(right: 16),
-                  child: Icon(Icons.delete, color: Colors.white, size: 24),
-                ),
-                confirmDismiss: (direction) async {
-                  return await showDialog<bool>(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: Text('Conferma'),
-                        content: Text(
-                          'Sei sicuro di voler rimuovere dalla panchina questo giocatore?',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(false),
-                            child: Text(
-                              'Annulla',
-                              style: TextStyle(
-                                color: Color(
-                                  competizione!.colori.isNotEmpty
-                                      ? int.parse(
-                                          competizione!.colori[0].replaceFirst(
-                                            '#',
-                                            'FF',
-                                          ),
-                                          radix: 16,
-                                        )
-                                      : 0xFF007AFF,
+
+          // Portieri
+          if (portieri.isNotEmpty) ...[
+            _buildRoleHeader('Portieri'),
+            for (var giocatore in portieri)
+              if (admin && !partita!.salvata)
+                Dismissible(
+                  key: Key(giocatore.idGiocatore),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerRight,
+                    padding: EdgeInsets.only(right: 16),
+                    child: Icon(Icons.delete, color: Colors.white, size: 24),
+                  ),
+                  confirmDismiss: (direction) async {
+                    return await showDialog<bool>(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Text('Conferma'),
+                          content: Text(
+                            'Sei sicuro di voler rimuovere dalla panchina questo giocatore?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: Text(
+                                'Annulla',
+                                style: TextStyle(
+                                  color: Color(
+                                    competizione!.colori.isNotEmpty
+                                        ? int.parse(
+                                            competizione!.colori[0]
+                                                .replaceFirst('#', 'FF'),
+                                            radix: 16,
+                                          )
+                                        : 0xFF007AFF,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(true),
-                            child: Text(
-                              'Cancella',
-                              style: TextStyle(
-                                color: Color(
-                                  competizione!.colori.isNotEmpty
-                                      ? int.parse(
-                                          competizione!.colori[0].replaceFirst(
-                                            '#',
-                                            'FF',
-                                          ),
-                                          radix: 16,
-                                        )
-                                      : 0xFF007AFF,
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              child: Text(
+                                'Cancella',
+                                style: TextStyle(
+                                  color: Color(
+                                    competizione!.colori.isNotEmpty
+                                        ? int.parse(
+                                            competizione!.colori[0]
+                                                .replaceFirst('#', 'FF'),
+                                            radix: 16,
+                                          )
+                                        : 0xFF007AFF,
+                                  ),
                                 ),
                               ),
                             ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                  onDismissed: (direction) {
+                    rimuoviDallaPanchina(team, giocatore);
+                  },
+                  child: rowContent(team, giocatore),
+                )
+              else
+                rowContent(team, giocatore),
+          ],
+
+          // Difensori
+          if (difensori.isNotEmpty) ...[
+            SizedBox(height: 8),
+            _buildRoleHeader('Difensori'),
+            for (var giocatore in difensori)
+              if (admin && !partita!.salvata)
+                Dismissible(
+                  key: Key(giocatore.idGiocatore),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerRight,
+                    padding: EdgeInsets.only(right: 16),
+                    child: Icon(Icons.delete, color: Colors.white, size: 24),
+                  ),
+                  confirmDismiss: (direction) async {
+                    return await showDialog<bool>(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Text('Conferma'),
+                          content: Text(
+                            'Sei sicuro di voler rimuovere dalla panchina questo giocatore?',
                           ),
-                        ],
-                      );
-                    },
-                  );
-                },
-                onDismissed: (direction) {
-                  rimuoviDallaPanchina(team, giocatore);
-                },
-                child: rowContent(team, giocatore),
-              )
-            else
-              rowContent(team, giocatore),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: Text(
+                                'Annulla',
+                                style: TextStyle(
+                                  color: Color(
+                                    competizione!.colori.isNotEmpty
+                                        ? int.parse(
+                                            competizione!.colori[0]
+                                                .replaceFirst('#', 'FF'),
+                                            radix: 16,
+                                          )
+                                        : 0xFF007AFF,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              child: Text(
+                                'Cancella',
+                                style: TextStyle(
+                                  color: Color(
+                                    competizione!.colori.isNotEmpty
+                                        ? int.parse(
+                                            competizione!.colori[0]
+                                                .replaceFirst('#', 'FF'),
+                                            radix: 16,
+                                          )
+                                        : 0xFF007AFF,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                  onDismissed: (direction) {
+                    rimuoviDallaPanchina(team, giocatore);
+                  },
+                  child: rowContent(team, giocatore),
+                )
+              else
+                rowContent(team, giocatore),
+          ],
+
+          // Centrocampisti
+          if (centrocampisti.isNotEmpty) ...[
+            SizedBox(height: 8),
+            _buildRoleHeader('Centrocampisti'),
+            for (var giocatore in centrocampisti)
+              if (admin && !partita!.salvata)
+                Dismissible(
+                  key: Key(giocatore.idGiocatore),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerRight,
+                    padding: EdgeInsets.only(right: 16),
+                    child: Icon(Icons.delete, color: Colors.white, size: 24),
+                  ),
+                  confirmDismiss: (direction) async {
+                    return await showDialog<bool>(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Text('Conferma'),
+                          content: Text(
+                            'Sei sicuro di voler rimuovere dalla panchina questo giocatore?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: Text(
+                                'Annulla',
+                                style: TextStyle(
+                                  color: Color(
+                                    competizione!.colori.isNotEmpty
+                                        ? int.parse(
+                                            competizione!.colori[0]
+                                                .replaceFirst('#', 'FF'),
+                                            radix: 16,
+                                          )
+                                        : 0xFF007AFF,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              child: Text(
+                                'Cancella',
+                                style: TextStyle(
+                                  color: Color(
+                                    competizione!.colori.isNotEmpty
+                                        ? int.parse(
+                                            competizione!.colori[0]
+                                                .replaceFirst('#', 'FF'),
+                                            radix: 16,
+                                          )
+                                        : 0xFF007AFF,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                  onDismissed: (direction) {
+                    rimuoviDallaPanchina(team, giocatore);
+                  },
+                  child: rowContent(team, giocatore),
+                )
+              else
+                rowContent(team, giocatore),
+          ],
+
+          // Attaccanti
+          if (attaccanti.isNotEmpty) ...[
+            SizedBox(height: 8),
+            _buildRoleHeader('Attaccanti'),
+            for (var giocatore in attaccanti)
+              if (admin && !partita!.salvata)
+                Dismissible(
+                  key: Key(giocatore.idGiocatore),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerRight,
+                    padding: EdgeInsets.only(right: 16),
+                    child: Icon(Icons.delete, color: Colors.white, size: 24),
+                  ),
+                  confirmDismiss: (direction) async {
+                    return await showDialog<bool>(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Text('Conferma'),
+                          content: Text(
+                            'Sei sicuro di voler rimuovere dalla panchina questo giocatore?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: Text(
+                                'Annulla',
+                                style: TextStyle(
+                                  color: Color(
+                                    competizione!.colori.isNotEmpty
+                                        ? int.parse(
+                                            competizione!.colori[0]
+                                                .replaceFirst('#', 'FF'),
+                                            radix: 16,
+                                          )
+                                        : 0xFF007AFF,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              child: Text(
+                                'Cancella',
+                                style: TextStyle(
+                                  color: Color(
+                                    competizione!.colori.isNotEmpty
+                                        ? int.parse(
+                                            competizione!.colori[0]
+                                                .replaceFirst('#', 'FF'),
+                                            radix: 16,
+                                          )
+                                        : 0xFF007AFF,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                  onDismissed: (direction) {
+                    rimuoviDallaPanchina(team, giocatore);
+                  },
+                  child: rowContent(team, giocatore),
+                )
+              else
+                rowContent(team, giocatore),
+          ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildRoleHeader(String role) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: 4, horizontal: 0),
+      margin: EdgeInsets.zero,
+      child: Text(
+        role,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 13,
+          color: Colors.grey[700],
+        ),
       ),
     );
   }

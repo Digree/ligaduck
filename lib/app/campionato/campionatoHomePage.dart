@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:ligaduck/app/competizione/competizioneHomePage.dart';
 import 'package:ligaduck/app/config/models/global.dart';
 import 'package:ligaduck/app/homePage.dart';
+import 'package:ligaduck/app/widgets/settingsIcon.dart';
 import 'package:ligaduck/app/models/campionato/campionatoMatchModel.dart';
 import 'package:ligaduck/app/models/campionato/listaSquadreModel.dart';
 import 'package:ligaduck/app/models/competizione/competizioneButtonModel.dart';
@@ -160,6 +161,12 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                 _showAddSquadraModal(context);
               },
             ),
+          SettingsIcon(
+            iconColor: Colors.white,
+            onDismiss: () {
+              setState(() {});
+            },
+          ),
         ],
       ),
       bottomNavigationBar: !isWide

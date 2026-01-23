@@ -14,6 +14,7 @@ import 'package:ligaduck/app/squadre/addFormazionePage.dart';
 import 'package:ligaduck/app/squadre/addGiocatoriPage.dart';
 import 'package:oktoast/oktoast.dart';
 import '../../services/commonService.dart';
+import 'package:ligaduck/app/widgets/settingsIcon.dart';
 
 class SquadrePage extends StatefulWidget {
   final Squadra squadra;
@@ -238,6 +239,13 @@ class _SquadrePageState extends State<SquadrePage> {
                     ],
                   )
                 : SizedBox(),
+            SettingsIcon(
+              iconColor: getIconColor('secondary'),
+              onDismiss: () async {
+                await _loadGiocatori();
+                setState(() {});
+              },
+            ),
           ],
           flexibleSpace: Container(
             decoration: BoxDecoration(
