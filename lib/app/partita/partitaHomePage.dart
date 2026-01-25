@@ -1088,7 +1088,12 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
 
     Widget rowContent = Container(
       width: screenWidth * 1,
-      height: evento.codAzione == 'sos' ? 60 : 40,
+      height:
+          evento.codAzione == 'sos' ||
+              evento.codAzione == 'pun' ||
+              evento.codAzione == 'rig'
+          ? 60
+          : 40,
       decoration: BoxDecoration(
         color: Colors.transparent,
         border: Border(
@@ -1110,6 +1115,17 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             evento.idTeam == partita!.idTeamHome
                 ? Row(
                     children: [
+                      // Minuti
+                      Text(
+                        '${evento.minuto}\'${evento.recupero > 0 ? '+${evento.recupero}\'' : ''}',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      // Icona
                       if (evento.codAzione == 'gol')
                         Image.asset(
                           'assets/icon/gol.png',
@@ -1154,18 +1170,22 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                         )
                       else if (evento.codAzione == 'pun')
                         Image.asset(
-                          'assets/icon/pun.png',
+                          'assets/icon/gol.png',
                           width: 20,
                           height: 20,
                         ),
-                      SizedBox(width: 16),
+                      SizedBox(width: 12),
+                      // Nome
                       if (evento.codAzione == 'sos')
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              '${evento.minuto}\'${evento.recupero > 0 ? '+${evento.recupero}\' ' : ' '}${setNomeTabellino(evento.idGiocatore, partita!.formazioneHome)}',
+                              setNomeTabellino(
+                                evento.idGiocatore,
+                                partita!.formazioneHome,
+                              ),
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.black,
@@ -1181,9 +1201,64 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                             ),
                           ],
                         )
+                      else if (evento.codAzione == 'pun')
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              setNomeTabellino(
+                                evento.idGiocatore,
+                                partita!.formazioneHome,
+                              ),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black,
+                              ),
+                            ),
+                            Text(
+                              'Su punizione',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
+                        )
+                      else if (evento.codAzione == 'rig')
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              setNomeTabellino(
+                                evento.idGiocatore,
+                                partita!.formazioneHome,
+                              ),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black,
+                              ),
+                            ),
+                            Text(
+                              'Su Rigore',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
+                        )
                       else
                         Text(
-                          '${evento.minuto}\'${evento.recupero > 0 ? '+${evento.recupero}\' ' : ' '}${setNomeTabellino(evento.idGiocatore, evento.codAzione == 'aut' ? partita!.formazioneAway : partita!.formazioneHome)}',
+                          setNomeTabellino(
+                            evento.idGiocatore,
+                            evento.codAzione == 'aut'
+                                ? partita!.formazioneAway
+                                : partita!.formazioneHome,
+                          ),
                           style: TextStyle(
                             fontSize: 16,
                             color:
@@ -1199,13 +1274,17 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
+                      // Nome
                       if (evento.codAzione == 'sos')
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              '${evento.minuto}\'${evento.recupero > 0 ? '+${evento.recupero}\' ' : ' '}${setNomeTabellino(evento.idGiocatore, partita!.formazioneAway)}',
+                              setNomeTabellino(
+                                evento.idGiocatore,
+                                partita!.formazioneAway,
+                              ),
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.black,
@@ -1221,9 +1300,64 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                             ),
                           ],
                         )
+                      else if (evento.codAzione == 'pun')
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              setNomeTabellino(
+                                evento.idGiocatore,
+                                partita!.formazioneAway,
+                              ),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black,
+                              ),
+                            ),
+                            Text(
+                              'Su Punizione',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
+                        )
+                      else if (evento.codAzione == 'rig')
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              setNomeTabellino(
+                                evento.idGiocatore,
+                                partita!.formazioneAway,
+                              ),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black,
+                              ),
+                            ),
+                            Text(
+                              'Su Rigore',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
+                        )
                       else
                         Text(
-                          '${evento.minuto}\'${evento.recupero > 0 ? '+${evento.recupero}\' ' : ' '} ${setNomeTabellino(evento.idGiocatore, evento.codAzione == 'aut' ? partita!.formazioneHome : partita!.formazioneAway)}',
+                          setNomeTabellino(
+                            evento.idGiocatore,
+                            evento.codAzione == 'aut'
+                                ? partita!.formazioneHome
+                                : partita!.formazioneAway,
+                          ),
                           style: TextStyle(
                             fontSize: 16,
                             color:
@@ -1234,7 +1368,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                 : Colors.black,
                           ),
                         ),
-                      SizedBox(width: 16),
+                      SizedBox(width: 12),
+                      // Icona
                       if (evento.codAzione == 'gol')
                         Image.asset(
                           'assets/icon/gol.png',
@@ -1279,10 +1414,20 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                         )
                       else if (evento.codAzione == 'pun')
                         Image.asset(
-                          'assets/icon/pun.png',
+                          'assets/icon/gol.png',
                           width: 20,
                           height: 20,
                         ),
+                      SizedBox(width: 12),
+                      // Minuti
+                      Text(
+                        '${evento.minuto}\'${evento.recupero > 0 ? '+${evento.recupero}\'' : ''}',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
+                      ),
                     ],
                   ),
           ],

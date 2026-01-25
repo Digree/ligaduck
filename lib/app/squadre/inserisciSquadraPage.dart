@@ -27,6 +27,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
   final List<Map<String, dynamic>> _trofeiSelezionati = [];
   final List<Competizione> _competizioniSelezionate = [];
   List<Competizione> _competizioniDisponibili = [];
+  List<String> _anniTrofei = [];
 
   final List<String> _campionati = ['Paperi'];
 
@@ -113,7 +114,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
               nome: trofeo['nome'],
               cod: trofeo['cod'],
               quantita: trofeo['quantita'],
-              anni: [],
+              anni: List<String>.from(trofeo['anni'] ?? []),
             ),
           )
           .toList(),
@@ -311,7 +312,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
             children: _trofeiSelezionati.asMap().entries.map((entry) {
               int index = entry.key;
               Map<String, dynamic> trofeo = entry.value;
-              List<int> anni = List<int>.from(trofeo['anni'] ?? []);
+              List<String> anni = List<String>.from(trofeo['anni'] ?? []);
               String anniText = anni.isNotEmpty
                   ? anni.join(', ')
                   : 'Anni non specificati';
@@ -479,16 +480,16 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
                   int? quantita = int.tryParse(quantitaController.text);
                   if (quantita != null && quantita > 0) {
                     // Parsing degli anni
-                    List<int> anni = [];
+                    _anniTrofei = [];
                     if (anniController.text.isNotEmpty) {
                       try {
-                        anni = anniController.text
+                        _anniTrofei = anniController.text
                             .split(',')
-                            .map((anno) => int.parse(anno.trim()))
+                            .map((anno) => anno.trim())
                             .toList();
 
                         // Verifica che il numero di anni corrisponda alla quantità
-                        if (anni.length != quantita) {
+                        if (_anniTrofei.length != quantita) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
@@ -518,7 +519,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
                         'nome': competizione.nome,
                         'cod': competizione.cod,
                         'quantita': quantita,
-                        'anni': anni,
+                        'anni': _anniTrofei,
                       });
                     });
                     Navigator.of(context).pop();
