@@ -500,20 +500,51 @@ class _SquadrePageState extends State<SquadrePage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Flexible(
-            child: Image.asset(
-              'assets/miscellaneous/stadium.png',
-              fit: BoxFit.contain,
-              //fit: BoxFit.cover,
+            child: Stack(
+              children: [
+                // Contorno bianco
+                Image.asset(
+                  'assets/miscellaneous/stadium.png',
+                  fit: BoxFit.contain,
+                  color: Colors.white,
+                  colorBlendMode: BlendMode.srcATop,
+                ),
+                // Immagine originale
+                Padding(
+                  padding: EdgeInsets.all(2),
+                  child: Image.asset(
+                    'assets/miscellaneous/stadium.png',
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ],
             ),
           ),
           Flexible(
-            child: Text(
-              widget.squadra.stadio,
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+            child: Stack(
+              children: [
+                // Contorno bianco per il testo
+                Text(
+                  widget.squadra.stadio,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    foreground: Paint()
+                      ..style = PaintingStyle.stroke
+                      ..strokeWidth = 2
+                      ..color = Colors.white,
+                  ),
+                ),
+                // Testo nero sopra
+                Text(
+                  widget.squadra.stadio,
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -534,30 +565,35 @@ class _SquadrePageState extends State<SquadrePage> {
           //1st Image of Slider
           teamLogo(context, isWide, screenWidth, screenHeight),
           buildSubData(context, isWide, screenWidth, screenHeight),
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  getColor('primary'),
-                  getColor('secondary'),
-                  widget.squadra.colori.length > 2
-                      ? getColor('tertiary')
-                      : getColor('secondary'),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(32),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 8,
-                  offset: Offset(0, 4),
+          Padding(
+            padding: EdgeInsets.only(left: 16, top: 16, right: 16),
+            child: Container(
+              width: isWide ? screenWidth * 0.14 : screenWidth * 0.9,
+              height: isWide ? 250 : screenWidth * 0.4,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    getColor('primary'),
+                    getColor('secondary'),
+                    widget.squadra.colori.length > 2
+                        ? getColor('tertiary')
+                        : getColor('secondary'),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-              ],
+                borderRadius: BorderRadius.circular(32),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Center(child: moreInfo(context, isWide)),
             ),
-            clipBehavior: Clip.antiAlias,
-            child: Center(child: moreInfo(context, isWide)),
           ),
         ],
 
@@ -986,9 +1022,8 @@ class _SquadrePageState extends State<SquadrePage> {
                     Image.asset(
                       'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_1.png',
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        decoration: BoxDecoration(color: Colors.grey[300]),
-                      ),
+                      errorBuilder: (context, error, stackTrace) =>
+                          _buildJerseyPlaceholder(giocatore.numero),
                     ),
                     Text(
                       '${giocatore.numero}',
@@ -1696,4 +1731,155 @@ class _SquadrePageState extends State<SquadrePage> {
       ],
     );
   }
+
+  Widget _buildJerseyPlaceholder(int numero) {
+    List<String> colori = widget.squadra.colori;
+
+    // Crea la lista dei colori usando getColor
+    List<Color> colorList = [];
+    final Map<String, Color> colorMap = {
+      'rosso': Colors.red,
+      'verde': Colors.green,
+      'blu': Colors.blueAccent,
+      'giallo': Colors.yellow[600]!,
+      'arancione': Colors.orange[900]!,
+      'viola': Colors.purple[800]!,
+      'nero': Colors.black,
+      'bianco': Colors.white,
+      'grigio': Colors.grey,
+      'fucsia': Colors.pink[700]!,
+      'ciano': Colors.lightBlue[300]!,
+      'marrone': Colors.brown[900]!,
+    };
+
+    for (var c in colori) {
+      colorList.add(colorMap[c.toLowerCase()] ?? Colors.grey);
+    }
+
+    return SizedBox(
+      width: 35,
+      height: 45,
+      child: Stack(
+        children: [
+          // Bordo nero
+          ClipPath(
+            clipper: JerseyClipper(),
+            child: Container(decoration: BoxDecoration(color: Colors.black)),
+          ),
+          // Maglia con colori (più piccola per mostrare il bordo)
+          Padding(
+            padding: EdgeInsets.all(1.5),
+            child: ClipPath(
+              clipper: JerseyClipper(),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: colorList.length > 1
+                      ? LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: colorList,
+                        )
+                      : null,
+                  color: colorList.length == 1 ? colorList[0] : null,
+                ),
+                child: Center(
+                  child: Text(
+                    '$numero',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                      shadows: [
+                        Shadow(
+                          offset: Offset(-1.0, -1.0),
+                          blurRadius: 1.0,
+                          color: Colors.black,
+                        ),
+                        Shadow(
+                          offset: Offset(1.0, -1.0),
+                          blurRadius: 1.0,
+                          color: Colors.black,
+                        ),
+                        Shadow(
+                          offset: Offset(1.0, 1.0),
+                          blurRadius: 1.0,
+                          color: Colors.black,
+                        ),
+                        Shadow(
+                          offset: Offset(-1.0, 1.0),
+                          blurRadius: 1.0,
+                          color: Colors.black,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class JerseyClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    Path path = Path();
+
+    double width = size.width;
+    double height = size.height;
+
+    // Inizia dall'angolo in alto a sinistra (manica)
+    path.moveTo(0, height * 0.15);
+
+    // Curva della manica sinistra
+    path.quadraticBezierTo(
+      width * 0.05,
+      height * 0.1,
+      width * 0.15,
+      height * 0.05,
+    );
+
+    // Spalla sinistra verso il collo
+    path.lineTo(width * 0.35, 0);
+
+    // Piccola curva per il collo
+    path.quadraticBezierTo(width * 0.5, height * 0.02, width * 0.65, 0);
+
+    // Spalla destra
+    path.lineTo(width * 0.85, height * 0.05);
+
+    // Curva della manica destra
+    path.quadraticBezierTo(width * 0.95, height * 0.1, width, height * 0.15);
+
+    // Lato destro (manica corta)
+    path.lineTo(width, height * 0.3);
+    path.quadraticBezierTo(
+      width * 0.95,
+      height * 0.32,
+      width * 0.9,
+      height * 0.35,
+    );
+
+    // Corpo destro
+    path.lineTo(width * 0.9, height);
+
+    // Fondo
+    path.lineTo(width * 0.1, height);
+
+    // Corpo sinistro
+    path.lineTo(width * 0.1, height * 0.35);
+
+    // Lato sinistro (manica corta)
+    path.quadraticBezierTo(width * 0.05, height * 0.32, 0, height * 0.3);
+
+    path.close();
+
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }

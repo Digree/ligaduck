@@ -1598,10 +1598,31 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Image.asset(
-                      'assets/squadre/${partita!.codHome}.png',
-                      height: 20,
-                      width: 20,
+                    FutureBuilder<Squadra>(
+                      future: _squadreFuture.then(
+                        (squadre) => squadre.firstWhere(
+                          (s) => s.id == partita!.idTeamHome,
+                        ),
+                      ),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return Icon(
+                            Icons.shield,
+                            size: 20,
+                            color: Colors.grey,
+                          );
+                        }
+                        return Image.asset(
+                          'assets/squadre/${partita!.codHome}.png',
+                          height: 20,
+                          width: 20,
+                          errorBuilder: (context, error, stackTrace) =>
+                              _buildTeamLogoPlaceholder(
+                                snapshot.data!,
+                                size: 20,
+                              ),
+                        );
+                      },
                     ),
                     SizedBox(width: 8),
                     Flexible(
@@ -1630,10 +1651,31 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Image.asset(
-                      'assets/squadre/${partita!.codAway}.png',
-                      height: 20,
-                      width: 20,
+                    FutureBuilder<Squadra>(
+                      future: _squadreFuture.then(
+                        (squadre) => squadre.firstWhere(
+                          (s) => s.id == partita!.idTeamAway,
+                        ),
+                      ),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return Icon(
+                            Icons.shield,
+                            size: 20,
+                            color: Colors.grey,
+                          );
+                        }
+                        return Image.asset(
+                          'assets/squadre/${partita!.codAway}.png',
+                          height: 20,
+                          width: 20,
+                          errorBuilder: (context, error, stackTrace) =>
+                              _buildTeamLogoPlaceholder(
+                                snapshot.data!,
+                                size: 20,
+                              ),
+                        );
+                      },
                     ),
                     SizedBox(width: 8),
                     Flexible(
@@ -3657,6 +3699,33 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
         );
       }
     });
+  }
+
+  Widget _buildTeamLogoPlaceholder(Squadra squadra, {double size = 20}) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.grey.shade300, width: 1),
+      ),
+      child: ShaderMask(
+        shaderCallback: (bounds) {
+          return LinearGradient(
+            colors: [
+              CommonService.getColor('primary', squadra),
+              CommonService.getColor('secondary', squadra),
+              if (squadra.colori.length > 2)
+                CommonService.getColor('tertiary', squadra),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ).createShader(bounds);
+        },
+        child: Icon(Icons.shield, size: size * 0.625, color: Colors.white),
+      ),
+    );
   }
 }
 

@@ -837,6 +837,19 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
   }
 
   Future<void> _pickAndProcessCsvFile() async {
+    // Mostra loader
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(getColor("primary")),
+          ),
+        );
+      },
+    );
+
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -864,12 +877,15 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
           final file = File(result.files.single.path!);
           await _processCsvFile(file);
         } else {
+          Navigator.pop(context); // Chiudi loader
           _showMessage('Nessun file selezionato');
         }
       } else {
+        Navigator.pop(context); // Chiudi loader
         _showMessage('Nessun file selezionato');
       }
     } catch (e) {
+      Navigator.pop(context); // Chiudi loader
       _showMessage('Errore nella selezione del file: $e');
     }
   }
@@ -925,14 +941,18 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
       try {
         await addGiocatori(giocatori);
       } catch (e) {
+        Navigator.pop(context); // Chiudi loader
         _showMessage('Errore nell\'aggiunta dei giocatori: $e');
+        return;
       }
 
+      Navigator.pop(context); // Chiudi loader
       _showMessage('File CSV caricato con successo: ${dataRows.length} righe');
 
       setState(() {});
       Navigator.pop(context, true); // Passa true per indicare che serve refresh
     } catch (e) {
+      Navigator.pop(context); // Chiudi loader
       _showMessage('Errore nell\'elaborazione del CSV: $e');
     }
   }
@@ -1033,9 +1053,25 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
   }
 
   Future<void> addGiocatore(Giocatore giocatore) async {
+    // Mostra loader
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(getColor("primary")),
+          ),
+        );
+      },
+    );
+
     try {
       final provider = GiocatoriProvider();
       bool success = await provider.aggiungiGiocatore(giocatore);
+
+      Navigator.pop(context); // Chiudi loader
+
       if (success) {
         setState(() {
           giocatori.add(giocatore);
@@ -1054,6 +1090,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
         _showMessage('Errore nell\'aggiunta del giocatore');
       }
     } catch (e) {
+      Navigator.pop(context); // Chiudi loader
       _showMessage('Errore nell\'aggiunta del giocatore: $e');
     }
   }
