@@ -340,51 +340,56 @@ Widget buildGiocatore(
   Widget giocatoreWidget = Stack(
     clipBehavior: Clip.none,
     children: [
-      Container(
+      SizedBox(
         width: 40,
         height: 40,
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage(
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Image.asset(
               model.divisa != null
                   ? 'assets/divise/divise_${model.campionato}/${model.codSquadra}_${model.divisa}.png'
                   : 'assets/divise/divise_${model.campionato}/${model.codSquadra}_1.png',
+              width: 40,
+              height: 40,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) =>
+                  _buildJerseyPlaceholderFormazione(
+                    int.tryParse(numeroMaglietta) ?? 0,
+                    model.coloriSquadra ?? [],
+                  ),
             ),
-            fit: BoxFit.cover,
-          ),
-          color: Colors.transparent,
-        ),
-        child: Center(
-          child: Text(
-            numeroMaglietta,
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
-              fontSize: 16,
-              shadows: [
-                Shadow(
-                  offset: Offset(-1.0, -1.0),
-                  blurRadius: 0.0,
-                  color: Colors.black,
-                ),
-                Shadow(
-                  offset: Offset(1.0, -1.0),
-                  blurRadius: 0.0,
-                  color: Colors.black,
-                ),
-                Shadow(
-                  offset: Offset(1.0, 1.0),
-                  blurRadius: 0.0,
-                  color: Colors.black,
-                ),
-                Shadow(
-                  offset: Offset(-1.0, 1.0),
-                  blurRadius: 0.0,
-                  color: Colors.black,
-                ),
-              ],
+            Text(
+              numeroMaglietta,
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 16,
+                shadows: [
+                  Shadow(
+                    offset: Offset(-1.0, -1.0),
+                    blurRadius: 0.0,
+                    color: Colors.black,
+                  ),
+                  Shadow(
+                    offset: Offset(1.0, -1.0),
+                    blurRadius: 0.0,
+                    color: Colors.black,
+                  ),
+                  Shadow(
+                    offset: Offset(1.0, 1.0),
+                    blurRadius: 0.0,
+                    color: Colors.black,
+                  ),
+                  Shadow(
+                    offset: Offset(-1.0, 1.0),
+                    blurRadius: 0.0,
+                    color: Colors.black,
+                  ),
+                ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
       // Mostra le icone del gol in base al numero di gol segnati
@@ -628,4 +633,84 @@ String _formatPlayerName(String nomeCompleto) {
     }
   }
   return nomeDecodificato;
+}
+
+Widget _buildJerseyPlaceholderFormazione(int numero, List<String> colori) {
+  List<Color> colorList = [];
+  final Map<String, Color> colorMap = {
+    'rosso': Colors.red,
+    'verde': Colors.green,
+    'blu': Colors.blueAccent,
+    'giallo': Colors.yellow[600]!,
+    'arancione': Colors.orange[900]!,
+    'viola': Colors.purple[800]!,
+    'nero': Colors.black,
+    'bianco': Colors.white,
+    'grigio': Colors.grey,
+    'fucsia': Colors.pink[700]!,
+    'ciano': Colors.lightBlue[300]!,
+    'marrone': Colors.brown[900]!,
+  };
+
+  for (var c in colori) {
+    colorList.add(colorMap[c.toLowerCase()] ?? Colors.grey);
+  }
+
+  return SizedBox(
+    width: 40,
+    height: 40,
+    child: Stack(
+      children: [
+        ClipPath(
+          clipper: JerseyClipperFormazione(),
+          child: Container(decoration: BoxDecoration(color: Colors.black)),
+        ),
+        Padding(
+          padding: EdgeInsets.all(1.5),
+          child: ClipPath(
+            clipper: JerseyClipperFormazione(),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: colorList.length > 1
+                    ? LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: colorList,
+                      )
+                    : null,
+                color: colorList.length == 1 ? colorList[0] : null,
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class JerseyClipperFormazione extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    Path path = Path();
+    double width = size.width;
+    double height = size.height;
+    path.moveTo(0, height * 0.15);
+    path.quadraticBezierTo(
+      width * 0.05,
+      height * 0.1,
+      width * 0.15,
+      height * 0.05,
+    );
+    path.lineTo(width * 0.35, 0);
+    path.quadraticBezierTo(width * 0.5, height * 0.02, width * 0.65, 0);
+    path.lineTo(width * 0.85, height * 0.05);
+    path.quadraticBezierTo(width * 0.95, height * 0.1, width, height * 0.15);
+    path.lineTo(width, height);
+    path.lineTo(0, height);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }

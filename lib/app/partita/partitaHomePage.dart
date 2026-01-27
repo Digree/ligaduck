@@ -2480,51 +2480,56 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
         children: [
           Padding(
             padding: EdgeInsets.only(left: 20),
-            child: Container(
+            child: SizedBox(
               width: 40,
               height: 40,
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage(
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Image.asset(
                     team == 0
                         ? 'assets/divise/divise_${widget.campionato}/${partita!.codHome}_${partita!.divisaHome}.png'
                         : 'assets/divise/divise_${widget.campionato}/${partita!.codAway}_${partita!.divisaAway}.png',
+                    width: 40,
+                    height: 40,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        _buildJerseyPlaceholderWithTeamColors(
+                          giocatore.pos,
+                          team == 0 ? partita!.codHome : partita!.codAway,
+                        ),
                   ),
-                  fit: BoxFit.cover,
-                ),
-                color: Colors.transparent,
-              ),
-              child: Center(
-                child: Text(
-                  '${giocatore.pos}',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
-                    shadows: [
-                      Shadow(
-                        offset: Offset(-1.0, -1.0),
-                        blurRadius: 0.0,
-                        color: Colors.black,
-                      ),
-                      Shadow(
-                        offset: Offset(1.0, -1.0),
-                        blurRadius: 0.0,
-                        color: Colors.black,
-                      ),
-                      Shadow(
-                        offset: Offset(1.0, 1.0),
-                        blurRadius: 0.0,
-                        color: Colors.black,
-                      ),
-                      Shadow(
-                        offset: Offset(-1.0, 1.0),
-                        blurRadius: 0.0,
-                        color: Colors.black,
-                      ),
-                    ],
+                  Text(
+                    '${giocatore.pos}',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16,
+                      shadows: [
+                        Shadow(
+                          offset: Offset(-1.0, -1.0),
+                          blurRadius: 0.0,
+                          color: Colors.black,
+                        ),
+                        Shadow(
+                          offset: Offset(1.0, -1.0),
+                          blurRadius: 0.0,
+                          color: Colors.black,
+                        ),
+                        Shadow(
+                          offset: Offset(1.0, 1.0),
+                          blurRadius: 0.0,
+                          color: Colors.black,
+                        ),
+                        Shadow(
+                          offset: Offset(-1.0, 1.0),
+                          blurRadius: 0.0,
+                          color: Colors.black,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
           ),
@@ -3051,51 +3056,58 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                 children: [
                   Padding(
                     padding: EdgeInsets.only(left: 20),
-                    child: Container(
+                    child: SizedBox(
                       width: 40,
                       height: 40,
-                      decoration: BoxDecoration(
-                        image: DecorationImage(
-                          image: AssetImage(
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Image.asset(
                             team == 0
                                 ? 'assets/divise/divise_${widget.campionato}/${partita!.codHome}_${partita!.divisaHome}.png'
                                 : 'assets/divise/divise_${widget.campionato}/${partita!.codAway}_${partita!.divisaAway}.png',
+                            width: 40,
+                            height: 40,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                _buildJerseyPlaceholderWithTeamColors(
+                                  giocatore.pos,
+                                  team == 0
+                                      ? partita!.codHome
+                                      : partita!.codAway,
+                                ),
                           ),
-                          fit: BoxFit.cover,
-                        ),
-                        color: Colors.transparent,
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${giocatore.pos}',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 16,
-                            shadows: [
-                              Shadow(
-                                offset: Offset(-1.0, -1.0),
-                                blurRadius: 0.0,
-                                color: Colors.black,
-                              ),
-                              Shadow(
-                                offset: Offset(1.0, -1.0),
-                                blurRadius: 0.0,
-                                color: Colors.black,
-                              ),
-                              Shadow(
-                                offset: Offset(1.0, 1.0),
-                                blurRadius: 0.0,
-                                color: Colors.black,
-                              ),
-                              Shadow(
-                                offset: Offset(-1.0, 1.0),
-                                blurRadius: 0.0,
-                                color: Colors.black,
-                              ),
-                            ],
+                          Text(
+                            '${giocatore.pos}',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 16,
+                              shadows: [
+                                Shadow(
+                                  offset: Offset(-1.0, -1.0),
+                                  blurRadius: 0.0,
+                                  color: Colors.black,
+                                ),
+                                Shadow(
+                                  offset: Offset(1.0, -1.0),
+                                  blurRadius: 0.0,
+                                  color: Colors.black,
+                                ),
+                                Shadow(
+                                  offset: Offset(1.0, 1.0),
+                                  blurRadius: 0.0,
+                                  color: Colors.black,
+                                ),
+                                Shadow(
+                                  offset: Offset(-1.0, 1.0),
+                                  blurRadius: 0.0,
+                                  color: Colors.black,
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ),
                   ),
@@ -3254,6 +3266,81 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       partita!.idGiornata,
     );
     return competizione;
+  }
+
+  Widget _buildJerseyPlaceholderWithTeamColors(int numero, String codSquadra) {
+    return FutureBuilder<Squadra>(
+      future: () async {
+        final provider = Provider.of<SquadreProvider>(context, listen: false);
+        var squadre = await provider.fetchSquadre(widget.campionato);
+        for (var squadra in squadre) {
+          if (squadra.id == codSquadra) {
+            return squadra;
+          }
+        }
+        throw Exception('Squadra non trovata');
+      }(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return Container(width: 40, height: 40, color: Colors.grey[600]);
+        }
+        var squadra = snapshot.data!;
+
+        List<Color> colorList = [];
+        final Map<String, Color> colorMap = {
+          'rosso': Colors.red,
+          'verde': Colors.green,
+          'blu': Colors.blueAccent,
+          'giallo': Colors.yellow[600]!,
+          'arancione': Colors.orange[900]!,
+          'viola': Colors.purple[800]!,
+          'nero': Colors.black,
+          'bianco': Colors.white,
+          'grigio': Colors.grey,
+          'fucsia': Colors.pink[700]!,
+          'ciano': Colors.lightBlue[300]!,
+          'marrone': Colors.brown[900]!,
+        };
+
+        for (var c in squadra.colori) {
+          colorList.add(colorMap[c.toLowerCase()] ?? Colors.grey);
+        }
+
+        return SizedBox(
+          width: 40,
+          height: 40,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              ClipPath(
+                clipper: JerseyClipper(),
+                child: Container(color: Colors.black),
+              ),
+              Padding(
+                padding: EdgeInsets.all(1.5),
+                child: ClipPath(
+                  clipper: JerseyClipper(),
+                  child: colorList.length > 1
+                      ? ShaderMask(
+                          shaderCallback: (bounds) => LinearGradient(
+                            colors: colorList,
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ).createShader(bounds),
+                          child: Container(color: Colors.white),
+                        )
+                      : Container(
+                          color: colorList.isNotEmpty
+                              ? colorList[0]
+                              : Colors.grey,
+                        ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future<Squadra> getSquadra(SquadreProvider provider, int idSquadra) async {
@@ -3764,4 +3851,27 @@ class DashedBorderPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
+}
+
+class JerseyClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    Path path = Path();
+    path.moveTo(0, size.height * 0.2);
+    path.quadraticBezierTo(
+      size.width * 0.15,
+      0,
+      size.width * 0.3,
+      size.height * 0.15,
+    );
+    path.lineTo(size.width * 0.7, size.height * 0.15);
+    path.quadraticBezierTo(size.width * 0.85, 0, size.width, size.height * 0.2);
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
