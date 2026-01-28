@@ -636,6 +636,7 @@ String _formatPlayerName(String nomeCompleto) {
 }
 
 Widget _buildJerseyPlaceholderFormazione(int numero, List<String> colori) {
+  print('Placeholder chiamato con colori: $colori per numero: $numero');
   List<Color> colorList = [];
   final Map<String, Color> colorMap = {
     'rosso': Colors.red,
@@ -656,31 +657,34 @@ Widget _buildJerseyPlaceholderFormazione(int numero, List<String> colori) {
     colorList.add(colorMap[c.toLowerCase()] ?? Colors.grey);
   }
 
+  print('ColorList generata: $colorList');
+
   return SizedBox(
     width: 40,
     height: 40,
     child: Stack(
+      alignment: Alignment.center,
       children: [
         ClipPath(
           clipper: JerseyClipperFormazione(),
-          child: Container(decoration: BoxDecoration(color: Colors.black)),
+          child: Container(color: Colors.black),
         ),
         Padding(
           padding: EdgeInsets.all(1.5),
           child: ClipPath(
             clipper: JerseyClipperFormazione(),
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: colorList.length > 1
-                    ? LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: colorList,
-                      )
-                    : null,
-                color: colorList.length == 1 ? colorList[0] : null,
-              ),
-            ),
+            child: colorList.length > 1
+                ? ShaderMask(
+                    shaderCallback: (bounds) => LinearGradient(
+                      colors: colorList,
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ).createShader(bounds),
+                    child: Container(color: Colors.white),
+                  )
+                : Container(
+                    color: colorList.isNotEmpty ? colorList[0] : Colors.grey,
+                  ),
           ),
         ),
       ],
@@ -694,20 +698,53 @@ class JerseyClipperFormazione extends CustomClipper<Path> {
     Path path = Path();
     double width = size.width;
     double height = size.height;
+
+    // Inizia dall'angolo in alto a sinistra (manica)
     path.moveTo(0, height * 0.15);
+
+    // Curva della manica sinistra
     path.quadraticBezierTo(
       width * 0.05,
       height * 0.1,
       width * 0.15,
       height * 0.05,
     );
+
+    // Spalla sinistra verso il collo
     path.lineTo(width * 0.35, 0);
+
+    // Piccola curva per il collo
     path.quadraticBezierTo(width * 0.5, height * 0.02, width * 0.65, 0);
+
+    // Spalla destra
     path.lineTo(width * 0.85, height * 0.05);
+
+    // Curva della manica destra
     path.quadraticBezierTo(width * 0.95, height * 0.1, width, height * 0.15);
-    path.lineTo(width, height);
-    path.lineTo(0, height);
+
+    // Lato destro (manica corta)
+    path.lineTo(width, height * 0.3);
+    path.quadraticBezierTo(
+      width * 0.95,
+      height * 0.32,
+      width * 0.9,
+      height * 0.35,
+    );
+
+    // Corpo destro
+    path.lineTo(width * 0.9, height);
+
+    // Fondo
+    path.lineTo(width * 0.1, height);
+
+    // Corpo sinistro
+    path.lineTo(width * 0.1, height * 0.35);
+
+    // Lato sinistro (manica corta)
+    path.quadraticBezierTo(width * 0.05, height * 0.32, 0, height * 0.3);
+
     path.close();
+
     return path;
   }
 

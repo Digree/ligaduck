@@ -2147,53 +2147,69 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
               child:
                   partita!.formazioneAway.titolari.isNotEmpty ||
                       partita!.formazioneHome.titolari.isNotEmpty
-                  ? buildPartitaFormazione(
-                      team == 0
-                          ? PartitaFormazioneModel(
-                              codSquadra: partita!.codHome,
-                              formazione: partita!.formazioneHome.titolari,
-                              modulo: partita!.formazioneHome.modulo,
-                              campionato: widget.campionato,
-                              divisa: team == 0
-                                  ? partita!.divisaHome
-                                  : partita!.divisaAway,
-                              coloriSquadra:
-                                  null, // TODO: Aggiungere colori squadra
-                              giocatoriDisponibili:
-                                  partita!.formazioneHome.panchina,
-                              giocatoriNonDisponibili:
-                                  partita!.formazioneHome.indisponibili,
-                              marcatori: marcatoriHome,
-                              autogol: autogolHome,
-                              sostituzioni: sostituzioniHome,
-                              espulsi: espulsiHome,
-                              onGiocatoreChanged: (pos, nuovoGiocatore) {
-                                _handleGiocatoreChanged(0, pos, nuovoGiocatore);
-                              },
-                            )
-                          : PartitaFormazioneModel(
-                              codSquadra: partita!.codAway,
-                              formazione: partita!.formazioneAway.titolari,
-                              modulo: partita!.formazioneAway.modulo,
-                              campionato: widget.campionato,
-                              divisa: team == 0
-                                  ? partita!.divisaHome
-                                  : partita!.divisaAway,
-                              coloriSquadra:
-                                  null, // TODO: Aggiungere colori squadra
-                              giocatoriDisponibili:
-                                  partita!.formazioneAway.panchina,
-                              giocatoriNonDisponibili:
-                                  partita!.formazioneAway.indisponibili,
-                              marcatori: marcatoriAway,
-                              autogol: autogolAway,
-                              sostituzioni: sostituzioniAway,
-                              espulsi: espulsiAway,
-                              onGiocatoreChanged: (pos, nuovoGiocatore) {
-                                _handleGiocatoreChanged(1, pos, nuovoGiocatore);
-                              },
-                            ),
-                      context,
+                  ? FutureBuilder<List<String>>(
+                      future: getColoriSquadra(
+                        team == 0 ? partita!.codHome : partita!.codAway,
+                      ),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return Center(child: CircularProgressIndicator());
+                        }
+                        return buildPartitaFormazione(
+                          team == 0
+                              ? PartitaFormazioneModel(
+                                  codSquadra: partita!.codHome,
+                                  formazione: partita!.formazioneHome.titolari,
+                                  modulo: partita!.formazioneHome.modulo,
+                                  campionato: widget.campionato,
+                                  divisa: team == 0
+                                      ? partita!.divisaHome
+                                      : partita!.divisaAway,
+                                  coloriSquadra: snapshot.data!,
+                                  giocatoriDisponibili:
+                                      partita!.formazioneHome.panchina,
+                                  giocatoriNonDisponibili:
+                                      partita!.formazioneHome.indisponibili,
+                                  marcatori: marcatoriHome,
+                                  autogol: autogolHome,
+                                  sostituzioni: sostituzioniHome,
+                                  espulsi: espulsiHome,
+                                  onGiocatoreChanged: (pos, nuovoGiocatore) {
+                                    _handleGiocatoreChanged(
+                                      0,
+                                      pos,
+                                      nuovoGiocatore,
+                                    );
+                                  },
+                                )
+                              : PartitaFormazioneModel(
+                                  codSquadra: partita!.codAway,
+                                  formazione: partita!.formazioneAway.titolari,
+                                  modulo: partita!.formazioneAway.modulo,
+                                  campionato: widget.campionato,
+                                  divisa: team == 0
+                                      ? partita!.divisaHome
+                                      : partita!.divisaAway,
+                                  coloriSquadra: snapshot.data!,
+                                  giocatoriDisponibili:
+                                      partita!.formazioneAway.panchina,
+                                  giocatoriNonDisponibili:
+                                      partita!.formazioneAway.indisponibili,
+                                  marcatori: marcatoriAway,
+                                  autogol: autogolAway,
+                                  sostituzioni: sostituzioniAway,
+                                  espulsi: espulsiAway,
+                                  onGiocatoreChanged: (pos, nuovoGiocatore) {
+                                    _handleGiocatoreChanged(
+                                      1,
+                                      pos,
+                                      nuovoGiocatore,
+                                    );
+                                  },
+                                ),
+                          context,
+                        );
+                      },
                     )
                   : Center(),
             ),
@@ -2317,53 +2333,61 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
           child:
               partita!.formazioneAway.titolari.isNotEmpty ||
                   partita!.formazioneHome.titolari.isNotEmpty
-              ? buildPartitaFormazione(
-                  team == 0
-                      ? PartitaFormazioneModel(
-                          codSquadra: partita!.codHome,
-                          formazione: partita!.formazioneHome.titolari,
-                          modulo: partita!.formazioneHome.modulo,
-                          campionato: widget.campionato,
-                          divisa: team == 0
-                              ? partita!.divisaHome
-                              : partita!.divisaAway,
-                          coloriSquadra:
-                              null, // TODO: Aggiungere colori squadra
-                          giocatoriDisponibili:
-                              partita!.formazioneHome.panchina,
-                          giocatoriNonDisponibili:
-                              partita!.formazioneHome.indisponibili,
-                          marcatori: marcatoriHome,
-                          autogol: autogolHome,
-                          sostituzioni: sostituzioniHome,
-                          espulsi: espulsiHome,
-                          onGiocatoreChanged: (pos, nuovoGiocatore) {
-                            _handleGiocatoreChanged(0, pos, nuovoGiocatore);
-                          },
-                        )
-                      : PartitaFormazioneModel(
-                          codSquadra: partita!.codAway,
-                          formazione: partita!.formazioneAway.titolari,
-                          modulo: partita!.formazioneAway.modulo,
-                          campionato: widget.campionato,
-                          divisa: team == 0
-                              ? partita!.divisaHome
-                              : partita!.divisaAway,
-                          coloriSquadra:
-                              null, // TODO: Aggiungere colori squadra
-                          giocatoriDisponibili:
-                              partita!.formazioneAway.panchina,
-                          giocatoriNonDisponibili:
-                              partita!.formazioneAway.indisponibili,
-                          marcatori: marcatoriAway,
-                          autogol: autogolAway,
-                          sostituzioni: sostituzioniAway,
-                          espulsi: espulsiAway,
-                          onGiocatoreChanged: (pos, nuovoGiocatore) {
-                            _handleGiocatoreChanged(1, pos, nuovoGiocatore);
-                          },
-                        ),
-                  context,
+              ? FutureBuilder<List<String>>(
+                  future: getColoriSquadra(
+                    team == 0 ? partita!.codHome : partita!.codAway,
+                  ),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return Center(child: CircularProgressIndicator());
+                    }
+                    return buildPartitaFormazione(
+                      team == 0
+                          ? PartitaFormazioneModel(
+                              codSquadra: partita!.codHome,
+                              formazione: partita!.formazioneHome.titolari,
+                              modulo: partita!.formazioneHome.modulo,
+                              campionato: widget.campionato,
+                              divisa: team == 0
+                                  ? partita!.divisaHome
+                                  : partita!.divisaAway,
+                              coloriSquadra: snapshot.data!,
+                              giocatoriDisponibili:
+                                  partita!.formazioneHome.panchina,
+                              giocatoriNonDisponibili:
+                                  partita!.formazioneHome.indisponibili,
+                              marcatori: marcatoriHome,
+                              autogol: autogolHome,
+                              sostituzioni: sostituzioniHome,
+                              espulsi: espulsiHome,
+                              onGiocatoreChanged: (pos, nuovoGiocatore) {
+                                _handleGiocatoreChanged(0, pos, nuovoGiocatore);
+                              },
+                            )
+                          : PartitaFormazioneModel(
+                              codSquadra: partita!.codAway,
+                              formazione: partita!.formazioneAway.titolari,
+                              modulo: partita!.formazioneAway.modulo,
+                              campionato: widget.campionato,
+                              divisa: team == 0
+                                  ? partita!.divisaHome
+                                  : partita!.divisaAway,
+                              coloriSquadra: snapshot.data!,
+                              giocatoriDisponibili:
+                                  partita!.formazioneAway.panchina,
+                              giocatoriNonDisponibili:
+                                  partita!.formazioneAway.indisponibili,
+                              marcatori: marcatoriAway,
+                              autogol: autogolAway,
+                              sostituzioni: sostituzioniAway,
+                              espulsi: espulsiAway,
+                              onGiocatoreChanged: (pos, nuovoGiocatore) {
+                                _handleGiocatoreChanged(1, pos, nuovoGiocatore);
+                              },
+                            ),
+                      context,
+                    );
+                  },
                 )
               : Center(),
         ),
@@ -3270,40 +3294,39 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
 
   Widget _buildJerseyPlaceholderWithTeamColors(int numero, String codSquadra) {
     return FutureBuilder<Squadra>(
-      future: () async {
-        final provider = Provider.of<SquadreProvider>(context, listen: false);
-        var squadre = await provider.fetchSquadre(widget.campionato);
+      future: _squadreFuture.then((squadre) {
         for (var squadra in squadre) {
-          if (squadra.id == codSquadra) {
+          if (squadra.cod == codSquadra) {
             return squadra;
           }
         }
         throw Exception('Squadra non trovata');
-      }(),
+      }),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return Container(width: 40, height: 40, color: Colors.grey[600]);
-        }
-        var squadra = snapshot.data!;
+        List<Color> colorList = [Colors.grey[600]!];
 
-        List<Color> colorList = [];
-        final Map<String, Color> colorMap = {
-          'rosso': Colors.red,
-          'verde': Colors.green,
-          'blu': Colors.blueAccent,
-          'giallo': Colors.yellow[600]!,
-          'arancione': Colors.orange[900]!,
-          'viola': Colors.purple[800]!,
-          'nero': Colors.black,
-          'bianco': Colors.white,
-          'grigio': Colors.grey,
-          'fucsia': Colors.pink[700]!,
-          'ciano': Colors.lightBlue[300]!,
-          'marrone': Colors.brown[900]!,
-        };
+        if (snapshot.hasData) {
+          var squadra = snapshot.data!;
+          colorList = [];
 
-        for (var c in squadra.colori) {
-          colorList.add(colorMap[c.toLowerCase()] ?? Colors.grey);
+          final Map<String, Color> colorMap = {
+            'rosso': Colors.red,
+            'verde': Colors.green,
+            'blu': Colors.blueAccent,
+            'giallo': Colors.yellow[600]!,
+            'arancione': Colors.orange[900]!,
+            'viola': Colors.purple[800]!,
+            'nero': Colors.black,
+            'bianco': Colors.white,
+            'grigio': Colors.grey,
+            'fucsia': Colors.pink[700]!,
+            'ciano': Colors.lightBlue[300]!,
+            'marrone': Colors.brown[900]!,
+          };
+
+          for (var c in squadra.colori) {
+            colorList.add(colorMap[c.toLowerCase()] ?? Colors.grey);
+          }
         }
 
         return SizedBox(
@@ -3329,11 +3352,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                           ).createShader(bounds),
                           child: Container(color: Colors.white),
                         )
-                      : Container(
-                          color: colorList.isNotEmpty
-                              ? colorList[0]
-                              : Colors.grey,
-                        ),
+                      : Container(color: colorList[0]),
                 ),
               ),
             ],
@@ -3341,6 +3360,27 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
         );
       },
     );
+  }
+
+  Future<List<String>> getColoriSquadra(String codSquadra) async {
+    print('getColoriSquadra chiamato per: $codSquadra');
+    try {
+      List<Squadra> squadre = await _squadreFuture;
+      print('Squadre caricate: ${squadre.length}');
+      for (var squadra in squadre) {
+        print('Confronto ${squadra.cod} con $codSquadra');
+        if (squadra.cod == codSquadra) {
+          print('Colori trovati per $codSquadra: ${squadra.colori}');
+          return squadra.colori;
+        }
+      }
+      print('Squadra non trovata: $codSquadra');
+      print('COD squadre disponibili: ${squadre.map((s) => s.cod).toList()}');
+      return [];
+    } catch (e) {
+      print('Errore nel recupero colori: $e');
+      return [];
+    }
   }
 
   Future<Squadra> getSquadra(SquadreProvider provider, int idSquadra) async {
@@ -3857,18 +3897,56 @@ class JerseyClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     Path path = Path();
-    path.moveTo(0, size.height * 0.2);
+
+    double width = size.width;
+    double height = size.height;
+
+    // Inizia dall'angolo in alto a sinistra (manica)
+    path.moveTo(0, height * 0.15);
+
+    // Curva della manica sinistra
     path.quadraticBezierTo(
-      size.width * 0.15,
-      0,
-      size.width * 0.3,
-      size.height * 0.15,
+      width * 0.05,
+      height * 0.1,
+      width * 0.15,
+      height * 0.05,
     );
-    path.lineTo(size.width * 0.7, size.height * 0.15);
-    path.quadraticBezierTo(size.width * 0.85, 0, size.width, size.height * 0.2);
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
+
+    // Spalla sinistra verso il collo
+    path.lineTo(width * 0.35, 0);
+
+    // Piccola curva per il collo
+    path.quadraticBezierTo(width * 0.5, height * 0.02, width * 0.65, 0);
+
+    // Spalla destra
+    path.lineTo(width * 0.85, height * 0.05);
+
+    // Curva della manica destra
+    path.quadraticBezierTo(width * 0.95, height * 0.1, width, height * 0.15);
+
+    // Lato destro (manica corta)
+    path.lineTo(width, height * 0.3);
+    path.quadraticBezierTo(
+      width * 0.95,
+      height * 0.32,
+      width * 0.9,
+      height * 0.35,
+    );
+
+    // Corpo destro
+    path.lineTo(width * 0.9, height);
+
+    // Fondo
+    path.lineTo(width * 0.1, height);
+
+    // Corpo sinistro
+    path.lineTo(width * 0.1, height * 0.35);
+
+    // Lato sinistro (manica corta)
+    path.quadraticBezierTo(width * 0.05, height * 0.32, 0, height * 0.3);
+
     path.close();
+
     return path;
   }
 
