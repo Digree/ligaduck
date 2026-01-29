@@ -3657,12 +3657,36 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
         ),
         child: Row(
           children: [
-            Image.asset(
-              team == 0
-                  ? 'assets/squadre/${partita!.codHome}.png'
-                  : 'assets/squadre/${partita!.codAway}.png',
-              height: 50,
-              width: 50,
+            FutureBuilder<Squadra>(
+              future: _squadreFuture.then((squadre) {
+                String codSquadra = team == 0
+                    ? partita!.codHome
+                    : partita!.codAway;
+                for (var squadra in squadre) {
+                  if (squadra.cod == codSquadra) {
+                    return squadra;
+                  }
+                }
+                throw Exception('Squadra non trovata');
+              }),
+              builder: (context, snapshot) {
+                return Image.asset(
+                  team == 0
+                      ? 'assets/squadre/${partita!.codHome}.png'
+                      : 'assets/squadre/${partita!.codAway}.png',
+                  height: 50,
+                  width: 50,
+                  errorBuilder: (context, error, stackTrace) {
+                    if (snapshot.hasData) {
+                      return _buildTeamLogoPlaceholder(
+                        snapshot.data!,
+                        size: 50,
+                      );
+                    }
+                    return Icon(Icons.shield, size: 50, color: Colors.grey);
+                  },
+                );
+              },
             ),
             SizedBox(width: 16),
             Expanded(
@@ -3716,24 +3740,89 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
               constraints: BoxConstraints(
                 maxWidth: MediaQuery.of(context).size.width > 600 ? 160 : 115,
               ),
-              child: Image.asset(
-                team == 0
-                    ? 'assets/divise/divise_${widget.campionato}/${partita!.codHome}_${partita!.divisaHome}.png'
-                    : 'assets/divise/divise_${widget.campionato}/${partita!.codAway}_${partita!.divisaAway}.png',
-                fit: BoxFit.fill,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: 70,
-                    width: 50,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Icon(
-                      Icons.sports_soccer,
-                      color: Colors.grey[500],
-                      size: 32,
-                    ),
+              child: FutureBuilder<List<String>>(
+                future: getColoriSquadra(
+                  team == 0 ? partita!.codHome : partita!.codAway,
+                ),
+                builder: (context, snapshot) {
+                  return Image.asset(
+                    team == 0
+                        ? 'assets/divise/divise_${widget.campionato}/${partita!.codHome}_${partita!.divisaHome}.png'
+                        : 'assets/divise/divise_${widget.campionato}/${partita!.codAway}_${partita!.divisaAway}.png',
+                    fit: BoxFit.fill,
+                    errorBuilder: (context, error, stackTrace) {
+                      if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                        List<Color> colorList = [];
+                        final Map<String, Color> colorMap = {
+                          'rosso': Colors.red,
+                          'verde': Colors.green,
+                          'blu': Colors.blueAccent,
+                          'giallo': Colors.yellow[600]!,
+                          'arancione': Colors.orange[900]!,
+                          'viola': Colors.purple[800]!,
+                          'nero': Colors.black,
+                          'bianco': Colors.white,
+                          'grigio': Colors.grey,
+                          'fucsia': Colors.pink[700]!,
+                          'ciano': Colors.lightBlue[300]!,
+                          'marrone': Colors.brown[900]!,
+                        };
+
+                        for (var c in snapshot.data!) {
+                          colorList.add(
+                            colorMap[c.toLowerCase()] ?? Colors.grey,
+                          );
+                        }
+
+                        return SizedBox(
+                          height: MediaQuery.of(context).size.width > 600
+                              ? 100
+                              : 80,
+                          width: MediaQuery.of(context).size.width > 600
+                              ? 100
+                              : 70,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              ClipPath(
+                                clipper: JerseyClipper(),
+                                child: Container(color: Colors.black),
+                              ),
+                              Padding(
+                                padding: EdgeInsets.all(2.5),
+                                child: ClipPath(
+                                  clipper: JerseyClipper(),
+                                  child: colorList.length > 1
+                                      ? ShaderMask(
+                                          shaderCallback: (bounds) =>
+                                              LinearGradient(
+                                                colors: colorList,
+                                                begin: Alignment.topCenter,
+                                                end: Alignment.bottomCenter,
+                                              ).createShader(bounds),
+                                          child: Container(color: Colors.white),
+                                        )
+                                      : Container(color: colorList[0]),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      return Container(
+                        height: 70,
+                        width: 50,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Icon(
+                          Icons.sports_soccer,
+                          color: Colors.grey[500],
+                          size: 32,
+                        ),
+                      );
+                    },
                   );
                 },
               ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/partiteProvider.dart';
@@ -30,10 +31,12 @@ class SetInfoSquadraModalPage extends StatefulWidget {
 class _SetInfoSquadraModalPageState extends State<SetInfoSquadraModalPage> {
   String _moduloSelezionato = "4-3-3";
   final List<String> _moduli = [];
+  late Future<bool> _divisaExistsFuture;
 
   @override
   void initState() {
     super.initState();
+    _divisaExistsFuture = _anyDivisaExists();
     caricaModuli();
   }
 
@@ -163,47 +166,62 @@ class _SetInfoSquadraModalPageState extends State<SetInfoSquadraModalPage> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   SizedBox(height: 60),
-                  Text(
-                    'Seleziona Divisa',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  FutureBuilder<bool>(
+                    future: _divisaExistsFuture,
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData || snapshot.data == false) {
+                        return SizedBox.shrink();
+                      }
+                      return Column(
+                        children: [
+                          Text(
+                            'Seleziona Divisa',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 20),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              _buildDivisaButton(
+                                widget.team,
+                                1,
+                                widget.selectedDivisaModal,
+                                (newDivisa) {
+                                  setModalState(() {
+                                    widget.selectedDivisaModal = newDivisa;
+                                  });
+                                },
+                              ),
+                              _buildDivisaButton(
+                                widget.team,
+                                2,
+                                widget.selectedDivisaModal,
+                                (newDivisa) {
+                                  setModalState(() {
+                                    widget.selectedDivisaModal = newDivisa;
+                                  });
+                                },
+                              ),
+                              _buildDivisaButton(
+                                widget.team,
+                                3,
+                                widget.selectedDivisaModal,
+                                (newDivisa) {
+                                  setModalState(() {
+                                    widget.selectedDivisaModal = newDivisa;
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 16),
+                        ],
+                      );
+                    },
                   ),
-                  SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildDivisaButton(
-                        widget.team,
-                        1,
-                        widget.selectedDivisaModal,
-                        (newDivisa) {
-                          setModalState(() {
-                            widget.selectedDivisaModal = newDivisa;
-                          });
-                        },
-                      ),
-                      _buildDivisaButton(
-                        widget.team,
-                        2,
-                        widget.selectedDivisaModal,
-                        (newDivisa) {
-                          setModalState(() {
-                            widget.selectedDivisaModal = newDivisa;
-                          });
-                        },
-                      ),
-                      _buildDivisaButton(
-                        widget.team,
-                        3,
-                        widget.selectedDivisaModal,
-                        (newDivisa) {
-                          setModalState(() {
-                            widget.selectedDivisaModal = newDivisa;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 16),
                   Text(
                     'Seleziona Modulo',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -268,68 +286,86 @@ class _SetInfoSquadraModalPageState extends State<SetInfoSquadraModalPage> {
     Function(int) onDivisaSelected,
   ) {
     bool isSelected = currentDivisa == divisaNumber;
+    String assetPath = team == 0
+        ? 'assets/divise/divise_${widget.campionato}/${widget.partita.codHome}_$divisaNumber.png'
+        : 'assets/divise/divise_${widget.campionato}/${widget.partita.codAway}_$divisaNumber.png';
 
-    return Container(
-      width: 100,
-      height: 130,
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Color(
-            widget.competizione.colori.isNotEmpty
-                ? int.parse(
-                    widget.competizione.colori[0].replaceFirst('#', 'FF'),
-                    radix: 16,
-                  )
-                : 0xFF007AFF,
-          ),
-          width: isSelected ? 3 : 2,
-        ),
-        borderRadius: BorderRadius.circular(12),
-        color: isSelected
-            ? Color(
+    return FutureBuilder<bool>(
+      future: _assetExists(assetPath),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data == false) {
+          return SizedBox.shrink();
+        }
+
+        return Container(
+          width: 100,
+          height: 130,
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: Color(
                 widget.competizione.colori.isNotEmpty
                     ? int.parse(
                         widget.competizione.colori[0].replaceFirst('#', 'FF'),
                         radix: 16,
                       )
                     : 0xFF007AFF,
-              ).withOpacity(0.1)
-            : Colors.transparent,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () {
-            onDivisaSelected(divisaNumber);
-            print('Divisa $divisaNumber selezionata per team $team');
-          },
-          child: Padding(
-            padding: EdgeInsets.all(8),
-            child: Image.asset(
-              team == 0
-                  ? 'assets/divise/divise_${widget.campionato}/${widget.partita.codHome}_$divisaNumber.png'
-                  : 'assets/divise/divise_${widget.campionato}/${widget.partita.codAway}_$divisaNumber.png',
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.sports_soccer,
-                    color: Colors.grey[500],
-                    size: 32,
-                  ),
-                );
+              ),
+              width: isSelected ? 3 : 2,
+            ),
+            borderRadius: BorderRadius.circular(12),
+            color: isSelected
+                ? Color(
+                    widget.competizione.colori.isNotEmpty
+                        ? int.parse(
+                            widget.competizione.colori[0].replaceFirst(
+                              '#',
+                              'FF',
+                            ),
+                            radix: 16,
+                          )
+                        : 0xFF007AFF,
+                  ).withOpacity(0.1)
+                : Colors.transparent,
+          ),
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () {
+                onDivisaSelected(divisaNumber);
+                print('Divisa $divisaNumber selezionata per team $team');
               },
+              child: Padding(
+                padding: EdgeInsets.all(8),
+                child: Image.asset(assetPath, fit: BoxFit.contain),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
+  }
+
+  Future<bool> _assetExists(String assetPath) async {
+    try {
+      await rootBundle.load(assetPath);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> _anyDivisaExists() async {
+    for (int i = 1; i <= 3; i++) {
+      String assetPath = widget.team == 0
+          ? 'assets/divise/divise_${widget.campionato}/${widget.partita.codHome}_$i.png'
+          : 'assets/divise/divise_${widget.campionato}/${widget.partita.codAway}_$i.png';
+      if (await _assetExists(assetPath)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   void modificaDatiSquadra() {
