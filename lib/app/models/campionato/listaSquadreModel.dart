@@ -274,6 +274,9 @@ Widget showSquadre(ListaSquadreModel model, String categoria) {
                       ),
                     ),
                   ),
+                SizedBox(
+                  height: 60,
+                ), // Padding in fondo per evitare che l'ultima squadra venga tagliata
               ],
             );
           },

@@ -121,7 +121,7 @@ class _SquadrePageState extends State<SquadrePage> {
           ),
           child: Container(
             width: MediaQuery.of(context).size.width * 0.2,
-            height: MediaQuery.of(context).size.height * 0.3,
+            height: MediaQuery.of(context).size.height * 0.5,
             padding: EdgeInsets.all(20.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,

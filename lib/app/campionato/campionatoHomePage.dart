@@ -289,17 +289,21 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Column(children: [buildProssimePartite(context)]),
-                            Column(
-                              children: [
-                                buildListaSquadre(
-                                  ListaSquadreModel(
-                                    campionato: widget.campionato,
-                                    squadreFuture: _squadreFuture,
-                                    competizioniFuture: _competizioniFuture,
-                                  ),
-                                  context,
+                            Expanded(
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  children: [
+                                    buildListaSquadre(
+                                      ListaSquadreModel(
+                                        campionato: widget.campionato,
+                                        squadreFuture: _squadreFuture,
+                                        competizioniFuture: _competizioniFuture,
+                                      ),
+                                      context,
+                                    ),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
                           ],
                         )
