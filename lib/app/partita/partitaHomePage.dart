@@ -683,7 +683,20 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                                     partita!.teamHome.split(
                                                       ' ',
                                                     );
-                                                if (nomeSquadra.length >= 2) {
+                                                if (nomeSquadra.length >= 3) {
+                                                  String abbreviato =
+                                                      nomeSquadra[0];
+                                                  for (
+                                                    int i = 1;
+                                                    i < nomeSquadra.length;
+                                                    i++
+                                                  ) {
+                                                    abbreviato +=
+                                                        ' ${nomeSquadra[i][0]}.';
+                                                  }
+                                                  return abbreviato;
+                                                } else if (nomeSquadra.length ==
+                                                    2) {
                                                   return '${nomeSquadra[0]} ${nomeSquadra[1][0]}.';
                                                 } else {
                                                   return '${partita!.teamHome.substring(0, 10)}...';
@@ -832,7 +845,20 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                                     partita!.teamAway.split(
                                                       ' ',
                                                     );
-                                                if (nomeSquadra.length >= 2) {
+                                                if (nomeSquadra.length >= 3) {
+                                                  String abbreviato =
+                                                      nomeSquadra[0];
+                                                  for (
+                                                    int i = 1;
+                                                    i < nomeSquadra.length;
+                                                    i++
+                                                  ) {
+                                                    abbreviato +=
+                                                        ' ${nomeSquadra[i][0]}.';
+                                                  }
+                                                  return abbreviato;
+                                                } else if (nomeSquadra.length ==
+                                                    2) {
                                                   return '${nomeSquadra[0]} ${nomeSquadra[1][0]}.';
                                                 } else {
                                                   return '${partita!.teamAway.substring(0, 10)}...';
@@ -1631,7 +1657,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                             ? () {
                                 List<String> nomeSquadra = partita!.teamHome
                                     .split(' ');
-                                if (nomeSquadra.length >= 2) {
+                                if (nomeSquadra.length >= 3) {
+                                  String abbreviato = nomeSquadra[0];
+                                  for (int i = 1; i < nomeSquadra.length; i++) {
+                                    abbreviato += ' ${nomeSquadra[i][0]}.';
+                                  }
+                                  return abbreviato;
+                                } else if (nomeSquadra.length == 2) {
                                   return '${nomeSquadra[0]} ${nomeSquadra[1][0]}.';
                                 } else {
                                   return '${partita!.teamHome.substring(0, 10)}...';
@@ -1687,7 +1719,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                 print(
                                   'Debug teamAway: "${partita!.teamAway}" - Length: ${partita!.teamAway.length} - Words: $nomeSquadra',
                                 );
-                                if (nomeSquadra.length >= 2) {
+                                if (nomeSquadra.length >= 3) {
+                                  String abbreviato = nomeSquadra[0];
+                                  for (int i = 1; i < nomeSquadra.length; i++) {
+                                    abbreviato += ' ${nomeSquadra[i][0]}.';
+                                  }
+                                  return abbreviato;
+                                } else if (nomeSquadra.length == 2) {
                                   return '${nomeSquadra[0]} ${nomeSquadra[1][0]}.';
                                 } else {
                                   return '${partita!.teamAway.substring(0, 10)}...';
@@ -3313,6 +3351,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             'rosso': Colors.red,
             'verde': Colors.green,
             'blu': Colors.blueAccent,
+            'blu scuro': Colors.blue[900]!,
             'giallo': Colors.yellow[600]!,
             'arancione': Colors.orange[900]!,
             'viola': Colors.purple[800]!,
@@ -3757,6 +3796,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                           'rosso': Colors.red,
                           'verde': Colors.green,
                           'blu': Colors.blueAccent,
+                          'blu scuro': Colors.blue[900]!,
                           'giallo': Colors.yellow[600]!,
                           'arancione': Colors.orange[900]!,
                           'viola': Colors.purple[800]!,

@@ -351,14 +351,17 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
               ),
             ),
             FutureBuilder(
-              future: _partiteFuture,
+              future: Future.wait([_partiteFuture, _competizioniFuture]),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
                   return Center(child: Text('Errore: ${snapshot.error}'));
                 } else {
-                  final partite = snapshot.data ?? [];
+                  final partite = snapshot.data?[0] as List<Partita>? ?? [];
+                  final competizioni =
+                      snapshot.data?[1] as List<Competizione>? ?? [];
+
                   if (partite.isEmpty) {
                     return Padding(
                       padding: EdgeInsetsGeometry.only(
@@ -514,6 +517,21 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                                                   squadraAway:
                                                       partiteDataMap[partita
                                                           .id]?['squadraAway'],
+                                                  competizione: (() {
+                                                    try {
+                                                      final idCompetizione =
+                                                          partiteDataMap[partita
+                                                              .id]?['idCompetizione'];
+                                                      return competizioni
+                                                          .firstWhere(
+                                                            (c) =>
+                                                                c.id ==
+                                                                idCompetizione,
+                                                          );
+                                                    } catch (e) {
+                                                      return null;
+                                                    }
+                                                  })(),
                                                 ),
                                                 context,
                                               ),

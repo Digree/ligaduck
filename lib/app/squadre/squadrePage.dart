@@ -198,6 +198,17 @@ class _SquadrePageState extends State<SquadrePage> {
                             style: TextStyle(color: getColor('primary')),
                           ),
                         ),
+                        SizedBox(height: 10),
+                        ElevatedButton(
+                          onPressed: () async {
+                            Navigator.of(context).pop();
+                            await _mostraDialogCompetizioniAbilitate();
+                          },
+                          child: Text(
+                            'Modifica Competizioni Abilitate',
+                            style: TextStyle(color: getColor('primary')),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -1299,6 +1310,7 @@ class _SquadrePageState extends State<SquadrePage> {
       'rosso': Colors.red,
       'verde': Colors.green,
       'blu': Colors.blueAccent,
+      'blu scuro': Colors.blue[900]!,
       'giallo': Colors.yellow[600]!,
       'arancione': Colors.orange[900]!,
       'viola': Colors.purple[800]!,
@@ -1660,6 +1672,154 @@ class _SquadrePageState extends State<SquadrePage> {
         );
       }
     }
+  }
+
+  Future<void> _mostraDialogCompetizioniAbilitate() async {
+    final competizioniProvider = Provider.of<CompetizioniProvider>(
+      context,
+      listen: false,
+    );
+    final squadreProvider = Provider.of<SquadreProvider>(
+      context,
+      listen: false,
+    );
+
+    // Carica tutte le competizioni del campionato
+    final competizioni = await competizioniProvider.fetchCompetizioni(
+      widget.campionato,
+    );
+
+    // Lista delle competizioni attualmente abilitate
+    List<int> competizioniAbilitate = List.from(
+      _squadra?.competizioni ?? widget.squadra.competizioni,
+    );
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text(
+                'Competizioni Abilitate',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 400,
+                child: ListView.builder(
+                  itemCount: competizioni.length,
+                  itemBuilder: (context, index) {
+                    final competizione = competizioni[index];
+                    final isAbilitata = competizioniAbilitate.contains(
+                      competizione.id,
+                    );
+
+                    return CheckboxListTile(
+                      title: Row(
+                        children: [
+                          Image.asset(
+                            'assets/logos/logo_${competizione.cod}_comp.png',
+                            height: 24,
+                            width: 24,
+                            errorBuilder: (context, error, stackTrace) => Icon(
+                              Icons.emoji_events,
+                              color: getColor('primary'),
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              competizione.nome,
+                              style: TextStyle(fontSize: 14),
+                            ),
+                          ),
+                        ],
+                      ),
+                      value: isAbilitata,
+                      activeColor: getColor('primary'),
+                      onChanged: (bool? value) {
+                        setDialogState(() {
+                          if (value == true) {
+                            if (!competizioniAbilitate.contains(
+                              competizione.id,
+                            )) {
+                              competizioniAbilitate.add(competizione.id);
+                            }
+                          } else {
+                            competizioniAbilitate.remove(competizione.id);
+                          }
+                        });
+                      },
+                    );
+                  },
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('Annulla', style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: getColor('primary'),
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () async {
+                    final squadraAggiornata = Squadra(
+                      id: widget.squadra.id,
+                      nome: widget.squadra.nome,
+                      cod: widget.squadra.cod,
+                      citta: widget.squadra.citta,
+                      categoria: widget.squadra.categoria,
+                      colori: widget.squadra.colori,
+                      campionato: widget.squadra.campionato,
+                      stadio: widget.squadra.stadio,
+                      competizioni: competizioniAbilitate,
+                      formazione: widget.squadra.formazione,
+                      indisponibili: widget.squadra.indisponibili,
+                      trofei: widget.squadra.trofei,
+                    );
+
+                    bool success = await squadreProvider
+                        .aggiornaCompetizioniSquadra(
+                          widget.campionato,
+                          squadraAggiornata,
+                        );
+
+                    Navigator.of(context).pop();
+
+                    if (success) {
+                      setState(() {
+                        _squadra = squadraAggiornata;
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Competizioni aggiornate con successo'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Errore nell\'aggiornamento delle competizioni',
+                          ),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  },
+                  child: Text('Salva'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   Widget showFormazione() {

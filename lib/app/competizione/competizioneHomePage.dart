@@ -84,11 +84,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && mounted) {
-      if (ModalRoute.of(context)?.isCurrent ?? false) {
-        _caricaClassifica();
-      }
-    }
+    // La classifica viene ricaricata solo quando necessario (es. dopo upload CSV)
+    // Non serve ricaricarla ogni volta che l'app torna in primo piano
   }
 
   void _caricaGiornate() async {
@@ -197,7 +194,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                   setState(() {
                     _invalidateCacheKey++;
                   });
-                  _caricaClassifica();
+                  // _caricaClassifica rimosso - le impostazioni non modificano la classifica
                 },
               ),
             ],
@@ -1890,6 +1887,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                       campionato: widget.campionato,
                       squadraHome: squadraHome,
                       squadraAway: squadraAway,
+                      competizione: widget.competizione,
                       onRefreshRequired: () {
                         setState(() {
                           _partiteCache.clear();
@@ -2477,6 +2475,17 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                   'assets/squadre/${posizione.codSquadra}.png',
                   fit: BoxFit.cover,
                   height: 35,
+                  errorBuilder: (context, error, stackTrace) {
+                    return FutureBuilder<Squadra>(
+                      future: getSquadra(provider, posizione.idSquadra),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          return _buildColoredShield(snapshot.data!);
+                        }
+                        return Icon(Icons.shield, size: 35, color: Colors.grey);
+                      },
+                    );
+                  },
                 ),
               ),
               SizedBox(
@@ -2486,7 +2495,14 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                   child: Text(
                     '${posizione.nomeSquadra!.length > 13 ? () {
                             List<String> nomeSquadra = posizione.nomeSquadra!.split(' ');
-                            if (nomeSquadra.length >= 2) {
+                            if (nomeSquadra.length >= 3) {
+                              // Per squadre con 3 o più parole: prima parola intera + iniziali delle altre
+                              String abbreviato = nomeSquadra[0];
+                              for (int i = 1; i < nomeSquadra.length; i++) {
+                                abbreviato += ' ${nomeSquadra[i][0]}.';
+                              }
+                              return abbreviato;
+                            } else if (nomeSquadra.length == 2) {
                               return '${nomeSquadra[0]} ${nomeSquadra[1][0]}.';
                             } else {
                               return '${posizione.nomeSquadra?.substring(0, 10)}...';
@@ -2657,6 +2673,49 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     throw Exception('Squadra non trovata');
   }
 
+  Widget _buildColoredShield(Squadra squadra) {
+    if (squadra.colori.isEmpty) {
+      return Icon(Icons.shield, size: 35, color: Colors.grey);
+    }
+
+    final Map<String, Color> colorMap = {
+      'rosso': Colors.red,
+      'verde': Colors.green,
+      'blu': Colors.blueAccent,
+      'blu scuro': Colors.blue[900]!,
+      'giallo': Colors.yellow[600]!,
+      'arancione': Colors.orange[900]!,
+      'viola': Colors.purple[800]!,
+      'nero': Colors.black,
+      'bianco': Colors.white,
+      'grigio': Colors.grey,
+      'fucsia': Colors.pink[700]!,
+      'ciano': Colors.lightBlue[300]!,
+      'marrone': Colors.brown[900]!,
+    };
+
+    if (squadra.colori.length == 1) {
+      final colorName = squadra.colori[0].toLowerCase();
+      return Icon(
+        Icons.shield,
+        size: 35,
+        color: colorMap[colorName] ?? Colors.grey,
+      );
+    } else {
+      final colors = squadra.colori.map((c) {
+        final colorName = c.toLowerCase();
+        return colorMap[colorName] ?? Colors.grey;
+      }).toList();
+
+      return ShaderMask(
+        shaderCallback: (bounds) {
+          return LinearGradient(colors: colors).createShader(bounds);
+        },
+        child: Icon(Icons.shield, size: 35, color: Colors.white),
+      );
+    }
+  }
+
   Future<void> _pickAndProcessCsvFile() async {
     giornateToPush = [];
     partiteToPush = [];
@@ -2700,17 +2759,41 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
 
       final idToGiornataList = [];
 
+      // Genera classifica iniziale in base alle squadre abilitate
       try {
-        classifica = await giornateProvider.generaClassifica(
-          widget.campionato,
-          widget.competizione.id,
-          widget.competizione.classifica!,
-        );
+        final squadre = await _squadreFuture;
 
-        classifica.sort((b, a) => a.punti.compareTo(b.punti));
+        // Filtra le squadre che hanno questa competizione abilitata
+        final squadreAbilitate = squadre.where((squadra) {
+          return squadra.competizioni.contains(widget.competizione.id);
+        }).toList();
+
+        // Ordina alfabeticamente
+        squadreAbilitate.sort((a, b) => a.nome.compareTo(b.nome));
+
+        // Crea le posizioni di classifica iniziali
+        classifica = [];
+        for (int i = 0; i < squadreAbilitate.length; i++) {
+          classifica.add(
+            PosizioneClassifica(
+              posizione: i + 1,
+              idSquadra: squadreAbilitate[i].id,
+              nomeSquadra: squadreAbilitate[i].nome,
+              codSquadra: squadreAbilitate[i].cod,
+              punti: 0,
+              partiteGiocate: 0,
+              win: 0,
+              draw: 0,
+              loss: 0,
+              gFatti: 0,
+              gSubiti: 0,
+              diff: 0,
+            ),
+          );
+        }
       } catch (e) {
         _showMessage('Errore nella generazione della classifica: $e');
-        //return;
+        classifica = [];
       }
 
       List<List<dynamic>> csvData = const CsvToListConverter(
@@ -2760,6 +2843,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       _partiteWidgetCache.clear();
       _invalidateCacheKey++;
       _caricaGiornate();
+      _caricaClassifica();
       setState(() {});
       Navigator.pop(context);
     } catch (e) {

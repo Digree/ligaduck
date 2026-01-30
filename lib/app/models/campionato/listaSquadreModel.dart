@@ -15,70 +15,198 @@ class ListaSquadreModel {
   });
 }
 
-Widget buildListaSquadre(ListaSquadreModel model, BuildContext context) {
-  bool isWide = MediaQuery.of(context).size.width > 600;
-  final screenHeight = isWide
-      ? MediaQuery.of(context).size.height * 1.2
-      : MediaQuery.of(context).size.height;
-  return SizedBox(
-    width: isWide
-        ? MediaQuery.of(context).size.width * 0.5
-        : MediaQuery.of(context).size.width,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 16.0),
-          child: Text(
-            'Squadre:',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          ),
-        ),
-        DefaultTabController(
-          length: 3,
-          child: SizedBox(
-            height: isWide ? screenHeight * 0.5 : screenHeight * 0.7,
-            child: Column(
+class _ListaSquadreState extends StatefulWidget {
+  final ListaSquadreModel model;
+
+  const _ListaSquadreState({required this.model});
+
+  @override
+  State<_ListaSquadreState> createState() => _ListaSquadreStateWidget();
+}
+
+class _ListaSquadreStateWidget extends State<_ListaSquadreState> {
+  String _selectedCampionato = 'Paperi';
+
+  @override
+  Widget build(BuildContext context) {
+    bool isWide = MediaQuery.of(context).size.width > 600;
+    final screenHeight = isWide
+        ? MediaQuery.of(context).size.height * 1.2
+        : MediaQuery.of(context).size.height;
+    return SizedBox(
+      width: isWide
+          ? MediaQuery.of(context).size.width * 0.5
+          : MediaQuery.of(context).size.width,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(
+              left: 16.0,
+              right: 16.0,
+              top: 16.0,
+              bottom: 16.0,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  constraints: BoxConstraints(maxHeight: 50, maxWidth: 900),
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                      right: 16.0,
-                      left: isWide ? 16.0 : 8.0,
-                    ),
-                    child: TabBar(
-                      labelColor: Colors.blueAccent,
-                      unselectedLabelColor: Colors.grey,
-                      indicatorColor: Colors.blueAccent,
-                      tabs: [
-                        Tab(text: 'Serie A'),
-                        Tab(text: 'Serie B'),
-                        Tab(text: 'Serie C'),
-                      ],
-                    ),
-                  ),
+                Text(
+                  'Squadre:',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
-                Expanded(
-                  flex: 1,
-                  child: SizedBox(
-                    width: MediaQuery.of(context).size.width * 1,
-                    child: TabBarView(
-                      children: [
-                        showSquadre(model, 'Serie A'),
-                        showSquadre(model, 'Serie B'),
-                        showSquadre(model, 'Serie C'),
-                      ],
-                    ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.blueAccent),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: DropdownButton<String>(
+                    value: _selectedCampionato,
+                    underline: SizedBox(),
+                    items: ['Paperi', 'Estero'].map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          _selectedCampionato = newValue;
+                        });
+                      }
+                    },
                   ),
                 ),
               ],
             ),
           ),
+          _selectedCampionato == 'Paperi'
+              ? _buildPaperiTabs(widget.model, isWide, screenHeight)
+              : _buildEsteroTabs(widget.model, isWide, screenHeight),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaperiTabs(
+    ListaSquadreModel model,
+    bool isWide,
+    double screenHeight,
+  ) {
+    return DefaultTabController(
+      length: 3,
+      child: SizedBox(
+        height: isWide ? screenHeight * 0.5 : screenHeight * 0.7,
+        child: Column(
+          children: [
+            Container(
+              constraints: BoxConstraints(maxHeight: 50, maxWidth: 900),
+              child: Padding(
+                padding: EdgeInsets.only(
+                  right: 16.0,
+                  left: isWide ? 16.0 : 8.0,
+                ),
+                child: TabBar(
+                  labelColor: Colors.blueAccent,
+                  unselectedLabelColor: Colors.grey,
+                  indicatorColor: Colors.blueAccent,
+                  tabs: [
+                    Tab(text: 'Serie A'),
+                    Tab(text: 'Serie B'),
+                    Tab(text: 'Serie C'),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width * 1,
+                child: TabBarView(
+                  children: [
+                    showSquadre(model, 'Serie A'),
+                    showSquadre(model, 'Serie B'),
+                    showSquadre(model, 'Serie C'),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
-      ],
-    ),
-  );
+      ),
+    );
+  }
+
+  Widget _buildEsteroTabs(
+    ListaSquadreModel model,
+    bool isWide,
+    double screenHeight,
+  ) {
+    final nazioni = [
+      'Francia',
+      'Germania',
+      'Inghilterra',
+      'Spagna',
+      'Portogallo',
+      'Olanda',
+      'Brasile',
+      'Argentina',
+      'Uruguay',
+      'Belgio',
+      'Croazia',
+      'Danimarca',
+      'Giappone',
+      'Grecia',
+      'Norvegia',
+      'Scozia',
+      'Serbia',
+      'Svezia',
+      'Colombia',
+    ];
+
+    return DefaultTabController(
+      length: nazioni.length,
+      child: SizedBox(
+        height: isWide ? screenHeight * 0.5 : screenHeight * 0.7,
+        child: Column(
+          children: [
+            Container(
+              constraints: BoxConstraints(maxHeight: 50, maxWidth: 900),
+              child: Padding(
+                padding: EdgeInsets.only(
+                  right: 16.0,
+                  left: isWide ? 16.0 : 8.0,
+                ),
+                child: TabBar(
+                  isScrollable: true,
+                  labelColor: Colors.blueAccent,
+                  unselectedLabelColor: Colors.grey,
+                  indicatorColor: Colors.blueAccent,
+                  tabs: nazioni.map((nazione) => Tab(text: nazione)).toList(),
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width * 1,
+                child: TabBarView(
+                  children: nazioni
+                      .map((nazione) => showSquadre(model, nazione))
+                      .toList(),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+Widget buildListaSquadre(ListaSquadreModel model, BuildContext context) {
+  return _ListaSquadreState(model: model);
 }
 
 Widget showSquadre(ListaSquadreModel model, String categoria) {

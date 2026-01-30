@@ -57,6 +57,7 @@ List<Color> getSquadraColors(Squadra? squadra, String codSquadra) {
       'rosso': Colors.red,
       'verde': Colors.green,
       'blu': Colors.blueAccent,
+      'blu scuro': Colors.blue[900]!,
       'giallo': Colors.yellow[600]!,
       'arancione': Colors.orange[900]!,
       'viola': Colors.purple[800]!,

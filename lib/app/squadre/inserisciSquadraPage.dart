@@ -29,14 +29,40 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
   List<Competizione> _competizioniDisponibili = [];
   List<String> _anniTrofei = [];
 
-  final List<String> _campionati = ['Paperi'];
+  final List<String> _campionati = ['Paperi', 'Estero'];
 
   final List<String> _categorie = ['Serie A', 'Serie B', 'Serie C'];
+
+  final List<String> _nazioni = [
+    'Francia',
+    'Germania',
+    'Inghilterra',
+    'Spagna',
+    'Portogallo',
+    'Olanda',
+    'Brasile',
+    'Argentina',
+    'Uruguay',
+    'Belgio',
+    'Croazia',
+    'Danimarca',
+    'Giappone',
+    'Grecia',
+    'Norvegia',
+    'Scozia',
+    'Serbia',
+    'Svezia',
+    'Colombia',
+  ];
+
+  List<String> get _categorieCorrente =>
+      _campionatoSelezionato == 'Estero' ? _nazioni : _categorie;
 
   final List<String> _coloriDisponibili = [
     'rosso',
     'verde',
     'blu',
+    'blu scuro',
     'giallo',
     'arancione',
     'viola',
@@ -57,7 +83,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
     } else {
       _campionatoSelezionato = _campionati.first;
     }
-    _categoriaSelezionata = _categorie.first;
+    _categoriaSelezionata = _categorieCorrente.first;
     _caricaCompetizioni();
   }
 
@@ -285,6 +311,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
       'fucsia': Colors.pink[700]!,
       'ciano': Colors.lightBlue[300]!,
       'marrone': Colors.brown[900]!,
+      'blu scuro': Colors.blue[900]!,
     };
     return colorMap[colorName] ?? Colors.grey;
   }
@@ -850,6 +877,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
                     onChanged: (String? newValue) {
                       setState(() {
                         _campionatoSelezionato = newValue;
+                        _categoriaSelezionata = _categorieCorrente.first;
                       });
                     },
                     validator: (value) {
@@ -877,7 +905,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
                         ),
                       ),
                     ),
-                    items: _categorie.map((String categoria) {
+                    items: _categorieCorrente.map((String categoria) {
                       return DropdownMenuItem<String>(
                         value: categoria,
                         child: Text(categoria),
@@ -898,8 +926,10 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
                   SizedBox(height: 16),
                   _buildColoriField(),
                   SizedBox(height: 16),
-                  _buildTrofeiField(),
-                  SizedBox(height: 16),
+                  if (_campionatoSelezionato != 'Estero') ...[
+                    _buildTrofeiField(),
+                    SizedBox(height: 16),
+                  ],
                   _buildCompetizioniField(),
                   SizedBox(height: 32),
                   ElevatedButton(

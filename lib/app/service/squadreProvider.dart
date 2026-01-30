@@ -222,4 +222,30 @@ class SquadreProvider with ChangeNotifier {
       return [];
     }
   }
+
+  Future<bool> aggiornaCompetizioniSquadra(
+    String campionato,
+    Squadra squadra,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse(
+          '${Env.apiUrl}/$campionato/squadra/${squadra.id}/competizioni',
+        ),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(squadra.toJson()),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        notifyListeners();
+        return true;
+      } else {
+        print('Errore POST squadra: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Errore POST squadra: $e');
+      return false;
+    }
+  }
 }
