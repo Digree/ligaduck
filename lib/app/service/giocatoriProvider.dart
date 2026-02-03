@@ -180,4 +180,32 @@ class GiocatoriProvider with ChangeNotifier {
       return [];
     }
   }
+
+  Future<bool> aggiornaCapitano(
+    String campionato,
+    String idGiocatore,
+    int idSquadra,
+    bool capitano,
+  ) async {
+    try {
+      final response = await http.put(
+        Uri.parse(
+          '${Env.apiUrl}/$campionato/giocatore/$idGiocatore/capitano/$idSquadra',
+        ),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(capitano),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        notifyListeners();
+        return true;
+      } else {
+        print('Errore PUT: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Errore PUT: $e');
+      return false;
+    }
+  }
 }

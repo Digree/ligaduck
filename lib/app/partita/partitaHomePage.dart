@@ -3489,6 +3489,63 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
     }
 
+    // Imposta il campo capitano nei giocatori della formazione se non è già impostato
+    if (giocatoriHome.isNotEmpty) {
+      for (var gioFormazione in partita.formazioneHome.titolari) {
+        if (gioFormazione.capitano == null) {
+          final giocatore = giocatoriHome.firstWhere(
+            (g) => g.id == gioFormazione.idGiocatore,
+            orElse: () => Giocatore(
+              id: '',
+              nome: '',
+              numero: 0,
+              eta: 0,
+              ruolo: '',
+              nazione: '',
+              idSquadraAttuale: 0,
+              attivo: false,
+            ),
+          );
+          if (giocatore.id.isNotEmpty) {
+            gioFormazione.capitano = giocatore.carriera.any(
+              (c) =>
+                  c.idSquadra == partita.idTeamHome &&
+                  c.campionato == widget.campionato &&
+                  c.capitano == true,
+            );
+          }
+        }
+      }
+    }
+
+    if (giocatoriAway.isNotEmpty) {
+      for (var gioFormazione in partita.formazioneAway.titolari) {
+        if (gioFormazione.capitano == null) {
+          final giocatore = giocatoriAway.firstWhere(
+            (g) => g.id == gioFormazione.idGiocatore,
+            orElse: () => Giocatore(
+              id: '',
+              nome: '',
+              numero: 0,
+              eta: 0,
+              ruolo: '',
+              nazione: '',
+              idSquadraAttuale: 0,
+              attivo: false,
+            ),
+          );
+          if (giocatore.id.isNotEmpty) {
+            gioFormazione.capitano = giocatore.carriera.any(
+              (c) =>
+                  c.idSquadra == partita.idTeamAway &&
+                  c.campionato == widget.campionato &&
+                  c.capitano == true,
+            );
+          }
+        }
+      }
+    }
+
     return partita;
   }
 
@@ -3568,6 +3625,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                 team: team,
                 partita: partita!,
                 selectedDivisaModal: selectedDivisaModal,
+                giocatori: team == 0 ? giocatoriHome : giocatoriAway,
               );
             },
           );
@@ -3576,6 +3634,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
           if (result != null && result.isNotEmpty) {
             int nuovaDivisa = result['divisa'] ?? selectedDivisaModal;
             String nuovoModulo = result['modulo'] ?? '';
+            String? nuovoCapitano = result['capitano'];
             int idSquadra = team == 0
                 ? partita!.idTeamHome
                 : partita!.idTeamAway;
@@ -3612,6 +3671,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     nuovaDivisa,
                     nuovoModulo,
                     idSquadra,
+                    nuovoCapitano,
                   );
 
               // Chiudi loader

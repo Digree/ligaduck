@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
+import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/partiteProvider.dart';
 import 'package:ligaduck/app/service/squadreProvider.dart';
 import 'package:provider/provider.dart';
+import '../../services/commonService.dart';
 
 // ignore: must_be_immutable
 class SetInfoSquadraModalPage extends StatefulWidget {
@@ -13,6 +15,7 @@ class SetInfoSquadraModalPage extends StatefulWidget {
   final int team; // 0 per home, 1 per away
   int selectedDivisaModal;
   final Partita partita;
+  final List<Giocatore> giocatori;
 
   SetInfoSquadraModalPage({
     super.key,
@@ -21,6 +24,7 @@ class SetInfoSquadraModalPage extends StatefulWidget {
     required this.team,
     required this.selectedDivisaModal,
     required this.partita,
+    required this.giocatori,
   });
 
   @override
@@ -32,12 +36,67 @@ class _SetInfoSquadraModalPageState extends State<SetInfoSquadraModalPage> {
   String _moduloSelezionato = "4-3-3";
   final List<String> _moduli = [];
   late Future<bool> _divisaExistsFuture;
+  String? _capitanoSelezionato;
 
   @override
   void initState() {
     super.initState();
     _divisaExistsFuture = _anyDivisaExists();
     caricaModuli();
+    _initCapitano();
+  }
+
+  void _initCapitano() {
+    // Trova il capitano attuale dalla formazione della partita
+    final formazione = widget.team == 0
+        ? widget.partita.formazioneHome
+        : widget.partita.formazioneAway;
+
+    // Cerca il capitano tra i titolari
+    final capitanoFormazione = formazione.titolari.firstWhere(
+      (g) => g.capitano == true,
+      orElse: () => GiocatoreFormazione(
+        idGiocatore: '',
+        nome: '',
+        pos: 0,
+        inCampo: false,
+      ),
+    );
+
+    if (capitanoFormazione.idGiocatore.isNotEmpty) {
+      setState(() {
+        _capitanoSelezionato = capitanoFormazione.idGiocatore;
+      });
+    } else {
+      // Se non trova il capitano nella formazione, cerca nella carriera dei giocatori
+      final capitanoAttuale = widget.giocatori.firstWhere(
+        (g) => g.carriera.any(
+          (c) =>
+              c.idSquadra ==
+                  (widget.team == 0
+                      ? widget.partita.idTeamHome
+                      : widget.partita.idTeamAway) &&
+              c.campionato == widget.campionato &&
+              c.capitano == true,
+        ),
+        orElse: () => Giocatore(
+          id: '',
+          nome: '',
+          numero: 0,
+          eta: 0,
+          ruolo: '',
+          nazione: '',
+          idSquadraAttuale: 0,
+          attivo: false,
+        ),
+      );
+
+      if (capitanoAttuale.id.isNotEmpty) {
+        setState(() {
+          _capitanoSelezionato = capitanoAttuale.id;
+        });
+      }
+    }
   }
 
   void caricaModuli() async {
@@ -158,111 +217,128 @@ class _SetInfoSquadraModalPageState extends State<SetInfoSquadraModalPage> {
     return StatefulBuilder(
       builder: (context, setModalState) {
         return SizedBox(
-          height: MediaQuery.of(context).size.height * 0.7,
+          height: MediaQuery.of(context).size.height * 0.8,
           width: MediaQuery.of(context).size.width,
           child: Stack(
             children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  SizedBox(height: 60),
-                  FutureBuilder<bool>(
-                    future: _divisaExistsFuture,
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData || snapshot.data == false) {
-                        return SizedBox.shrink();
-                      }
-                      return Column(
-                        children: [
-                          Text(
-                            'Seleziona Divisa',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+              SingleChildScrollView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 60),
+                    FutureBuilder<bool>(
+                      future: _divisaExistsFuture,
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData || snapshot.data == false) {
+                          return SizedBox.shrink();
+                        }
+                        return Column(
+                          children: [
+                            Text(
+                              'Seleziona Divisa',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
+                            SizedBox(height: 20),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                _buildDivisaButton(
+                                  widget.team,
+                                  1,
+                                  widget.selectedDivisaModal,
+                                  (newDivisa) {
+                                    setModalState(() {
+                                      widget.selectedDivisaModal = newDivisa;
+                                    });
+                                  },
+                                ),
+                                _buildDivisaButton(
+                                  widget.team,
+                                  2,
+                                  widget.selectedDivisaModal,
+                                  (newDivisa) {
+                                    setModalState(() {
+                                      widget.selectedDivisaModal = newDivisa;
+                                    });
+                                  },
+                                ),
+                                _buildDivisaButton(
+                                  widget.team,
+                                  3,
+                                  widget.selectedDivisaModal,
+                                  (newDivisa) {
+                                    setModalState(() {
+                                      widget.selectedDivisaModal = newDivisa;
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 16),
+                          ],
+                        );
+                      },
+                    ),
+                    Text(
+                      'Seleziona Modulo',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: _buildModuloDropdown(),
+                    ),
+                    SizedBox(height: 20),
+                    Text(
+                      'Seleziona Capitano',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: _buildCapitanoDropdown(),
+                    ),
+                    SizedBox(height: 20),
+                    Padding(
+                      padding: EdgeInsetsGeometry.only(left: 16, right: 16),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(context, {
+                              'divisa': widget.selectedDivisaModal,
+                              'modulo': _moduloSelezionato,
+                              'capitano': _capitanoSelezionato,
+                            });
+                          },
+                          label: Text('Conferma'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(
+                              widget.competizione.colori.isNotEmpty
+                                  ? int.parse(
+                                      widget.competizione.colori[0]
+                                          .replaceFirst('#', 'FF'),
+                                      radix: 16,
+                                    )
+                                  : 0xFF000000,
+                            ),
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(vertical: 12),
                           ),
-                          SizedBox(height: 20),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              _buildDivisaButton(
-                                widget.team,
-                                1,
-                                widget.selectedDivisaModal,
-                                (newDivisa) {
-                                  setModalState(() {
-                                    widget.selectedDivisaModal = newDivisa;
-                                  });
-                                },
-                              ),
-                              _buildDivisaButton(
-                                widget.team,
-                                2,
-                                widget.selectedDivisaModal,
-                                (newDivisa) {
-                                  setModalState(() {
-                                    widget.selectedDivisaModal = newDivisa;
-                                  });
-                                },
-                              ),
-                              _buildDivisaButton(
-                                widget.team,
-                                3,
-                                widget.selectedDivisaModal,
-                                (newDivisa) {
-                                  setModalState(() {
-                                    widget.selectedDivisaModal = newDivisa;
-                                  });
-                                },
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 16),
-                        ],
-                      );
-                    },
-                  ),
-                  Text(
-                    'Seleziona Modulo',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 20),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: _buildModuloDropdown(),
-                  ),
-                  SizedBox(height: 20),
-                  Padding(
-                    padding: EdgeInsetsGeometry.only(left: 16, right: 16),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.pop(context, {
-                            'divisa': widget.selectedDivisaModal,
-                            'modulo': _moduloSelezionato,
-                          });
-                        },
-                        label: Text('Conferma'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(
-                            widget.competizione.colori.isNotEmpty
-                                ? int.parse(
-                                    widget.competizione.colori[0].replaceFirst(
-                                      '#',
-                                      'FF',
-                                    ),
-                                    radix: 16,
-                                  )
-                                : 0xFF000000,
-                          ),
-                          foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(vertical: 12),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               Positioned(
                 top: 16,
@@ -368,6 +444,108 @@ class _SetInfoSquadraModalPageState extends State<SetInfoSquadraModalPage> {
     return false;
   }
 
+  Widget _buildCapitanoDropdown() {
+    // Ottieni i titolari della formazione
+    final formazione = widget.team == 0
+        ? widget.partita.formazioneHome
+        : widget.partita.formazioneAway;
+
+    if (formazione.titolari.isEmpty) {
+      return Center(
+        child: Text(
+          'Nessun titolare disponibile',
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
+    }
+
+    // Filtra solo i giocatori titolari (escludendo allenatori)
+    final giocatoriTitolari = widget.giocatori.where((g) {
+      return g.ruolo != 'Allenatore' &&
+          formazione.titolari.any((t) => t.idGiocatore == g.id);
+    }).toList();
+
+    if (giocatoriTitolari.isEmpty) {
+      return Center(
+        child: Text(
+          'Nessun giocatore disponibile',
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
+    }
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: Color(
+            widget.competizione.colori.isNotEmpty
+                ? int.parse(
+                    widget.competizione.colori[0].replaceFirst('#', 'FF'),
+                    radix: 16,
+                  )
+                : 0xFF007AFF,
+          ),
+        ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String?>(
+          value: _capitanoSelezionato,
+          isExpanded: true,
+          hint: Text(
+            'Seleziona capitano',
+            style: TextStyle(color: Colors.grey),
+          ),
+          icon: Icon(
+            Icons.arrow_drop_down,
+            color: Color(
+              widget.competizione.colori.isNotEmpty
+                  ? int.parse(
+                      widget.competizione.colori[0].replaceFirst('#', 'FF'),
+                      radix: 16,
+                    )
+                  : 0xFF007AFF,
+            ),
+          ),
+          style: TextStyle(
+            color: Color(
+              widget.competizione.colori.isNotEmpty
+                  ? int.parse(
+                      widget.competizione.colori[0].replaceFirst('#', 'FF'),
+                      radix: 16,
+                    )
+                  : 0xFF007AFF,
+            ),
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+          items: giocatoriTitolari.map((Giocatore giocatore) {
+            return DropdownMenuItem<String?>(
+              value: giocatore.id,
+              child: Row(
+                children: [
+                  Text('${giocatore.numero} - '),
+                  Expanded(
+                    child: Text(
+                      CommonService.decodePlayerName(giocatore.nome),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+          onChanged: (String? newValue) {
+            setState(() {
+              _capitanoSelezionato = newValue;
+            });
+          },
+        ),
+      ),
+    );
+  }
+
   void modificaDatiSquadra() {
     PartiteProvider provider = Provider.of<PartiteProvider>(
       context,
@@ -379,6 +557,7 @@ class _SetInfoSquadraModalPageState extends State<SetInfoSquadraModalPage> {
       widget.selectedDivisaModal,
       _moduloSelezionato,
       widget.team == 0 ? widget.partita.idTeamHome : widget.partita.idTeamAway,
+      null,
     );
   }
 }

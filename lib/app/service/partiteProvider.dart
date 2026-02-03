@@ -211,8 +211,13 @@ class PartiteProvider with ChangeNotifier {
     int divisa,
     String modulo,
     int idSquadra,
+    String? capitano,
   ) async {
-    final body = {'divisa': divisa, 'modulo': modulo};
+    final body = {
+      'divisa': divisa,
+      'modulo': modulo,
+      if (capitano != null) 'capitano': capitano,
+    };
     try {
       final response = await http.post(
         Uri.parse(

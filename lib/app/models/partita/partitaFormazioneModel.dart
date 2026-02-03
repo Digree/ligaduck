@@ -469,6 +469,23 @@ Widget buildGiocatore(
             ),
           ),
         ),
+      // Mostra l'icona del capitano se il giocatore è capitano
+      if (pos <= model.formazione.length &&
+          model.formazione[pos - 1].capitano == true)
+        Positioned(
+          bottom: -6,
+          left: -6,
+          child: Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.black, width: 1.5),
+            ),
+            child: Image.asset('assets/icon/cap_2.png', width: 20, height: 20),
+          ),
+        ),
     ],
   );
 

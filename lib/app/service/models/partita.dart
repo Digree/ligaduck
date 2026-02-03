@@ -138,6 +138,7 @@ class GiocatoreFormazione {
   String nome;
   bool inCampo;
   String? ruolo;
+  bool? capitano;
 
   GiocatoreFormazione({
     required this.pos,
@@ -145,6 +146,7 @@ class GiocatoreFormazione {
     required this.nome,
     required this.inCampo,
     this.ruolo,
+    this.capitano,
   });
 
   factory GiocatoreFormazione.fromJson(Map<String, dynamic> json) {
@@ -154,6 +156,7 @@ class GiocatoreFormazione {
       nome: json['nome'],
       inCampo: json['inCampo'] ?? true,
       ruolo: json['ruolo'],
+      capitano: json['capitano'],
     );
   }
 
@@ -164,6 +167,7 @@ class GiocatoreFormazione {
       'nome': nome,
       'inCampo': inCampo,
       'ruolo': ruolo,
+      'capitano': capitano,
     };
   }
 }

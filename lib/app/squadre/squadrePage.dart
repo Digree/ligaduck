@@ -5,6 +5,7 @@ import 'package:ligaduck/app/models/partita/partitaFormazioneModel.dart';
 import 'package:ligaduck/app/service/giocatoriProvider.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
+import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/competizioniProvider.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/squadreProvider.dart';
@@ -206,6 +207,17 @@ class _SquadrePageState extends State<SquadrePage> {
                           },
                           child: Text(
                             'Modifica Competizioni Abilitate',
+                            style: TextStyle(color: getColor('primary')),
+                          ),
+                        ),
+                        SizedBox(height: 10),
+                        ElevatedButton(
+                          onPressed: () async {
+                            Navigator.of(context).pop();
+                            await _mostraDialogSelezionaCapitano();
+                          },
+                          child: Text(
+                            'Seleziona Capitano',
                             style: TextStyle(color: getColor('primary')),
                           ),
                         ),
@@ -1081,6 +1093,37 @@ class _SquadrePageState extends State<SquadrePage> {
               ),
             ),
           ),
+          // Icona capitano
+          if (giocatore.ruolo != 'Allenatore')
+            Builder(
+              builder: (context) {
+                // Verifica se il giocatore è capitano
+                final carrieraAttuale = giocatore.carriera.firstWhere(
+                  (c) =>
+                      c.idSquadra == widget.squadra.id &&
+                      c.campionato == widget.campionato,
+                  orElse: () => Carriera(
+                    campionato: widget.campionato,
+                    idSquadra: widget.squadra.id,
+                    gol: 0,
+                    presenze: 0,
+                    espulsioni: 0,
+                  ),
+                );
+
+                if (carrieraAttuale.capitano == true) {
+                  return Padding(
+                    padding: EdgeInsets.only(left: 8),
+                    child: Image.asset(
+                      'assets/icon/cap.png',
+                      width: 20,
+                      height: 20,
+                    ),
+                  );
+                }
+                return SizedBox.shrink();
+              },
+            ),
           Expanded(
             child: Align(
               alignment: Alignment.centerRight,
@@ -1672,6 +1715,178 @@ class _SquadrePageState extends State<SquadrePage> {
         );
       }
     }
+  }
+
+  Future<void> _mostraDialogSelezionaCapitano() async {
+    final giocatoriProvider = Provider.of<GiocatoriProvider>(
+      context,
+      listen: false,
+    );
+
+    // Trova il capitano attuale (se esiste)
+    String? idCapitanoAttuale;
+    for (var giocatore in giocatori) {
+      if (giocatore.ruolo != 'Allenatore') {
+        final carrieraAttuale = giocatore.carriera.firstWhere(
+          (c) =>
+              c.idSquadra == widget.squadra.id &&
+              c.campionato == widget.campionato,
+          orElse: () => Carriera(
+            campionato: widget.campionato,
+            idSquadra: widget.squadra.id,
+            gol: 0,
+            presenze: 0,
+            espulsioni: 0,
+          ),
+        );
+        if (carrieraAttuale.capitano == true) {
+          idCapitanoAttuale = giocatore.id;
+          break;
+        }
+      }
+    }
+
+    // Lista dei titolari
+    List<GiocatoreFormazione> titolari = widget.squadra.formazione.titolari;
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        String? idCapitanoSelezionato = idCapitanoAttuale;
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text(
+                'Seleziona Capitano',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 400,
+                child: titolari.isEmpty
+                    ? Center(
+                        child: Text(
+                          'Nessun titolare disponibile. Inserisci prima una formazione.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 14, color: Colors.grey),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: titolari.length,
+                        itemBuilder: (context, index) {
+                          final titolare = titolari[index];
+                          final giocatore = giocatori.firstWhere(
+                            (g) => g.id == titolare.idGiocatore,
+                            orElse: () => Giocatore(
+                              id: titolare.idGiocatore,
+                              nome: titolare.nome,
+                              numero: 0,
+                              eta: 0,
+                              ruolo: '',
+                              nazione: '',
+                              idSquadraAttuale: widget.squadra.id,
+                              attivo: true,
+                            ),
+                          );
+
+                          return RadioListTile<String>(
+                            title: Row(
+                              children: [
+                                Text(
+                                  '${giocatore.numero}',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: getColor('primary'),
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    CommonService.decodePlayerName(
+                                      giocatore.nome,
+                                    ),
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            value: titolare.idGiocatore,
+                            groupValue: idCapitanoSelezionato,
+                            activeColor: getColor('primary'),
+                            onChanged: (String? value) {
+                              setDialogState(() {
+                                idCapitanoSelezionato = value;
+                              });
+                            },
+                          );
+                        },
+                      ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('Annulla', style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: getColor('primary'),
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () async {
+                    if (idCapitanoSelezionato != null) {
+                      // Rimuovi il capitano attuale (se esiste)
+                      if (idCapitanoAttuale != null &&
+                          idCapitanoAttuale != idCapitanoSelezionato) {
+                        await giocatoriProvider.aggiornaCapitano(
+                          widget.campionato,
+                          idCapitanoAttuale,
+                          widget.squadra.id,
+                          false,
+                        );
+                      }
+
+                      // Imposta il nuovo capitano
+                      bool success = await giocatoriProvider.aggiornaCapitano(
+                        widget.campionato,
+                        idCapitanoSelezionato!,
+                        widget.squadra.id,
+                        true,
+                      );
+
+                      Navigator.of(context).pop();
+
+                      if (success) {
+                        await _loadGiocatori();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Capitano aggiornato con successo'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Errore nell\'aggiornamento del capitano',
+                            ),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    } else {
+                      Navigator.of(context).pop();
+                    }
+                  },
+                  child: Text('Salva'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _mostraDialogCompetizioniAbilitate() async {

@@ -70,6 +70,7 @@ class Carriera {
   final int? golSubiti;
   final int? cleanSheet;
   final bool? esonero;
+  final bool? capitano;
 
   Carriera({
     required this.campionato,
@@ -83,6 +84,7 @@ class Carriera {
     this.golSubiti,
     this.cleanSheet,
     this.esonero,
+    this.capitano,
   });
 
   factory Carriera.fromJson(Map<String, dynamic> json) {
@@ -98,6 +100,7 @@ class Carriera {
       golSubiti: json['golSubiti'],
       cleanSheet: json['cleanSheet'],
       esonero: json['esonero'],
+      capitano: json['capitano'],
     );
   }
 
@@ -114,6 +117,7 @@ class Carriera {
       'golSubiti': golSubiti,
       'cleanSheet': cleanSheet,
       'esonero': esonero,
+      'capitano': capitano,
     };
   }
 }
