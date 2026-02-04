@@ -288,7 +288,7 @@ class _SquadrePageState extends State<SquadrePage> {
             },
           ),
           title: Text(
-            widget.squadra.nome,
+            CommonService.decodePlayerName(widget.squadra.nome),
             style: TextStyle(color: getIconColor('primary')),
           ),
         ),
@@ -548,7 +548,7 @@ class _SquadrePageState extends State<SquadrePage> {
               children: [
                 // Contorno bianco per il testo
                 Text(
-                  widget.squadra.stadio,
+                  CommonService.decodePlayerName(widget.squadra.stadio),
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -560,7 +560,7 @@ class _SquadrePageState extends State<SquadrePage> {
                 ),
                 // Testo nero sopra
                 Text(
-                  widget.squadra.stadio,
+                  CommonService.decodePlayerName(widget.squadra.stadio),
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 20,

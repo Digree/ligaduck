@@ -7,6 +7,7 @@ import 'package:ligaduck/app/service/partiteProvider.dart';
 import 'package:ligaduck/app/widgets/squadra_logo_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
+import '../../../services/commonService.dart';
 
 class CampionatoMatchModel {
   final String match;
@@ -107,23 +108,50 @@ Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
                   width: isWide ? 120 : 80,
                   child: Center(
                     child: Text(
-                      model.partita.teamHome.length > 13
-                          ? () {
-                              List<String> nomeSquadra = model.partita.teamHome
-                                  .split(' ');
-                              if (nomeSquadra.length >= 3) {
-                                String abbreviato = nomeSquadra[0];
-                                for (int i = 1; i < nomeSquadra.length; i++) {
-                                  abbreviato += ' ${nomeSquadra[i][0]}.';
-                                }
-                                return abbreviato;
-                              } else if (nomeSquadra.length == 2) {
-                                return '${nomeSquadra[0]} ${nomeSquadra[1][0]}.';
-                              } else {
-                                return '${model.partita.teamHome.substring(0, 10)}...';
-                              }
-                            }()
-                          : model.partita.teamHome,
+                      () {
+                        String nomeDecodificato =
+                            CommonService.decodePlayerName(
+                              model.partita.teamHome,
+                            );
+                        // Caso speciale per Pipp Saint Germain
+                        if (nomeDecodificato == 'Pipp Saint Germain') {
+                          return 'PSG';
+                        }
+                        if (nomeDecodificato.length > 13) {
+                          List<String> nomeSquadra = nomeDecodificato.split(
+                            ' ',
+                          );
+                          if (nomeSquadra.length == 3) {
+                            String abbreviato = nomeSquadra[0].length > 10
+                                ? '${nomeSquadra[0].substring(0, 10)}.'
+                                : nomeSquadra[0];
+                            if (nomeSquadra[1].length > 3) {
+                              abbreviato += ' ${nomeSquadra[1][0]}.';
+                            } else {
+                              abbreviato += ' ${nomeSquadra[1]}';
+                            }
+                            abbreviato += ' ${nomeSquadra[2][0]}.';
+                            return abbreviato;
+                          } else if (nomeSquadra.length > 3) {
+                            String abbreviato = nomeSquadra[0].length > 10
+                                ? '${nomeSquadra[0].substring(0, 10)}.'
+                                : nomeSquadra[0];
+                            for (int i = 1; i < nomeSquadra.length; i++) {
+                              abbreviato += ' ${nomeSquadra[i][0]}.';
+                            }
+                            return abbreviato;
+                          } else if (nomeSquadra.length == 2) {
+                            String primaParola = nomeSquadra[0].length > 10
+                                ? '${nomeSquadra[0].substring(0, 10)}.'
+                                : nomeSquadra[0];
+                            return '$primaParola ${nomeSquadra[1][0]}.';
+                          } else {
+                            return '${nomeDecodificato.substring(0, 10)}...';
+                          }
+                        } else {
+                          return nomeDecodificato;
+                        }
+                      }(),
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
@@ -157,23 +185,50 @@ Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
                   width: isWide ? 120 : 80,
                   child: Center(
                     child: Text(
-                      model.partita.teamAway.length > 13
-                          ? () {
-                              List<String> nomeSquadra = model.partita.teamAway
-                                  .split(' ');
-                              if (nomeSquadra.length >= 3) {
-                                String abbreviato = nomeSquadra[0];
-                                for (int i = 1; i < nomeSquadra.length; i++) {
-                                  abbreviato += ' ${nomeSquadra[i][0]}.';
-                                }
-                                return abbreviato;
-                              } else if (nomeSquadra.length == 2) {
-                                return '${nomeSquadra[0]} ${nomeSquadra[1][0]}.';
-                              } else {
-                                return '${model.partita.teamAway.substring(0, 10)}...';
-                              }
-                            }()
-                          : model.partita.teamAway,
+                      () {
+                        String nomeDecodificato =
+                            CommonService.decodePlayerName(
+                              model.partita.teamAway,
+                            );
+                        // Caso speciale per Pipp Saint Germain
+                        if (nomeDecodificato == 'Pipp Saint Germain') {
+                          return 'PSG';
+                        }
+                        if (nomeDecodificato.length > 13) {
+                          List<String> nomeSquadra = nomeDecodificato.split(
+                            ' ',
+                          );
+                          if (nomeSquadra.length == 3) {
+                            String abbreviato = nomeSquadra[0].length > 10
+                                ? '${nomeSquadra[0].substring(0, 10)}.'
+                                : nomeSquadra[0];
+                            if (nomeSquadra[1].length > 3) {
+                              abbreviato += ' ${nomeSquadra[1][0]}.';
+                            } else {
+                              abbreviato += ' ${nomeSquadra[1]}';
+                            }
+                            abbreviato += ' ${nomeSquadra[2][0]}.';
+                            return abbreviato;
+                          } else if (nomeSquadra.length > 3) {
+                            String abbreviato = nomeSquadra[0].length > 10
+                                ? '${nomeSquadra[0].substring(0, 10)}.'
+                                : nomeSquadra[0];
+                            for (int i = 1; i < nomeSquadra.length; i++) {
+                              abbreviato += ' ${nomeSquadra[i][0]}.';
+                            }
+                            return abbreviato;
+                          } else if (nomeSquadra.length == 2) {
+                            String primaParola = nomeSquadra[0].length > 10
+                                ? '${nomeSquadra[0].substring(0, 10)}.'
+                                : nomeSquadra[0];
+                            return '$primaParola ${nomeSquadra[1][0]}.';
+                          } else {
+                            return '${nomeDecodificato.substring(0, 10)}...';
+                          }
+                        } else {
+                          return nomeDecodificato;
+                        }
+                      }(),
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
@@ -232,7 +287,7 @@ Future<void> _showRisultatoDialog(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              '${model.partita.teamHome} - ${model.partita.teamAway}',
+              '${CommonService.decodePlayerName(model.partita.teamHome)} - ${CommonService.decodePlayerName(model.partita.teamAway)}',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 20),
@@ -246,7 +301,9 @@ Future<void> _showRisultatoDialog(
                     textAlign: TextAlign.center,
                     cursorColor: competizioneColor,
                     decoration: InputDecoration(
-                      labelText: model.partita.teamHome,
+                      labelText: CommonService.decodePlayerName(
+                        model.partita.teamHome,
+                      ),
                       labelStyle: TextStyle(color: competizioneColor),
                       border: OutlineInputBorder(),
                       focusedBorder: OutlineInputBorder(
@@ -272,7 +329,9 @@ Future<void> _showRisultatoDialog(
                     textAlign: TextAlign.center,
                     cursorColor: competizioneColor,
                     decoration: InputDecoration(
-                      labelText: model.partita.teamAway,
+                      labelText: CommonService.decodePlayerName(
+                        model.partita.teamAway,
+                      ),
                       labelStyle: TextStyle(color: competizioneColor),
                       border: OutlineInputBorder(),
                       focusedBorder: OutlineInputBorder(

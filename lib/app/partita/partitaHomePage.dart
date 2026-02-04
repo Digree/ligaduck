@@ -616,93 +616,140 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                           'assets/squadre/${partita!.codHome}.png',
                                           height: 80,
                                           width: 80,
-                                          errorBuilder:
-                                              (
-                                                context,
-                                                error,
-                                                stackTrace,
-                                              ) => Padding(
-                                                padding: EdgeInsets.only(
-                                                  bottom: 15,
-                                                  top: 15,
+                                          errorBuilder: (context, error, stackTrace) => Padding(
+                                            padding: EdgeInsets.only(
+                                              bottom: 15,
+                                              top: 15,
+                                            ),
+                                            child: Stack(
+                                              alignment: Alignment.center,
+                                              children: [
+                                                // Icona di sfondo per l'outline nero
+                                                Icon(
+                                                  Icons.shield,
+                                                  size: 50 * 0.9,
+                                                  color: Colors.black,
+                                                  shadows: [
+                                                    Shadow(
+                                                      color: Colors.black,
+                                                      blurRadius: 2,
+                                                    ),
+                                                    Shadow(
+                                                      color: Colors.black,
+                                                      offset: Offset(1, 0),
+                                                    ),
+                                                    Shadow(
+                                                      color: Colors.black,
+                                                      offset: Offset(-1, 0),
+                                                    ),
+                                                    Shadow(
+                                                      color: Colors.black,
+                                                      offset: Offset(0, 1),
+                                                    ),
+                                                    Shadow(
+                                                      color: Colors.black,
+                                                      offset: Offset(0, -1),
+                                                    ),
+                                                  ],
                                                 ),
-                                                child: Container(
-                                                  decoration: BoxDecoration(
+                                                // Icona principale con gradiente
+                                                ShaderMask(
+                                                  shaderCallback: (bounds) {
+                                                    return LinearGradient(
+                                                      colors: [
+                                                        CommonService.getColor(
+                                                          'primary',
+                                                          squadra,
+                                                        ),
+                                                        CommonService.getColor(
+                                                          'secondary',
+                                                          squadra,
+                                                        ),
+                                                        if (squadra
+                                                                .colori
+                                                                .length >
+                                                            2)
+                                                          CommonService.getColor(
+                                                            'tertiary',
+                                                            squadra,
+                                                          ),
+                                                      ],
+                                                      begin: Alignment.topLeft,
+                                                      end:
+                                                          Alignment.bottomRight,
+                                                    ).createShader(bounds);
+                                                  },
+                                                  child: Icon(
+                                                    Icons.shield,
+                                                    size: 50 * 2,
                                                     color: Colors.white,
-                                                    shape: BoxShape.circle,
-                                                    border: Border.all(
-                                                      color:
-                                                          Colors.grey.shade300,
-                                                      width: 2,
-                                                    ),
-                                                  ),
-                                                  child: ShaderMask(
-                                                    shaderCallback: (bounds) {
-                                                      return LinearGradient(
-                                                        colors: [
-                                                          CommonService.getColor(
-                                                            'primary',
-                                                            squadra,
-                                                          ),
-                                                          CommonService.getColor(
-                                                            'secondary',
-                                                            squadra,
-                                                          ),
-                                                          if (squadra
-                                                                  .colori
-                                                                  .length >
-                                                              2)
-                                                            CommonService.getColor(
-                                                              'tertiary',
-                                                              squadra,
-                                                            ),
-                                                        ],
-                                                        begin:
-                                                            Alignment.topLeft,
-                                                        end: Alignment
-                                                            .bottomRight,
-                                                      ).createShader(bounds);
-                                                    },
-                                                    child: Icon(
-                                                      Icons.shield,
-                                                      size: 50,
-                                                      color: Colors.white,
-                                                    ),
                                                   ),
                                                 ),
-                                              ),
+                                              ],
+                                            ),
+                                          ),
                                         );
                                       },
                                     ),
                                     SizedBox(
                                       height: 20,
                                       child: Text(
-                                        partita!.teamHome.length > 12
-                                            ? () {
-                                                List<String> nomeSquadra =
-                                                    partita!.teamHome.split(
-                                                      ' ',
-                                                    );
-                                                if (nomeSquadra.length >= 3) {
-                                                  String abbreviato =
-                                                      nomeSquadra[0];
-                                                  for (
-                                                    int i = 1;
-                                                    i < nomeSquadra.length;
-                                                    i++
-                                                  ) {
-                                                    abbreviato +=
-                                                        ' ${nomeSquadra[i][0]}.';
-                                                  }
-                                                  return abbreviato;
-                                                } else if (nomeSquadra.length ==
-                                                    2) {
-                                                  return '${nomeSquadra[0]} ${nomeSquadra[1][0]}.';
-                                                } else {
-                                                  return '${partita!.teamHome.substring(0, 10)}...';
-                                                }
-                                              }()
-                                            : partita!.teamHome,
+                                        () {
+                                          String nomeDecodificato =
+                                              CommonService.decodePlayerName(
+                                                partita!.teamHome,
+                                              );
+                                          // Caso speciale per Pipp Saint Germain
+                                          if (nomeDecodificato ==
+                                              'Pipp Saint Germain') {
+                                            return 'PSG';
+                                          }
+                                          if (nomeDecodificato.length > 12) {
+                                            List<String> nomeSquadra =
+                                                nomeDecodificato.split(' ');
+                                            if (nomeSquadra.length == 3) {
+                                              String abbreviato =
+                                                  nomeSquadra[0].length > 10
+                                                  ? '${nomeSquadra[0].substring(0, 10)}.'
+                                                  : nomeSquadra[0];
+                                              if (nomeSquadra[1].length > 3) {
+                                                abbreviato +=
+                                                    ' ${nomeSquadra[1][0]}.';
+                                              } else {
+                                                abbreviato +=
+                                                    ' ${nomeSquadra[1]}';
+                                              }
+                                              abbreviato +=
+                                                  ' ${nomeSquadra[2][0]}.';
+                                              return abbreviato;
+                                            } else if (nomeSquadra.length > 3) {
+                                              String abbreviato =
+                                                  nomeSquadra[0].length > 10
+                                                  ? '${nomeSquadra[0].substring(0, 10)}.'
+                                                  : nomeSquadra[0];
+                                              for (
+                                                int i = 1;
+                                                i < nomeSquadra.length;
+                                                i++
+                                              ) {
+                                                abbreviato +=
+                                                    ' ${nomeSquadra[i][0]}.';
+                                              }
+                                              return abbreviato;
+                                            } else if (nomeSquadra.length ==
+                                                2) {
+                                              String primaParola =
+                                                  nomeSquadra[0].length > 10
+                                                  ? '${nomeSquadra[0].substring(0, 10)}.'
+                                                  : nomeSquadra[0];
+                                              return '$primaParola ${nomeSquadra[1][0]}.';
+                                            } else {
+                                              return '${nomeDecodificato.substring(0, 10)}...';
+                                            }
+                                          } else {
+                                            return nomeDecodificato;
+                                          }
+                                        }(),
                                         style: TextStyle(
                                           fontSize: 13,
                                           color: Colors.white,
@@ -778,93 +825,140 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                           'assets/squadre/${partita!.codAway}.png',
                                           height: 80,
                                           width: 80,
-                                          errorBuilder:
-                                              (
-                                                context,
-                                                error,
-                                                stackTrace,
-                                              ) => Padding(
-                                                padding: EdgeInsets.only(
-                                                  bottom: 15,
-                                                  top: 15,
+                                          errorBuilder: (context, error, stackTrace) => Padding(
+                                            padding: EdgeInsets.only(
+                                              bottom: 15,
+                                              top: 15,
+                                            ),
+                                            child: Stack(
+                                              alignment: Alignment.center,
+                                              children: [
+                                                // Icona di sfondo per l'outline nero
+                                                Icon(
+                                                  Icons.shield,
+                                                  size: 50 * 0.3,
+                                                  color: Colors.black,
+                                                  shadows: [
+                                                    Shadow(
+                                                      color: Colors.black,
+                                                      blurRadius: 2,
+                                                    ),
+                                                    Shadow(
+                                                      color: Colors.black,
+                                                      offset: Offset(1, 0),
+                                                    ),
+                                                    Shadow(
+                                                      color: Colors.black,
+                                                      offset: Offset(-1, 0),
+                                                    ),
+                                                    Shadow(
+                                                      color: Colors.black,
+                                                      offset: Offset(0, 1),
+                                                    ),
+                                                    Shadow(
+                                                      color: Colors.black,
+                                                      offset: Offset(0, -1),
+                                                    ),
+                                                  ],
                                                 ),
-                                                child: Container(
-                                                  decoration: BoxDecoration(
+                                                // Icona principale con gradiente
+                                                ShaderMask(
+                                                  shaderCallback: (bounds) {
+                                                    return LinearGradient(
+                                                      colors: [
+                                                        CommonService.getColor(
+                                                          'primary',
+                                                          squadra,
+                                                        ),
+                                                        CommonService.getColor(
+                                                          'secondary',
+                                                          squadra,
+                                                        ),
+                                                        if (squadra
+                                                                .colori
+                                                                .length >
+                                                            2)
+                                                          CommonService.getColor(
+                                                            'tertiary',
+                                                            squadra,
+                                                          ),
+                                                      ],
+                                                      begin: Alignment.topLeft,
+                                                      end:
+                                                          Alignment.bottomRight,
+                                                    ).createShader(bounds);
+                                                  },
+                                                  child: Icon(
+                                                    Icons.shield,
+                                                    size: 50,
                                                     color: Colors.white,
-                                                    shape: BoxShape.circle,
-                                                    border: Border.all(
-                                                      color:
-                                                          Colors.grey.shade300,
-                                                      width: 2,
-                                                    ),
-                                                  ),
-                                                  child: ShaderMask(
-                                                    shaderCallback: (bounds) {
-                                                      return LinearGradient(
-                                                        colors: [
-                                                          CommonService.getColor(
-                                                            'primary',
-                                                            squadra,
-                                                          ),
-                                                          CommonService.getColor(
-                                                            'secondary',
-                                                            squadra,
-                                                          ),
-                                                          if (squadra
-                                                                  .colori
-                                                                  .length >
-                                                              2)
-                                                            CommonService.getColor(
-                                                              'tertiary',
-                                                              squadra,
-                                                            ),
-                                                        ],
-                                                        begin:
-                                                            Alignment.topLeft,
-                                                        end: Alignment
-                                                            .bottomRight,
-                                                      ).createShader(bounds);
-                                                    },
-                                                    child: Icon(
-                                                      Icons.shield,
-                                                      size: 50,
-                                                      color: Colors.white,
-                                                    ),
                                                   ),
                                                 ),
-                                              ),
+                                              ],
+                                            ),
+                                          ),
                                         );
                                       },
                                     ),
                                     SizedBox(
                                       height: 20,
                                       child: Text(
-                                        partita!.teamAway.length > 12
-                                            ? () {
-                                                List<String> nomeSquadra =
-                                                    partita!.teamAway.split(
-                                                      ' ',
-                                                    );
-                                                if (nomeSquadra.length >= 3) {
-                                                  String abbreviato =
-                                                      nomeSquadra[0];
-                                                  for (
-                                                    int i = 1;
-                                                    i < nomeSquadra.length;
-                                                    i++
-                                                  ) {
-                                                    abbreviato +=
-                                                        ' ${nomeSquadra[i][0]}.';
-                                                  }
-                                                  return abbreviato;
-                                                } else if (nomeSquadra.length ==
-                                                    2) {
-                                                  return '${nomeSquadra[0]} ${nomeSquadra[1][0]}.';
-                                                } else {
-                                                  return '${partita!.teamAway.substring(0, 10)}...';
-                                                }
-                                              }()
-                                            : partita!.teamAway,
+                                        () {
+                                          String nomeDecodificato =
+                                              CommonService.decodePlayerName(
+                                                partita!.teamAway,
+                                              );
+                                          // Caso speciale per Pipp Saint Germain
+                                          if (nomeDecodificato ==
+                                              'Pipp Saint Germain') {
+                                            return 'PSG';
+                                          }
+                                          if (nomeDecodificato.length > 12) {
+                                            List<String> nomeSquadra =
+                                                nomeDecodificato.split(' ');
+                                            if (nomeSquadra.length == 3) {
+                                              String abbreviato =
+                                                  nomeSquadra[0].length > 10
+                                                  ? '${nomeSquadra[0].substring(0, 10)}.'
+                                                  : nomeSquadra[0];
+                                              if (nomeSquadra[1].length > 3) {
+                                                abbreviato +=
+                                                    ' ${nomeSquadra[1][0]}.';
+                                              } else {
+                                                abbreviato +=
+                                                    ' ${nomeSquadra[1]}';
+                                              }
+                                              abbreviato +=
+                                                  ' ${nomeSquadra[2][0]}.';
+                                              return abbreviato;
+                                            } else if (nomeSquadra.length > 3) {
+                                              String abbreviato =
+                                                  nomeSquadra[0].length > 10
+                                                  ? '${nomeSquadra[0].substring(0, 10)}.'
+                                                  : nomeSquadra[0];
+                                              for (
+                                                int i = 1;
+                                                i < nomeSquadra.length;
+                                                i++
+                                              ) {
+                                                abbreviato +=
+                                                    ' ${nomeSquadra[i][0]}.';
+                                              }
+                                              return abbreviato;
+                                            } else if (nomeSquadra.length ==
+                                                2) {
+                                              String primaParola =
+                                                  nomeSquadra[0].length > 10
+                                                  ? '${nomeSquadra[0].substring(0, 10)}.'
+                                                  : nomeSquadra[0];
+                                              return '$primaParola ${nomeSquadra[1][0]}.';
+                                            } else {
+                                              return '${nomeDecodificato.substring(0, 10)}...';
+                                            }
+                                          } else {
+                                            return nomeDecodificato;
+                                          }
+                                        }(),
                                         style: TextStyle(
                                           fontSize: 13,
                                           color: Colors.white,
@@ -1653,23 +1747,28 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        partita!.teamHome.length > 18
-                            ? () {
-                                List<String> nomeSquadra = partita!.teamHome
-                                    .split(' ');
-                                if (nomeSquadra.length >= 3) {
-                                  String abbreviato = nomeSquadra[0];
-                                  for (int i = 1; i < nomeSquadra.length; i++) {
-                                    abbreviato += ' ${nomeSquadra[i][0]}.';
-                                  }
-                                  return abbreviato;
-                                } else if (nomeSquadra.length == 2) {
-                                  return '${nomeSquadra[0]} ${nomeSquadra[1][0]}.';
-                                } else {
-                                  return '${partita!.teamHome.substring(0, 10)}...';
-                                }
-                              }()
-                            : partita!.teamHome,
+                        () {
+                          String nomeDecodificato =
+                              CommonService.decodePlayerName(partita!.teamHome);
+                          if (nomeDecodificato.length > 18) {
+                            List<String> nomeSquadra = nomeDecodificato.split(
+                              ' ',
+                            );
+                            if (nomeSquadra.length >= 3) {
+                              String abbreviato = nomeSquadra[0];
+                              for (int i = 1; i < nomeSquadra.length; i++) {
+                                abbreviato += ' ${nomeSquadra[i][0]}.';
+                              }
+                              return abbreviato;
+                            } else if (nomeSquadra.length == 2) {
+                              return '${nomeSquadra[0]} ${nomeSquadra[1][0]}.';
+                            } else {
+                              return '${nomeDecodificato.substring(0, 10)}...';
+                            }
+                          } else {
+                            return nomeDecodificato;
+                          }
+                        }(),
                         style: TextStyle(fontSize: 14),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -1712,26 +1811,31 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        partita!.teamAway.length > 18
-                            ? () {
-                                List<String> nomeSquadra = partita!.teamAway
-                                    .split(' ');
-                                print(
-                                  'Debug teamAway: "${partita!.teamAway}" - Length: ${partita!.teamAway.length} - Words: $nomeSquadra',
-                                );
-                                if (nomeSquadra.length >= 3) {
-                                  String abbreviato = nomeSquadra[0];
-                                  for (int i = 1; i < nomeSquadra.length; i++) {
-                                    abbreviato += ' ${nomeSquadra[i][0]}.';
-                                  }
-                                  return abbreviato;
-                                } else if (nomeSquadra.length == 2) {
-                                  return '${nomeSquadra[0]} ${nomeSquadra[1][0]}.';
-                                } else {
-                                  return '${partita!.teamAway.substring(0, 10)}...';
-                                }
-                              }()
-                            : partita!.teamAway,
+                        () {
+                          String nomeDecodificato =
+                              CommonService.decodePlayerName(partita!.teamAway);
+                          if (nomeDecodificato.length > 18) {
+                            List<String> nomeSquadra = nomeDecodificato.split(
+                              ' ',
+                            );
+                            print(
+                              'Debug teamAway: "$nomeDecodificato" - Length: ${nomeDecodificato.length} - Words: $nomeSquadra',
+                            );
+                            if (nomeSquadra.length >= 3) {
+                              String abbreviato = nomeSquadra[0];
+                              for (int i = 1; i < nomeSquadra.length; i++) {
+                                abbreviato += ' ${nomeSquadra[i][0]}.';
+                              }
+                              return abbreviato;
+                            } else if (nomeSquadra.length == 2) {
+                              return '${nomeSquadra[0]} ${nomeSquadra[1][0]}.';
+                            } else {
+                              return '${nomeDecodificato.substring(0, 10)}...';
+                            }
+                          } else {
+                            return nomeDecodificato;
+                          }
+                        }(),
                         style: TextStyle(fontSize: 14),
                         overflow: TextOverflow.ellipsis,
                       ),

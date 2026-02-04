@@ -1978,15 +1978,15 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     }
 
     if (widget.competizione.classifica == "Gironi") {
-      giornata.classifica?.sort((b, a) => a.punti.compareTo(b.punti));
+      giornata.classifica?.sort((a, b) => a.posizione.compareTo(b.posizione));
       for (var pos in giornata.classifica!) {
         if (pos.girone == String.fromCharCode(65 + index)) {
           classifica.add(pos);
         }
-        classifica.sort((b, a) => a.punti.compareTo(b.punti));
       }
+      classifica.sort((a, b) => a.posizione.compareTo(b.posizione));
     } else {
-      giornata.classifica?.sort((b, a) => a.punti.compareTo(b.punti));
+      giornata.classifica?.sort((a, b) => a.posizione.compareTo(b.posizione));
       classifica = giornata.classifica;
     }
     return Card(
@@ -2026,6 +2026,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                       screenWidth,
                       screenHeight,
                       classifica![i],
+                      classifica.length,
                     ),
                 ],
               ),
@@ -2417,12 +2418,31 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     );
   }
 
+  Color _getRowBackgroundColor(int posizione, int totalTeams) {
+    // Applica i colori solo per le competizioni 5, 6 e 7
+    if (widget.competizione.id == 5 ||
+        widget.competizione.id == 6 ||
+        widget.competizione.id == 7) {
+      // Primi 8 posti: verde
+      if (posizione <= 8) {
+        return Colors.green.withOpacity(0.3);
+      }
+      // Ultime 12 posizioni: rosso
+      else if (posizione > totalTeams - 12) {
+        return Colors.red.withOpacity(0.3);
+      }
+    }
+    // Per tutte le altre competizioni o posizioni intermedie: trasparente
+    return Colors.transparent;
+  }
+
   Widget teamListClassifica(
     BuildContext context,
     bool isWide,
     double screenWidth,
     double screenHeight,
     PosizioneClassifica? posizione,
+    int totalTeams,
   ) {
     final provider = Provider.of<SquadreProvider>(context, listen: false);
     final competizioniProvider = Provider.of<CompetizioniProvider>(
@@ -2450,7 +2470,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
           width: screenWidth * 1,
           height: 45,
           decoration: BoxDecoration(
-            color: Colors.transparent,
+            color: _getRowBackgroundColor(posizione!.posizione, totalTeams),
             border: Border(
               bottom: BorderSide(
                 color: Colors.grey[350] ?? Colors.grey,
@@ -2462,7 +2482,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
             children: [
               Padding(
                 padding: EdgeInsets.only(
-                  right: posizione!.posizione > 9 ? 1 : 8,
+                  right: posizione.posizione > 9 ? 1 : 8,
                 ),
                 child: Text(
                   '${posizione.posizione}',
@@ -2493,21 +2513,49 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                 child: Padding(
                   padding: EdgeInsets.only(left: 8),
                   child: Text(
-                    '${posizione.nomeSquadra!.length > 13 ? () {
-                            List<String> nomeSquadra = posizione.nomeSquadra!.split(' ');
-                            if (nomeSquadra.length >= 3) {
-                              // Per squadre con 3 o più parole: prima parola intera + iniziali delle altre
-                              String abbreviato = nomeSquadra[0];
-                              for (int i = 1; i < nomeSquadra.length; i++) {
-                                abbreviato += ' ${nomeSquadra[i][0]}.';
-                              }
-                              return abbreviato;
-                            } else if (nomeSquadra.length == 2) {
-                              return '${nomeSquadra[0]} ${nomeSquadra[1][0]}.';
-                            } else {
-                              return '${posizione.nomeSquadra?.substring(0, 10)}...';
-                            }
-                          }() : posizione.nomeSquadra}',
+                    () {
+                      String nomeDecodificato = CommonService.decodePlayerName(
+                        posizione.nomeSquadra!,
+                      );
+                      // Caso speciale per Pipp Saint Germain
+                      if (nomeDecodificato == 'Pipp Saint Germain') {
+                        return 'PSG';
+                      }
+                      if (nomeDecodificato.length > 13) {
+                        List<String> nomeSquadra = nomeDecodificato.split(' ');
+                        if (nomeSquadra.length == 3) {
+                          // Per squadre con 3 parole: abbrevia la seconda solo se > 3 caratteri
+                          String abbreviato = nomeSquadra[0].length > 10
+                              ? '${nomeSquadra[0].substring(0, 10)}.'
+                              : nomeSquadra[0];
+                          if (nomeSquadra[1].length > 3) {
+                            abbreviato += ' ${nomeSquadra[1][0]}.';
+                          } else {
+                            abbreviato += ' ${nomeSquadra[1]}';
+                          }
+                          abbreviato += ' ${nomeSquadra[2][0]}.';
+                          return abbreviato;
+                        } else if (nomeSquadra.length > 3) {
+                          // Per squadre con 4+ parole: prima parola intera + iniziali delle altre
+                          String abbreviato = nomeSquadra[0].length > 10
+                              ? '${nomeSquadra[0].substring(0, 10)}.'
+                              : nomeSquadra[0];
+                          for (int i = 1; i < nomeSquadra.length; i++) {
+                            abbreviato += ' ${nomeSquadra[i][0]}.';
+                          }
+                          return abbreviato;
+                        } else if (nomeSquadra.length == 2) {
+                          String primaParola = nomeSquadra[0].length > 10
+                              ? '${nomeSquadra[0].substring(0, 10)}.'
+                              : nomeSquadra[0];
+                          return '$primaParola ${nomeSquadra[1][0]}.';
+                        } else {
+                          return '${nomeDecodificato.substring(0, 10)}...';
+                        }
+                      } else {
+                        return nomeDecodificato;
+                      }
+                    }(),
                     style: TextStyle(fontSize: 12, color: Colors.white),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -2728,7 +2776,17 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       if (result != null) {
         // Se siamo su web, path è null, usiamo bytes
         if (result.files.single.bytes != null) {
-          final input = String.fromCharCodes(result.files.single.bytes!);
+          // Prova prima con UTF-8, poi con latin1 se fallisce
+          String input;
+          try {
+            input = utf8.decode(result.files.single.bytes!);
+          } catch (e) {
+            try {
+              input = latin1.decode(result.files.single.bytes!);
+            } catch (e2) {
+              input = String.fromCharCodes(result.files.single.bytes!);
+            }
+          }
           await _processCsvString(input);
         }
         // Se siamo su mobile/desktop, usiamo il path
@@ -2853,7 +2911,19 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
 
   Future<void> _processCsvFile(File file) async {
     try {
-      final input = await file.readAsString();
+      // Prova prima con UTF-8
+      String input;
+      try {
+        input = await file.readAsString(encoding: utf8);
+      } catch (e) {
+        // Se UTF-8 fallisce, prova con latin1
+        try {
+          input = await file.readAsString(encoding: latin1);
+        } catch (e2) {
+          // Come ultima risorsa, prova senza specificare encoding
+          input = await file.readAsString();
+        }
+      }
       await _processCsvString(input);
     } catch (e) {
       _showMessage('Errore nella lettura del file CSV: $e');

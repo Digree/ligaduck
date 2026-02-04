@@ -25,23 +25,30 @@ class SquadraLogoWidget extends StatelessWidget {
       width: size,
       errorBuilder: (context, error, stackTrace) {
         List<Color> teamColors = getSquadraColors(squadra, codSquadra);
-        return Container(
+        return SizedBox(
           width: size,
           height: size,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.grey.shade300, width: 2),
-          ),
-          child: ShaderMask(
-            shaderCallback: (bounds) {
-              return LinearGradient(
-                colors: teamColors,
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ).createShader(bounds);
-            },
-            child: Icon(Icons.shield, size: size * 0.6, color: Colors.white),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Icona nera di sfondo per il contorno
+              Icon(Icons.shield, size: size * 0.86, color: Colors.black),
+              // Icona colorata sopra
+              ShaderMask(
+                shaderCallback: (bounds) {
+                  return LinearGradient(
+                    colors: teamColors,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ).createShader(bounds);
+                },
+                child: Icon(
+                  Icons.shield,
+                  size: size * 0.8,
+                  color: Colors.white,
+                ),
+              ),
+            ],
           ),
         );
       },
@@ -115,23 +122,26 @@ createSquadraLogoErrorBuilder({
 }) {
   return (context, error, stackTrace) {
     List<Color> teamColors = getSquadraColors(squadra, codSquadra);
-    return Container(
+    return SizedBox(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.grey.shade300, width: 2),
-      ),
-      child: ShaderMask(
-        shaderCallback: (bounds) {
-          return LinearGradient(
-            colors: teamColors,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ).createShader(bounds);
-        },
-        child: Icon(Icons.shield, size: size * 0.6, color: Colors.white),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Icona nera di sfondo per il contorno
+          Icon(Icons.shield, size: size * 0.65, color: Colors.black),
+          // Icona colorata sopra
+          ShaderMask(
+            shaderCallback: (bounds) {
+              return LinearGradient(
+                colors: teamColors,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ).createShader(bounds);
+            },
+            child: Icon(Icons.shield, size: size * 0.6, color: Colors.white),
+          ),
+        ],
       ),
     );
   };

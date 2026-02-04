@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/squadre/squadrePage.dart';
+import 'package:ligaduck/services/commonService.dart';
 
 class ListaSquadreModel {
   final String campionato;
@@ -284,7 +285,7 @@ Widget showSquadre(ListaSquadreModel model, String categoria) {
                           );
                         },
                         child: Text(
-                          squadra.nome,
+                          CommonService.decodePlayerName(squadra.nome),
                           style: TextStyle(color: Colors.blueAccent),
                         ),
                       ),
