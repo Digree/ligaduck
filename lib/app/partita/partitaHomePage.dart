@@ -203,12 +203,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
           provider,
           partita!.idTeamHome,
           widget.campionato,
+          competizione!.id,
         );
       } else {
         squadra = await getSquadraById(
           provider,
           partita!.idTeamAway,
           widget.campionato,
+          competizione!.id,
         );
       }
       setState(() {
@@ -627,7 +629,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                                 // Icona di sfondo per l'outline nero
                                                 Icon(
                                                   Icons.shield,
-                                                  size: 50 * 0.9,
+                                                  size: 50 * 0.3,
                                                   color: Colors.black,
                                                   shadows: [
                                                     Shadow(
@@ -681,7 +683,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                                   },
                                                   child: Icon(
                                                     Icons.shield,
-                                                    size: 50 * 2,
+                                                    size: 50,
                                                     color: Colors.white,
                                                   ),
                                                 ),
@@ -3541,8 +3543,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     SquadreProvider provider,
     int idSquadra,
     String campionato,
+    int idCompetizione,
   ) async {
-    Squadra squadra = await provider.fetchSquadraById(campionato, idSquadra);
+    Squadra squadra = await provider.fetchSquadraById(
+      campionato,
+      idSquadra,
+      idCompetizione,
+    );
     return squadra;
   }
 

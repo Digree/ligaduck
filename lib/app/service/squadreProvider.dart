@@ -48,10 +48,16 @@ class SquadreProvider with ChangeNotifier {
     }
   }
 
-  Future<Squadra> fetchSquadraById(String campionato, int idSquadra) async {
+  Future<Squadra> fetchSquadraById(
+    String campionato,
+    int idSquadra,
+    int idCompetizione,
+  ) async {
     try {
       final response = await http.get(
-        Uri.parse('${Env.apiUrl}/$campionato/squadre/$idSquadra'),
+        Uri.parse(
+          '${Env.apiUrl}/$campionato/squadre/$idSquadra?competizione=$idCompetizione',
+        ),
       );
 
       if (response.statusCode == 200) {
