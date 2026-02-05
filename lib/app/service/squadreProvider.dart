@@ -88,6 +88,49 @@ class SquadreProvider with ChangeNotifier {
     }
   }
 
+  Future<List<Squadra>> fetchSquadreByCompetizione(
+    String campionato,
+    int idCompetizione,
+  ) async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+          '${Env.apiUrl}/$campionato/squadre/competizione/$idCompetizione',
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        List<Squadra> squadre = data
+            .map((item) => Squadra.fromJson(item))
+            .toList();
+
+        for (var squadra in squadre) {
+          for (var giocatore in squadra.formazione.titolari) {
+            giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
+          }
+
+          for (var giocatore in squadra.formazione.panchina) {
+            giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
+          }
+
+          for (var giocatore in squadra.indisponibili) {
+            giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
+          }
+        }
+
+        notifyListeners();
+        return squadre;
+      } else {
+        throw Exception('Errore nel caricamento: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Tipo errore: ${e.runtimeType}');
+      print('Dettaglio errore: $e');
+      return [];
+    }
+  }
+
   Future<void> caricaFormazione(
     String campionato,
     int idSquadra,

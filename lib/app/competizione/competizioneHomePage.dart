@@ -55,7 +55,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
   List<PosizioneClassifica> classifica = [];
   // Chiave _refreshKey rimossa in favore di _invalidateCacheKey
   late final Future<List<Giornata>> _giornateFuture;
-  late final Future<List<Squadra>> _squadreFuture;
+  //late final Future<List<Squadra>> _squadreFuture;
+  late final Future<List<Squadra>> _squadreCompetizioneFuture;
   final Map<String, Future<Map<String, dynamic>>> _partiteCache = {};
   final Map<String, Widget> _partiteWidgetCache =
       {}; // Cache dei widget FutureBuilder
@@ -71,7 +72,11 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       listen: false,
     );
     _giornateFuture = getGiornate(provider);
-    _squadreFuture = squadreProvider.fetchSquadre(widget.campionato);
+    //_squadreFuture = squadreProvider.fetchSquadre(widget.campionato);
+    _squadreCompetizioneFuture = squadreProvider.fetchSquadreByCompetizione(
+      widget.campionato,
+      widget.competizione.id,
+    );
     _caricaGiornate();
     _caricaClassifica();
   }
@@ -186,7 +191,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     }
 
     return DefaultTabController(
-      length: mostraClassifica ? 3 : 2,
+      key: ValueKey('tabs_$isWide'),
+      length: 4,
       child: Scaffold(
         appBar: PreferredSize(
           preferredSize: Size.fromHeight(200),
@@ -349,8 +355,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                               ),
                               tabs: [
                                 Tab(text: 'Partite'),
-                                if (mostraClassifica) Tab(text: 'Classifica'),
+                                Tab(text: 'Classifica'),
                                 Tab(text: 'Statistiche'),
+                                Tab(text: 'Squadre'),
                               ],
                             ),
                           ),
@@ -358,9 +365,13 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                             child: TabBarView(
                               children: [
                                 buildPartiteList(selectedGiornata!),
-                                if (mostraClassifica)
-                                  buildClassifica(context, selectedGiornata!),
+                                buildClassifica(
+                                  context,
+                                  selectedGiornata!,
+                                  mostraClassifica,
+                                ),
                                 buildStatistiche(),
+                                buildSquadre(),
                               ],
                             ),
                           ),
@@ -430,6 +441,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                               child: buildClassifica(
                                                 context,
                                                 selectedGiornata!,
+                                                mostraClassifica,
                                               ),
                                             ),
                                           ),
@@ -725,10 +737,27 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                           ],
                         ),
                       ),
-                    /* else
-                    const Expanded(
-                      child: Center(child: CircularProgressIndicator()),
-                    ), */
+                    if (selectedGiornata != null)
+                      Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.only(bottom: 16),
+                              child: Text(
+                                'Squadre:',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.left,
+                              ),
+                            ),
+                            SizedBox(height: 400, child: buildSquadre()),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -2522,7 +2551,21 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     return partiteWidget;
   }
 
-  Widget buildClassifica(BuildContext context, String idGiornata) {
+  Widget buildClassifica(
+    BuildContext context,
+    String idGiornata,
+    bool mostraClassifica,
+  ) {
+    // Se non dobbiamo mostrare la classifica, mostra un messaggio
+    if (!mostraClassifica) {
+      return Center(
+        child: Text(
+          'La classifica è disponibile solo per le giornate del girone',
+          style: TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+      );
+    }
+
     bool isWide = MediaQuery.of(context).size.width > 600;
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
@@ -2865,6 +2908,64 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     );
   }
 
+  Widget buildSquadre() {
+    return FutureBuilder<List<Squadra>>(
+      future: _squadreCompetizioneFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(child: Text('Errore: ${snapshot.error}'));
+        }
+
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return Center(child: Text('Nessuna squadra trovata'));
+        }
+
+        final squadre = snapshot.data!;
+
+        squadre.sort((a, b) => a.nome.compareTo(b.nome));
+
+        return ListView.builder(
+          itemCount: squadre.length,
+          itemBuilder: (context, index) {
+            final squadra = squadre[index];
+            return Card(
+              margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: ListTile(
+                leading: Image.asset(
+                  'assets/squadre/${squadra.cod}.png',
+                  width: 40,
+                  height: 40,
+                  errorBuilder: (context, error, stackTrace) {
+                    return _buildColoredShield(squadra);
+                  },
+                ),
+                title: Text(
+                  CommonService.decodePlayerName(squadra.nome),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SquadrePage(
+                        campionato: widget.campionato,
+                        squadra: squadra,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Future<List<Giornata>> getGiornate(GiornateProvider provider) async {
     List<Giornata> giornata = await provider.fetchGiornate(
       widget.campionato,
@@ -2892,7 +2993,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     // Carica partite e squadre in parallelo
     final futures = await Future.wait([
       partiteProvider.fetchPartite(widget.campionato, idGiornata),
-      _squadreFuture,
+      _squadreCompetizioneFuture,
     ]);
 
     final partite = futures[0] as List<Partita>;
@@ -3320,7 +3421,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
   }
 
   Future<Squadra> getSquadra(SquadreProvider provider, int idSquadra) async {
-    List<Squadra> squadre = await _squadreFuture;
+    List<Squadra> squadre = await _squadreCompetizioneFuture;
 
     for (var squadra in squadre) {
       if (squadra.id == idSquadra) {
@@ -3428,25 +3529,20 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
 
       // Genera classifica iniziale in base alle squadre abilitate
       try {
-        final squadre = await _squadreFuture;
-
-        // Filtra le squadre che hanno questa competizione abilitata
-        final squadreAbilitate = squadre.where((squadra) {
-          return squadra.competizioni.contains(widget.competizione.id);
-        }).toList();
+        final squadre = await _squadreCompetizioneFuture;
 
         // Ordina alfabeticamente
-        squadreAbilitate.sort((a, b) => a.nome.compareTo(b.nome));
+        squadre.sort((a, b) => a.nome.compareTo(b.nome));
 
         // Crea le posizioni di classifica iniziali
         classifica = [];
-        for (int i = 0; i < squadreAbilitate.length; i++) {
+        for (int i = 0; i < squadre.length; i++) {
           classifica.add(
             PosizioneClassifica(
               posizione: i + 1,
-              idSquadra: squadreAbilitate[i].id,
-              nomeSquadra: squadreAbilitate[i].nome,
-              codSquadra: squadreAbilitate[i].cod,
+              idSquadra: squadre[i].id,
+              nomeSquadra: squadre[i].nome,
+              codSquadra: squadre[i].cod,
               punti: 0,
               partiteGiocate: 0,
               win: 0,
