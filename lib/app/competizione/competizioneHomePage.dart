@@ -55,7 +55,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
   List<PosizioneClassifica> classifica = [];
   // Chiave _refreshKey rimossa in favore di _invalidateCacheKey
   late final Future<List<Giornata>> _giornateFuture;
-  //late final Future<List<Squadra>> _squadreFuture;
+  late final Future<List<Squadra>> _squadreFuture;
   late final Future<List<Squadra>> _squadreCompetizioneFuture;
   final Map<String, Future<Map<String, dynamic>>> _partiteCache = {};
   final Map<String, Widget> _partiteWidgetCache =
@@ -72,12 +72,11 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       listen: false,
     );
     _giornateFuture = getGiornate(provider);
-    //_squadreFuture = squadreProvider.fetchSquadre(widget.campionato);
+    _squadreFuture = squadreProvider.fetchSquadre(widget.campionato);
     _squadreCompetizioneFuture = squadreProvider.fetchSquadreByCompetizione(
       widget.campionato,
       widget.competizione.id,
     );
-    _caricaGiornate();
     _caricaClassifica();
   }
 
@@ -324,60 +323,77 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
             ? Column(
                 children: [
                   buildGiornateBox(),
-                  if (selectedGiornata != null)
-                    Expanded(
-                      child: Column(
-                        children: [
-                          Container(
-                            constraints: BoxConstraints(
-                              maxHeight: 50,
-                              maxWidth: MediaQuery.of(context).size.width,
-                            ),
-                            child: TabBar(
-                              labelColor: Color(
-                                widget.competizione.colori.isNotEmpty
-                                    ? int.parse(
-                                        widget.competizione.colori[0]
-                                            .replaceFirst('#', 'FF'),
-                                        radix: 16,
-                                      )
-                                    : 0xFF000000,
-                              ),
-                              unselectedLabelColor: Colors.grey,
-                              indicatorColor: Color(
-                                widget.competizione.colori.isNotEmpty
-                                    ? int.parse(
-                                        widget.competizione.colori[0]
-                                            .replaceFirst('#', 'FF'),
-                                        radix: 16,
-                                      )
-                                    : 0xFF000000,
-                              ),
-                              tabs: [
-                                Tab(text: 'Partite'),
-                                Tab(text: 'Classifica'),
-                                Tab(text: 'Statistiche'),
-                                Tab(text: 'Squadre'),
-                              ],
-                            ),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Container(
+                          constraints: BoxConstraints(
+                            maxHeight: 50,
+                            maxWidth: MediaQuery.of(context).size.width,
                           ),
-                          Expanded(
-                            child: TabBarView(
-                              children: [
-                                buildPartiteList(selectedGiornata!),
-                                buildClassifica(
-                                  context,
-                                  selectedGiornata!,
-                                  mostraClassifica,
-                                ),
-                                buildStatistiche(),
-                                buildSquadre(),
-                              ],
+                          child: TabBar(
+                            labelColor: Color(
+                              widget.competizione.colori.isNotEmpty
+                                  ? int.parse(
+                                      widget.competizione.colori[0]
+                                          .replaceFirst('#', 'FF'),
+                                      radix: 16,
+                                    )
+                                  : 0xFF000000,
                             ),
+                            unselectedLabelColor: Colors.grey,
+                            indicatorColor: Color(
+                              widget.competizione.colori.isNotEmpty
+                                  ? int.parse(
+                                      widget.competizione.colori[0]
+                                          .replaceFirst('#', 'FF'),
+                                      radix: 16,
+                                    )
+                                  : 0xFF000000,
+                            ),
+                            tabs: [
+                              Tab(text: 'Partite'),
+                              Tab(text: 'Classifica'),
+                              Tab(text: 'Statistiche'),
+                              Tab(text: 'Squadre'),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                        Expanded(
+                          child: TabBarView(
+                            children: [
+                              selectedGiornata != null
+                                  ? buildPartiteList(selectedGiornata!)
+                                  : Center(
+                                      child: Text(
+                                        'Nessuna giornata disponibile',
+                                      ),
+                                    ),
+                              selectedGiornata != null
+                                  ? buildClassifica(
+                                      context,
+                                      selectedGiornata!,
+                                      mostraClassifica,
+                                    )
+                                  : Center(
+                                      child: Text(
+                                        'Nessuna classifica disponibile',
+                                      ),
+                                    ),
+                              selectedGiornata != null
+                                  ? buildStatistiche()
+                                  : Center(
+                                      child: Text(
+                                        'Nessuna statistica disponibile',
+                                      ),
+                                    ),
+                              buildSquadre(),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
+                  ),
                   /*                   else
                     const Expanded(
                       child: Center(child: CircularProgressIndicator()),
@@ -389,89 +405,83 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                   children: [
                     buildGiornateBox(),
                     if (selectedGiornata != null)
-                      SizedBox(
-                        height: MediaQuery.of(context).size.height,
-                        child: Padding(
-                          padding: EdgeInsets.all(16),
-                          child: mostraClassifica
-                              ? Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Partite:',
-                                            style: TextStyle(
-                                              fontSize: 22,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                            textAlign: TextAlign.left,
+                      Padding(
+                        padding: EdgeInsets.all(16),
+                        child: mostraClassifica
+                            ? Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Partite:',
+                                          style: TextStyle(
+                                            fontSize: 22,
+                                            fontWeight: FontWeight.bold,
                                           ),
-                                          Expanded(
-                                            child: Padding(
-                                              padding: EdgeInsets.only(top: 16),
-                                              child: buildPartiteList(
-                                                selectedGiornata!,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    SizedBox(width: 32),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Classifica:',
-                                            style: TextStyle(
-                                              fontSize: 22,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                            textAlign: TextAlign.left,
-                                          ),
-                                          Expanded(
-                                            child: Padding(
-                                              padding: EdgeInsets.only(top: 16),
-                                              child: buildClassifica(
-                                                context,
-                                                selectedGiornata!,
-                                                mostraClassifica,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                )
-                              : Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Partite:',
-                                      style: TextStyle(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                      textAlign: TextAlign.left,
-                                    ),
-                                    Expanded(
-                                      child: Padding(
-                                        padding: EdgeInsets.only(top: 16),
-                                        child: buildPartiteList(
-                                          selectedGiornata!,
+                                          textAlign: TextAlign.left,
                                         ),
-                                      ),
+                                        Padding(
+                                          padding: EdgeInsets.only(top: 16),
+                                          child: buildPartiteList(
+                                            selectedGiornata!,
+                                            shrinkWrap: true,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                        ),
+                                  ),
+                                  SizedBox(width: 32),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Classifica:',
+                                          style: TextStyle(
+                                            fontSize: 22,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          textAlign: TextAlign.left,
+                                        ),
+                                        Padding(
+                                          padding: EdgeInsets.only(top: 16),
+                                          child: buildClassifica(
+                                            context,
+                                            selectedGiornata!,
+                                            mostraClassifica,
+                                            shrinkWrap: true,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Partite:',
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.left,
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.only(top: 16),
+                                    child: buildPartiteList(
+                                      selectedGiornata!,
+                                      shrinkWrap: true,
+                                    ),
+                                  ),
+                                ],
+                              ),
                       ),
                     if (selectedGiornata != null)
                       Padding(
@@ -2350,10 +2360,11 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
           return Center(child: Text('Errore nel caricamento delle giornate'));
         } else if (snapshot.hasData) {
           giornate = snapshot.data!;
+          giornate_ = snapshot.data!;
           if (giornate.isEmpty) {
             return Padding(
-              padding: EdgeInsetsGeometry.only(top: 100),
-              child: Center(child: Text('Nessuna giornata disponibile')),
+              padding: EdgeInsetsGeometry.only(top: 10),
+              child: Center(),
             );
           } else {
             giornate.sort((a, b) {
@@ -2419,8 +2430,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     );
   }
 
-  Widget buildPartiteList(String idGiornata) {
-    final cacheKey = '${idGiornata}_$_invalidateCacheKey';
+  Widget buildPartiteList(String idGiornata, {bool shrinkWrap = false}) {
+    final cacheKey =
+        '${idGiornata}_$_invalidateCacheKey${shrinkWrap ? '_shrink' : ''}';
 
     // Se il widget è già in cache, lo ritorna direttamente
     if (_partiteWidgetCache.containsKey(cacheKey)) {
@@ -2465,6 +2477,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
             return Padding(
               padding: EdgeInsets.only(top: 16),
               child: ListView.builder(
+                shrinkWrap: shrinkWrap,
+                physics: shrinkWrap ? NeverScrollableScrollPhysics() : null,
                 itemCount: partite.length,
                 itemBuilder: (context, index) {
                   // Trova le squadre per la partita corrente
@@ -2554,8 +2568,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
   Widget buildClassifica(
     BuildContext context,
     String idGiornata,
-    bool mostraClassifica,
-  ) {
+    bool mostraClassifica, {
+    bool shrinkWrap = false,
+  }) {
     // Se non dobbiamo mostrare la classifica, mostra un messaggio
     if (!mostraClassifica) {
       return Center(
@@ -2598,6 +2613,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       padding: EdgeInsets.only(top: 8.0),
       child: widget.competizione.classifica == "Gironi"
           ? ListView.builder(
+              shrinkWrap: shrinkWrap,
+              physics: shrinkWrap ? NeverScrollableScrollPhysics() : null,
               itemCount: count,
               itemBuilder: (context, index) {
                 return cardClassifica(
@@ -3218,8 +3235,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                   },
                 ),
               ),
-              SizedBox(
-                width: isWide ? screenWidth * 0.3 : screenWidth * 0.22,
+              Expanded(
                 child: Padding(
                   padding: EdgeInsets.only(left: 8),
                   child: Text(
@@ -3421,7 +3437,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
   }
 
   Future<Squadra> getSquadra(SquadreProvider provider, int idSquadra) async {
-    List<Squadra> squadre = await _squadreCompetizioneFuture;
+    List<Squadra> squadre = await _squadreFuture;
 
     for (var squadra in squadre) {
       if (squadra.id == idSquadra) {

@@ -100,6 +100,43 @@ class Country {
     );
   }
 
+  // Factory per creare Country con nome tradotto in italiano
+  factory Country.fromJsonWithItalian(Map<String, dynamic> json) {
+    // Estrai la traduzione italiana se disponibile, altrimenti usa il nome comune
+    String commonName = json['name']['common'] ?? '';
+
+    if (json['translations'] != null && json['translations']['ita'] != null) {
+      commonName = json['translations']['ita']['common'] ?? commonName;
+    }
+
+    // Estrazione bandiera
+    String flagUrl = '';
+    String flagEmoji = json['flag'] ?? '';
+
+    if (json['flags'] != null) {
+      flagUrl = json['flags']['png'] ?? json['flags']['svg'] ?? '';
+    }
+
+    // Codici ISO
+    String cca2 = json['cca2'] ?? '';
+    String cca3 = json['cca3'] ?? '';
+
+    return Country(
+      commonName: commonName,
+      officialName: commonName,
+      region: '',
+      subregion: '',
+      population: 0,
+      area: 0,
+      currencies: [],
+      languages: [],
+      flagUrl: flagUrl,
+      flagEmoji: flagEmoji,
+      cca2: cca2,
+      cca3: cca3,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'commonName': commonName,

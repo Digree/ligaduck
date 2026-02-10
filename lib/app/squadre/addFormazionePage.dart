@@ -61,7 +61,7 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
       return Center(
         child: Text(
           'Caricamento moduli...',
-          style: TextStyle(color: getColor("primary")),
+          style: TextStyle(color: getColor("primary", forText: true)),
         ),
       );
     }
@@ -91,9 +91,12 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
       child: DropdownButton<String>(
         value: validValue,
         isExpanded: true,
-        icon: Icon(Icons.arrow_drop_down, color: getColor("primary")),
+        icon: Icon(
+          Icons.arrow_drop_down,
+          color: getColor("primary", forText: true),
+        ),
         style: TextStyle(
-          color: getColor("primary"),
+          color: getColor("primary", forText: true),
           fontSize: 16,
           fontWeight: FontWeight.bold,
         ),
@@ -261,14 +264,17 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: getColor("primary"), width: 2),
+              border: Border.all(
+                color: getColor("primary", forText: true),
+                width: 2,
+              ),
             ),
             child: _isLoadingModuli || _moduli.isEmpty
                 ? Center(
                     child: Padding(
                       padding: EdgeInsets.all(16.0),
                       child: CircularProgressIndicator(
-                        color: getColor("primary"),
+                        color: getColor("primary", forText: true),
                       ),
                     ),
                   )
@@ -366,7 +372,7 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
     );
   }
 
-  Color getColor(String type) {
+  Color getColor(String type, {bool forText = false}) {
     final Map<String, Color> colorMap = {
       'rosso': Colors.red,
       'verde': Colors.green,
@@ -386,6 +392,15 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
     if (type.contains('primary')) {
       final primaryColorName = widget.squadra.colori[0].toLowerCase();
       final primaryColor = colorMap[primaryColorName] ?? Colors.grey;
+
+      // Se il colore primario è bianco e siamo in un testo, usa il colore secondario
+      if (forText &&
+          primaryColorName == 'bianco' &&
+          widget.squadra.colori.length > 1) {
+        final secondaryColorName = widget.squadra.colori[1].toLowerCase();
+        return colorMap[secondaryColorName] ?? Colors.grey;
+      }
+
       return primaryColor;
     } else if (type.contains('secondary')) {
       final secondaryColorName = widget.squadra.colori[1].toLowerCase();

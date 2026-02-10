@@ -171,7 +171,9 @@ class _SquadrePageState extends State<SquadrePage> {
                           },
                           child: Text(
                             'Aggiungi Giocatori',
-                            style: TextStyle(color: getColor('primary')),
+                            style: TextStyle(
+                              color: getColor('primary', forText: true),
+                            ),
                           ),
                         ),
                         SizedBox(height: 10),
@@ -196,7 +198,9 @@ class _SquadrePageState extends State<SquadrePage> {
                           },
                           child: Text(
                             'Inserisci Formazione',
-                            style: TextStyle(color: getColor('primary')),
+                            style: TextStyle(
+                              color: getColor('primary', forText: true),
+                            ),
                           ),
                         ),
                         SizedBox(height: 10),
@@ -207,7 +211,9 @@ class _SquadrePageState extends State<SquadrePage> {
                           },
                           child: Text(
                             'Modifica Competizioni Abilitate',
-                            style: TextStyle(color: getColor('primary')),
+                            style: TextStyle(
+                              color: getColor('primary', forText: true),
+                            ),
                           ),
                         ),
                         SizedBox(height: 10),
@@ -218,7 +224,9 @@ class _SquadrePageState extends State<SquadrePage> {
                           },
                           child: Text(
                             'Seleziona Capitano',
-                            style: TextStyle(color: getColor('primary')),
+                            style: TextStyle(
+                              color: getColor('primary', forText: true),
+                            ),
                           ),
                         ),
                       ],
@@ -517,61 +525,243 @@ class _SquadrePageState extends State<SquadrePage> {
   }
 
   Widget moreInfo(BuildContext context, bool isWide) {
-    return Padding(
-      padding: isWide ? EdgeInsets.only(left: 100) : EdgeInsets.only(),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Flexible(
-            child: Stack(
-              children: [
-                // Contorno bianco
-                Image.asset(
-                  'assets/miscellaneous/stadium.png',
-                  fit: BoxFit.contain,
-                  color: Colors.white,
-                  colorBlendMode: BlendMode.srcATop,
+    final content = Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Stadio (grande come prima)
+        Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (isWide)
+              Flexible(
+                child: Stack(
+                  children: [
+                    Image.asset(
+                      'assets/miscellaneous/stadium.png',
+                      fit: BoxFit.contain,
+                      color: Colors.white,
+                      colorBlendMode: BlendMode.srcATop,
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(2),
+                      child: Image.asset(
+                        'assets/miscellaneous/stadium.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ],
                 ),
-                // Immagine originale
-                Padding(
-                  padding: EdgeInsets.all(2),
-                  child: Image.asset(
+              )
+            else
+              Stack(
+                children: [
+                  Image.asset(
                     'assets/miscellaneous/stadium.png',
                     fit: BoxFit.contain,
+                    color: Colors.white,
+                    colorBlendMode: BlendMode.srcATop,
+                    height: 60,
                   ),
+                  Padding(
+                    padding: EdgeInsets.all(2),
+                    child: Image.asset(
+                      'assets/miscellaneous/stadium.png',
+                      fit: BoxFit.contain,
+                      height: 60,
+                    ),
+                  ),
+                ],
+              ),
+            if (isWide)
+              Flexible(
+                child: Stack(
+                  children: [
+                    Text(
+                      CommonService.decodePlayerName(widget.squadra.stadio),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        foreground: Paint()
+                          ..style = PaintingStyle.stroke
+                          ..strokeWidth = 2
+                          ..color = Colors.white,
+                      ),
+                    ),
+                    Text(
+                      CommonService.decodePlayerName(widget.squadra.stadio),
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          Flexible(
-            child: Stack(
+              )
+            else
+              Column(
+                children: [
+                  SizedBox(height: 8),
+                  Stack(
+                    children: [
+                      Text(
+                        CommonService.decodePlayerName(widget.squadra.stadio),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          foreground: Paint()
+                            ..style = PaintingStyle.stroke
+                            ..strokeWidth = 2
+                            ..color = Colors.white,
+                        ),
+                      ),
+                      Text(
+                        CommonService.decodePlayerName(widget.squadra.stadio),
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+          ],
+        ),
+        SizedBox(width: 40),
+        // Colonna con città e colori sociali
+        Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Città
+            Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // Contorno bianco per il testo
-                Text(
-                  CommonService.decodePlayerName(widget.squadra.stadio),
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    foreground: Paint()
-                      ..style = PaintingStyle.stroke
-                      ..strokeWidth = 2
-                      ..color = Colors.white,
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Stack(
+                    children: [
+                      Icon(
+                        Icons.location_city,
+                        size: 22,
+                        color: Colors.white,
+                        shadows: [
+                          Shadow(
+                            offset: Offset(2, 2),
+                            blurRadius: 2,
+                            color: Colors.white,
+                          ),
+                        ],
+                      ),
+                      Icon(Icons.location_city, size: 22, color: Colors.black),
+                    ],
                   ),
                 ),
-                // Testo nero sopra
-                Text(
-                  CommonService.decodePlayerName(widget.squadra.stadio),
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                SizedBox(width: 8),
+                Stack(
+                  children: [
+                    Text(
+                      CommonService.decodePlayerName(widget.squadra.citta),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        foreground: Paint()
+                          ..style = PaintingStyle.stroke
+                          ..strokeWidth = 2
+                          ..color = Colors.white,
+                      ),
+                    ),
+                    Text(
+                      CommonService.decodePlayerName(widget.squadra.citta),
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ),
-        ],
-      ),
+            SizedBox(height: 8),
+            // Colori sociali
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Stack(
+                    children: [
+                      Icon(
+                        Icons.palette,
+                        size: 22,
+                        color: Colors.white,
+                        shadows: [
+                          Shadow(
+                            offset: Offset(2, 2),
+                            blurRadius: 2,
+                            color: Colors.white,
+                          ),
+                        ],
+                      ),
+                      Icon(Icons.palette, size: 22, color: Colors.black),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 8),
+                Stack(
+                  children: [
+                    Text(
+                      widget.squadra.colori
+                          .map(
+                            (c) =>
+                                c[0].toUpperCase() +
+                                c.substring(1).toLowerCase(),
+                          )
+                          .join(', '),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        foreground: Paint()
+                          ..style = PaintingStyle.stroke
+                          ..strokeWidth = 2
+                          ..color = Colors.white,
+                      ),
+                    ),
+                    Text(
+                      widget.squadra.colori
+                          .map(
+                            (c) =>
+                                c[0].toUpperCase() +
+                                c.substring(1).toLowerCase(),
+                          )
+                          .join(', '),
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+    );
+
+    return Padding(
+      padding: isWide ? EdgeInsets.only(left: 100) : EdgeInsets.only(),
+      child: isWide
+          ? content
+          : FittedBox(fit: BoxFit.scaleDown, child: content),
     );
   }
 
@@ -648,9 +838,9 @@ class _SquadrePageState extends State<SquadrePage> {
           child: Column(
             children: [
               TabBar(
-                labelColor: getColor('primary'),
+                labelColor: getColor('primary', forText: true),
                 unselectedLabelColor: Colors.grey,
-                indicatorColor: getColor('primary'),
+                indicatorColor: getColor('primary', forText: true),
                 tabs: [
                   Tab(text: 'Squadra'),
                   Tab(text: 'Palmarès'),
@@ -700,9 +890,9 @@ class _SquadrePageState extends State<SquadrePage> {
       child: Column(
         children: [
           TabBar(
-            labelColor: getColor('primary'),
+            labelColor: getColor('primary', forText: true),
             unselectedLabelColor: Colors.grey,
-            indicatorColor: getColor('primary'),
+            indicatorColor: getColor('primary', forText: true),
             tabs: [
               Tab(text: 'Esoneri'),
               Tab(text: 'Mercato Estivo'),
@@ -1174,7 +1364,9 @@ class _SquadrePageState extends State<SquadrePage> {
                     onPressed: () => Navigator.of(context).pop(false),
                     child: Text(
                       'Annulla',
-                      style: TextStyle(color: getColor('primary')),
+                      style: TextStyle(
+                        color: getColor('primary', forText: true),
+                      ),
                     ),
                   ),
                   TextButton(
@@ -1318,7 +1510,7 @@ class _SquadrePageState extends State<SquadrePage> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: getColor("primary"),
+                color: getColor("primary", forText: true),
               ),
             ),
             SizedBox(width: 16),
@@ -1348,7 +1540,7 @@ class _SquadrePageState extends State<SquadrePage> {
     );
   }
 
-  Color getColor(String type) {
+  Color getColor(String type, {bool forText = false}) {
     final Map<String, Color> colorMap = {
       'rosso': Colors.red,
       'verde': Colors.green,
@@ -1368,6 +1560,15 @@ class _SquadrePageState extends State<SquadrePage> {
     if (type.contains('primary')) {
       final primaryColorName = widget.squadra.colori[0].toLowerCase();
       final primaryColor = colorMap[primaryColorName] ?? Colors.grey;
+
+      // Se il colore primario è bianco e siamo in un testo, usa il colore secondario
+      if (forText &&
+          primaryColorName == 'bianco' &&
+          widget.squadra.colori.length > 1) {
+        final secondaryColorName = widget.squadra.colori[1].toLowerCase();
+        return colorMap[secondaryColorName] ?? Colors.grey;
+      }
+
       return primaryColor;
     } else if (type.contains('secondary')) {
       final secondaryColorName = widget.squadra.colori[1].toLowerCase();
@@ -1468,7 +1669,7 @@ class _SquadrePageState extends State<SquadrePage> {
                           ),
                           child: Icon(
                             Icons.person_add,
-                            color: getColor('primary'),
+                            color: getColor('primary', forText: true),
                             size: 32,
                           ),
                         ),
@@ -1521,7 +1722,7 @@ class _SquadrePageState extends State<SquadrePage> {
                           ),
                           child: Icon(
                             Icons.search,
-                            color: getColor('primary'),
+                            color: getColor('primary', forText: true),
                             size: 32,
                           ),
                         ),
@@ -1633,7 +1834,7 @@ class _SquadrePageState extends State<SquadrePage> {
                               return ListTile(
                                 leading: Icon(
                                   Icons.person_4,
-                                  color: getColor('primary'),
+                                  color: getColor('primary', forText: true),
                                 ),
                                 title: Text(allenatore.nome),
                                 subtitle: Text(
@@ -1662,7 +1863,7 @@ class _SquadrePageState extends State<SquadrePage> {
                   },
                   child: Text(
                     'Indietro',
-                    style: TextStyle(color: getColor('primary')),
+                    style: TextStyle(color: getColor('primary', forText: true)),
                   ),
                 ),
               ],
@@ -1796,7 +1997,7 @@ class _SquadrePageState extends State<SquadrePage> {
                                   '${giocatore.numero}',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: getColor('primary'),
+                                    color: getColor('primary', forText: true),
                                   ),
                                 ),
                                 SizedBox(width: 8),
@@ -1939,7 +2140,7 @@ class _SquadrePageState extends State<SquadrePage> {
                             width: 24,
                             errorBuilder: (context, error, stackTrace) => Icon(
                               Icons.emoji_events,
-                              color: getColor('primary'),
+                              color: getColor('primary', forText: true),
                             ),
                           ),
                           SizedBox(width: 8),
@@ -2054,7 +2255,7 @@ class _SquadrePageState extends State<SquadrePage> {
                   'Modulo: ${widget.squadra.formazione.modulo}',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: getColor('primary'),
+                    color: getColor('primary', forText: true),
                   ),
                 ),
                 Text(
@@ -2068,7 +2269,7 @@ class _SquadrePageState extends State<SquadrePage> {
                   }(),
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: getColor('primary'),
+                    color: getColor('primary', forText: true),
                   ),
                 ),
               ],

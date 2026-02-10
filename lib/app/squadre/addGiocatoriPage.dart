@@ -12,7 +12,6 @@ import 'package:ligaduck/app/service/giocatoriProvider.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:mongo_dart/mongo_dart.dart' as mongo;
-import 'package:translator/translator.dart';
 
 class AddGiocatoriPage extends StatefulWidget {
   final Squadra squadra;
@@ -57,31 +56,6 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
   String? _nomeGiocatoreEx;
 
   List<Giocatore> giocatori = [];
-  final translator = GoogleTranslator();
-
-  static final Map<String, String> _translationCache = {};
-
-  Future<String> traduciNazione(String nazione) async {
-    if (_translationCache.containsKey(nazione)) {
-      return _translationCache[nazione]!;
-    }
-
-    try {
-      var translation = await translator.translate(
-        nazione,
-        from: 'en',
-        to: 'it',
-      );
-      // Salva nella cache
-      _translationCache[nazione] = translation.text;
-      return translation.text;
-    } catch (e) {
-      print('Errore nella traduzione: $e');
-      // Salva nella cache anche il fallback
-      _translationCache[nazione] = nazione;
-      return nazione;
-    }
-  }
 
   @override
   void initState() {
@@ -173,9 +147,9 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
       child: Column(
         children: [
           TabBar(
-            labelColor: Color(getColor("primary").value),
+            labelColor: Color(getColor("primary", forText: true).value),
             unselectedLabelColor: Colors.grey,
-            indicatorColor: Color(getColor("primary").value),
+            indicatorColor: Color(getColor("primary", forText: true).value),
             tabs: [
               Tab(text: 'Crea Giocatore'),
               Tab(text: 'Carica da File'),
@@ -207,7 +181,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: getColor("primary"),
+                  color: getColor("primary", forText: true),
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -223,15 +197,20 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
                 controller: _nomeController,
                 decoration: InputDecoration(
                   labelText: 'Nome',
-                  labelStyle: TextStyle(color: getColor("primary")),
-                  prefixIcon: Icon(Icons.person, color: getColor("primary")),
+                  labelStyle: TextStyle(
+                    color: getColor("primary", forText: true),
+                  ),
+                  prefixIcon: Icon(
+                    Icons.person,
+                    color: getColor("primary", forText: true),
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: getColor("primary"),
+                      color: getColor("primary", forText: true),
                       width: 2,
                     ),
                   ),
@@ -256,15 +235,20 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
                   controller: _numeroMagliaController,
                   decoration: InputDecoration(
                     labelText: 'Numero',
-                    labelStyle: TextStyle(color: getColor("primary")),
-                    prefixIcon: Icon(Icons.numbers, color: getColor("primary")),
+                    labelStyle: TextStyle(
+                      color: getColor("primary", forText: true),
+                    ),
+                    prefixIcon: Icon(
+                      Icons.numbers,
+                      color: getColor("primary", forText: true),
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(
-                        color: getColor("primary"),
+                        color: getColor("primary", forText: true),
                         width: 2,
                       ),
                     ),
@@ -293,10 +277,12 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
                   isExpanded: true,
                   decoration: InputDecoration(
                     labelText: 'Ruolo',
-                    labelStyle: TextStyle(color: getColor("primary")),
+                    labelStyle: TextStyle(
+                      color: getColor("primary", forText: true),
+                    ),
                     prefixIcon: Icon(
                       Icons.sports_soccer,
-                      color: getColor("primary"),
+                      color: getColor("primary", forText: true),
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -304,7 +290,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(
-                        color: getColor("primary"),
+                        color: getColor("primary", forText: true),
                         width: 2,
                       ),
                     ),
@@ -348,7 +334,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
                               padding: EdgeInsets.symmetric(horizontal: 12),
                               child: Icon(
                                 Icons.flag,
-                                color: getColor("primary"),
+                                color: getColor("primary", forText: true),
                               ),
                             ),
                             Expanded(
@@ -360,7 +346,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
                                       valueColor: AlwaysStoppedAnimation<Color>(
-                                        getColor("primary"),
+                                        getColor("primary", forText: true),
                                       ),
                                     ),
                                   ),
@@ -384,10 +370,12 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
                         menuMaxHeight: 300,
                         decoration: InputDecoration(
                           labelText: 'Nazione',
-                          labelStyle: TextStyle(color: getColor("primary")),
+                          labelStyle: TextStyle(
+                            color: getColor("primary", forText: true),
+                          ),
                           prefixIcon: Icon(
                             Icons.flag,
-                            color: getColor("primary"),
+                            color: getColor("primary", forText: true),
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -395,7 +383,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(
-                              color: getColor("primary"),
+                              color: getColor("primary", forText: true),
                               width: 2,
                             ),
                           ),
@@ -436,7 +424,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: getColor("primary"),
+                        color: getColor("primary", forText: true),
                       ),
                     ),
                     Row(
@@ -542,7 +530,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: getColor("primary"),
+            color: getColor("primary", forText: true),
           ),
           textAlign: TextAlign.center,
         ),
@@ -741,7 +729,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
     );
   }
 
-  Color getColor(String type) {
+  Color getColor(String type, {bool forText = false}) {
     final Map<String, Color> colorMap = {
       'rosso': Colors.red,
       'verde': Colors.green,
@@ -761,6 +749,15 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
     if (type.contains('primary')) {
       final primaryColorName = widget.squadra.colori[0].toLowerCase();
       final primaryColor = colorMap[primaryColorName] ?? Colors.grey;
+
+      // Se il colore primario è bianco e siamo in un testo, usa il colore secondario
+      if (forText &&
+          primaryColorName == 'bianco' &&
+          widget.squadra.colori.length > 1) {
+        final secondaryColorName = widget.squadra.colori[1].toLowerCase();
+        return colorMap[secondaryColorName] ?? Colors.grey;
+      }
+
       return primaryColor;
     } else if (type.contains('secondary')) {
       final secondaryColorName = widget.squadra.colori[1].toLowerCase();
@@ -797,6 +794,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
         _isLoadingCountries = true;
       });
 
+      // Le nazioni arrivano già tradotte in italiano dall'API
       List<Country> countries = await CountryService.getAllCountries();
 
       if (!mounted) {
@@ -806,21 +804,9 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
         return;
       }
 
-      List<Future<String>> translationFutures = countries
-          .map((country) => traduciNazione(country.commonName))
-          .toList();
-
-      List<String> nazioniTradotte = await Future.wait(translationFutures);
-
-      if (!mounted) {
-        setState(() {
-          _isLoadingCountries = false;
-        });
-        return;
-      }
-
       setState(() {
-        _nazioni = nazioniTradotte;
+        // Estrai solo i nomi (già in italiano)
+        _nazioni = countries.map((c) => c.commonName).toList();
         _nazioni.sort();
         if (!_nazioni.contains(_nazioneSelezionata)) {
           _nazioneSelezionata = _nazioni.isNotEmpty ? _nazioni.first : 'Italia';

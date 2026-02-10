@@ -585,7 +585,11 @@ void _showGiocatoreDropdown(
                         ? FontWeight.bold
                         : FontWeight.normal,
                     color: isInFormazione
-                        ? CommonService.getSquadraColor(model, 'primary')
+                        ? CommonService.getSquadraColor(
+                            model,
+                            'primary',
+                            forText: true,
+                          )
                         : Colors.black,
                   ),
                 ),
@@ -593,14 +597,22 @@ void _showGiocatoreDropdown(
                   isInFormazione ? 'In campo' : 'In panchina',
                   style: TextStyle(
                     color: isInFormazione
-                        ? CommonService.getSquadraColor(model, 'primary')
+                        ? CommonService.getSquadraColor(
+                            model,
+                            'primary',
+                            forText: true,
+                          )
                         : Colors.grey[600],
                   ),
                 ),
                 trailing: isInFormazione
                     ? Icon(
                         Icons.sports_soccer,
-                        color: CommonService.getSquadraColor(model, 'primary'),
+                        color: CommonService.getSquadraColor(
+                          model,
+                          'primary',
+                          forText: true,
+                        ),
                         size: 20,
                       )
                     : null,
@@ -644,6 +656,10 @@ String _formatPlayerName(String nomeCompleto) {
         parole[0] != 'Ze' &&
         parole[0] != 'Mc' &&
         parole[0] != 'De' &&
+        parole[0] != 'Di' &&
+        parole[0] != 'Da' &&
+        parole[0] != 'Der' &&
+        parole[0] != 'Delli' &&
         parole[0] != 'Del') {
       nomeDecodificato =
           '${parole[0][0].toUpperCase()}. ${parole.sublist(1).join(' ')}';

@@ -59,9 +59,17 @@ Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
         backgroundColor: competizioneColor.withOpacity(0.3),
         elevation: 0,
         onPressed: () async {
-          // Verifica se entrambe le squadre sono estere
-          bool isHomeEstera = model.squadraHome?.campionato == 'Estero';
-          bool isAwayEstera = model.squadraAway?.campionato == 'Estero';
+          // Verifica se entrambe le squadre sono estere (non italiane)
+          bool isHomeEstera =
+              model.squadraHome?.categoria != null &&
+              model.squadraHome!.categoria != 'Serie A' &&
+              model.squadraHome!.categoria != 'Serie B' &&
+              model.squadraHome!.categoria != 'Serie C';
+          bool isAwayEstera =
+              model.squadraAway?.categoria != null &&
+              model.squadraAway!.categoria != 'Serie A' &&
+              model.squadraAway!.categoria != 'Serie B' &&
+              model.squadraAway!.categoria != 'Serie C';
 
           if (isHomeEstera && isAwayEstera) {
             // Controlla se l'utente è admin e se la partita non è già salvata

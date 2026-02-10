@@ -129,7 +129,11 @@ class CommonService {
   }
 
   /// Ottiene il colore della squadra basato sul modello e tipo
-  static Color getSquadraColor(PartitaFormazioneModel model, String type) {
+  static Color getSquadraColor(
+    PartitaFormazioneModel model,
+    String type, {
+    bool forText = false,
+  }) {
     if (model.coloriSquadra == null || model.coloriSquadra!.isEmpty) {
       return Colors.blueAccent; // Colore di default
     }
@@ -164,6 +168,15 @@ class CommonService {
       'ciano': Colors.lightBlue[300]!,
       'marrone': Colors.brown[900]!,
     };
+
+    // Se il colore primario è bianco e siamo in un testo, usa il colore secondario
+    if (forText &&
+        type == 'primary' &&
+        colorName.toLowerCase() == 'bianco' &&
+        model.coloriSquadra!.length > 1) {
+      final secondaryColorName = model.coloriSquadra![1].toLowerCase();
+      return colorMap[secondaryColorName] ?? Colors.blueAccent;
+    }
 
     return colorMap[colorName.toLowerCase()] ?? Colors.blueAccent;
   }

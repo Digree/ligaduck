@@ -3932,8 +3932,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                   SizedBox(height: 4),
                   Text(
                     team == 0
-                        ? ('All: ${partita!.formazioneHome.allenatore}')
-                        : ('All: ${partita!.formazioneAway.allenatore}'),
+                        ? ('All: ${CommonService.decodePlayerName(partita!.formazioneHome.allenatore)}')
+                        : ('All: ${CommonService.decodePlayerName(partita!.formazioneAway.allenatore)}'),
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,

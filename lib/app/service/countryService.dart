@@ -3,77 +3,33 @@ import 'package:http/http.dart' as http;
 import '../models/country.dart';
 
 class CountryService {
-  // API alternative - prova in ordine fino a trovarne una che funziona
-  static const List<String> apiUrls = [
-    'https://pkgstore.datahub.io/core/country-list/data_json/data/8c458f2d15d9f2119654b29ede6e45b8/data_json.json',
-    'https://raw.githubusercontent.com/hejny/country-codes/main/countries.json',
-  ];
+  // API REST countries con traduzioni italiane
+  static const String apiUrl =
+      'https://restcountries.com/v3.1/all?fields=name,translations,cca2,cca3,flags,flag';
 
   static Future<List<Country>> getAllCountries() async {
-    // Prova prima con una lista statica veloce
-    //return _getStaticCountries();
+    try {
+      print('Caricamento nazioni da REST countries API...');
+      final response = await http.get(Uri.parse(apiUrl));
 
-    // Se vuoi provare le API, decomenta questo:
-    for (String url in apiUrls) {
-      try {
-        print('Tentativo con: $url');
-        final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body) as List;
+        List<Country> countries = data
+            .map((json) => Country.fromJsonWithItalian(json))
+            .toList();
 
-        if (response.statusCode == 200) {
-          final data = json.decode(response.body);
-          return _parseCountriesFromResponse(url, data);
-        }
-      } catch (e) {
-        print('Errore con $url: $e');
-        continue;
+        // Ordina per nome italiano
+        countries.sort((a, b) => a.commonName.compareTo(b.commonName));
+
+        print('Caricate ${countries.length} nazioni in italiano');
+        return countries;
       }
+    } catch (e) {
+      print('Errore nel caricamento delle nazioni: $e');
     }
 
-    // Se tutte le API falliscono, usa la lista statica
+    // Se l'API fallisce, usa la lista statica
     return _getStaticCountries();
-  }
-
-  // Parsing diverso per ogni API
-  static List<Country> _parseCountriesFromResponse(String url, dynamic data) {
-    if (url.contains('restcountries.com')) {
-      return (data as List).map((json) => Country.fromJson(json)).toList();
-    } else if (url.contains('first.org')) {
-      Map<String, dynamic> countries = data['data'];
-      return countries.entries.map((entry) {
-        return Country(
-          commonName: entry.value['country'] ?? entry.key,
-          officialName: entry.value['country'] ?? entry.key,
-          region: entry.value['region'] ?? '',
-          subregion: '',
-          population: 0,
-          area: 0,
-          currencies: [],
-          languages: [],
-          flagUrl: '',
-          flagEmoji: '',
-          cca2: entry.key,
-          cca3: entry.key,
-        );
-      }).toList();
-    } else {
-      // Parsing generico per altre API
-      return (data as List).map((json) {
-        return Country(
-          commonName: json['Name'] ?? json['name'] ?? json['country'] ?? '',
-          officialName: json['Name'] ?? json['name'] ?? json['country'] ?? '',
-          region: '',
-          subregion: '',
-          population: 0,
-          area: 0,
-          currencies: [],
-          languages: [],
-          flagUrl: '',
-          flagEmoji: '',
-          cca2: json['Code'] ?? json['code'] ?? '',
-          cca3: json['Code'] ?? json['code'] ?? '',
-        );
-      }).toList();
-    }
   }
 
   // Lista statica di nazioni per fallback immediato
