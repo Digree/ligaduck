@@ -41,7 +41,7 @@ Widget buildPartitaFormazione(
   PartitaFormazioneModel model, [
   BuildContext? context,
 ]) {
-  final modulo = model.modulo?.split('-');
+  final modulo = model.modulo?.split('-').where((s) => s.isNotEmpty).toList();
   int j = 1;
 
   return Column(
@@ -146,7 +146,7 @@ Widget buildPartitaFormazione(
               if (model.formazione.length > 1)
                 for (
                   int count = 0;
-                  count < int.parse(modulo[i]) &&
+                  count < (int.tryParse(modulo[i]) ?? 0) &&
                       j < 11 &&
                       j < model.formazione.length;
                   count++, j++
@@ -154,7 +154,9 @@ Widget buildPartitaFormazione(
                   Flexible(
                     child: Padding(
                       padding: EdgeInsets.symmetric(
-                        horizontal: int.parse(modulo[i]) >= 4 ? 2.0 : 6.0,
+                        horizontal: (int.tryParse(modulo[i]) ?? 0) >= 4
+                            ? 2.0
+                            : 6.0,
                         vertical: modulo.length > 3 ? 0.0 : 2.0,
                       ),
                       child: Column(
@@ -660,6 +662,9 @@ String _formatPlayerName(String nomeCompleto) {
         parole[0] != 'Da' &&
         parole[0] != 'Der' &&
         parole[0] != 'Delli' &&
+        parole[0] != 'Luiz' &&
+        parole[0] != 'Le' &&
+        parole[0] != 'Kanchero' &&
         parole[0] != 'Del') {
       nomeDecodificato =
           '${parole[0][0].toUpperCase()}. ${parole.sublist(1).join(' ')}';
@@ -675,6 +680,7 @@ Widget _buildJerseyPlaceholderFormazione(int numero, List<String> colori) {
     'rosso': Colors.red,
     'verde': Colors.green,
     'blu': Colors.blueAccent,
+    'blu scuro': Colors.blue[900]!,
     'giallo': Colors.yellow[600]!,
     'arancione': Colors.orange[900]!,
     'viola': Colors.purple[800]!,

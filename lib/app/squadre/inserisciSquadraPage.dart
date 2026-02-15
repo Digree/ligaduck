@@ -318,6 +318,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
       'rosso': Colors.red,
       'verde': Colors.green,
       'blu': Colors.blueAccent,
+      'blu scuro': Colors.blue[900]!,
       'giallo': Colors.yellow[600]!,
       'arancione': Colors.orange[900]!,
       'viola': Colors.purple[800]!,
@@ -327,7 +328,6 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
       'fucsia': Colors.pink[700]!,
       'ciano': Colors.lightBlue[300]!,
       'marrone': Colors.brown[900]!,
-      'blu scuro': Colors.blue[900]!,
     };
     return colorMap[colorName] ?? Colors.grey;
   }

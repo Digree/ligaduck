@@ -750,9 +750,9 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
       final primaryColorName = widget.squadra.colori[0].toLowerCase();
       final primaryColor = colorMap[primaryColorName] ?? Colors.grey;
 
-      // Se il colore primario è bianco e siamo in un testo, usa il colore secondario
+      // Se il colore primario è bianco o giallo e siamo in un testo, usa il colore secondario
       if (forText &&
-          primaryColorName == 'bianco' &&
+          (primaryColorName == 'bianco' || primaryColorName == 'giallo') &&
           widget.squadra.colori.length > 1) {
         final secondaryColorName = widget.squadra.colori[1].toLowerCase();
         return colorMap[secondaryColorName] ?? Colors.grey;

@@ -265,6 +265,7 @@ class CommonService {
       'china': 'cn',
       'cina': 'cn',
       'india': 'in',
+      'indonesia': 'id',
       'australia': 'au',
       'iran': 'ir',
       'saudi arabia': 'sa',
@@ -299,14 +300,16 @@ class CommonService {
       'galles': 'gb-wls',
       'iceland': 'is',
       'islanda': 'is',
+      'israele': 'il',
     };
 
     if (countryMap.containsKey(nazioneNome)) {
       return countryMap[nazioneNome]!;
     }
 
+    // Prova match parziali solo se la nazione inizia con la chiave
     for (String key in countryMap.keys) {
-      if (nazioneNome.contains(key) || key.contains(nazioneNome)) {
+      if (nazioneNome.startsWith(key)) {
         return countryMap[key]!;
       }
     }
