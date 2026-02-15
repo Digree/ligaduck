@@ -2682,7 +2682,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                   style: TextStyle(color: Colors.white, fontSize: 20),
                 ),
               ),
-            buildHeader(),
+            buildHeader(isWide),
             Flexible(
               fit: FlexFit.loose,
               child: ListView(
@@ -3022,7 +3022,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     return {'partite': partite, 'squadre': squadre};
   }
 
-  Widget buildHeader() {
+  Widget buildHeader(bool isWide) {
     return Container(
       width: MediaQuery.of(context).size.width * 1,
       height: 45,
@@ -3051,11 +3051,11 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
               style: TextStyle(fontSize: 12, color: Colors.white),
             ),
           ),
-          Spacer(),
+          Expanded(child: SizedBox()),
           SizedBox(
-            width: 32,
+            width: isWide ? 40 : 28,
             child: Padding(
-              padding: EdgeInsets.only(left: 4),
+              padding: EdgeInsets.only(left: 2),
               child: Text(
                 'Pti',
                 style: TextStyle(fontSize: 12, color: Colors.white),
@@ -3064,9 +3064,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
             ),
           ),
           SizedBox(
-            width: 24,
+            width: isWide ? 30 : 22,
             child: Padding(
-              padding: EdgeInsets.only(left: 4),
+              padding: EdgeInsets.only(left: 2),
               child: Text(
                 'PG',
                 style: TextStyle(fontSize: 12, color: Colors.white),
@@ -3075,9 +3075,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
             ),
           ),
           SizedBox(
-            width: 20,
+            width: isWide ? 24 : 18,
             child: Padding(
-              padding: EdgeInsets.only(left: 4),
+              padding: EdgeInsets.only(left: 2),
               child: Text(
                 'V',
                 style: TextStyle(fontSize: 12, color: Colors.white),
@@ -3086,9 +3086,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
             ),
           ),
           SizedBox(
-            width: 20,
+            width: isWide ? 24 : 18,
             child: Padding(
-              padding: EdgeInsets.only(left: 4),
+              padding: EdgeInsets.only(left: 2),
               child: Text(
                 'P',
                 style: TextStyle(fontSize: 12, color: Colors.white),
@@ -3097,9 +3097,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
             ),
           ),
           SizedBox(
-            width: 20,
+            width: isWide ? 24 : 18,
             child: Padding(
-              padding: EdgeInsets.only(left: 4),
+              padding: EdgeInsets.only(left: 2),
               child: Text(
                 'S',
                 style: TextStyle(fontSize: 12, color: Colors.white),
@@ -3108,9 +3108,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
             ),
           ),
           SizedBox(
-            width: 20,
+            width: isWide ? 24 : 18,
             child: Padding(
-              padding: EdgeInsets.only(left: 4),
+              padding: EdgeInsets.only(left: 2),
               child: Text(
                 'GF',
                 style: TextStyle(fontSize: 12, color: Colors.white),
@@ -3119,9 +3119,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
             ),
           ),
           SizedBox(
-            width: 20,
+            width: isWide ? 24 : 18,
             child: Padding(
-              padding: EdgeInsets.only(left: 4),
+              padding: EdgeInsets.only(left: 2),
               child: Text(
                 'GS',
                 style: TextStyle(fontSize: 12, color: Colors.white),
@@ -3130,9 +3130,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
             ),
           ),
           SizedBox(
-            width: 24,
+            width: isWide ? 30 : 22,
             child: Padding(
-              padding: EdgeInsets.only(left: 4),
+              padding: EdgeInsets.only(left: 2),
               child: Text(
                 'DR',
                 style: TextStyle(fontSize: 12, color: Colors.white),
@@ -3247,12 +3247,12 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                       if (nomeDecodificato == 'Pipp Saint Germain') {
                         return 'PSG';
                       }
-                      if (nomeDecodificato.length > 13) {
+                      if (nomeDecodificato.length > 20) {
                         List<String> nomeSquadra = nomeDecodificato.split(' ');
                         if (nomeSquadra.length == 3) {
                           // Per squadre con 3 parole: abbrevia la seconda solo se > 3 caratteri
-                          String abbreviato = nomeSquadra[0].length > 10
-                              ? '${nomeSquadra[0].substring(0, 10)}.'
+                          String abbreviato = nomeSquadra[0].length > 15
+                              ? '${nomeSquadra[0].substring(0, 15)}.'
                               : nomeSquadra[0];
                           if (nomeSquadra[1].length > 3) {
                             abbreviato += ' ${nomeSquadra[1][0]}.';
@@ -3263,8 +3263,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                           return abbreviato;
                         } else if (nomeSquadra.length > 3) {
                           // Per squadre con 4+ parole: prima parola intera + iniziali delle altre
-                          String abbreviato = nomeSquadra[0].length > 10
-                              ? '${nomeSquadra[0].substring(0, 10)}.'
+                          String abbreviato = nomeSquadra[0].length > 15
+                              ? '${nomeSquadra[0].substring(0, 15)}.'
                               : nomeSquadra[0];
                           for (int i = 1; i < nomeSquadra.length; i++) {
                             abbreviato += ' ${nomeSquadra[i][0]}.';
@@ -3276,7 +3276,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                               : nomeSquadra[0];
                           return '$primaParola ${nomeSquadra[1][0]}.';
                         } else {
-                          return '${nomeDecodificato.substring(0, 10)}...';
+                          return '${nomeDecodificato.substring(0, 15)}...';
                         }
                       } else {
                         return nomeDecodificato;
@@ -3287,11 +3287,10 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                   ),
                 ),
               ),
-              Spacer(),
               SizedBox(
-                width: 32,
+                width: isWide ? 40 : 28,
                 child: Padding(
-                  padding: EdgeInsets.only(right: 4),
+                  padding: EdgeInsets.only(right: 2),
                   child: Text(
                     '${posizione.punti}',
                     style: TextStyle(
@@ -3304,9 +3303,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                 ),
               ),
               SizedBox(
-                width: 24,
+                width: isWide ? 30 : 22,
                 child: Padding(
-                  padding: EdgeInsets.only(left: 4),
+                  padding: EdgeInsets.only(left: 2),
                   child: Text(
                     '${posizione.partiteGiocate}',
                     style: TextStyle(fontSize: 12, color: Colors.white),
@@ -3315,9 +3314,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                 ),
               ),
               SizedBox(
-                width: 20,
+                width: isWide ? 24 : 18,
                 child: Padding(
-                  padding: EdgeInsets.only(left: 4),
+                  padding: EdgeInsets.only(left: 2),
                   child: Text(
                     '${posizione.win}',
                     style: TextStyle(fontSize: 12, color: Colors.white),
@@ -3326,9 +3325,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                 ),
               ),
               SizedBox(
-                width: 20,
+                width: isWide ? 24 : 18,
                 child: Padding(
-                  padding: EdgeInsets.only(left: 4),
+                  padding: EdgeInsets.only(left: 2),
                   child: Text(
                     '${posizione.draw}',
                     style: TextStyle(fontSize: 12, color: Colors.white),
@@ -3337,9 +3336,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                 ),
               ),
               SizedBox(
-                width: 20,
+                width: isWide ? 24 : 18,
                 child: Padding(
-                  padding: EdgeInsets.only(left: 4),
+                  padding: EdgeInsets.only(left: 2),
                   child: Text(
                     '${posizione.loss}',
                     style: TextStyle(fontSize: 12, color: Colors.white),
@@ -3348,9 +3347,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                 ),
               ),
               SizedBox(
-                width: 20,
+                width: isWide ? 24 : 18,
                 child: Padding(
-                  padding: EdgeInsets.only(left: 4),
+                  padding: EdgeInsets.only(left: 2),
                   child: Text(
                     '${posizione.gFatti}',
                     style: TextStyle(fontSize: 12, color: Colors.white),
@@ -3359,9 +3358,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                 ),
               ),
               SizedBox(
-                width: 20,
+                width: isWide ? 24 : 18,
                 child: Padding(
-                  padding: EdgeInsets.only(left: 4),
+                  padding: EdgeInsets.only(left: 2),
                   child: Text(
                     '${posizione.gSubiti}',
                     style: TextStyle(fontSize: 12, color: Colors.white),
@@ -3370,9 +3369,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                 ),
               ),
               SizedBox(
-                width: 24,
+                width: isWide ? 30 : 22,
                 child: Padding(
-                  padding: EdgeInsets.only(left: 4),
+                  padding: EdgeInsets.only(left: 2),
                   child: Text(
                     '${posizione.diff}',
                     style: TextStyle(fontSize: 12, color: Colors.white),
