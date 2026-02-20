@@ -110,7 +110,18 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
             children: [
               Text(
                 'Aggiungi Evento',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: widget.competizione?.id == 5
+                      ? 'champions'
+                      : widget.competizione?.id == 6 ||
+                            widget.competizione?.id == 7
+                      ? 'europa'
+                      : widget.competizione?.id == 8
+                      ? 'supercup'
+                      : null,
+                ),
               ),
               IconButton(
                 icon: Icon(Icons.close),
@@ -150,8 +161,16 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                       : 0xFF000000,
                 ),
                 tabs: [
-                  Tab(text: widget.partita.teamHome),
-                  Tab(text: widget.partita.teamAway),
+                  Tab(
+                    text: CommonService.decodePlayerName(
+                      widget.partita.teamHome,
+                    ),
+                  ),
+                  Tab(
+                    text: CommonService.decodePlayerName(
+                      widget.partita.teamAway,
+                    ),
+                  ),
                 ],
               ),
               SizedBox(
@@ -185,6 +204,14 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                                     style: TextStyle(
                                       color: Colors.grey[600],
                                       fontSize: 14,
+                                      fontFamily: widget.competizione?.id == 5
+                                          ? 'champions'
+                                          : widget.competizione?.id == 6 ||
+                                                widget.competizione?.id == 7
+                                          ? 'europa'
+                                          : widget.competizione?.id == 8
+                                          ? 'supercup'
+                                          : null,
                                     ),
                                   ),
                                 ],
@@ -218,6 +245,14 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                                     style: TextStyle(
                                       color: Colors.grey[600],
                                       fontSize: 14,
+                                      fontFamily: widget.competizione?.id == 5
+                                          ? 'champions'
+                                          : widget.competizione?.id == 6 ||
+                                                widget.competizione?.id == 7
+                                          ? 'europa'
+                                          : widget.competizione?.id == 8
+                                          ? 'supercup'
+                                          : null,
                                     ),
                                   ),
                                 ],
@@ -287,7 +322,19 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                       .map(
                         (evento) => DropdownMenuItem<String>(
                           value: evento.nome,
-                          child: Text(evento.nome),
+                          child: Text(
+                            evento.nome,
+                            style: TextStyle(
+                              fontFamily: widget.competizione?.id == 5
+                                  ? 'champions'
+                                  : widget.competizione?.id == 6 ||
+                                        widget.competizione?.id == 7
+                                  ? 'europa'
+                                  : widget.competizione?.id == 8
+                                  ? 'supercup'
+                                  : null,
+                            ),
+                          ),
                         ),
                       )
                       .toList(),
@@ -331,7 +378,19 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                       ),
                     )
                   : Icon(Icons.add),
-              label: Text(isLoading ? 'Caricamento...' : 'Aggiungi'),
+              label: Text(
+                isLoading ? 'Caricamento...' : 'Aggiungi',
+                style: TextStyle(
+                  fontFamily: widget.competizione?.id == 5
+                      ? 'champions'
+                      : widget.competizione?.id == 6 ||
+                            widget.competizione?.id == 7
+                      ? 'europa'
+                      : widget.competizione?.id == 8
+                      ? 'supercup'
+                      : null,
+                ),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Color(
                   widget.competizione!.colori.isNotEmpty
@@ -760,7 +819,19 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
             ],
           ),
           SizedBox(height: 16),
-          Text('Entra', style: TextStyle(fontSize: 16)),
+          Text(
+            'Entra',
+            style: TextStyle(
+              fontSize: 16,
+              fontFamily: widget.competizione?.id == 5
+                  ? 'champions'
+                  : widget.competizione?.id == 6 || widget.competizione?.id == 7
+                  ? 'europa'
+                  : widget.competizione?.id == 8
+                  ? 'supercup'
+                  : null,
+            ),
+          ),
           SizedBox(height: 8),
           SizedBox(
             height: 50,
@@ -848,7 +919,19 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
             ),
           ),
           SizedBox(height: 16),
-          Text('Esce', style: TextStyle(fontSize: 16)),
+          Text(
+            'Esce',
+            style: TextStyle(
+              fontSize: 16,
+              fontFamily: widget.competizione?.id == 5
+                  ? 'champions'
+                  : widget.competizione?.id == 6 || widget.competizione?.id == 7
+                  ? 'europa'
+                  : widget.competizione?.id == 8
+                  ? 'supercup'
+                  : null,
+            ),
+          ),
           SizedBox(height: 8),
           SizedBox(
             height: 60,
@@ -1232,7 +1315,8 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
             : widget.partita.formazioneAway;
 
         try {
-          giocatoreEspulso = formazione.titolari.firstWhere(
+          var formazioneTotale = formazione.titolari + formazione.panchina;
+          giocatoreEspulso = formazioneTotale.firstWhere(
             (g) => g.idGiocatore == giocatoreSelezionato,
           );
         } catch (e) {

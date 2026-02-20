@@ -834,10 +834,13 @@ class _SquadrePageState extends State<SquadrePage> {
       child: Padding(
         padding: EdgeInsets.only(top: 20),
         child: DefaultTabController(
-          length: 4,
+          length: 5,
           child: Column(
             children: [
               TabBar(
+                isScrollable: !isWide,
+                tabAlignment: isWide ? null : TabAlignment.start,
+                padding: EdgeInsets.zero,
                 labelColor: getColor('primary', forText: true),
                 unselectedLabelColor: Colors.grey,
                 indicatorColor: getColor('primary', forText: true),
@@ -846,6 +849,7 @@ class _SquadrePageState extends State<SquadrePage> {
                   Tab(text: 'Palmarès'),
                   Tab(text: 'Formazione'),
                   Tab(text: 'Mercato'),
+                  Tab(text: 'Vivaio'),
                 ],
               ),
               Expanded(
@@ -869,6 +873,7 @@ class _SquadrePageState extends State<SquadrePage> {
                       screenWidth,
                       screenHeight,
                     ),
+                    teamListVivaio(context, isWide, screenWidth, screenHeight),
                   ],
                 ),
               ),
@@ -1049,16 +1054,28 @@ class _SquadrePageState extends State<SquadrePage> {
         .where((giocatore) => giocatore.ruolo == 'Allenatore')
         .toList();
     List<Giocatore> portieri = giocatori
-        .where((giocatore) => giocatore.ruolo == 'Portiere')
+        .where(
+          (giocatore) =>
+              giocatore.ruolo == 'Portiere' && giocatore.numero <= 21,
+        )
         .toList();
     List<Giocatore> difensori = giocatori
-        .where((giocatore) => giocatore.ruolo == 'Difensore')
+        .where(
+          (giocatore) =>
+              giocatore.ruolo == 'Difensore' && giocatore.numero <= 21,
+        )
         .toList();
     List<Giocatore> centrocampisti = giocatori
-        .where((giocatore) => giocatore.ruolo == 'Centrocampista')
+        .where(
+          (giocatore) =>
+              giocatore.ruolo == 'Centrocampista' && giocatore.numero <= 21,
+        )
         .toList();
     List<Giocatore> attaccanti = giocatori
-        .where((giocatore) => giocatore.ruolo == 'Attaccante')
+        .where(
+          (giocatore) =>
+              giocatore.ruolo == 'Attaccante' && giocatore.numero <= 21,
+        )
         .toList();
     return _isLoadingGiocatori
         ? Center(
@@ -1095,6 +1112,119 @@ class _SquadrePageState extends State<SquadrePage> {
                   screenHeight,
                   allenatori[i],
                 ),
+              teamListHeader(
+                context,
+                isWide,
+                screenWidth,
+                screenHeight,
+                'Portieri',
+              ),
+              for (var i = 0; i < portieri.length; i++)
+                teamListPlayer(
+                  context,
+                  isWide,
+                  screenWidth,
+                  screenHeight,
+                  portieri[i],
+                ),
+              teamListHeader(
+                context,
+                isWide,
+                screenWidth,
+                screenHeight,
+                'Difensori',
+              ),
+              for (var i = 0; i < difensori.length; i++)
+                teamListPlayer(
+                  context,
+                  isWide,
+                  screenWidth,
+                  screenHeight,
+                  difensori[i],
+                ),
+              teamListHeader(
+                context,
+                isWide,
+                screenWidth,
+                screenHeight,
+                'Centrocampisti',
+              ),
+              for (var i = 0; i < centrocampisti.length; i++)
+                teamListPlayer(
+                  context,
+                  isWide,
+                  screenWidth,
+                  screenHeight,
+                  centrocampisti[i],
+                ),
+              teamListHeader(
+                context,
+                isWide,
+                screenWidth,
+                screenHeight,
+                'Attaccanti',
+              ),
+              for (var i = 0; i < attaccanti.length; i++)
+                teamListPlayer(
+                  context,
+                  isWide,
+                  screenWidth,
+                  screenHeight,
+                  attaccanti[i],
+                ),
+            ],
+          );
+  }
+
+  Widget teamListVivaio(
+    BuildContext context,
+    bool isWide,
+    double screenWidth,
+    double screenHeight,
+  ) {
+    List<Giocatore> portieri = giocatori
+        .where(
+          (giocatore) => giocatore.ruolo == 'Portiere' && giocatore.numero > 21,
+        )
+        .toList();
+    List<Giocatore> difensori = giocatori
+        .where(
+          (giocatore) =>
+              giocatore.ruolo == 'Difensore' && giocatore.numero > 21,
+        )
+        .toList();
+    List<Giocatore> centrocampisti = giocatori
+        .where(
+          (giocatore) =>
+              giocatore.ruolo == 'Centrocampista' && giocatore.numero > 21,
+        )
+        .toList();
+    List<Giocatore> attaccanti = giocatori
+        .where(
+          (giocatore) =>
+              giocatore.ruolo == 'Attaccante' && giocatore.numero > 21,
+        )
+        .toList();
+    return _isLoadingGiocatori
+        ? Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    getColor("primary"),
+                  ),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Caricamento giocatori...',
+                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          )
+        : ListView(
+            children: [
               teamListHeader(
                 context,
                 isWide,
@@ -2320,6 +2450,7 @@ class _SquadrePageState extends State<SquadrePage> {
                       modulo: widget.squadra.formazione.modulo,
                       coloriSquadra: widget.squadra.colori,
                       giocatoriDisponibili: widget.squadra.formazione.panchina,
+                      competizioneId: null,
                     ),
                   ),
           ),

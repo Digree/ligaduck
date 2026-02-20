@@ -196,7 +196,9 @@ class _ListaSquadreStateWidget extends State<_ListaSquadreState> {
                   left: isWide ? 16.0 : 8.0,
                 ),
                 child: TabBar(
-                  isScrollable: true,
+                  isScrollable: !isWide,
+                  tabAlignment: isWide ? null : TabAlignment.start,
+                  padding: EdgeInsets.zero,
                   labelColor: Colors.blueAccent,
                   unselectedLabelColor: Colors.grey,
                   indicatorColor: Colors.blueAccent,

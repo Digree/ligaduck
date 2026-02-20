@@ -151,6 +151,15 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
               SnackBar(
                 content: Text(
                   'Errore nel caricamento della partita: ${error.toString()}',
+                  style: TextStyle(
+                    fontFamily: competizione?.id == 5
+                        ? 'champions'
+                        : competizione?.id == 6 || competizione?.id == 7
+                        ? 'europa'
+                        : competizione?.id == 8
+                        ? 'supercup'
+                        : null,
+                  ),
                 ),
                 backgroundColor: Colors.red,
                 duration: Duration(seconds: 5),
@@ -261,6 +270,20 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             );
           }
 
+          partita!.formazioneHome.nonConvocati.clear();
+          partita!.formazioneHome.nonConvocati.addAll(
+            squadra.formazione.nonConvocati
+                .map(
+                  (g) => GiocatoreFormazione(
+                    idGiocatore: g.idGiocatore,
+                    pos: g.pos,
+                    nome: g.nome,
+                    inCampo: g.inCampo,
+                  ),
+                )
+                .toList(),
+          );
+
           partita!.formazioneHome.modulo = squadra.formazione.modulo;
           partita!.formazioneHome.allenatore = squadra.formazione.allenatore;
         } else {
@@ -310,6 +333,20 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             );
           }
 
+          partita!.formazioneAway.nonConvocati.clear();
+          partita!.formazioneAway.nonConvocati.addAll(
+            squadra.formazione.nonConvocati
+                .map(
+                  (g) => GiocatoreFormazione(
+                    idGiocatore: g.idGiocatore,
+                    pos: g.pos,
+                    nome: g.nome,
+                    inCampo: g.inCampo,
+                  ),
+                )
+                .toList(),
+          );
+
           partita!.formazioneAway.modulo = squadra.formazione.modulo;
           partita!.formazioneAway.allenatore = squadra.formazione.allenatore;
         }
@@ -324,7 +361,18 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       print('Formazioni caricate con successo dalle squadre');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Formazioni caricate con successo dalle squadre'),
+          content: Text(
+            'Formazioni caricate con successo dalle squadre',
+            style: TextStyle(
+              fontFamily: competizione?.id == 5
+                  ? 'champions'
+                  : competizione?.id == 6 || competizione?.id == 7
+                  ? 'europa'
+                  : competizione?.id == 8
+                  ? 'supercup'
+                  : null,
+            ),
+          ),
           backgroundColor: Colors.green,
           duration: Duration(seconds: 2),
         ),
@@ -335,6 +383,15 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
         SnackBar(
           content: Text(
             'Errore nel caricamento delle formazioni: ${e.toString()}',
+            style: TextStyle(
+              fontFamily: competizione?.id == 5
+                  ? 'champions'
+                  : competizione?.id == 6 || competizione?.id == 7
+                  ? 'europa'
+                  : competizione?.id == 8
+                  ? 'supercup'
+                  : null,
+            ),
           ),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 3),
@@ -439,7 +496,18 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                             DateFormat(
                               'dd/MM/yyyy - HH:mm',
                             ).format(partita!.data),
-                            style: TextStyle(fontSize: 12, color: Colors.white),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white,
+                              fontFamily: competizione?.id == 5
+                                  ? 'champions'
+                                  : competizione?.id == 6 ||
+                                        competizione?.id == 7
+                                  ? 'europa'
+                                  : competizione?.id == 8
+                                  ? 'supercup'
+                                  : null,
+                            ),
                           ),
                           onTap: () {
                             if (admin && !partita!.salvata) {
@@ -471,6 +539,10 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                                     color: Colors.white,
                                                     fontSize: 18,
                                                     fontWeight: FontWeight.bold,
+                                                    fontFamily:
+                                                        competizione?.id == 5
+                                                        ? 'champions'
+                                                        : null,
                                                   ),
                                                 ),
                                               ),
@@ -497,12 +569,24 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                                               fontWeight:
                                                                   FontWeight
                                                                       .normal,
+                                                              fontFamily:
+                                                                  competizione
+                                                                          ?.id ==
+                                                                      5
+                                                                  ? 'champions'
+                                                                  : null,
                                                             ),
                                                         pickerTextStyle:
                                                             TextStyle(
                                                               color:
                                                                   Colors.white,
                                                               fontSize: 20,
+                                                              fontFamily:
+                                                                  competizione
+                                                                          ?.id ==
+                                                                      5
+                                                                  ? 'champions'
+                                                                  : null,
                                                             ),
                                                       ),
                                                 ),
@@ -547,6 +631,11 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                                       'Annulla',
                                                       style: TextStyle(
                                                         color: Colors.black,
+                                                        fontFamily:
+                                                            competizione?.id ==
+                                                                5
+                                                            ? 'champions'
+                                                            : null,
                                                       ),
                                                     ),
                                                   ),
@@ -570,6 +659,11 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                                       'Salva',
                                                       style: TextStyle(
                                                         color: Colors.white,
+                                                        fontFamily:
+                                                            competizione?.id ==
+                                                                5
+                                                            ? 'champions'
+                                                            : null,
                                                       ),
                                                     ),
                                                   ),
@@ -755,6 +849,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                         style: TextStyle(
                                           fontSize: 13,
                                           color: Colors.white,
+                                          fontFamily: competizione?.id == 5
+                                              ? 'champions'
+                                              : competizione?.id == 6 ||
+                                                    competizione?.id == 7
+                                              ? 'europa'
+                                              : competizione?.id == 8
+                                              ? 'supercup'
+                                              : null,
                                         ),
                                         textAlign: TextAlign.center,
                                       ),
@@ -790,9 +892,23 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                               child: Text(
                                 '${partita!.risultatoHome} - ${partita!.risultatoAway}',
                                 style: TextStyle(
-                                  fontSize: 40,
+                                  fontSize:
+                                      competizione?.id == 6 ||
+                                          competizione?.id == 7
+                                      ? 36.0
+                                      : competizione?.id == 8
+                                      ? 40.0
+                                      : 40.0,
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
+                                  fontFamily: competizione?.id == 5
+                                      ? 'champions'
+                                      : competizione?.id == 6 ||
+                                            competizione?.id == 7
+                                      ? 'europa'
+                                      : competizione?.id == 8
+                                      ? 'supercup'
+                                      : null,
                                 ),
                                 textAlign: TextAlign.center,
                               ),
@@ -964,6 +1080,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                         style: TextStyle(
                                           fontSize: 13,
                                           color: Colors.white,
+                                          fontFamily: competizione?.id == 5
+                                              ? 'champions'
+                                              : competizione?.id == 6 ||
+                                                    competizione?.id == 7
+                                              ? 'europa'
+                                              : competizione?.id == 8
+                                              ? 'supercup'
+                                              : null,
                                         ),
                                         textAlign: TextAlign.center,
                                       ),
@@ -1099,6 +1223,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
+                                fontFamily: competizione?.id == 5
+                                    ? 'champions'
+                                    : competizione?.id == 6 ||
+                                          competizione?.id == 7
+                                    ? 'europa'
+                                    : competizione?.id == 8
+                                    ? 'supercup'
+                                    : null,
                               ),
                             ),
                             SizedBox(height: 20),
@@ -1108,6 +1240,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.grey[600],
+                                fontFamily: competizione?.id == 5
+                                    ? 'champions'
+                                    : competizione?.id == 6 ||
+                                          competizione?.id == 7
+                                    ? 'europa'
+                                    : competizione?.id == 8
+                                    ? 'supercup'
+                                    : null,
                               ),
                             ),
                           ],
@@ -1136,7 +1276,17 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     child: Center(
                       child: Text(
                         'Nessun evento registrato per questa partita.',
-                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[600],
+                          fontFamily: competizione?.id == 5
+                              ? 'champions'
+                              : competizione?.id == 6 || competizione?.id == 7
+                              ? 'europa'
+                              : competizione?.id == 8
+                              ? 'supercup'
+                              : null,
+                        ),
                       ),
                     ),
                   ),
@@ -1244,6 +1394,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: Colors.black,
+                          fontFamily: competizione?.id == 5
+                              ? 'champions'
+                              : competizione?.id == 6 || competizione?.id == 7
+                              ? 'europa'
+                              : competizione?.id == 8
+                              ? 'supercup'
+                              : null,
                         ),
                       ),
                       SizedBox(width: 12),
@@ -1311,6 +1468,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.black,
+                                fontFamily: competizione?.id == 5
+                                    ? 'champions'
+                                    : competizione?.id == 6 ||
+                                          competizione?.id == 7
+                                    ? 'europa'
+                                    : competizione?.id == 8
+                                    ? 'supercup'
+                                    : null,
                               ),
                             ),
                             Text(
@@ -1319,6 +1484,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                 fontSize: 12,
                                 color: Colors.grey[600],
                                 fontStyle: FontStyle.italic,
+                                fontFamily: competizione?.id == 5
+                                    ? 'champions'
+                                    : competizione?.id == 6 ||
+                                          competizione?.id == 7
+                                    ? 'europa'
+                                    : competizione?.id == 8
+                                    ? 'supercup'
+                                    : null,
                               ),
                             ),
                           ],
@@ -1336,6 +1509,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.black,
+                                fontFamily: competizione?.id == 5
+                                    ? 'champions'
+                                    : competizione?.id == 6 ||
+                                          competizione?.id == 7
+                                    ? 'europa'
+                                    : competizione?.id == 8
+                                    ? 'supercup'
+                                    : null,
                               ),
                             ),
                             Text(
@@ -1344,6 +1525,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                 fontSize: 12,
                                 color: Colors.grey[600],
                                 fontStyle: FontStyle.italic,
+                                fontFamily: competizione?.id == 5
+                                    ? 'champions'
+                                    : competizione?.id == 6 ||
+                                          competizione?.id == 7
+                                    ? 'europa'
+                                    : competizione?.id == 8
+                                    ? 'supercup'
+                                    : null,
                               ),
                             ),
                           ],
@@ -1361,6 +1550,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.black,
+                                fontFamily: competizione?.id == 5
+                                    ? 'champions'
+                                    : competizione?.id == 6 ||
+                                          competizione?.id == 7
+                                    ? 'europa'
+                                    : competizione?.id == 8
+                                    ? 'supercup'
+                                    : null,
                               ),
                             ),
                             Text(
@@ -1369,6 +1566,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                 fontSize: 12,
                                 color: Colors.grey[600],
                                 fontStyle: FontStyle.italic,
+                                fontFamily: competizione?.id == 5
+                                    ? 'champions'
+                                    : competizione?.id == 6 ||
+                                          competizione?.id == 7
+                                    ? 'europa'
+                                    : competizione?.id == 8
+                                    ? 'supercup'
+                                    : null,
                               ),
                             ),
                           ],
@@ -1389,6 +1594,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                     evento.codAzione == 'gol_ann'
                                 ? Colors.red
                                 : Colors.black,
+                            fontFamily: competizione?.id == 5
+                                ? 'champions'
+                                : competizione?.id == 6 || competizione?.id == 7
+                                ? 'europa'
+                                : competizione?.id == 8
+                                ? 'supercup'
+                                : null,
                           ),
                         ),
                     ],
@@ -1410,6 +1622,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.black,
+                                fontFamily: competizione?.id == 5
+                                    ? 'champions'
+                                    : competizione?.id == 6 ||
+                                          competizione?.id == 7
+                                    ? 'europa'
+                                    : competizione?.id == 8
+                                    ? 'supercup'
+                                    : null,
                               ),
                             ),
                             Text(
@@ -1418,6 +1638,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                 fontSize: 12,
                                 color: Colors.grey[600],
                                 fontStyle: FontStyle.italic,
+                                fontFamily: competizione?.id == 5
+                                    ? 'champions'
+                                    : competizione?.id == 6 ||
+                                          competizione?.id == 7
+                                    ? 'europa'
+                                    : competizione?.id == 8
+                                    ? 'supercup'
+                                    : null,
                               ),
                             ),
                           ],
@@ -1435,6 +1663,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.black,
+                                fontFamily: competizione?.id == 5
+                                    ? 'champions'
+                                    : competizione?.id == 6 ||
+                                          competizione?.id == 7
+                                    ? 'europa'
+                                    : competizione?.id == 8
+                                    ? 'supercup'
+                                    : null,
                               ),
                             ),
                             Text(
@@ -1443,6 +1679,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                 fontSize: 12,
                                 color: Colors.grey[600],
                                 fontStyle: FontStyle.italic,
+                                fontFamily: competizione?.id == 5
+                                    ? 'champions'
+                                    : competizione?.id == 6 ||
+                                          competizione?.id == 7
+                                    ? 'europa'
+                                    : competizione?.id == 8
+                                    ? 'supercup'
+                                    : null,
                               ),
                             ),
                           ],
@@ -1460,6 +1704,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.black,
+                                fontFamily: competizione?.id == 5
+                                    ? 'champions'
+                                    : competizione?.id == 6 ||
+                                          competizione?.id == 7
+                                    ? 'europa'
+                                    : competizione?.id == 8
+                                    ? 'supercup'
+                                    : null,
                               ),
                             ),
                             Text(
@@ -1468,6 +1720,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                 fontSize: 12,
                                 color: Colors.grey[600],
                                 fontStyle: FontStyle.italic,
+                                fontFamily: competizione?.id == 5
+                                    ? 'champions'
+                                    : competizione?.id == 6 ||
+                                          competizione?.id == 7
+                                    ? 'europa'
+                                    : competizione?.id == 8
+                                    ? 'supercup'
+                                    : null,
                               ),
                             ),
                           ],
@@ -1488,6 +1748,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                     evento.codAzione == 'gol_ann'
                                 ? Colors.red
                                 : Colors.black,
+                            fontFamily: competizione?.id == 5
+                                ? 'champions'
+                                : competizione?.id == 6 || competizione?.id == 7
+                                ? 'europa'
+                                : competizione?.id == 8
+                                ? 'supercup'
+                                : null,
                           ),
                         ),
                       SizedBox(width: 12),
@@ -1548,6 +1815,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: Colors.black,
+                          fontFamily: competizione?.id == 5
+                              ? 'champions'
+                              : competizione?.id == 6 || competizione?.id == 7
+                              ? 'europa'
+                              : competizione?.id == 8
+                              ? 'supercup'
+                              : null,
                         ),
                       ),
                     ],
@@ -1575,8 +1849,30 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             context: context,
             builder: (BuildContext context) {
               return AlertDialog(
-                title: Text('Conferma'),
-                content: Text('Sei sicuro di voler cancellare questo evento?'),
+                title: Text(
+                  'Conferma',
+                  style: TextStyle(
+                    fontFamily: competizione?.id == 5
+                        ? 'champions'
+                        : competizione?.id == 6 || competizione?.id == 7
+                        ? 'europa'
+                        : competizione?.id == 8
+                        ? 'supercup'
+                        : null,
+                  ),
+                ),
+                content: Text(
+                  'Sei sicuro di voler cancellare questo evento?',
+                  style: TextStyle(
+                    fontFamily: competizione?.id == 5
+                        ? 'champions'
+                        : competizione?.id == 6 || competizione?.id == 7
+                        ? 'europa'
+                        : competizione?.id == 8
+                        ? 'supercup'
+                        : null,
+                  ),
+                ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(false),
@@ -1594,6 +1890,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                 )
                               : 0xFF007AFF,
                         ),
+                        fontFamily: competizione?.id == 5
+                            ? 'champions'
+                            : competizione?.id == 6 || competizione?.id == 7
+                            ? 'europa'
+                            : competizione?.id == 8
+                            ? 'supercup'
+                            : null,
                       ),
                     ),
                   ),
@@ -1678,7 +1981,18 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Evento cancellato con successo'),
+          content: Text(
+            'Evento cancellato con successo',
+            style: TextStyle(
+              fontFamily: competizione?.id == 5
+                  ? 'champions'
+                  : competizione?.id == 6 || competizione?.id == 7
+                  ? 'europa'
+                  : competizione?.id == 8
+                  ? 'supercup'
+                  : null,
+            ),
+          ),
           duration: Duration(seconds: 2),
           backgroundColor: Colors.green,
         ),
@@ -1691,7 +2005,18 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Errore nella cancellazione dell\'evento'),
+          content: Text(
+            'Errore nella cancellazione dell\'evento',
+            style: TextStyle(
+              fontFamily: competizione?.id == 5
+                  ? 'champions'
+                  : competizione?.id == 6 || competizione?.id == 7
+                  ? 'europa'
+                  : competizione?.id == 8
+                  ? 'supercup'
+                  : null,
+            ),
+          ),
           duration: Duration(seconds: 2),
           backgroundColor: Colors.red,
         ),
@@ -1771,7 +2096,16 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                             return nomeDecodificato;
                           }
                         }(),
-                        style: TextStyle(fontSize: 14),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontFamily: competizione?.id == 5
+                              ? 'champions'
+                              : competizione?.id == 6 || competizione?.id == 7
+                              ? 'europa'
+                              : competizione?.id == 8
+                              ? 'supercup'
+                              : null,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -1838,7 +2172,16 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                             return nomeDecodificato;
                           }
                         }(),
-                        style: TextStyle(fontSize: 14),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontFamily: competizione?.id == 5
+                              ? 'champions'
+                              : competizione?.id == 6 || competizione?.id == 7
+                              ? 'europa'
+                              : competizione?.id == 8
+                              ? 'supercup'
+                              : null,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -1950,7 +2293,17 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                   ),
                                   label: Text(
                                     'Salva Formazione',
-                                    style: TextStyle(color: Colors.white),
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontFamily: competizione?.id == 5
+                                          ? 'champions'
+                                          : competizione?.id == 6 ||
+                                                competizione?.id == 7
+                                          ? 'europa'
+                                          : competizione?.id == 8
+                                          ? 'supercup'
+                                          : null,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -1993,7 +2346,17 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                   icon: Icon(Icons.delete, color: Colors.white),
                                   label: Text(
                                     'Reset Formazione',
-                                    style: TextStyle(color: Colors.white),
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontFamily: competizione?.id == 5
+                                          ? 'champions'
+                                          : competizione?.id == 6 ||
+                                                competizione?.id == 7
+                                          ? 'europa'
+                                          : competizione?.id == 8
+                                          ? 'supercup'
+                                          : null,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -2074,7 +2437,17 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                             icon: Icon(Icons.save_as, color: Colors.white),
                             label: Text(
                               'Salva Formazione',
-                              style: TextStyle(color: Colors.white),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontFamily: competizione?.id == 5
+                                    ? 'champions'
+                                    : competizione?.id == 6 ||
+                                          competizione?.id == 7
+                                    ? 'europa'
+                                    : competizione?.id == 8
+                                    ? 'supercup'
+                                    : null,
+                              ),
                             ),
                           ),
                         ),
@@ -2109,7 +2482,17 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                             icon: Icon(Icons.delete, color: Colors.white),
                             label: Text(
                               'Reset Formazione',
-                              style: TextStyle(color: Colors.white),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontFamily: competizione?.id == 5
+                                    ? 'champions'
+                                    : competizione?.id == 6 ||
+                                          competizione?.id == 7
+                                    ? 'europa'
+                                    : competizione?.id == 8
+                                    ? 'supercup'
+                                    : null,
+                              ),
                             ),
                           ),
                         ),
@@ -2135,6 +2518,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
+                          fontFamily: competizione?.id == 5
+                              ? 'champions'
+                              : competizione?.id == 6 || competizione?.id == 7
+                              ? 'europa'
+                              : competizione?.id == 8
+                              ? 'supercup'
+                              : null,
                         ),
                       ),
                     ),
@@ -2167,7 +2557,17 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
         : Center(
             child: Text(
               'Le formazioni non sono ancora state inserite.',
-              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[600],
+                fontFamily: competizione?.id == 5
+                    ? 'champions'
+                    : competizione?.id == 6 || competizione?.id == 7
+                    ? 'europa'
+                    : competizione?.id == 8
+                    ? 'supercup'
+                    : null,
+              ),
             ),
           );
   }
@@ -2318,6 +2718,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                   autogol: autogolHome,
                                   sostituzioni: sostituzioniHome,
                                   espulsi: espulsiHome,
+                                  competizioneId: competizione?.id,
                                   onGiocatoreChanged: (pos, nuovoGiocatore) {
                                     _handleGiocatoreChanged(
                                       0,
@@ -2343,6 +2744,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                   autogol: autogolAway,
                                   sostituzioni: sostituzioniAway,
                                   espulsi: espulsiAway,
+                                  competizioneId: competizione?.id,
                                   onGiocatoreChanged: (pos, nuovoGiocatore) {
                                     _handleGiocatoreChanged(
                                       1,
@@ -2504,6 +2906,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                               autogol: autogolHome,
                               sostituzioni: sostituzioniHome,
                               espulsi: espulsiHome,
+                              competizioneId: competizione?.id,
                               onGiocatoreChanged: (pos, nuovoGiocatore) {
                                 _handleGiocatoreChanged(0, pos, nuovoGiocatore);
                               },
@@ -2525,6 +2928,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                               autogol: autogolAway,
                               sostituzioni: sostituzioniAway,
                               espulsi: espulsiAway,
+                              competizioneId: competizione?.id,
                               onGiocatoreChanged: (pos, nuovoGiocatore) {
                                 _handleGiocatoreChanged(1, pos, nuovoGiocatore);
                               },
@@ -2711,6 +3115,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     color: isEspulso ? Colors.red : Colors.black,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
+                    fontFamily: competizione?.id == 5
+                        ? 'champions'
+                        : competizione?.id == 6 || competizione?.id == 7
+                        ? 'europa'
+                        : competizione?.id == 8
+                        ? 'supercup'
+                        : null,
                   ),
                 ),
                 if (hasSostituito) ...[
@@ -2841,7 +3252,17 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
         children: [
           Text(
             'Panchina',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              fontFamily: competizione?.id == 5
+                  ? 'champions'
+                  : competizione?.id == 6 || competizione?.id == 7
+                  ? 'europa'
+                  : competizione?.id == 8
+                  ? 'supercup'
+                  : null,
+            ),
           ),
           SizedBox(height: 12),
 
@@ -2864,9 +3285,31 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                       context: context,
                       builder: (BuildContext context) {
                         return AlertDialog(
-                          title: Text('Conferma'),
+                          title: Text(
+                            'Conferma',
+                            style: TextStyle(
+                              fontFamily: competizione?.id == 5
+                                  ? 'champions'
+                                  : competizione?.id == 6 ||
+                                        competizione?.id == 7
+                                  ? 'europa'
+                                  : competizione?.id == 8
+                                  ? 'supercup'
+                                  : null,
+                            ),
+                          ),
                           content: Text(
                             'Sei sicuro di voler rimuovere dalla panchina questo giocatore?',
+                            style: TextStyle(
+                              fontFamily: competizione?.id == 5
+                                  ? 'champions'
+                                  : competizione?.id == 6 ||
+                                        competizione?.id == 7
+                                  ? 'europa'
+                                  : competizione?.id == 8
+                                  ? 'supercup'
+                                  : null,
+                            ),
                           ),
                           actions: [
                             TextButton(
@@ -2883,6 +3326,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                           )
                                         : 0xFF007AFF,
                                   ),
+                                  fontFamily: competizione?.id == 5
+                                      ? 'champions'
+                                      : competizione?.id == 6 ||
+                                            competizione?.id == 7
+                                      ? 'europa'
+                                      : competizione?.id == 8
+                                      ? 'supercup'
+                                      : null,
                                 ),
                               ),
                             ),
@@ -2900,6 +3351,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                           )
                                         : 0xFF007AFF,
                                   ),
+                                  fontFamily: competizione?.id == 5
+                                      ? 'champions'
+                                      : competizione?.id == 6 ||
+                                            competizione?.id == 7
+                                      ? 'europa'
+                                      : competizione?.id == 8
+                                      ? 'supercup'
+                                      : null,
                                 ),
                               ),
                             ),
@@ -2937,9 +3396,31 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                       context: context,
                       builder: (BuildContext context) {
                         return AlertDialog(
-                          title: Text('Conferma'),
+                          title: Text(
+                            'Conferma',
+                            style: TextStyle(
+                              fontFamily: competizione?.id == 5
+                                  ? 'champions'
+                                  : competizione?.id == 6 ||
+                                        competizione?.id == 7
+                                  ? 'europa'
+                                  : competizione?.id == 8
+                                  ? 'supercup'
+                                  : null,
+                            ),
+                          ),
                           content: Text(
                             'Sei sicuro di voler rimuovere dalla panchina questo giocatore?',
+                            style: TextStyle(
+                              fontFamily: competizione?.id == 5
+                                  ? 'champions'
+                                  : competizione?.id == 6 ||
+                                        competizione?.id == 7
+                                  ? 'europa'
+                                  : competizione?.id == 8
+                                  ? 'supercup'
+                                  : null,
+                            ),
                           ),
                           actions: [
                             TextButton(
@@ -2956,6 +3437,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                           )
                                         : 0xFF007AFF,
                                   ),
+                                  fontFamily: competizione?.id == 5
+                                      ? 'champions'
+                                      : competizione?.id == 6 ||
+                                            competizione?.id == 7
+                                      ? 'europa'
+                                      : competizione?.id == 8
+                                      ? 'supercup'
+                                      : null,
                                 ),
                               ),
                             ),
@@ -2973,6 +3462,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                           )
                                         : 0xFF007AFF,
                                   ),
+                                  fontFamily: competizione?.id == 5
+                                      ? 'champions'
+                                      : competizione?.id == 6 ||
+                                            competizione?.id == 7
+                                      ? 'europa'
+                                      : competizione?.id == 8
+                                      ? 'supercup'
+                                      : null,
                                 ),
                               ),
                             ),
@@ -3010,9 +3507,31 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                       context: context,
                       builder: (BuildContext context) {
                         return AlertDialog(
-                          title: Text('Conferma'),
+                          title: Text(
+                            'Conferma',
+                            style: TextStyle(
+                              fontFamily: competizione?.id == 5
+                                  ? 'champions'
+                                  : competizione?.id == 6 ||
+                                        competizione?.id == 7
+                                  ? 'europa'
+                                  : competizione?.id == 8
+                                  ? 'supercup'
+                                  : null,
+                            ),
+                          ),
                           content: Text(
                             'Sei sicuro di voler rimuovere dalla panchina questo giocatore?',
+                            style: TextStyle(
+                              fontFamily: competizione?.id == 5
+                                  ? 'champions'
+                                  : competizione?.id == 6 ||
+                                        competizione?.id == 7
+                                  ? 'europa'
+                                  : competizione?.id == 8
+                                  ? 'supercup'
+                                  : null,
+                            ),
                           ),
                           actions: [
                             TextButton(
@@ -3029,6 +3548,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                           )
                                         : 0xFF007AFF,
                                   ),
+                                  fontFamily: competizione?.id == 5
+                                      ? 'champions'
+                                      : competizione?.id == 6 ||
+                                            competizione?.id == 7
+                                      ? 'europa'
+                                      : competizione?.id == 8
+                                      ? 'supercup'
+                                      : null,
                                 ),
                               ),
                             ),
@@ -3046,6 +3573,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                           )
                                         : 0xFF007AFF,
                                   ),
+                                  fontFamily: competizione?.id == 5
+                                      ? 'champions'
+                                      : competizione?.id == 6 ||
+                                            competizione?.id == 7
+                                      ? 'europa'
+                                      : competizione?.id == 8
+                                      ? 'supercup'
+                                      : null,
                                 ),
                               ),
                             ),
@@ -3083,9 +3618,31 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                       context: context,
                       builder: (BuildContext context) {
                         return AlertDialog(
-                          title: Text('Conferma'),
+                          title: Text(
+                            'Conferma',
+                            style: TextStyle(
+                              fontFamily: competizione?.id == 5
+                                  ? 'champions'
+                                  : competizione?.id == 6 ||
+                                        competizione?.id == 7
+                                  ? 'europa'
+                                  : competizione?.id == 8
+                                  ? 'supercup'
+                                  : null,
+                            ),
+                          ),
                           content: Text(
                             'Sei sicuro di voler rimuovere dalla panchina questo giocatore?',
+                            style: TextStyle(
+                              fontFamily: competizione?.id == 5
+                                  ? 'champions'
+                                  : competizione?.id == 6 ||
+                                        competizione?.id == 7
+                                  ? 'europa'
+                                  : competizione?.id == 8
+                                  ? 'supercup'
+                                  : null,
+                            ),
                           ),
                           actions: [
                             TextButton(
@@ -3102,6 +3659,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                           )
                                         : 0xFF007AFF,
                                   ),
+                                  fontFamily: competizione?.id == 5
+                                      ? 'champions'
+                                      : competizione?.id == 6 ||
+                                            competizione?.id == 7
+                                      ? 'europa'
+                                      : competizione?.id == 8
+                                      ? 'supercup'
+                                      : null,
                                 ),
                               ),
                             ),
@@ -3119,6 +3684,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                           )
                                         : 0xFF007AFF,
                                   ),
+                                  fontFamily: competizione?.id == 5
+                                      ? 'champions'
+                                      : competizione?.id == 6 ||
+                                            competizione?.id == 7
+                                      ? 'europa'
+                                      : competizione?.id == 8
+                                      ? 'supercup'
+                                      : null,
                                 ),
                               ),
                             ),
@@ -3150,6 +3723,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
         style: TextStyle(
           fontWeight: FontWeight.bold,
           fontSize: 13,
+          fontFamily: competizione?.id == 5
+              ? 'champions'
+              : competizione?.id == 6 || competizione?.id == 7
+              ? 'europa'
+              : competizione?.id == 8
+              ? 'supercup'
+              : null,
           color: Colors.grey[700],
         ),
       ),
@@ -3201,7 +3781,17 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
           SizedBox(height: 16),
           Text(
             'Non Disponibili',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              fontFamily: competizione?.id == 5
+                  ? 'champions'
+                  : competizione?.id == 6 || competizione?.id == 7
+                  ? 'europa'
+                  : competizione?.id == 8
+                  ? 'supercup'
+                  : null,
+            ),
           ),
 
           for (var giocatore
@@ -3328,7 +3918,17 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
               team == 1 && partita!.formazioneAway.nonConvocati.isNotEmpty)
             Text(
               'Non Convocati',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                fontFamily: competizione?.id == 5
+                    ? 'champions'
+                    : competizione?.id == 6 || competizione?.id == 7
+                    ? 'europa'
+                    : competizione?.id == 8
+                    ? 'supercup'
+                    : null,
+              ),
             ),
 
           for (var giocatore
@@ -3350,9 +3950,29 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     context: context,
                     builder: (BuildContext context) {
                       return AlertDialog(
-                        title: Text('Conferma'),
+                        title: Text(
+                          'Conferma',
+                          style: TextStyle(
+                            fontFamily: competizione?.id == 5
+                                ? 'champions'
+                                : competizione?.id == 6 || competizione?.id == 7
+                                ? 'europa'
+                                : competizione?.id == 8
+                                ? 'supercup'
+                                : null,
+                          ),
+                        ),
                         content: Text(
                           'Sei sicuro di voler inserire in panchina questo giocatore?',
+                          style: TextStyle(
+                            fontFamily: competizione?.id == 5
+                                ? 'champions'
+                                : competizione?.id == 6 || competizione?.id == 7
+                                ? 'europa'
+                                : competizione?.id == 8
+                                ? 'supercup'
+                                : null,
+                          ),
                         ),
                         actions: [
                           TextButton(
@@ -3371,6 +3991,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                         )
                                       : 0xFF007AFF,
                                 ),
+                                fontFamily: competizione?.id == 5
+                                    ? 'champions'
+                                    : competizione?.id == 6 ||
+                                          competizione?.id == 7
+                                    ? 'europa'
+                                    : competizione?.id == 8
+                                    ? 'supercup'
+                                    : null,
                               ),
                             ),
                           ),
@@ -3390,6 +4018,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                         )
                                       : 0xFF007AFF,
                                 ),
+                                fontFamily: competizione?.id == 5
+                                    ? 'champions'
+                                    : competizione?.id == 6 ||
+                                          competizione?.id == 7
+                                    ? 'europa'
+                                    : competizione?.id == 8
+                                    ? 'supercup'
+                                    : null,
                               ),
                             ),
                           ),
@@ -3703,7 +4339,18 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Formazione salvata con successo'),
+          content: Text(
+            'Formazione salvata con successo',
+            style: TextStyle(
+              fontFamily: competizione?.id == 5
+                  ? 'champions'
+                  : competizione?.id == 6 || competizione?.id == 7
+                  ? 'europa'
+                  : competizione?.id == 8
+                  ? 'supercup'
+                  : null,
+            ),
+          ),
           duration: Duration(seconds: 2),
           backgroundColor: Colors.green,
         ),
@@ -3711,7 +4358,18 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Errore nel salvataggio della formazione'),
+          content: Text(
+            'Errore nel salvataggio della formazione',
+            style: TextStyle(
+              fontFamily: competizione?.id == 5
+                  ? 'champions'
+                  : competizione?.id == 6 || competizione?.id == 7
+                  ? 'europa'
+                  : competizione?.id == 8
+                  ? 'supercup'
+                  : null,
+            ),
+          ),
           duration: Duration(seconds: 2),
           backgroundColor: Colors.red,
         ),
@@ -3797,7 +4455,18 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
 
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Modifiche salvate con successo'),
+                    content: Text(
+                      'Modifiche salvate con successo',
+                      style: TextStyle(
+                        fontFamily: competizione?.id == 5
+                            ? 'champions'
+                            : competizione?.id == 6 || competizione?.id == 7
+                            ? 'europa'
+                            : competizione?.id == 8
+                            ? 'supercup'
+                            : null,
+                      ),
+                    ),
                     backgroundColor: Colors.green,
                     duration: Duration(seconds: 2),
                   ),
@@ -3805,7 +4474,18 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Errore nel salvataggio delle modifiche'),
+                    content: Text(
+                      'Errore nel salvataggio delle modifiche',
+                      style: TextStyle(
+                        fontFamily: competizione?.id == 5
+                            ? 'champions'
+                            : competizione?.id == 6 || competizione?.id == 7
+                            ? 'europa'
+                            : competizione?.id == 8
+                            ? 'supercup'
+                            : null,
+                      ),
+                    ),
                     backgroundColor: Colors.red,
                     duration: Duration(seconds: 3),
                   ),
@@ -3904,10 +4584,19 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    team == 0 ? partita!.teamHome : partita!.teamAway,
+                    team == 0
+                        ? CommonService.decodePlayerName(partita!.teamHome)
+                        : CommonService.decodePlayerName(partita!.teamAway),
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
+                      fontFamily: competizione?.id == 5
+                          ? 'champions'
+                          : competizione?.id == 6 || competizione?.id == 7
+                          ? 'europa'
+                          : competizione?.id == 8
+                          ? 'supercup'
+                          : null,
                       color: Color(
                         competizione!.colori.isNotEmpty
                             ? int.parse(
@@ -3925,6 +4614,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
+                      fontFamily: competizione?.id == 5
+                          ? 'champions'
+                          : competizione?.id == 6 || competizione?.id == 7
+                          ? 'europa'
+                          : competizione?.id == 8
+                          ? 'supercup'
+                          : null,
                       color: Colors.grey[600],
                       letterSpacing: 1.2,
                     ),
@@ -3937,6 +4633,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
+                      fontFamily: competizione?.id == 5
+                          ? 'champions'
+                          : competizione?.id == 6 || competizione?.id == 7
+                          ? 'europa'
+                          : competizione?.id == 8
+                          ? 'supercup'
+                          : null,
                       color: Colors.grey[600],
                       letterSpacing: 1.2,
                     ),
@@ -4058,7 +4761,18 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Formazione resettata con successo'),
+            content: Text(
+              'Formazione resettata con successo',
+              style: TextStyle(
+                fontFamily: competizione?.id == 5
+                    ? 'champions'
+                    : competizione?.id == 6 || competizione?.id == 7
+                    ? 'europa'
+                    : competizione?.id == 8
+                    ? 'supercup'
+                    : null,
+              ),
+            ),
             duration: Duration(seconds: 2),
             backgroundColor: Colors.green,
           ),
@@ -4066,7 +4780,18 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Errore nel reset della formazione'),
+            content: Text(
+              'Errore nel reset della formazione',
+              style: TextStyle(
+                fontFamily: competizione?.id == 5
+                    ? 'champions'
+                    : competizione?.id == 6 || competizione?.id == 7
+                    ? 'europa'
+                    : competizione?.id == 8
+                    ? 'supercup'
+                    : null,
+              ),
+            ),
             duration: Duration(seconds: 2),
             backgroundColor: Colors.red,
           ),
@@ -4111,7 +4836,18 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Partita salvata con successo'),
+            content: Text(
+              'Partita salvata con successo',
+              style: TextStyle(
+                fontFamily: competizione?.id == 5
+                    ? 'champions'
+                    : competizione?.id == 6 || competizione?.id == 7
+                    ? 'europa'
+                    : competizione?.id == 8
+                    ? 'supercup'
+                    : null,
+              ),
+            ),
             duration: Duration(seconds: 2),
             backgroundColor: Colors.green,
           ),
@@ -4119,7 +4855,18 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Errore nel salvataggio della partita'),
+            content: Text(
+              'Errore nel salvataggio della partita',
+              style: TextStyle(
+                fontFamily: competizione?.id == 5
+                    ? 'champions'
+                    : competizione?.id == 6 || competizione?.id == 7
+                    ? 'europa'
+                    : competizione?.id == 8
+                    ? 'supercup'
+                    : null,
+              ),
+            ),
             duration: Duration(seconds: 2),
             backgroundColor: Colors.red,
           ),

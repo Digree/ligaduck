@@ -45,6 +45,15 @@ flutter:
     - family: Franklin Gothic
       fonts:
         - asset: assets/font/framd.ttf
+    - family: champions
+      fonts:
+        - asset: assets/font/champions.ttf
+    - family: europa
+      fonts:
+        - asset: assets/font/europa.ttf
+    - family: supercup
+      fonts:
+        - asset: assets/font/supercup.otf
   assets:
     #icone
     - assets/icon/

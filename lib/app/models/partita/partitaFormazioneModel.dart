@@ -19,6 +19,7 @@ class PartitaFormazioneModel {
   autogol; // Lista di ID giocatori che hanno segnato autogol
   final List<String>? sostituzioni; // Lista di ID giocatori entrati in campo
   final List<String>? espulsi; // Lista di ID giocatori espulsi
+  final int? competizioneId; // ID della competizione per il font condizionale
 
   PartitaFormazioneModel({
     required this.codSquadra,
@@ -34,6 +35,7 @@ class PartitaFormazioneModel {
     this.autogol,
     this.sostituzioni,
     this.espulsi,
+    this.competizioneId,
   });
 }
 
@@ -79,6 +81,14 @@ Widget buildPartitaFormazione(
                                     )
                                 ? FontWeight.bold
                                 : FontWeight.normal,
+                            fontFamily: model.competizioneId == 5
+                                ? 'champions'
+                                : model.competizioneId == 6 ||
+                                      model.competizioneId == 7
+                                ? 'europa'
+                                : model.competizioneId == 8
+                                ? 'supercup'
+                                : null,
                             shadows:
                                 model.espulsi != null &&
                                     model.espulsi!.contains(
@@ -197,6 +207,14 @@ Widget buildPartitaFormazione(
                                                 )
                                             ? FontWeight.bold
                                             : FontWeight.normal,
+                                        fontFamily: model.competizioneId == 5
+                                            ? 'champions'
+                                            : model.competizioneId == 6 ||
+                                                  model.competizioneId == 7
+                                            ? 'europa'
+                                            : model.competizioneId == 8
+                                            ? 'supercup'
+                                            : null,
                                         shadows:
                                             j < model.formazione.length &&
                                                 model.espulsi != null &&
@@ -367,6 +385,13 @@ Widget buildGiocatore(
                 color: Colors.white,
                 fontWeight: FontWeight.w900,
                 fontSize: 16,
+                fontFamily: model.competizioneId == 5
+                    ? 'champions'
+                    : model.competizioneId == 6 || model.competizioneId == 7
+                    ? 'europa'
+                    : model.competizioneId == 8
+                    ? 'supercup'
+                    : null,
                 shadows: [
                   Shadow(
                     offset: Offset(-1.0, -1.0),
@@ -519,7 +544,18 @@ void _showGiocatoreDropdown(
     context: context,
     builder: (BuildContext context) {
       return AlertDialog(
-        title: Text('Sostituisci Giocatore'),
+        title: Text(
+          'Sostituisci Giocatore',
+          style: TextStyle(
+            fontFamily: model.competizioneId == 5
+                ? 'champions'
+                : model.competizioneId == 6 || model.competizioneId == 7
+                ? 'europa'
+                : model.competizioneId == 8
+                ? 'supercup'
+                : null,
+          ),
+        ),
         content: SizedBox(
           width: double.maxFinite,
           child: ListView.builder(
@@ -554,6 +590,14 @@ void _showGiocatoreDropdown(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
                         fontSize: 14,
+                        fontFamily: model.competizioneId == 5
+                            ? 'champions'
+                            : model.competizioneId == 6 ||
+                                  model.competizioneId == 7
+                            ? 'europa'
+                            : model.competizioneId == 8
+                            ? 'supercup'
+                            : null,
                         shadows: [
                           Shadow(
                             offset: Offset(-1.0, -1.0),
@@ -586,6 +630,13 @@ void _showGiocatoreDropdown(
                     fontWeight: isInFormazione
                         ? FontWeight.bold
                         : FontWeight.normal,
+                    fontFamily: model.competizioneId == 5
+                        ? 'champions'
+                        : model.competizioneId == 6 || model.competizioneId == 7
+                        ? 'europa'
+                        : model.competizioneId == 8
+                        ? 'supercup'
+                        : null,
                     color: isInFormazione
                         ? CommonService.getSquadraColor(
                             model,
@@ -598,6 +649,13 @@ void _showGiocatoreDropdown(
                 subtitle: Text(
                   isInFormazione ? 'In campo' : 'In panchina',
                   style: TextStyle(
+                    fontFamily: model.competizioneId == 5
+                        ? 'champions'
+                        : model.competizioneId == 6 || model.competizioneId == 7
+                        ? 'europa'
+                        : model.competizioneId == 8
+                        ? 'supercup'
+                        : null,
                     color: isInFormazione
                         ? CommonService.getSquadraColor(
                             model,
@@ -629,7 +687,19 @@ void _showGiocatoreDropdown(
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text('Annulla', style: TextStyle(color: Colors.black)),
+            child: Text(
+              'Annulla',
+              style: TextStyle(
+                color: Colors.black,
+                fontFamily: model.competizioneId == 5
+                    ? 'champions'
+                    : model.competizioneId == 6 || model.competizioneId == 7
+                    ? 'europa'
+                    : model.competizioneId == 8
+                    ? 'supercup'
+                    : null,
+              ),
+            ),
           ),
         ],
       );
@@ -662,6 +732,7 @@ String _formatPlayerName(String nomeCompleto) {
         parole[0] != 'Da' &&
         parole[0] != 'Der' &&
         parole[0] != 'Delli' &&
+        parole[0] != 'Cha' &&
         parole[0] != 'Luiz' &&
         parole[0] != 'Le' &&
         parole[0] != 'Kanchero' &&

@@ -27,11 +27,51 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
   String _moduloSelezionato = "4-3-3";
   final List<String> _moduli = [];
   bool _isLoadingModuli = true;
+  int _formazioneUpdateKey = 0;
+  List<GiocatoreFormazione> _titolari = [];
+  List<GiocatoreFormazione> _panchina = [];
 
   @override
   void initState() {
     super.initState();
     caricaModuli();
+    caricaFormazioneDalDatabase();
+  }
+
+  void caricaFormazioneDalDatabase() async {
+    try {
+      final provider = Provider.of<SquadreProvider>(context, listen: false);
+      final squadraAggiornata = await provider.fetchSquadraById(
+        widget.campionato,
+        widget.squadra.id,
+        0, // Competizione di default
+      );
+
+      setState(() {
+        // Aggiorna la formazione con i dati dal database
+        widget.squadra.formazione.titolari.clear();
+        widget.squadra.formazione.titolari.addAll(
+          squadraAggiornata.formazione.titolari,
+        );
+        widget.squadra.formazione.panchina.clear();
+        widget.squadra.formazione.panchina.addAll(
+          squadraAggiornata.formazione.panchina,
+        );
+        widget.squadra.formazione.nonConvocati.clear();
+        widget.squadra.formazione.nonConvocati.addAll(
+          squadraAggiornata.formazione.nonConvocati,
+        );
+        widget.squadra.formazione.modulo = squadraAggiornata.formazione.modulo;
+        widget.squadra.formazione.allenatore =
+            squadraAggiornata.formazione.allenatore;
+
+        // Sincronizza le liste locali
+        _titolari = List.from(widget.squadra.formazione.titolari);
+        _panchina = List.from(widget.squadra.formazione.panchina);
+      });
+    } catch (e) {
+      print('Errore nel caricamento della formazione: $e');
+    }
   }
 
   void caricaModuli() async {
@@ -116,72 +156,73 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
   }
 
   void _handleGiocatoreSwap(int pos, GiocatoreFormazione nuovoGiocatore) {
-    // La posizione corrisponde all'indice nell'array + 1
-    int index = pos - 1;
+    setState(() {
+      // La posizione corrisponde all'indice nell'array + 1
+      int index = pos - 1;
 
-    // Verifica che l'indice sia valido per i titolari
-    if (index < 0 || index >= widget.squadra.formazione.titolari.length) {
-      return;
-    }
+      // Verifica che l'indice sia valido per i titolari
+      if (index < 0 || index >= _titolari.length) {
+        return;
+      }
 
-    // Trova se il nuovo giocatore è già nei titolari
-    int indexGiocatoreNeiTitolari = widget.squadra.formazione.titolari
-        .indexWhere((g) => g.idGiocatore == nuovoGiocatore.idGiocatore);
-
-    // Trova se il nuovo giocatore è nella panchina
-    int indexGiocatoreNellaPanchina = widget.squadra.formazione.panchina
-        .indexWhere((g) => g.idGiocatore == nuovoGiocatore.idGiocatore);
-
-    // Caso 1: TITOLARE ↔ TITOLARE (swap diretto tra titolari)
-    if (indexGiocatoreNeiTitolari != -1 && indexGiocatoreNeiTitolari != index) {
-      GiocatoreFormazione giocatoreAttuale =
-          widget.squadra.formazione.titolari[index];
-
-      // Swap i due giocatori titolari
-      widget.squadra.formazione.titolari[index] = GiocatoreFormazione(
-        idGiocatore: nuovoGiocatore.idGiocatore,
-        pos: nuovoGiocatore.pos,
-        nome: nuovoGiocatore.nome,
-        inCampo: true,
+      // Trova se il nuovo giocatore è già nei titolari
+      int indexGiocatoreNeiTitolari = _titolari.indexWhere(
+        (g) => g.idGiocatore == nuovoGiocatore.idGiocatore,
       );
-      widget.squadra.formazione.titolari[indexGiocatoreNeiTitolari] =
-          GiocatoreFormazione(
-            idGiocatore: giocatoreAttuale.idGiocatore,
-            pos: giocatoreAttuale.pos,
-            nome: giocatoreAttuale.nome,
-            inCampo: true,
-          );
-    }
-    // Caso 2: TITOLARE ↔ PANCHINA (cambio stato)
-    else if (indexGiocatoreNellaPanchina != -1) {
-      GiocatoreFormazione giocatoreAttuale =
-          widget.squadra.formazione.titolari[index];
 
-      // Sposta il giocatore attuale in panchina (sostituisce il posto del nuovo giocatore)
-      widget.squadra.formazione.panchina[indexGiocatoreNellaPanchina] =
-          GiocatoreFormazione(
-            idGiocatore: giocatoreAttuale.idGiocatore,
-            pos: giocatoreAttuale.pos,
-            nome: giocatoreAttuale.nome,
-            inCampo: false,
-          );
-
-      // Sposta il nuovo giocatore nei titolari
-      widget.squadra.formazione.titolari[index] = GiocatoreFormazione(
-        idGiocatore: nuovoGiocatore.idGiocatore,
-        pos: nuovoGiocatore.pos,
-        nome: nuovoGiocatore.nome,
-        inCampo: true,
+      // Trova se il nuovo giocatore è nella panchina
+      int indexGiocatoreNellaPanchina = _panchina.indexWhere(
+        (g) => g.idGiocatore == nuovoGiocatore.idGiocatore,
       );
-    }
 
-    // Caso 3: Stesso giocatore nella stessa posizione (nessuna azione)
-    // Non fa nulla se il giocatore è già in quella posizione
+      // Caso 1: TITOLARE ↔ TITOLARE (swap diretto tra titolari)
+      if (indexGiocatoreNeiTitolari != -1 &&
+          indexGiocatoreNeiTitolari != index) {
+        GiocatoreFormazione giocatoreAttuale = _titolari[index];
 
-    // NOTA: Per lo swap PANCHINA ↔ PANCHINA, la logica è già gestita
-    // automaticamente attraverso il sistema di selezione della UI.
-    // Se necessario, si può implementare una funzione separata per
-    // gestire direttamente lo swap tra due posizioni in panchina.
+        // Swap i due giocatori titolari
+        _titolari[index] = GiocatoreFormazione(
+          idGiocatore: nuovoGiocatore.idGiocatore,
+          pos: nuovoGiocatore.pos,
+          nome: nuovoGiocatore.nome,
+          inCampo: true,
+        );
+        _titolari[indexGiocatoreNeiTitolari] = GiocatoreFormazione(
+          idGiocatore: giocatoreAttuale.idGiocatore,
+          pos: giocatoreAttuale.pos,
+          nome: giocatoreAttuale.nome,
+          inCampo: true,
+        );
+      }
+      // Caso 2: TITOLARE ↔ PANCHINA (cambio stato)
+      else if (indexGiocatoreNellaPanchina != -1) {
+        GiocatoreFormazione giocatoreAttuale = _titolari[index];
+
+        // Sposta il giocatore attuale in panchina (sostituisce il posto del nuovo giocatore)
+        _panchina[indexGiocatoreNellaPanchina] = GiocatoreFormazione(
+          idGiocatore: giocatoreAttuale.idGiocatore,
+          pos: giocatoreAttuale.pos,
+          nome: giocatoreAttuale.nome,
+          inCampo: false,
+        );
+
+        // Sposta il nuovo giocatore nei titolari
+        _titolari[index] = GiocatoreFormazione(
+          idGiocatore: nuovoGiocatore.idGiocatore,
+          pos: nuovoGiocatore.pos,
+          nome: nuovoGiocatore.nome,
+          inCampo: true,
+        );
+      }
+
+      _formazioneUpdateKey++;
+
+      // Sincronizza con la formazione originale
+      widget.squadra.formazione.titolari.clear();
+      widget.squadra.formazione.titolari.addAll(_titolari);
+      widget.squadra.formazione.panchina.clear();
+      widget.squadra.formazione.panchina.addAll(_panchina);
+    });
   }
 
   @override
@@ -214,13 +255,11 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
 
   Widget buildFormazione() {
     bool isWide = MediaQuery.of(context).size.width > 600;
-    if ((widget.squadra.formazione.panchina.length +
-            widget.squadra.formazione.titolari.length) <
-        widget.giocatori.length - 1) {
-      widget.squadra.formazione.titolari.clear();
-      widget.squadra.formazione.panchina.clear();
-    }
-    if (widget.squadra.formazione.titolari.isEmpty) {
+
+    // Genera automaticamente la formazione solo se è completamente vuota
+    if (widget.squadra.formazione.titolari.isEmpty &&
+        widget.squadra.formazione.panchina.isEmpty &&
+        widget.squadra.formazione.nonConvocati.isEmpty) {
       List<Giocatore> giocatoriSenzaAllenatore = widget.giocatori
           .where((giocatore) => giocatore.numero != 0)
           .toList();
@@ -228,6 +267,19 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
         (giocatore) => giocatore.numero == 0,
       );
       for (var g in giocatoriSenzaAllenatore) {
+        // Giocatori con numero > 21 vanno direttamente nei non convocati
+        if (g.numero > 21) {
+          widget.squadra.formazione.nonConvocati.add(
+            GiocatoreFormazione(
+              idGiocatore: g.id,
+              pos: g.numero,
+              nome: CommonService.decodePlayerName(g.nome),
+              inCampo: false,
+            ),
+          );
+          continue;
+        }
+
         int currentIndex = widget.squadra.formazione.titolari.length;
         if (currentIndex < 11) {
           widget.squadra.formazione.titolari.add(
@@ -250,6 +302,17 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
         }
       }
       widget.squadra.formazione.allenatore = allenatore.nome;
+
+      // Ordina i non convocati per numero di maglia
+      widget.squadra.formazione.nonConvocati.sort(
+        (a, b) => a.pos.compareTo(b.pos),
+      );
+    }
+
+    // Sincronizza le liste locali con la formazione
+    if (_titolari.isEmpty) {
+      _titolari = List.from(widget.squadra.formazione.titolari);
+      _panchina = List.from(widget.squadra.formazione.panchina);
     }
 
     return Column(
@@ -282,6 +345,7 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
           ),
         ),
         Container(
+          key: ValueKey(_formazioneUpdateKey),
           width: isWide
               ? MediaQuery.of(context).size.width * 0.56
               : MediaQuery.of(context).size.width * 0.95,
@@ -299,20 +363,19 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
             border: Border.all(color: Colors.grey[200]!, width: 1),
           ),
           child: Center(
-            child: widget.squadra.formazione.titolari.isEmpty
+            child: _titolari.isEmpty
                 ? Center()
                 : buildPartitaFormazione(
                     PartitaFormazioneModel(
                       codSquadra: widget.squadra.cod,
-                      formazione: widget.squadra.formazione.titolari,
+                      formazione: _titolari,
                       campionato: widget.campionato,
                       modulo: widget.squadra.formazione.modulo,
                       coloriSquadra: widget.squadra.colori,
-                      giocatoriDisponibili: widget.squadra.formazione.panchina,
+                      giocatoriDisponibili: _panchina,
+                      competizioneId: null,
                       onGiocatoreChanged: (pos, nuovoGiocatore) {
-                        setState(() {
-                          _handleGiocatoreSwap(pos, nuovoGiocatore);
-                        });
+                        _handleGiocatoreSwap(pos, nuovoGiocatore);
                       },
                     ),
                     context,
@@ -364,6 +427,30 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
   }
 
   void caricaFormazione() {
+    // Assicurati che le liste locali siano sincronizzate con la formazione
+    widget.squadra.formazione.titolari.clear();
+    widget.squadra.formazione.titolari.addAll(_titolari);
+    widget.squadra.formazione.panchina.clear();
+    widget.squadra.formazione.panchina.addAll(_panchina);
+
+    // Sposta i giocatori con numero > 21 dalla panchina ai non convocati
+    final giocatoriDaSpostare = widget.squadra.formazione.panchina
+        .where((giocatore) => giocatore.pos > 21)
+        .toList();
+
+    for (var giocatore in giocatoriDaSpostare) {
+      widget.squadra.formazione.nonConvocati.add(giocatore);
+    }
+
+    widget.squadra.formazione.panchina.removeWhere(
+      (giocatore) => giocatore.pos > 21,
+    );
+
+    // Ordina i non convocati per numero di maglia
+    widget.squadra.formazione.nonConvocati.sort(
+      (a, b) => a.pos.compareTo(b.pos),
+    );
+
     final provider = SquadreProvider();
     provider.caricaFormazione(
       widget.campionato,
