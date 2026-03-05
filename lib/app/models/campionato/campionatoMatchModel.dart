@@ -289,156 +289,199 @@ Future<void> _showRisultatoDialog(
   return showDialog(
     context: context,
     builder: (BuildContext dialogContext) {
-      return AlertDialog(
-        title: Text('Inserisci Risultato'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '${CommonService.decodePlayerName(model.partita.teamHome)} - ${CommonService.decodePlayerName(model.partita.teamAway)}',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      return StatefulBuilder(
+        builder: (context, setState) {
+          bool isLoading = false;
+
+          return AlertDialog(
+            title: Text('Inserisci Risultato'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: homeController,
-                    keyboardType: TextInputType.number,
-                    textAlign: TextAlign.center,
-                    cursorColor: competizioneColor,
-                    decoration: InputDecoration(
-                      labelText: CommonService.decodePlayerName(
-                        model.partita.teamHome,
-                      ),
-                      labelStyle: TextStyle(color: competizioneColor),
-                      border: OutlineInputBorder(),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: competizioneColor,
-                          width: 2.0,
+                Text(
+                  '${CommonService.decodePlayerName(model.partita.teamHome)} - ${CommonService.decodePlayerName(model.partita.teamAway)}',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: homeController,
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        cursorColor: competizioneColor,
+                        enabled: !isLoading,
+                        decoration: InputDecoration(
+                          labelText: CommonService.decodePlayerName(
+                            model.partita.teamHome,
+                          ),
+                          labelStyle: TextStyle(color: competizioneColor),
+                          border: OutlineInputBorder(),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: competizioneColor,
+                              width: 2.0,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    '-',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Expanded(
-                  child: TextField(
-                    controller: awayController,
-                    keyboardType: TextInputType.number,
-                    textAlign: TextAlign.center,
-                    cursorColor: competizioneColor,
-                    decoration: InputDecoration(
-                      labelText: CommonService.decodePlayerName(
-                        model.partita.teamAway,
-                      ),
-                      labelStyle: TextStyle(color: competizioneColor),
-                      border: OutlineInputBorder(),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: competizioneColor,
-                          width: 2.0,
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        '-',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                  ),
+                    Expanded(
+                      child: TextField(
+                        controller: awayController,
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        cursorColor: competizioneColor,
+                        enabled: !isLoading,
+                        decoration: InputDecoration(
+                          labelText: CommonService.decodePlayerName(
+                            model.partita.teamAway,
+                          ),
+                          labelStyle: TextStyle(color: competizioneColor),
+                          border: OutlineInputBorder(),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: competizioneColor,
+                              width: 2.0,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-            },
-            style: TextButton.styleFrom(foregroundColor: competizioneColor),
-            child: Text('Annulla'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: competizioneColor,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () async {
-              final int? risultatoHome = int.tryParse(homeController.text);
-              final int? risultatoAway = int.tryParse(awayController.text);
+            actions: [
+              TextButton(
+                onPressed: isLoading
+                    ? null
+                    : () {
+                        Navigator.of(dialogContext).pop();
+                      },
+                style: TextButton.styleFrom(foregroundColor: competizioneColor),
+                child: Text('Annulla'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: competizioneColor,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: isLoading
+                    ? null
+                    : () async {
+                        setState(() {
+                          isLoading = true;
+                        });
 
-              if (risultatoHome == null || risultatoAway == null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Inserisci numeri validi per i risultati'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-                return;
-              }
+                        final int? risultatoHome = int.tryParse(
+                          homeController.text,
+                        );
+                        final int? risultatoAway = int.tryParse(
+                          awayController.text,
+                        );
 
-              // Aggiorna i risultati della partita creando una nuova istanza
-              final partitaAggiornata = Partita(
-                id: model.partita.id,
-                idGiornata: model.partita.idGiornata,
-                idTeamHome: model.partita.idTeamHome,
-                idTeamAway: model.partita.idTeamAway,
-                teamHome: model.partita.teamHome,
-                teamAway: model.partita.teamAway,
-                codHome: model.partita.codHome,
-                codAway: model.partita.codAway,
-                risultatoHome: risultatoHome,
-                risultatoAway: risultatoAway,
-                formazioneHome: model.partita.formazioneHome,
-                formazioneAway: model.partita.formazioneAway,
-                divisaHome: model.partita.divisaHome,
-                divisaAway: model.partita.divisaAway,
-                tabellino: model.partita.tabellino,
-                data: model.partita.data,
-                salvata: model.partita.salvata,
-              );
+                        if (risultatoHome == null || risultatoAway == null) {
+                          setState(() {
+                            isLoading = false;
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Inserisci numeri validi per i risultati',
+                              ),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          return;
+                        }
 
-              // Salva la partita
-              final provider = Provider.of<PartiteProvider>(
-                context,
-                listen: false,
-              );
-              final success = await provider.salvaPartita(
-                model.campionato,
-                partitaAggiornata,
-              );
+                        // Aggiorna i risultati della partita creando una nuova istanza
+                        final partitaAggiornata = Partita(
+                          id: model.partita.id,
+                          idGiornata: model.partita.idGiornata,
+                          idTeamHome: model.partita.idTeamHome,
+                          idTeamAway: model.partita.idTeamAway,
+                          teamHome: model.partita.teamHome,
+                          teamAway: model.partita.teamAway,
+                          codHome: model.partita.codHome,
+                          codAway: model.partita.codAway,
+                          risultatoHome: risultatoHome,
+                          risultatoAway: risultatoAway,
+                          formazioneHome: model.partita.formazioneHome,
+                          formazioneAway: model.partita.formazioneAway,
+                          divisaHome: model.partita.divisaHome,
+                          divisaAway: model.partita.divisaAway,
+                          tabellino: model.partita.tabellino,
+                          data: model.partita.data,
+                          salvata: model.partita.salvata,
+                        );
 
-              Navigator.of(dialogContext).pop();
+                        // Salva la partita
+                        final provider = Provider.of<PartiteProvider>(
+                          context,
+                          listen: false,
+                        );
+                        final success = await provider.salvaPartita(
+                          model.campionato,
+                          partitaAggiornata,
+                        );
 
-              if (success) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Risultato salvato con successo'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
+                        setState(() {
+                          isLoading = false;
+                        });
 
-                // Richiama refresh
-                if (model.onRefreshRequired != null) {
-                  model.onRefreshRequired!();
-                }
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Errore nel salvataggio del risultato'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            },
-            child: Text('Salva'),
-          ),
-        ],
+                        Navigator.of(dialogContext).pop();
+
+                        if (success) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Risultato salvato con successo'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+
+                          // Richiama refresh
+                          if (model.onRefreshRequired != null) {
+                            model.onRefreshRequired!();
+                          }
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Errore nel salvataggio del risultato',
+                              ),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                child: isLoading
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Text('Salva'),
+              ),
+            ],
+          );
+        },
       );
     },
   );

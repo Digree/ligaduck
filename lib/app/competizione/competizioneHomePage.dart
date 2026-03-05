@@ -27,6 +27,7 @@ import 'package:mongo_dart/mongo_dart.dart' as mongo;
 import 'package:provider/provider.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
 import 'package:ligaduck/app/widgets/settingsIcon.dart';
+import 'package:ligaduck/app/widgets/fireworks.dart';
 
 class CompetizioneHomePage extends StatefulWidget {
   final String title;
@@ -61,6 +62,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
   final Map<String, Widget> _partiteWidgetCache =
       {}; // Cache dei widget FutureBuilder
   int _invalidateCacheKey = 0; // Chiave separata per invalidare cache
+  bool _testFireworks =
+      true; // Flag per attivare/disattivare i fuochi d'artificio
 
   @override
   void initState() {
@@ -114,6 +117,11 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
   }
 
   void _caricaClassifica() async {
+    // Se la competizione non ha una classifica, non fare nulla
+    if (widget.competizione.classifica == null) {
+      return;
+    }
+
     final giornateProvider = Provider.of<GiornateProvider>(
       context,
       listen: false,
@@ -168,6 +176,31 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     }
   }
 
+  // Ottiene i colori della squadra campione per i fuochi d'artificio
+  Future<List<Color>> _getChampionColors() async {
+    if (widget.competizione.idCampione == 0) {
+      return [Colors.amber, Colors.yellow, Colors.orange];
+    }
+
+    try {
+      final squadre = await _squadreFuture;
+      final campione = squadre.firstWhere(
+        (s) => s.id == widget.competizione.idCampione,
+        orElse: () => squadre.first,
+      );
+
+      if (campione.colori.isEmpty) {
+        return [Colors.amber, Colors.yellow, Colors.orange];
+      }
+
+      return campione.colori.map((colorName) {
+        return _parseColor(colorName);
+      }).toList();
+    } catch (e) {
+      return [Colors.amber, Colors.yellow, Colors.orange];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     bool isWide = MediaQuery.of(context).size.width > 600;
@@ -201,600 +234,659 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
               : null,
         ),
       ),
-      child: DefaultTabController(
-        key: ValueKey('tabs_$isWide'),
-        length: 4,
-        child: Scaffold(
-          appBar: PreferredSize(
-            preferredSize: Size.fromHeight(200),
-            child: AppBar(
-              automaticallyImplyLeading: false,
-              actions: [
-                globals.admin
-                    ? Row(
-                        children: [
-                          if (giornataChiusa != null && giornate_.isNotEmpty)
-                            IconButton(
-                              onPressed: () {
-                                giornataChiusa = !giornataChiusa!;
-                                closeGiornata();
-                              },
-                              icon: giornataChiusa!
-                                  ? Icon(Icons.lock, color: Colors.white)
-                                  : Icon(Icons.lock_open, color: Colors.white),
-                            ),
-                          IconButton(
-                            onPressed: () {
-                              showAddCalendarModal();
-                            },
-                            icon: Icon(Icons.add, color: Colors.white),
+      child: Stack(
+        children: [
+          DefaultTabController(
+            key: ValueKey('tabs_${isWide}_$mostraClassifica'),
+            length: mostraClassifica ? 4 : 3,
+            child: Scaffold(
+              appBar: PreferredSize(
+                preferredSize: Size.fromHeight(200),
+                child: AppBar(
+                  automaticallyImplyLeading: false,
+                  actions: [
+                    globals.admin
+                        ? Row(
+                            children: [
+                              if (giornataChiusa != null &&
+                                  giornate_.isNotEmpty &&
+                                  widget.competizione.conclusa == false)
+                                IconButton(
+                                  onPressed: () {
+                                    giornataChiusa = !giornataChiusa!;
+                                    closeGiornata();
+                                  },
+                                  icon: giornataChiusa!
+                                      ? Icon(Icons.lock, color: Colors.white)
+                                      : Icon(
+                                          Icons.lock_open,
+                                          color: Colors.white,
+                                        ),
+                                ),
+                              if (widget.competizione.conclusa == false)
+                                IconButton(
+                                  onPressed: () {
+                                    showAddCalendarModal();
+                                  },
+                                  icon: Icon(Icons.add, color: Colors.white),
+                                ),
+                              IconButton(
+                                onPressed: () {
+                                  _downloadCsvTemplate();
+                                },
+                                icon: Icon(Icons.download, color: Colors.white),
+                                tooltip: 'Scarica Template CSV',
+                              ),
+                              if (widget.competizione.conclusa)
+                                IconButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _testFireworks = !_testFireworks;
+                                    });
+                                  },
+                                  icon: Icon(
+                                    _testFireworks
+                                        ? Icons.celebration
+                                        : Icons.celebration_outlined,
+                                    color: _testFireworks
+                                        ? Colors.yellow
+                                        : Colors.white,
+                                  ),
+                                  tooltip: 'Fuochi d\'Artificio',
+                                ),
+                            ],
+                          )
+                        : SizedBox(),
+                    SettingsIcon(
+                      iconColor: Colors.white,
+                      onDismiss: () {
+                        setState(() {
+                          _invalidateCacheKey++;
+                        });
+                        // _caricaClassifica rimosso - le impostazioni non modificano la classifica
+                      },
+                    ),
+                  ],
+                  flexibleSpace: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Color(
+                            widget.competizione.colori.isNotEmpty
+                                ? int.parse(
+                                    widget.competizione.colori[0].replaceFirst(
+                                      '#',
+                                      'FF',
+                                    ),
+                                    radix: 16,
+                                  )
+                                : 0xFF000000,
                           ),
-                          IconButton(
-                            onPressed: () {
-                              _downloadCsvTemplate();
-                            },
-                            icon: Icon(Icons.download, color: Colors.white),
-                            tooltip: 'Scarica Template CSV',
+                          Color(
+                            widget.competizione.colori.length > 1
+                                ? int.parse(
+                                    widget.competizione.colori[1].replaceFirst(
+                                      '#',
+                                      'FF',
+                                    ),
+                                    radix: 16,
+                                  )
+                                : 0xFF000000,
                           ),
                         ],
-                      )
-                    : SizedBox(),
-                SettingsIcon(
-                  iconColor: Colors.white,
-                  onDismiss: () {
-                    setState(() {
-                      _invalidateCacheKey++;
-                    });
-                    // _caricaClassifica rimosso - le impostazioni non modificano la classifica
-                  },
-                ),
-              ],
-              flexibleSpace: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Color(
-                        widget.competizione.colori.isNotEmpty
-                            ? int.parse(
-                                widget.competizione.colori[0].replaceFirst(
-                                  '#',
-                                  'FF',
-                                ),
-                                radix: 16,
-                              )
-                            : 0xFF000000,
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
-                      Color(
-                        widget.competizione.colori.length > 1
-                            ? int.parse(
-                                widget.competizione.colori[1].replaceFirst(
-                                  '#',
-                                  'FF',
-                                ),
-                                radix: 16,
-                              )
-                            : 0xFF000000,
-                      ),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: SafeArea(
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        top: 10,
-                        left: 10,
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.arrow_back,
-                            color: Colors.white,
-                          ),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => CampionatoHomePage(
-                                  title: "${widget.campionato}° Campionato",
-                                  campionato: widget.campionato,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const SizedBox(height: 16),
-                            Image.asset(
-                              'assets/logos/logo_${widget.competizione.cod}_comp.png',
-                              fit: BoxFit.contain,
-                              height: 90,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              widget.title,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          body: !isWide
-              ? Column(
-                  children: [
-                    buildGiornateBox(),
-                    Expanded(
-                      child: Column(
+                    ),
+                    child: SafeArea(
+                      child: Stack(
                         children: [
-                          Container(
-                            constraints: BoxConstraints(
-                              maxHeight: 50,
-                              maxWidth: MediaQuery.of(context).size.width,
-                            ),
-                            child: TabBar(
-                              labelColor: Color(
-                                widget.competizione.colori.isNotEmpty
-                                    ? int.parse(
-                                        widget.competizione.colori[0]
-                                            .replaceFirst('#', 'FF'),
-                                        radix: 16,
-                                      )
-                                    : 0xFF000000,
+                          Positioned(
+                            top: 10,
+                            left: 10,
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.arrow_back,
+                                color: Colors.white,
                               ),
-                              unselectedLabelColor: Colors.grey,
-                              indicatorColor: Color(
-                                widget.competizione.colori.isNotEmpty
-                                    ? int.parse(
-                                        widget.competizione.colori[0]
-                                            .replaceFirst('#', 'FF'),
-                                        radix: 16,
-                                      )
-                                    : 0xFF000000,
-                              ),
-                              tabs: [
-                                Tab(text: 'Partite'),
-                                Tab(text: 'Classifica'),
-                                Tab(text: 'Statistiche'),
-                                Tab(text: 'Squadre'),
-                              ],
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => CampionatoHomePage(
+                                      title: "${widget.campionato}° Campionato",
+                                      campionato: widget.campionato,
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ),
-                          Expanded(
-                            child: TabBarView(
+                          Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                selectedGiornata != null
-                                    ? buildPartiteList(selectedGiornata!)
-                                    : Center(
-                                        child: Text(
-                                          'Nessuna giornata disponibile',
-                                        ),
-                                      ),
-                                selectedGiornata != null
-                                    ? buildClassifica(
-                                        context,
-                                        selectedGiornata!,
-                                        mostraClassifica,
-                                      )
-                                    : Center(
-                                        child: Text(
-                                          'Nessuna classifica disponibile',
-                                        ),
-                                      ),
-                                selectedGiornata != null
-                                    ? buildStatistiche()
-                                    : Center(
-                                        child: Text(
-                                          'Nessuna statistica disponibile',
-                                        ),
-                                      ),
-                                buildSquadre(),
+                                const SizedBox(height: 16),
+                                Image.asset(
+                                  'assets/logos/logo_${widget.competizione.cod}_comp.png',
+                                  fit: BoxFit.contain,
+                                  height: 90,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  widget.title,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
                               ],
                             ),
                           ),
                         ],
                       ),
                     ),
-                    /*                   else
-                    const Expanded(
-                      child: Center(child: CircularProgressIndicator()),
-                    ), */
-                  ],
-                )
-              : SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      buildGiornateBox(),
-                      if (selectedGiornata != null)
-                        Padding(
-                          padding: EdgeInsets.all(16),
-                          child: mostraClassifica
-                              ? Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                  ),
+                ),
+              ),
+              body: !isWide
+                  ? Column(
+                      children: [
+                        buildGiornateBox(),
+                        Expanded(
+                          child: Column(
+                            children: [
+                              Container(
+                                constraints: BoxConstraints(
+                                  maxHeight: 50,
+                                  maxWidth: MediaQuery.of(context).size.width,
+                                ),
+                                child: TabBar(
+                                  labelColor: Color(
+                                    widget.competizione.colori.isNotEmpty
+                                        ? int.parse(
+                                            widget.competizione.colori[0]
+                                                .replaceFirst('#', 'FF'),
+                                            radix: 16,
+                                          )
+                                        : 0xFF000000,
+                                  ),
+                                  unselectedLabelColor: Colors.grey,
+                                  indicatorColor: Color(
+                                    widget.competizione.colori.isNotEmpty
+                                        ? int.parse(
+                                            widget.competizione.colori[0]
+                                                .replaceFirst('#', 'FF'),
+                                            radix: 16,
+                                          )
+                                        : 0xFF000000,
+                                  ),
+                                  tabs: [
+                                    Tab(text: 'Partite'),
+                                    if (mostraClassifica)
+                                      Tab(text: 'Classifica'),
+                                    Tab(text: 'Statistiche'),
+                                    Tab(text: 'Squadre'),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                child: TabBarView(
                                   children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Partite:',
-                                            style: TextStyle(
-                                              fontSize: 22,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                            textAlign: TextAlign.left,
-                                          ),
-                                          Padding(
-                                            padding: EdgeInsets.only(top: 16),
-                                            child: buildPartiteList(
-                                              selectedGiornata!,
-                                              shrinkWrap: true,
+                                    selectedGiornata != null
+                                        ? buildPartiteList(selectedGiornata!)
+                                        : Center(
+                                            child: Text(
+                                              'Nessuna giornata disponibile',
                                             ),
                                           ),
-                                        ],
-                                      ),
-                                    ),
-                                    SizedBox(width: 32),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Classifica:',
-                                            style: TextStyle(
-                                              fontSize: 22,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                            textAlign: TextAlign.left,
-                                          ),
-                                          Padding(
-                                            padding: EdgeInsets.only(top: 16),
-                                            child: buildClassifica(
+                                    if (mostraClassifica)
+                                      selectedGiornata != null
+                                          ? buildClassifica(
                                               context,
                                               selectedGiornata!,
                                               mostraClassifica,
-                                              shrinkWrap: true,
+                                            )
+                                          : Center(
+                                              child: Text(
+                                                'Nessuna classifica disponibile',
+                                              ),
+                                            ),
+                                    selectedGiornata != null
+                                        ? buildStatistiche()
+                                        : Center(
+                                            child: Text(
+                                              'Nessuna statistica disponibile',
                                             ),
                                           ),
-                                        ],
-                                      ),
-                                    ),
+                                    buildSquadre(),
                                   ],
-                                )
-                              : Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Partite:',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        /*                   else
+                    const Expanded(
+                      child: Center(child: CircularProgressIndicator()),
+                    ), */
+                      ],
+                    )
+                  : SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          buildGiornateBox(),
+                          if (selectedGiornata != null)
+                            Padding(
+                              padding: EdgeInsets.all(16),
+                              child: mostraClassifica
+                                  ? Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Partite:',
+                                                style: TextStyle(
+                                                  fontSize: 22,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                                textAlign: TextAlign.left,
+                                              ),
+                                              Padding(
+                                                padding: EdgeInsets.only(
+                                                  top: 16,
+                                                ),
+                                                child: buildPartiteList(
+                                                  selectedGiornata!,
+                                                  shrinkWrap: true,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        SizedBox(width: 32),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Classifica:',
+                                                style: TextStyle(
+                                                  fontSize: 22,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                                textAlign: TextAlign.left,
+                                              ),
+                                              Padding(
+                                                padding: EdgeInsets.only(
+                                                  top: 16,
+                                                ),
+                                                child: buildClassifica(
+                                                  context,
+                                                  selectedGiornata!,
+                                                  mostraClassifica,
+                                                  shrinkWrap: true,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  : Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Partite:',
+                                          style: TextStyle(
+                                            fontSize: 22,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          textAlign: TextAlign.left,
+                                        ),
+                                        Padding(
+                                          padding: EdgeInsets.only(top: 16),
+                                          child: buildPartiteList(
+                                            selectedGiornata!,
+                                            shrinkWrap: true,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                            ),
+                          if (selectedGiornata != null)
+                            Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Padding(
+                                    padding: EdgeInsets.only(bottom: 16),
+                                    child: Text(
+                                      'Statistiche:',
                                       style: TextStyle(
                                         fontSize: 22,
                                         fontWeight: FontWeight.bold,
                                       ),
                                       textAlign: TextAlign.left,
                                     ),
-                                    Padding(
-                                      padding: EdgeInsets.only(top: 16),
-                                      child: buildPartiteList(
-                                        selectedGiornata!,
-                                        shrinkWrap: true,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                        ),
-                      if (selectedGiornata != null)
-                        Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Padding(
-                                padding: EdgeInsets.only(bottom: 16),
-                                child: Text(
-                                  'Statistiche:',
-                                  style: TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
                                   ),
-                                  textAlign: TextAlign.left,
-                                ),
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  Expanded(
-                                    flex: 1,
-                                    child: Card(
-                                      child: SizedBox(
-                                        height: 300,
-                                        child: Padding(
-                                          padding: EdgeInsets.all(12),
-                                          child: Column(
-                                            children: [
-                                              Row(
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      Expanded(
+                                        flex: 1,
+                                        child: Card(
+                                          child: SizedBox(
+                                            height: 300,
+                                            child: Padding(
+                                              padding: EdgeInsets.all(12),
+                                              child: Column(
                                                 children: [
-                                                  Image.asset(
-                                                    'assets/icon/gol.png',
-                                                    width: 20,
-                                                    height: 20,
+                                                  Row(
+                                                    children: [
+                                                      Image.asset(
+                                                        'assets/icon/gol.png',
+                                                        width: 20,
+                                                        height: 20,
+                                                      ),
+                                                      SizedBox(width: 8),
+                                                      Text(
+                                                        'Classifica Marcatori',
+                                                        style: TextStyle(
+                                                          fontSize: 20,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                        textAlign:
+                                                            TextAlign.start,
+                                                      ),
+                                                    ],
                                                   ),
-                                                  SizedBox(width: 8),
-                                                  Text(
-                                                    'Classifica Marcatori',
-                                                    style: TextStyle(
-                                                      fontSize: 20,
-                                                      fontWeight:
-                                                          FontWeight.bold,
+                                                  SizedBox(height: 8),
+                                                  Expanded(
+                                                    child: buildMarcatoriBox(
+                                                      selectedGiornata!,
                                                     ),
-                                                    textAlign: TextAlign.start,
                                                   ),
                                                 ],
                                               ),
-                                              SizedBox(height: 8),
-                                              Expanded(
-                                                child: buildMarcatoriBox(
-                                                  selectedGiornata!,
-                                                ),
-                                              ),
-                                            ],
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  ),
-                                  SizedBox(width: 8),
-                                  Expanded(
-                                    child: Card(
-                                      child: SizedBox(
-                                        height: 300,
-                                        child: Padding(
-                                          padding: EdgeInsets.all(12),
-                                          child: Column(
-                                            children: [
-                                              Row(
+                                      SizedBox(width: 8),
+                                      Expanded(
+                                        child: Card(
+                                          child: SizedBox(
+                                            height: 300,
+                                            child: Padding(
+                                              padding: EdgeInsets.all(12),
+                                              child: Column(
                                                 children: [
-                                                  Image.asset(
-                                                    'assets/icon/aut.png',
-                                                    width: 20,
-                                                    height: 20,
+                                                  Row(
+                                                    children: [
+                                                      Image.asset(
+                                                        'assets/icon/aut.png',
+                                                        width: 20,
+                                                        height: 20,
+                                                      ),
+                                                      SizedBox(width: 8),
+                                                      Text(
+                                                        'Autogol',
+                                                        style: TextStyle(
+                                                          fontSize: 20,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                        textAlign:
+                                                            TextAlign.start,
+                                                      ),
+                                                    ],
                                                   ),
-                                                  SizedBox(width: 8),
-                                                  Text(
-                                                    'Autogol',
-                                                    style: TextStyle(
-                                                      fontSize: 20,
-                                                      fontWeight:
-                                                          FontWeight.bold,
+                                                  SizedBox(height: 8),
+                                                  Expanded(
+                                                    child: buildAutogolBox(
+                                                      selectedGiornata!,
                                                     ),
-                                                    textAlign: TextAlign.start,
                                                   ),
                                                 ],
                                               ),
-                                              SizedBox(height: 8),
-                                              Expanded(
-                                                child: buildAutogolBox(
-                                                  selectedGiornata!,
-                                                ),
-                                              ),
-                                            ],
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  ),
-                                  SizedBox(width: 8),
-                                  Expanded(
-                                    child: Card(
-                                      child: SizedBox(
-                                        height: 300,
-                                        child: Padding(
-                                          padding: EdgeInsets.all(12),
-                                          child: Column(
-                                            children: [
-                                              Row(
+                                      SizedBox(width: 8),
+                                      Expanded(
+                                        child: Card(
+                                          child: SizedBox(
+                                            height: 300,
+                                            child: Padding(
+                                              padding: EdgeInsets.all(12),
+                                              child: Column(
                                                 children: [
-                                                  Image.asset(
-                                                    'assets/icon/rig_sb.png',
-                                                    width: 20,
-                                                    height: 20,
+                                                  Row(
+                                                    children: [
+                                                      Image.asset(
+                                                        'assets/icon/rig_sb.png',
+                                                        width: 20,
+                                                        height: 20,
+                                                      ),
+                                                      SizedBox(width: 8),
+                                                      Text(
+                                                        'Rigori Sbagliati',
+                                                        style: TextStyle(
+                                                          fontSize: 20,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                        textAlign:
+                                                            TextAlign.start,
+                                                      ),
+                                                    ],
                                                   ),
-                                                  SizedBox(width: 8),
-                                                  Text(
-                                                    'Rigori Sbagliati',
-                                                    style: TextStyle(
-                                                      fontSize: 20,
-                                                      fontWeight:
-                                                          FontWeight.bold,
+                                                  SizedBox(height: 8),
+                                                  Expanded(
+                                                    child: buildRigSbBox(
+                                                      selectedGiornata!,
                                                     ),
-                                                    textAlign: TextAlign.start,
                                                   ),
                                                 ],
                                               ),
-                                              SizedBox(height: 8),
-                                              Expanded(
-                                                child: buildRigSbBox(
-                                                  selectedGiornata!,
-                                                ),
-                                              ),
-                                            ],
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      Expanded(
+                                        flex: 1,
+                                        child: Card(
+                                          child: SizedBox(
+                                            height: 300,
+                                            child: Padding(
+                                              padding: EdgeInsets.all(12),
+                                              child: Column(
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      Image.asset(
+                                                        'assets/icon/gol_ann.png',
+                                                        width: 20,
+                                                        height: 20,
+                                                      ),
+                                                      SizedBox(width: 8),
+                                                      Text(
+                                                        'Gol Annullati',
+                                                        style: TextStyle(
+                                                          fontSize: 20,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                        textAlign:
+                                                            TextAlign.start,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  SizedBox(height: 8),
+                                                  Expanded(
+                                                    child: buildGolAnnullatiBox(
+                                                      selectedGiornata!,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 8),
+                                      Expanded(
+                                        child: Card(
+                                          child: SizedBox(
+                                            height: 300,
+                                            child: Padding(
+                                              padding: EdgeInsets.all(12),
+                                              child: Column(
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      Image.asset(
+                                                        'assets/icon/clean.png',
+                                                        width: 20,
+                                                        height: 20,
+                                                      ),
+                                                      SizedBox(width: 8),
+                                                      Text(
+                                                        'Reti Inviolate',
+                                                        style: TextStyle(
+                                                          fontSize: 20,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                        textAlign:
+                                                            TextAlign.start,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  SizedBox(height: 8),
+                                                  Expanded(
+                                                    child: buildCleanSheetBox(
+                                                      selectedGiornata!,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 8),
+                                      Expanded(
+                                        child: Card(
+                                          child: SizedBox(
+                                            height: 300,
+                                            child: Padding(
+                                              padding: EdgeInsets.all(12),
+                                              child: Column(
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      Image.asset(
+                                                        'assets/icon/red_card.png',
+                                                        width: 20,
+                                                        height: 20,
+                                                      ),
+                                                      SizedBox(width: 8),
+                                                      Text(
+                                                        'Espulsioni',
+                                                        style: TextStyle(
+                                                          fontSize: 20,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                        textAlign:
+                                                            TextAlign.start,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  SizedBox(height: 8),
+                                                  Expanded(
+                                                    child: buildEspulsioniBox(
+                                                      selectedGiornata!,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
+                            ),
+                          if (selectedGiornata != null)
+                            Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Expanded(
-                                    flex: 1,
-                                    child: Card(
-                                      child: SizedBox(
-                                        height: 300,
-                                        child: Padding(
-                                          padding: EdgeInsets.all(12),
-                                          child: Column(
-                                            children: [
-                                              Row(
-                                                children: [
-                                                  Image.asset(
-                                                    'assets/icon/gol_ann.png',
-                                                    width: 20,
-                                                    height: 20,
-                                                  ),
-                                                  SizedBox(width: 8),
-                                                  Text(
-                                                    'Gol Annullati',
-                                                    style: TextStyle(
-                                                      fontSize: 20,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                    ),
-                                                    textAlign: TextAlign.start,
-                                                  ),
-                                                ],
-                                              ),
-                                              SizedBox(height: 8),
-                                              Expanded(
-                                                child: buildGolAnnullatiBox(
-                                                  selectedGiornata!,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
+                                  Padding(
+                                    padding: EdgeInsets.only(bottom: 16),
+                                    child: Text(
+                                      'Squadre:',
+                                      style: TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
                                       ),
+                                      textAlign: TextAlign.left,
                                     ),
                                   ),
-                                  SizedBox(width: 8),
-                                  Expanded(
-                                    child: Card(
-                                      child: SizedBox(
-                                        height: 300,
-                                        child: Padding(
-                                          padding: EdgeInsets.all(12),
-                                          child: Column(
-                                            children: [
-                                              Row(
-                                                children: [
-                                                  Image.asset(
-                                                    'assets/icon/clean.png',
-                                                    width: 20,
-                                                    height: 20,
-                                                  ),
-                                                  SizedBox(width: 8),
-                                                  Text(
-                                                    'Reti Inviolate',
-                                                    style: TextStyle(
-                                                      fontSize: 20,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                    ),
-                                                    textAlign: TextAlign.start,
-                                                  ),
-                                                ],
-                                              ),
-                                              SizedBox(height: 8),
-                                              Expanded(
-                                                child: buildCleanSheetBox(
-                                                  selectedGiornata!,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(width: 8),
-                                  Expanded(
-                                    child: Card(
-                                      child: SizedBox(
-                                        height: 300,
-                                        child: Padding(
-                                          padding: EdgeInsets.all(12),
-                                          child: Column(
-                                            children: [
-                                              Row(
-                                                children: [
-                                                  Image.asset(
-                                                    'assets/icon/red_card.png',
-                                                    width: 20,
-                                                    height: 20,
-                                                  ),
-                                                  SizedBox(width: 8),
-                                                  Text(
-                                                    'Espulsioni',
-                                                    style: TextStyle(
-                                                      fontSize: 20,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                    ),
-                                                    textAlign: TextAlign.start,
-                                                  ),
-                                                ],
-                                              ),
-                                              SizedBox(height: 8),
-                                              Expanded(
-                                                child: buildEspulsioniBox(
-                                                  selectedGiornata!,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
+                                  SizedBox(height: 400, child: buildSquadre()),
                                 ],
                               ),
-                            ],
-                          ),
-                        ),
-                      if (selectedGiornata != null)
-                        Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Padding(
-                                padding: EdgeInsets.only(bottom: 16),
-                                child: Text(
-                                  'Squadre:',
-                                  style: TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  textAlign: TextAlign.left,
-                                ),
-                              ),
-                              SizedBox(height: 400, child: buildSquadre()),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-        ),
+                            ),
+                        ],
+                      ),
+                    ),
+            ),
+          ),
+          // Overlay dei fuochi d'artificio se la competizione è conclusa e il flag è attivo
+          if (widget.competizione.conclusa && _testFireworks)
+            Positioned.fill(
+              child: FutureBuilder<List<Color>>(
+                future: _getChampionColors(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return SizedBox.shrink();
+                  }
+                  if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                    return IgnorePointer(
+                      child: Fireworks(colors: snapshot.data!),
+                    );
+                  }
+                  return SizedBox.shrink();
+                },
+              ),
+            ),
+        ],
       ),
     );
   }

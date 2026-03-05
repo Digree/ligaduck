@@ -897,7 +897,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                           competizione?.id == 7
                                       ? 36.0
                                       : competizione?.id == 8
-                                      ? 40.0
+                                      ? 36.0
                                       : 40.0,
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
@@ -1168,6 +1168,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                       )
                                     : 0xFF000000,
                               ),
+                              fontFamily: competizione?.id == 5
+                                  ? 'champions'
+                                  : competizione?.id == 6 ||
+                                        competizione?.id == 7
+                                  ? 'europa'
+                                  : competizione?.id == 8
+                                  ? 'supercup'
+                                  : null,
                             ),
                           ),
                         ),
@@ -1202,6 +1210,24 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                             radix: 16,
                           )
                         : 0xFF000000,
+                  ),
+                  labelStyle: TextStyle(
+                    fontFamily: competizione?.id == 5
+                        ? 'champions'
+                        : competizione?.id == 6 || competizione?.id == 7
+                        ? 'europa'
+                        : competizione?.id == 8
+                        ? 'supercup'
+                        : null,
+                  ),
+                  unselectedLabelStyle: TextStyle(
+                    fontFamily: competizione?.id == 5
+                        ? 'champions'
+                        : competizione?.id == 6 || competizione?.id == 7
+                        ? 'europa'
+                        : competizione?.id == 8
+                        ? 'supercup'
+                        : null,
                   ),
                   tabs: [
                     Tab(text: 'Tabellino'),
