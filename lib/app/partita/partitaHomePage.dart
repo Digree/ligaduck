@@ -410,6 +410,69 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     if (partita == null || competizione == null) {
       return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
+
+    // Calcola il risultato escludendo i rigori al minuto 121
+    int risultatoHomeSenzaRigori = partita!.tabellino
+        .where(
+          (e) =>
+              e.minuto != 121 &&
+              (e.codAzione == 'gol' ||
+                  e.codAzione == 'rig' ||
+                  e.codAzione == 'pun') &&
+              e.idTeam == partita!.idTeamHome,
+        )
+        .length;
+    risultatoHomeSenzaRigori += partita!.tabellino
+        .where(
+          (e) =>
+              e.minuto != 121 &&
+              e.codAzione == 'aut' &&
+              e.idTeam == partita!.idTeamAway,
+        )
+        .length;
+
+    int risultatoAwaySenzaRigori = partita!.tabellino
+        .where(
+          (e) =>
+              e.minuto != 121 &&
+              (e.codAzione == 'gol' ||
+                  e.codAzione == 'rig' ||
+                  e.codAzione == 'pun') &&
+              e.idTeam == partita!.idTeamAway,
+        )
+        .length;
+    risultatoAwaySenzaRigori += partita!.tabellino
+        .where(
+          (e) =>
+              e.minuto != 121 &&
+              e.codAzione == 'aut' &&
+              e.idTeam == partita!.idTeamHome,
+        )
+        .length;
+
+    // Calcola i rigori segnati al minuto 121
+    int rigoriHomeSeganti = partita!.tabellino
+        .where(
+          (e) =>
+              e.minuto == 121 &&
+              e.codAzione == 'rig' &&
+              e.esitoRigore == true &&
+              e.idTeam == partita!.idTeamHome,
+        )
+        .length;
+
+    int rigoriAwaySeganti = partita!.tabellino
+        .where(
+          (e) =>
+              e.minuto == 121 &&
+              e.codAzione == 'rig' &&
+              e.esitoRigore == true &&
+              e.idTeam == partita!.idTeamAway,
+        )
+        .length;
+
+    bool hasRigori121 = partita!.tabellino.any((e) => e.minuto == 121);
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(200),
@@ -889,28 +952,71 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                             SizedBox(width: 40),
                             SizedBox(
                               width: 80,
-                              child: Text(
-                                '${partita!.risultatoHome} - ${partita!.risultatoAway}',
-                                style: TextStyle(
-                                  fontSize:
-                                      competizione?.id == 6 ||
-                                          competizione?.id == 7
-                                      ? 36.0
-                                      : competizione?.id == 8
-                                      ? 36.0
-                                      : 40.0,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: competizione?.id == 5
-                                      ? 'champions'
-                                      : competizione?.id == 6 ||
-                                            competizione?.id == 7
-                                      ? 'europa'
-                                      : competizione?.id == 8
-                                      ? 'supercup'
-                                      : null,
-                                ),
-                                textAlign: TextAlign.center,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    '$risultatoHomeSenzaRigori - $risultatoAwaySenzaRigori',
+                                    style: TextStyle(
+                                      fontSize:
+                                          competizione?.id == 6 ||
+                                              competizione?.id == 7
+                                          ? 36.0
+                                          : competizione?.id == 8
+                                          ? 36.0
+                                          : 40.0,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: competizione?.id == 5
+                                          ? 'champions'
+                                          : competizione?.id == 6 ||
+                                                competizione?.id == 7
+                                          ? 'europa'
+                                          : competizione?.id == 8
+                                          ? 'supercup'
+                                          : null,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  if (hasRigori121)
+                                    Text(
+                                      'Rig: $rigoriHomeSeganti - $rigoriAwaySeganti',
+                                      style: TextStyle(
+                                        fontSize: 12.0,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: competizione?.id == 5
+                                            ? 'champions'
+                                            : competizione?.id == 6 ||
+                                                  competizione?.id == 7
+                                            ? 'europa'
+                                            : competizione?.id == 8
+                                            ? 'supercup'
+                                            : null,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    )
+                                  else if (partita!.tabellino.any(
+                                    (evento) => evento.minuto > 90,
+                                  ))
+                                    Text(
+                                      'd.t.s.',
+                                      style: TextStyle(
+                                        fontSize: 12.0,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: competizione?.id == 5
+                                            ? 'champions'
+                                            : competizione?.id == 6 ||
+                                                  competizione?.id == 7
+                                            ? 'europa'
+                                            : competizione?.id == 8
+                                            ? 'supercup'
+                                            : null,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                ],
                               ),
                             ),
                             SizedBox(width: 40),
@@ -1289,6 +1395,40 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
 
   Widget buildTabellino() {
     partita!.tabellino.sort((a, b) => a.minuto.compareTo(b.minuto));
+
+    // Costruisco la lista di widget per il tabellino
+    List<Widget> tabellinoWidgets = [];
+    bool hasMostratoDivisoreTS = false;
+    bool hasMostratoDivisoreRigori = false;
+
+    // Controllo se ci sono eventi tra 91 e 120 minuti
+    bool hasEventiTS = partita!.tabellino.any(
+      (e) => e.minuto > 90 && e.minuto < 121,
+    );
+
+    for (var evento in partita!.tabellino) {
+      // Se l'evento è oltre i 90' e non ho ancora mostrato il divisore TS
+      if (evento.minuto > 90 && !hasMostratoDivisoreTS) {
+        tabellinoWidgets.add(buildDivisoreTS());
+        hasMostratoDivisoreTS = true;
+      }
+      // Se l'evento è al minuto 121 (rigori) e non ho ancora mostrato il divisore Rigori
+      if (evento.minuto == 121 && !hasMostratoDivisoreRigori) {
+        // Se non ci sono eventi tra 91 e 120, aggiungi spazio vuoto con linea al centro
+        if (!hasEventiTS && hasMostratoDivisoreTS) {
+          tabellinoWidgets.add(
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 10, horizontal: 180),
+              child: Divider(color: Colors.black, thickness: 1, height: 1),
+            ),
+          );
+        }
+        tabellinoWidgets.add(buildDivisoreRigori());
+        hasMostratoDivisoreRigori = true;
+      }
+      tabellinoWidgets.add(buildTabellinoRow(evento));
+    }
+
     return SizedBox(
       height: MediaQuery.of(context).size.height,
       child: Stack(
@@ -1316,8 +1456,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                       ),
                     ),
                   ),
-                for (var evento in partita!.tabellino)
-                  buildTabellinoRow(evento),
+                ...tabellinoWidgets,
               ],
             ),
           ),
@@ -1381,6 +1520,68 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     );
   }
 
+  Widget buildDivisoreTS() {
+    return Container(
+      width: double.infinity,
+      height: 40,
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        border: Border(
+          top: BorderSide(color: Colors.grey[400]!, width: 2),
+          bottom: BorderSide(color: Colors.grey[400]!, width: 2),
+        ),
+      ),
+      child: Center(
+        child: Text(
+          'TS',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey[700],
+            fontFamily: competizione?.id == 5
+                ? 'champions'
+                : competizione?.id == 6 || competizione?.id == 7
+                ? 'europa'
+                : competizione?.id == 8
+                ? 'supercup'
+                : null,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget buildDivisoreRigori() {
+    return Container(
+      width: double.infinity,
+      height: 40,
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        border: Border(
+          top: BorderSide(color: Colors.grey[400]!, width: 2),
+          bottom: BorderSide(color: Colors.grey[400]!, width: 2),
+        ),
+      ),
+      child: Center(
+        child: Text(
+          'Rigori',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey[700],
+            fontFamily: competizione?.id == 5
+                ? 'champions'
+                : competizione?.id == 6 || competizione?.id == 7
+                ? 'europa'
+                : competizione?.id == 8
+                ? 'supercup'
+                : null,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget buildTabellinoRow(evento) {
     double screenWidth = MediaQuery.of(context).size.width;
 
@@ -1415,7 +1616,9 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     children: [
                       // Minuti
                       Text(
-                        '${evento.minuto}\'${evento.recupero > 0 ? '+${evento.recupero}\'' : ''}',
+                        evento.minuto == 121
+                            ? 'CR'
+                            : '${evento.minuto}\'${evento.recupero > 0 ? '+${evento.recupero}\'' : ''}',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -1468,11 +1671,23 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                           height: 20,
                         )
                       else if (evento.codAzione == 'rig')
-                        Image.asset(
-                          'assets/icon/rig.png',
-                          width: 20,
-                          height: 20,
-                        )
+                        evento.minuto == 121
+                            ? (evento.esitoRigore == true
+                                  ? Icon(
+                                      Icons.check_circle,
+                                      color: Colors.green,
+                                      size: 20,
+                                    )
+                                  : Icon(
+                                      Icons.cancel,
+                                      color: Colors.red,
+                                      size: 20,
+                                    ))
+                            : Image.asset(
+                                'assets/icon/rig.png',
+                                width: 20,
+                                height: 20,
+                              )
                       else if (evento.codAzione == 'pun')
                         Image.asset(
                           'assets/icon/gol.png',
@@ -1564,46 +1779,65 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                           ],
                         )
                       else if (evento.codAzione == 'rig')
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              setNomeTabellino(
-                                evento.idGiocatore,
-                                partita!.formazioneHome,
-                              ),
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.black,
-                                fontFamily: competizione?.id == 5
-                                    ? 'champions'
-                                    : competizione?.id == 6 ||
-                                          competizione?.id == 7
-                                    ? 'europa'
-                                    : competizione?.id == 8
-                                    ? 'supercup'
-                                    : null,
-                              ),
-                            ),
-                            Text(
-                              'Su Rigore',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                                fontStyle: FontStyle.italic,
-                                fontFamily: competizione?.id == 5
-                                    ? 'champions'
-                                    : competizione?.id == 6 ||
-                                          competizione?.id == 7
-                                    ? 'europa'
-                                    : competizione?.id == 8
-                                    ? 'supercup'
-                                    : null,
-                              ),
-                            ),
-                          ],
-                        )
+                        evento.minuto == 121
+                            ? Text(
+                                setNomeTabellino(
+                                  evento.idGiocatore,
+                                  partita!.formazioneHome,
+                                ),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.black,
+                                  fontFamily: competizione?.id == 5
+                                      ? 'champions'
+                                      : competizione?.id == 6 ||
+                                            competizione?.id == 7
+                                      ? 'europa'
+                                      : competizione?.id == 8
+                                      ? 'supercup'
+                                      : null,
+                                ),
+                              )
+                            : Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    setNomeTabellino(
+                                      evento.idGiocatore,
+                                      partita!.formazioneHome,
+                                    ),
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.black,
+                                      fontFamily: competizione?.id == 5
+                                          ? 'champions'
+                                          : competizione?.id == 6 ||
+                                                competizione?.id == 7
+                                          ? 'europa'
+                                          : competizione?.id == 8
+                                          ? 'supercup'
+                                          : null,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Su Rigore',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                      fontStyle: FontStyle.italic,
+                                      fontFamily: competizione?.id == 5
+                                          ? 'champions'
+                                          : competizione?.id == 6 ||
+                                                competizione?.id == 7
+                                          ? 'europa'
+                                          : competizione?.id == 8
+                                          ? 'supercup'
+                                          : null,
+                                    ),
+                                  ),
+                                ],
+                              )
                       else
                         Text(
                           setNomeTabellino(
@@ -1718,46 +1952,65 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                           ],
                         )
                       else if (evento.codAzione == 'rig')
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              setNomeTabellino(
-                                evento.idGiocatore,
-                                partita!.formazioneAway,
-                              ),
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.black,
-                                fontFamily: competizione?.id == 5
-                                    ? 'champions'
-                                    : competizione?.id == 6 ||
-                                          competizione?.id == 7
-                                    ? 'europa'
-                                    : competizione?.id == 8
-                                    ? 'supercup'
-                                    : null,
-                              ),
-                            ),
-                            Text(
-                              'Su Rigore',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                                fontStyle: FontStyle.italic,
-                                fontFamily: competizione?.id == 5
-                                    ? 'champions'
-                                    : competizione?.id == 6 ||
-                                          competizione?.id == 7
-                                    ? 'europa'
-                                    : competizione?.id == 8
-                                    ? 'supercup'
-                                    : null,
-                              ),
-                            ),
-                          ],
-                        )
+                        evento.minuto == 121
+                            ? Text(
+                                setNomeTabellino(
+                                  evento.idGiocatore,
+                                  partita!.formazioneAway,
+                                ),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.black,
+                                  fontFamily: competizione?.id == 5
+                                      ? 'champions'
+                                      : competizione?.id == 6 ||
+                                            competizione?.id == 7
+                                      ? 'europa'
+                                      : competizione?.id == 8
+                                      ? 'supercup'
+                                      : null,
+                                ),
+                              )
+                            : Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    setNomeTabellino(
+                                      evento.idGiocatore,
+                                      partita!.formazioneAway,
+                                    ),
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.black,
+                                      fontFamily: competizione?.id == 5
+                                          ? 'champions'
+                                          : competizione?.id == 6 ||
+                                                competizione?.id == 7
+                                          ? 'europa'
+                                          : competizione?.id == 8
+                                          ? 'supercup'
+                                          : null,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Su Rigore',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                      fontStyle: FontStyle.italic,
+                                      fontFamily: competizione?.id == 5
+                                          ? 'champions'
+                                          : competizione?.id == 6 ||
+                                                competizione?.id == 7
+                                          ? 'europa'
+                                          : competizione?.id == 8
+                                          ? 'supercup'
+                                          : null,
+                                    ),
+                                  ),
+                                ],
+                              )
                       else
                         Text(
                           setNomeTabellino(
@@ -1770,7 +2023,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                             fontSize: 16,
                             color:
                                 evento.codAzione == 'aut' ||
-                                    evento.codAzione == 'rig_sb' ||
+                                    (evento.codAzione == 'rig' &&
+                                        evento.esitoRigore == false) ||
                                     evento.codAzione == 'gol_ann'
                                 ? Colors.red
                                 : Colors.black,
@@ -1797,12 +2051,6 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                           width: 20,
                           height: 20,
                         )
-                      else if (evento.codAzione == 'rig_sb')
-                        Image.asset(
-                          'assets/icon/rig_sb.png',
-                          width: 20,
-                          height: 20,
-                        )
                       else if (evento.codAzione == 'esp')
                         Image.asset(
                           'assets/icon/red_card.png',
@@ -1822,11 +2070,23 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                           height: 20,
                         )
                       else if (evento.codAzione == 'rig')
-                        Image.asset(
-                          'assets/icon/rig.png',
-                          width: 20,
-                          height: 20,
-                        )
+                        evento.minuto == 121
+                            ? (evento.esitoRigore == true
+                                  ? Icon(
+                                      Icons.check_circle,
+                                      color: Colors.green,
+                                      size: 20,
+                                    )
+                                  : Icon(
+                                      Icons.cancel,
+                                      color: Colors.red,
+                                      size: 20,
+                                    ))
+                            : Image.asset(
+                                'assets/icon/rig.png',
+                                width: 20,
+                                height: 20,
+                              )
                       else if (evento.codAzione == 'pun')
                         Image.asset(
                           'assets/icon/gol.png',
@@ -1836,7 +2096,9 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                       SizedBox(width: 12),
                       // Minuti
                       Text(
-                        '${evento.minuto}\'${evento.recupero > 0 ? '+${evento.recupero}\'' : ''}',
+                        evento.minuto == 121
+                            ? 'CR'
+                            : '${evento.minuto}\'${evento.recupero > 0 ? '+${evento.recupero}\'' : ''}',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -2608,7 +2870,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
               (evento.codAzione == 'gol' ||
                   evento.codAzione == 'rig' ||
                   evento.codAzione == 'pun') &&
-              evento.idTeam == partita!.idTeamHome,
+              evento.idTeam == partita!.idTeamHome &&
+              evento.minuto != 121,
         )
         .map((evento) => evento.idGiocatore)
         .toList();
@@ -2619,7 +2882,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
               (evento.codAzione == 'gol' ||
                   evento.codAzione == 'rig' ||
                   evento.codAzione == 'pun') &&
-              evento.idTeam == partita!.idTeamAway,
+              evento.idTeam == partita!.idTeamAway &&
+              evento.minuto != 121,
         )
         .map((evento) => evento.idGiocatore)
         .toList();
@@ -2801,7 +3065,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
               (evento.codAzione == 'gol' ||
                   evento.codAzione == 'rig' ||
                   evento.codAzione == 'pun') &&
-              evento.idTeam == partita!.idTeamHome,
+              evento.idTeam == partita!.idTeamHome &&
+              evento.minuto != 121,
         )
         .map((evento) => evento.idGiocatore)
         .toList();
@@ -2812,7 +3077,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
               (evento.codAzione == 'gol' ||
                   evento.codAzione == 'rig' ||
                   evento.codAzione == 'pun') &&
-              evento.idTeam == partita!.idTeamAway,
+              evento.idTeam == partita!.idTeamAway &&
+              evento.minuto != 121,
         )
         .map((evento) => evento.idGiocatore)
         .toList();

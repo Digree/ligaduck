@@ -28,7 +28,7 @@ class _FireworksState extends State<Fireworks>
 
               // Crea nuovi fuochi d'artificio periodicamente
               final currentTime = (_controller.value * 1000).toInt();
-              if (currentTime - _lastFireworkTime > 100) {
+              if (currentTime - _lastFireworkTime > 50) {
                 _createFirework();
                 _lastFireworkTime = currentTime;
               }

@@ -220,6 +220,7 @@ class Evento {
   final int recupero;
   final String codAzione;
   final int idTeam;
+  bool? esitoRigore;
 
   Evento({
     required this.id,
@@ -229,6 +230,7 @@ class Evento {
     required this.recupero,
     required this.codAzione,
     required this.idTeam,
+    this.esitoRigore,
   });
 
   factory Evento.fromJson(Map<String, dynamic> json) {
@@ -240,6 +242,7 @@ class Evento {
       recupero: json['recupero'] ?? 0,
       codAzione: json['codAzione'],
       idTeam: json['idTeam'],
+      esitoRigore: json['esitoRigore'],
     );
   }
 
@@ -252,6 +255,7 @@ class Evento {
       'recupero': recupero,
       'codAzione': codAzione,
       'idTeam': idTeam,
+      'esitoRigore': esitoRigore,
     };
   }
 }

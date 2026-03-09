@@ -1373,11 +1373,14 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                           '${CommonService.decodePlayerName(autogol.nome)} - ${() {
                                             for (var g in giornate_) {
                                               if (g.id == autogol.idGiornata) {
-                                                return g.giornata;
+                                                final giornataText = CommonService.decodePlayerName(g.giornata);
+                                                // Verifica se la giornata è numerica
+                                                final isNumeric = int.tryParse(g.giornata) != null;
+                                                return isNumeric ? '$giornataText^ Giornata' : giornataText;
                                               }
                                             }
                                             return 'N/A';
-                                          }()}^ Giornata',
+                                          }()}',
                                           style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.w500,
@@ -2607,7 +2610,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                 return aNum.compareTo(bNum);
               }
               // Se non sono numeri, usa ordinamento alfabetico
-              return a.giornata.compareTo(b.giornata);
+              return a.id.compareTo(b.id);
             });
 
             if (selectedGiornata == null) {
@@ -2619,11 +2622,24 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                   if (nonConcluse.isNotEmpty) {
                     selectedGiornata = nonConcluse.first.id;
                   } else {
-                    selectedGiornata = giornate.first.id;
+                    // Verifica se tutte le giornate sono chiuse e non numeriche
+                    final tutteChiuse = giornate.every((g) => g.conclusa);
+                    final tutteNonNumeriche = giornate.every(
+                      (g) => int.tryParse(g.giornata) == null,
+                    );
+
+                    if (tutteChiuse && tutteNonNumeriche) {
+                      // Se tutte chiuse e non numeriche, seleziona l'ultima (creata più recentemente)
+                      selectedGiornata = giornate.last.id;
+                    } else {
+                      // Altrimenti seleziona la prima
+                      selectedGiornata = giornate.first.id;
+                    }
                   }
                 });
               });
             }
+
             return Padding(
               padding: EdgeInsets.only(
                 left: isWide ? 16 : 8,

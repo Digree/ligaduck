@@ -35,6 +35,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
   String giocatoreSelezionatoOut = '';
   String tipoGolSelezionato = 'no';
   String infortunioSelezionato = 'no';
+  String esitoRigoreSelezionato = 'segnato';
   bool isLoading = false;
 
   final _formKeyHome = GlobalKey<FormState>();
@@ -439,7 +440,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
       case 'sos':
         return buildWidgetSostituzione(team);
       case 'rig':
-        return buildWidgetSelectPlayer(team);
+        return buildWidgetRigore(team);
       default:
         return Container();
     }
@@ -1253,6 +1254,169 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
     );
   }
 
+  Widget buildWidgetRigore(int team) {
+    List<GiocatoreFormazione> formazione;
+    if (team == 0) {
+      formazione =
+          widget.partita.formazioneHome.panchina +
+          widget.partita.formazioneHome.titolari;
+    } else {
+      formazione =
+          widget.partita.formazioneAway.panchina +
+          widget.partita.formazioneAway.titolari;
+    }
+    return Form(
+      key: team == 0 ? _formKeyHome : _formKeyAway,
+      child: Column(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            padding: EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Esito Rigore',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: getColor(),
+                  ),
+                ),
+                SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: RadioListTile<String>(
+                        title: Text('Segnato', style: TextStyle(fontSize: 12)),
+                        value: 'segnato',
+                        groupValue: esitoRigoreSelezionato,
+                        activeColor: getColor(),
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                        onChanged: (String? value) {
+                          setState(() {
+                            esitoRigoreSelezionato = value ?? 'segnato';
+                          });
+                        },
+                      ),
+                    ),
+                    Expanded(
+                      child: RadioListTile<String>(
+                        title: Text(
+                          'Sbagliato',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        value: 'sbagliato',
+                        groupValue: esitoRigoreSelezionato,
+                        activeColor: getColor(),
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                        onChanged: (String? value) {
+                          setState(() {
+                            esitoRigoreSelezionato = value ?? 'segnato';
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 16),
+          SizedBox(
+            height: 100,
+            child: DropdownButtonFormField<String>(
+              isExpanded: true,
+              decoration: InputDecoration(
+                labelText: 'Seleziona Giocatore',
+                labelStyle: TextStyle(
+                  color: Color(
+                    widget.competizione!.colori.isNotEmpty
+                        ? int.parse(
+                            widget.competizione!.colori[0].replaceFirst(
+                              '#',
+                              'FF',
+                            ),
+                            radix: 16,
+                          )
+                        : 0xFF000000,
+                  ),
+                ),
+                prefixIcon: Icon(
+                  Icons.person,
+                  color: Color(
+                    widget.competizione!.colori.isNotEmpty
+                        ? int.parse(
+                            widget.competizione!.colori[0].replaceFirst(
+                              '#',
+                              'FF',
+                            ),
+                            radix: 16,
+                          )
+                        : 0xFF000000,
+                  ),
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: Color(
+                      widget.competizione!.colori.isNotEmpty
+                          ? int.parse(
+                              widget.competizione!.colori[0].replaceFirst(
+                                '#',
+                                'FF',
+                              ),
+                              radix: 16,
+                            )
+                          : 0xFF000000,
+                    ),
+                    width: 2,
+                  ),
+                ),
+              ),
+              items:
+                  (team == 0
+                          ? formazione.where(
+                              (element) => element.inCampo == true,
+                            )
+                          : formazione.where(
+                              (element) => element.inCampo == true,
+                            ))
+                      .map(
+                        (giocatore) => DropdownMenuItem<String>(
+                          value: giocatore.idGiocatore,
+                          child: Text(
+                            "${giocatore.pos} ${CommonService.decodePlayerName(giocatore.nome)}",
+                          ),
+                        ),
+                      )
+                      .toList(),
+              onChanged: (String? newValue) {
+                setState(() {
+                  giocatoreSelezionato = newValue ?? '';
+                });
+              },
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Inserisci il giocatore';
+                }
+                return null;
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Color getColor() {
     return Color(
       widget.competizione!.colori.isNotEmpty
@@ -1285,11 +1449,19 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
     Evento evento;
 
     try {
-      int minuti = int.parse(controllerMin.text);
-      if (controllerRec.text.isEmpty) {
-        controllerRec.text = '0';
+      int minuti;
+      int recupero;
+
+      if (eventoSelezionato!.cod == 'rig') {
+        minuti = 121;
+        recupero = 0;
+      } else {
+        minuti = int.parse(controllerMin.text);
+        if (controllerRec.text.isEmpty) {
+          controllerRec.text = '0';
+        }
+        recupero = int.parse(controllerRec.text);
       }
-      int recupero = int.parse(controllerRec.text);
 
       String codAzione = eventoSelezionato!.cod;
       if (eventoSelezionato!.cod == 'gol') {
@@ -1436,6 +1608,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
             : (team == 0
                   ? widget.partita.idTeamHome
                   : widget.partita.idTeamAway),
+        esitoRigore: esitoRigoreSelezionato == 'segnato' ? true : false,
       );
 
       bool success = await putEvento(evento);
@@ -1485,12 +1658,16 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
     _recuperoControllerAway.clear();
     _squalificaControllerHome.clear();
     _squalificaControllerAway.clear();
+    _infortunioControllerHome.clear();
+    _infortunioControllerAway.clear();
     setState(() {
       giocatoreSelezionato = '';
       eventoSelezionato = null;
       tipoGolSelezionato = 'no';
       giocatoreSelezionatoIn = '';
       giocatoreSelezionatoOut = '';
+      esitoRigoreSelezionato = 'segnato';
+      infortunioSelezionato = 'no';
     });
   }
 

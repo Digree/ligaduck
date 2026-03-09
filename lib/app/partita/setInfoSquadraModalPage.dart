@@ -465,7 +465,14 @@ class _SetInfoSquadraModalPageState extends State<SetInfoSquadraModalPage> {
           formazione.titolari.any((t) => t.idGiocatore == g.id);
     }).toList();
 
-    if (giocatoriTitolari.isEmpty) {
+    // Rimuovi duplicati basandosi sull'ID del giocatore
+    final giocatoriTitolariUnique = <String, Giocatore>{};
+    for (var giocatore in giocatoriTitolari) {
+      giocatoriTitolariUnique[giocatore.id] = giocatore;
+    }
+    final giocatoriTitolariList = giocatoriTitolariUnique.values.toList();
+
+    if (giocatoriTitolariList.isEmpty) {
       return Center(
         child: Text(
           'Nessun giocatore disponibile',
@@ -520,7 +527,7 @@ class _SetInfoSquadraModalPageState extends State<SetInfoSquadraModalPage> {
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
-          items: giocatoriTitolari.map((Giocatore giocatore) {
+          items: giocatoriTitolariList.map((Giocatore giocatore) {
             return DropdownMenuItem<String?>(
               value: giocatore.id,
               child: Row(
