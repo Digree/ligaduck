@@ -1247,10 +1247,12 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
               SizedBox(width: 20),
               Expanded(
                 child: Container(
-                  margin: EdgeInsets.only(top: 150),
+                  margin: EdgeInsets.only(top: 40),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      buildUltime5PartiteWide(),
+                      SizedBox(height: 16),
                       Padding(
                         padding: EdgeInsets.only(
                           bottom: 16,
@@ -1346,45 +1348,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     children: [
                       buildTabellino(),
                       buildFormazioni(),
-                      SingleChildScrollView(
-                        padding: EdgeInsets.all(24),
-                        child: Column(
-                          children: [
-                            Text(
-                              'Info Partita',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: competizione?.id == 5
-                                    ? 'champions'
-                                    : competizione?.id == 6 ||
-                                          competizione?.id == 7
-                                    ? 'europa'
-                                    : competizione?.id == 8
-                                    ? 'supercup'
-                                    : null,
-                              ),
-                            ),
-                            SizedBox(height: 20),
-                            Text(
-                              'Contenuto informazioni partita in arrivo...',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey[600],
-                                fontFamily: competizione?.id == 5
-                                    ? 'champions'
-                                    : competizione?.id == 6 ||
-                                          competizione?.id == 7
-                                    ? 'europa'
-                                    : competizione?.id == 8
-                                    ? 'supercup'
-                                    : null,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      buildInfoPartita(),
                     ],
                   ),
                 ),
@@ -1414,15 +1378,6 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       }
       // Se l'evento è al minuto 121 (rigori) e non ho ancora mostrato il divisore Rigori
       if (evento.minuto == 121 && !hasMostratoDivisoreRigori) {
-        // Se non ci sono eventi tra 91 e 120, aggiungi spazio vuoto con linea al centro
-        if (!hasEventiTS && hasMostratoDivisoreTS) {
-          tabellinoWidgets.add(
-            Padding(
-              padding: EdgeInsets.symmetric(vertical: 10, horizontal: 180),
-              child: Divider(color: Colors.black, thickness: 1, height: 1),
-            ),
-          );
-        }
         tabellinoWidgets.add(buildDivisoreRigori());
         hasMostratoDivisoreRigori = true;
       }
@@ -1521,63 +1476,61 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   }
 
   Widget buildDivisoreTS() {
-    return Container(
-      width: double.infinity,
-      height: 40,
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        border: Border(
-          top: BorderSide(color: Colors.grey[400]!, width: 2),
-          bottom: BorderSide(color: Colors.grey[400]!, width: 2),
-        ),
-      ),
-      child: Center(
-        child: Text(
-          'TS',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.grey[700],
-            fontFamily: competizione?.id == 5
-                ? 'champions'
-                : competizione?.id == 6 || competizione?.id == 7
-                ? 'europa'
-                : competizione?.id == 8
-                ? 'supercup'
-                : null,
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+      child: Row(
+        children: [
+          Expanded(child: Divider(color: Colors.grey[400], thickness: 1.5)),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              'TS',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[700],
+                fontFamily: competizione?.id == 5
+                    ? 'champions'
+                    : competizione?.id == 6 || competizione?.id == 7
+                    ? 'europa'
+                    : competizione?.id == 8
+                    ? 'supercup'
+                    : null,
+              ),
+            ),
           ),
-        ),
+          Expanded(child: Divider(color: Colors.grey[400], thickness: 1.5)),
+        ],
       ),
     );
   }
 
   Widget buildDivisoreRigori() {
-    return Container(
-      width: double.infinity,
-      height: 40,
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        border: Border(
-          top: BorderSide(color: Colors.grey[400]!, width: 2),
-          bottom: BorderSide(color: Colors.grey[400]!, width: 2),
-        ),
-      ),
-      child: Center(
-        child: Text(
-          'Rigori',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.grey[700],
-            fontFamily: competizione?.id == 5
-                ? 'champions'
-                : competizione?.id == 6 || competizione?.id == 7
-                ? 'europa'
-                : competizione?.id == 8
-                ? 'supercup'
-                : null,
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+      child: Row(
+        children: [
+          Expanded(child: Divider(color: Colors.grey[400], thickness: 1.5)),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              'Rigori',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[700],
+                fontFamily: competizione?.id == 5
+                    ? 'champions'
+                    : competizione?.id == 6 || competizione?.id == 7
+                    ? 'europa'
+                    : competizione?.id == 8
+                    ? 'supercup'
+                    : null,
+              ),
+            ),
           ),
-        ),
+          Expanded(child: Divider(color: Colors.grey[400], thickness: 1.5)),
+        ],
       ),
     );
   }
@@ -2481,6 +2434,859 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
         ),
         Expanded(child: buildFormazioneSquadra(selectedFormazione)),
       ],
+    );
+  }
+
+  Widget buildInfoPartita() {
+    final squadreProvider = Provider.of<SquadreProvider>(
+      context,
+      listen: false,
+    );
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Ultime Partite',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              fontFamily: competizione?.id == 5
+                  ? 'champions'
+                  : competizione?.id == 6 || competizione?.id == 7
+                  ? 'europa'
+                  : competizione?.id == 8
+                  ? 'supercup'
+                  : null,
+            ),
+          ),
+          SizedBox(height: 24),
+
+          // Ultime 5 partite squadra casa
+          FutureBuilder<Squadra>(
+            future: _squadreFuture.then(
+              (squadre) =>
+                  squadre.firstWhere((s) => s.id == partita!.idTeamHome),
+            ),
+            builder: (context, squadraSnapshot) {
+              if (!squadraSnapshot.hasData) {
+                return SizedBox.shrink();
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Image.asset(
+                        'assets/squadre/${partita!.codHome}.png',
+                        height: 24,
+                        width: 24,
+                        errorBuilder: (context, error, stackTrace) =>
+                            _buildTeamLogoPlaceholder(
+                              squadraSnapshot.data!,
+                              size: 24,
+                            ),
+                      ),
+                      SizedBox(width: 12),
+                      Text(
+                        CommonService.decodePlayerName(partita!.teamHome),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: competizione?.id == 5
+                              ? 'champions'
+                              : competizione?.id == 6 || competizione?.id == 7
+                              ? 'europa'
+                              : competizione?.id == 8
+                              ? 'supercup'
+                              : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 12),
+                  FutureBuilder<List<Partita>>(
+                    future: squadreProvider.fetchUltime5Partite(
+                      widget.campionato,
+                      partita!.idTeamHome,
+                      partita!.id,
+                    ),
+                    builder: (context, partiteSnapshot) {
+                      if (partiteSnapshot.connectionState ==
+                          ConnectionState.waiting) {
+                        return Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(16),
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Color(
+                                  competizione!.colori.isNotEmpty
+                                      ? int.parse(
+                                          competizione!.colori[0].replaceFirst(
+                                            '#',
+                                            'FF',
+                                          ),
+                                          radix: 16,
+                                        )
+                                      : 0xFF007AFF,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+
+                      if (!partiteSnapshot.hasData ||
+                          partiteSnapshot.data!.isEmpty) {
+                        return Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Text(
+                            'Nessuna partita disponibile',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 14,
+                            ),
+                          ),
+                        );
+                      }
+
+                      return SizedBox(
+                        width: double.infinity,
+                        height: 100,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: partiteSnapshot.data!.map((p) {
+                            bool isHome = p.idTeamHome == partita!.idTeamHome;
+                            String risultato = isHome
+                                ? '${p.risultatoHome} - ${p.risultatoAway}'
+                                : '${p.risultatoAway} - ${p.risultatoHome}';
+                            String codAvversario = isHome
+                                ? p.codAway
+                                : p.codHome;
+
+                            // Determina l'esito
+                            String esito;
+                            Color esitoColor;
+                            if ((isHome && p.risultatoHome > p.risultatoAway) ||
+                                (!isHome &&
+                                    p.risultatoAway > p.risultatoHome)) {
+                              esito = 'V';
+                              esitoColor = Colors.green;
+                            } else if (p.risultatoHome == p.risultatoAway) {
+                              esito = 'P';
+                              esitoColor = Colors.grey;
+                            } else {
+                              esito = 'S';
+                              esitoColor = Colors.red;
+                            }
+
+                            return InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PartitaHomePage(
+                                      partitaId: p.id,
+                                      campionato: widget.campionato,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                width: 68,
+                                margin: EdgeInsets.only(right: 4),
+                                padding: EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[100],
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Container(
+                                      width: 24,
+                                      height: 24,
+                                      decoration: BoxDecoration(
+                                        color: esitoColor,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          esito,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Column(
+                                      children: [
+                                        Text(
+                                          isHome ? 'vs' : '@',
+                                          style: TextStyle(
+                                            color: Colors.grey[600],
+                                            fontSize: 9,
+                                          ),
+                                        ),
+                                        SizedBox(height: 2),
+                                        FutureBuilder<Squadra?>(
+                                          future: _squadreFuture.then((
+                                            squadre,
+                                          ) {
+                                            try {
+                                              return squadre.firstWhere(
+                                                (s) => s.cod == codAvversario,
+                                              );
+                                            } catch (e) {
+                                              return null;
+                                            }
+                                          }),
+                                          builder: (context, snapshot) {
+                                            if (!snapshot.hasData ||
+                                                snapshot.data == null) {
+                                              return Icon(
+                                                Icons.shield,
+                                                size: 20,
+                                                color: Colors.grey,
+                                              );
+                                            }
+
+                                            return Image.asset(
+                                              'assets/squadre/$codAvversario.png',
+                                              height: 20,
+                                              width: 20,
+                                              errorBuilder:
+                                                  (context, error, stackTrace) {
+                                                    return _buildTeamLogoPlaceholder(
+                                                      snapshot.data!,
+                                                      size: 20,
+                                                    );
+                                                  },
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                    Text(
+                                      risultato,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              );
+            },
+          ),
+
+          SizedBox(height: 32),
+
+          // Ultime 5 partite squadra trasferta
+          FutureBuilder<Squadra>(
+            future: _squadreFuture.then(
+              (squadre) =>
+                  squadre.firstWhere((s) => s.id == partita!.idTeamAway),
+            ),
+            builder: (context, squadraSnapshot) {
+              if (!squadraSnapshot.hasData) {
+                return SizedBox.shrink();
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Image.asset(
+                        'assets/squadre/${partita!.codAway}.png',
+                        height: 24,
+                        width: 24,
+                        errorBuilder: (context, error, stackTrace) =>
+                            _buildTeamLogoPlaceholder(
+                              squadraSnapshot.data!,
+                              size: 24,
+                            ),
+                      ),
+                      SizedBox(width: 12),
+                      Text(
+                        CommonService.decodePlayerName(partita!.teamAway),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: competizione?.id == 5
+                              ? 'champions'
+                              : competizione?.id == 6 || competizione?.id == 7
+                              ? 'europa'
+                              : competizione?.id == 8
+                              ? 'supercup'
+                              : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 12),
+                  FutureBuilder<List<Partita>>(
+                    future: squadreProvider.fetchUltime5Partite(
+                      widget.campionato,
+                      partita!.idTeamAway,
+                      partita!.id,
+                    ),
+                    builder: (context, partiteSnapshot) {
+                      if (partiteSnapshot.connectionState ==
+                          ConnectionState.waiting) {
+                        return Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(16),
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Color(
+                                  competizione!.colori.isNotEmpty
+                                      ? int.parse(
+                                          competizione!.colori[0].replaceFirst(
+                                            '#',
+                                            'FF',
+                                          ),
+                                          radix: 16,
+                                        )
+                                      : 0xFF007AFF,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+
+                      if (!partiteSnapshot.hasData ||
+                          partiteSnapshot.data!.isEmpty) {
+                        return Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Text(
+                            'Nessuna partita disponibile',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 14,
+                            ),
+                          ),
+                        );
+                      }
+
+                      return SizedBox(
+                        width: double.infinity,
+                        height: 100,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: partiteSnapshot.data!.map((p) {
+                            bool isHome = p.idTeamHome == partita!.idTeamAway;
+                            String risultato = isHome
+                                ? '${p.risultatoHome} - ${p.risultatoAway}'
+                                : '${p.risultatoAway} - ${p.risultatoHome}';
+                            String codAvversario = isHome
+                                ? p.codAway
+                                : p.codHome;
+
+                            // Determina l'esito
+                            String esito;
+                            Color esitoColor;
+                            if ((isHome && p.risultatoHome > p.risultatoAway) ||
+                                (!isHome &&
+                                    p.risultatoAway > p.risultatoHome)) {
+                              esito = 'V';
+                              esitoColor = Colors.green;
+                            } else if (p.risultatoHome == p.risultatoAway) {
+                              esito = 'P';
+                              esitoColor = Colors.grey;
+                            } else {
+                              esito = 'S';
+                              esitoColor = Colors.red;
+                            }
+
+                            return InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PartitaHomePage(
+                                      partitaId: p.id,
+                                      campionato: widget.campionato,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                width: 68,
+                                margin: EdgeInsets.only(right: 4),
+                                padding: EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[100],
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Container(
+                                      width: 24,
+                                      height: 24,
+                                      decoration: BoxDecoration(
+                                        color: esitoColor,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          esito,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Column(
+                                      children: [
+                                        Text(
+                                          isHome ? 'vs' : '@',
+                                          style: TextStyle(
+                                            color: Colors.grey[600],
+                                            fontSize: 9,
+                                          ),
+                                        ),
+                                        SizedBox(height: 2),
+                                        FutureBuilder<Squadra?>(
+                                          future: _squadreFuture.then((
+                                            squadre,
+                                          ) {
+                                            try {
+                                              return squadre.firstWhere(
+                                                (s) => s.cod == codAvversario,
+                                              );
+                                            } catch (e) {
+                                              return null;
+                                            }
+                                          }),
+                                          builder: (context, snapshot) {
+                                            if (!snapshot.hasData ||
+                                                snapshot.data == null) {
+                                              return Icon(
+                                                Icons.shield,
+                                                size: 20,
+                                                color: Colors.grey,
+                                              );
+                                            }
+
+                                            return Image.asset(
+                                              'assets/squadre/$codAvversario.png',
+                                              height: 20,
+                                              width: 20,
+                                              errorBuilder:
+                                                  (context, error, stackTrace) {
+                                                    return _buildTeamLogoPlaceholder(
+                                                      snapshot.data!,
+                                                      size: 20,
+                                                    );
+                                                  },
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                    Text(
+                                      risultato,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildUltime5PartiteWide() {
+    final squadreProvider = Provider.of<SquadreProvider>(
+      context,
+      listen: false,
+    );
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        children: [
+          Center(
+            child: Text(
+              'Ultime 5 Partite',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Color(
+                  competizione!.colori.isNotEmpty
+                      ? int.parse(
+                          competizione!.colori[0].replaceFirst('#', 'FF'),
+                          radix: 16,
+                        )
+                      : 0xFF000000,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: 4),
+          Row(
+            children: [
+              // Ultime 5 partite squadra casa (sinistra)
+              Expanded(
+                child: FutureBuilder<List<Partita>>(
+                  future: squadreProvider.fetchUltime5Partite(
+                    widget.campionato,
+                    partita!.idTeamHome,
+                    partita!.id,
+                  ),
+                  builder: (context, partiteSnapshot) {
+                    if (partiteSnapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(8),
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
+
+                    if (!partiteSnapshot.hasData ||
+                        partiteSnapshot.data!.isEmpty) {
+                      return SizedBox.shrink();
+                    }
+
+                    return SizedBox(
+                      height: 70,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: partiteSnapshot.data!.map((p) {
+                          bool isHome = p.idTeamHome == partita!.idTeamHome;
+                          String risultato = isHome
+                              ? '${p.risultatoHome} - ${p.risultatoAway}'
+                              : '${p.risultatoAway} - ${p.risultatoHome}';
+                          String codAvversario = isHome ? p.codAway : p.codHome;
+
+                          // Determina l'esito
+                          String esito;
+                          Color esitoColor;
+                          if ((isHome && p.risultatoHome > p.risultatoAway) ||
+                              (!isHome && p.risultatoAway > p.risultatoHome)) {
+                            esito = 'V';
+                            esitoColor = Colors.green;
+                          } else if (p.risultatoHome == p.risultatoAway) {
+                            esito = 'P';
+                            esitoColor = Colors.grey;
+                          } else {
+                            esito = 'S';
+                            esitoColor = Colors.red;
+                          }
+
+                          return InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PartitaHomePage(
+                                    partitaId: p.id,
+                                    campionato: widget.campionato,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              width: 38,
+                              margin: EdgeInsets.only(right: 2),
+                              padding: EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[100],
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Column(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Container(
+                                    width: 14,
+                                    height: 14,
+                                    decoration: BoxDecoration(
+                                      color: esitoColor,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        esito,
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 8,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Column(
+                                    children: [
+                                      Text(
+                                        isHome ? 'vs' : '@',
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontSize: 6,
+                                        ),
+                                      ),
+                                      SizedBox(height: 1),
+                                      FutureBuilder<Squadra?>(
+                                        future: _squadreFuture.then((squadre) {
+                                          try {
+                                            return squadre.firstWhere(
+                                              (s) => s.cod == codAvversario,
+                                            );
+                                          } catch (e) {
+                                            print(
+                                              'Squadra casa non trovata: $codAvversario',
+                                            );
+                                            return null;
+                                          }
+                                        }),
+                                        builder: (context, snapshot) {
+                                          if (!snapshot.hasData ||
+                                              snapshot.data == null) {
+                                            return Icon(
+                                              Icons.shield,
+                                              size: 14,
+                                              color: Colors.grey,
+                                            );
+                                          }
+
+                                          return Image.asset(
+                                            'assets/squadre/$codAvversario.png',
+                                            height: 14,
+                                            width: 14,
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                                  print(
+                                                    'Errore caricamento immagine $codAvversario, uso placeholder colorato',
+                                                  );
+                                                  return _buildTeamLogoPlaceholder(
+                                                    snapshot.data!,
+                                                    size: 14,
+                                                  );
+                                                },
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                  Text(
+                                    risultato,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 8,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              SizedBox(width: 16),
+              // Ultime 5 partite squadra trasferta (destra)
+              Expanded(
+                child: FutureBuilder<List<Partita>>(
+                  future: squadreProvider.fetchUltime5Partite(
+                    widget.campionato,
+                    partita!.idTeamAway,
+                    partita!.id,
+                  ),
+                  builder: (context, partiteSnapshot) {
+                    if (partiteSnapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(8),
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
+
+                    if (!partiteSnapshot.hasData ||
+                        partiteSnapshot.data!.isEmpty) {
+                      return SizedBox.shrink();
+                    }
+
+                    return SizedBox(
+                      height: 70,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: partiteSnapshot.data!.map((p) {
+                          bool isHome = p.idTeamHome == partita!.idTeamAway;
+                          String risultato = isHome
+                              ? '${p.risultatoHome} - ${p.risultatoAway}'
+                              : '${p.risultatoAway} - ${p.risultatoHome}';
+                          String codAvversario = isHome ? p.codAway : p.codHome;
+
+                          // Determina l'esito
+                          String esito;
+                          Color esitoColor;
+                          if ((isHome && p.risultatoHome > p.risultatoAway) ||
+                              (!isHome && p.risultatoAway > p.risultatoHome)) {
+                            esito = 'V';
+                            esitoColor = Colors.green;
+                          } else if (p.risultatoHome == p.risultatoAway) {
+                            esito = 'P';
+                            esitoColor = Colors.grey;
+                          } else {
+                            esito = 'S';
+                            esitoColor = Colors.red;
+                          }
+
+                          return InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PartitaHomePage(
+                                    partitaId: p.id,
+                                    campionato: widget.campionato,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              width: 38,
+                              margin: EdgeInsets.only(right: 2),
+                              padding: EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[100],
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Column(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Container(
+                                    width: 14,
+                                    height: 14,
+                                    decoration: BoxDecoration(
+                                      color: esitoColor,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        esito,
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 8,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Column(
+                                    children: [
+                                      Text(
+                                        isHome ? 'vs' : '@',
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontSize: 6,
+                                        ),
+                                      ),
+                                      SizedBox(height: 1),
+                                      FutureBuilder<Squadra?>(
+                                        future: _squadreFuture.then((squadre) {
+                                          try {
+                                            return squadre.firstWhere(
+                                              (s) => s.cod == codAvversario,
+                                            );
+                                          } catch (e) {
+                                            print(
+                                              'Squadra trasferta non trovata: $codAvversario',
+                                            );
+                                            return null;
+                                          }
+                                        }),
+                                        builder: (context, snapshot) {
+                                          if (!snapshot.hasData ||
+                                              snapshot.data == null) {
+                                            return Icon(
+                                              Icons.shield,
+                                              size: 14,
+                                              color: Colors.grey,
+                                            );
+                                          }
+
+                                          return Image.asset(
+                                            'assets/squadre/$codAvversario.png',
+                                            height: 14,
+                                            width: 14,
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                                  print(
+                                                    'Errore caricamento immagine $codAvversario, uso placeholder colorato',
+                                                  );
+                                                  return _buildTeamLogoPlaceholder(
+                                                    snapshot.data!,
+                                                    size: 14,
+                                                  );
+                                                },
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                  Text(
+                                    risultato,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 8,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

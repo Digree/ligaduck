@@ -297,4 +297,32 @@ class SquadreProvider with ChangeNotifier {
       return false;
     }
   }
+
+  Future<List<Partita>> fetchUltime5Partite(
+    String campionato,
+    int idSquadra,
+    String idPartita,
+  ) async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+          '${Env.apiUrl}/$campionato/squadra/$idSquadra/$idPartita/ultime5',
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        List<Partita> partite = data
+            .map((item) => Partita.fromJson(item))
+            .toList();
+        return partite;
+      } else {
+        throw Exception('Errore nel caricamento: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Tipo errore: ${e.runtimeType}');
+      print('Dettaglio errore: $e');
+      return [];
+    }
+  }
 }
