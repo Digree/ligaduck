@@ -1,7 +1,6 @@
 class Giocatore {
   final String id;
   String nome;
-  final int numero;
   final int eta;
   final String ruolo;
   final String nazione;
@@ -13,7 +12,6 @@ class Giocatore {
   Giocatore({
     required this.id,
     required this.nome,
-    required this.numero,
     required this.eta,
     required this.ruolo,
     required this.nazione,
@@ -27,7 +25,6 @@ class Giocatore {
     return Giocatore(
       id: json['id'],
       nome: json['nome'],
-      numero: json['numero'] ?? 0,
       eta: json['eta'] ?? 0,
       ruolo: json['ruolo'],
       nazione: json['nazione'],
@@ -46,7 +43,6 @@ class Giocatore {
     return {
       'id': id,
       'nome': nome,
-      'numero': numero,
       'eta': eta,
       'ruolo': ruolo,
       'nazione': nazione,
@@ -61,6 +57,7 @@ class Giocatore {
 class Carriera {
   final String campionato;
   final int idSquadra;
+  final int numero;
   final int gol;
   final int presenze;
   final int espulsioni;
@@ -75,6 +72,7 @@ class Carriera {
   Carriera({
     required this.campionato,
     required this.idSquadra,
+    required this.numero,
     required this.gol,
     required this.presenze,
     required this.espulsioni,
@@ -91,6 +89,7 @@ class Carriera {
     return Carriera(
       campionato: json['campionato'],
       idSquadra: json['idSquadra'] ?? 0,
+      numero: json['numero'] ?? 0,
       gol: json['gol'] ?? 0,
       presenze: json['presenze'] ?? 0,
       espulsioni: json['espulsioni'] ?? 0,
@@ -108,6 +107,7 @@ class Carriera {
     return {
       'campionato': campionato,
       'idSquadra': idSquadra,
+      'numero': numero,
       'gol': gol,
       'presenze': presenze,
       'espulsioni': espulsioni,

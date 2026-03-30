@@ -725,17 +725,22 @@ String _formatPlayerName(String nomeCompleto) {
   if (parole.length >= 2) {
     if (parole[0] != 'Van' &&
         parole[0] != 'La' &&
+        parole[0] != 'Zè' &&
         parole[0] != 'Ze' &&
         parole[0] != 'Mc' &&
         parole[0] != 'De' &&
         parole[0] != 'Di' &&
         parole[0] != 'Da' &&
         parole[0] != 'Der' &&
+        parole[0] != 'Ben' &&
         parole[0] != 'Delli' &&
+        parole[0] != 'Santi' &&
         parole[0] != 'Cha' &&
         parole[0] != 'Luiz' &&
         parole[0] != 'Le' &&
         parole[0] != 'Kanchero' &&
+        parole[0] != 'Borja' &&
+        parole[0] != 'Gilberto' &&
         parole[0] != 'Del') {
       nomeDecodificato =
           '${parole[0][0].toUpperCase()}. ${parole.sublist(1).join(' ')}';

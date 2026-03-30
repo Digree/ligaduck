@@ -29,11 +29,11 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
   List<Competizione> _competizioniDisponibili = [];
   List<String> _anniTrofei = [];
 
-  final List<String> _campionati = ['Paperi', 'Estero'];
+  final List<String> _campionati = ['Paperi', 'Europa', 'Resto del Mondo'];
 
   final List<String> _categorie = ['Serie A', 'Serie B', 'Serie C'];
 
-  final List<String> _nazioni = [
+  final List<String> _nazioniEuropa = [
     'Austria',
     'Belgio',
     'Bulgaria',
@@ -71,8 +71,49 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
     'Ungheria',
   ];
 
-  List<String> get _categorieCorrente =>
-      _campionatoSelezionato == 'Estero' ? _nazioni : _categorie;
+  final List<String> _nazioniRestoMondo = [
+    'Argentina',
+    'Australia',
+    'Brasile',
+    'Uruguay',
+    'Cile',
+    'Colombia',
+    'Perù',
+    'Venezuela',
+    'Ecuador',
+    'Paraguay',
+    'Bolivia',
+    'Costa Rica',
+    'Panama',
+    'Giamaica',
+    'Honduras',
+    'El Salvador',
+    'Nicaragua',
+    'Cuba',
+    'Repubblica Dominicana',
+    'Haiti',
+    'Giappone',
+    'Corea del Sud',
+    'Stati Uniti',
+    'Canada',
+    'Messico',
+    'Cina',
+    'India',
+    'Sudafrica',
+    'Nigeria',
+    'Egitto',
+    'Marocco',
+  ];
+
+  List<String> get _categorieCorrente {
+    if (_campionatoSelezionato == 'Europa') {
+      return _nazioniEuropa;
+    } else if (_campionatoSelezionato == 'Resto del Mondo') {
+      return _nazioniRestoMondo;
+    } else {
+      return _categorie;
+    }
+  }
 
   final List<String> _coloriDisponibili = [
     'rosso',

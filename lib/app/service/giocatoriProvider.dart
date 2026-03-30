@@ -208,4 +208,54 @@ class GiocatoriProvider with ChangeNotifier {
       return false;
     }
   }
+
+  Future<bool> aggiornaNumeroGiocatore(
+    String campionato,
+    String idGiocatore,
+    int numero,
+  ) async {
+    try {
+      final response = await http.put(
+        Uri.parse('${Env.apiUrl}/$campionato/giocatore/$idGiocatore/numero'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(numero),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        notifyListeners();
+        return true;
+      } else {
+        print('Errore PUT: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Errore PUT: $e');
+      return false;
+    }
+  }
+
+  Future<List<String>> fetchNazioniGiocatori(
+    String campionato,
+    int idSquadra,
+  ) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${Env.apiUrl}/$campionato/giocatori/nazionalita'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        List<String> nazioni = data.map((item) => item.toString()).toList();
+
+        notifyListeners();
+        return nazioni;
+      } else {
+        throw Exception('Errore nel caricamento: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Tipo errore: ${e.runtimeType}');
+      print('Dettaglio errore: $e');
+      return [];
+    }
+  }
 }

@@ -96,6 +96,22 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
     });
   }
 
+  int _getNumeroGiocatore(Giocatore giocatore) {
+    final carrieraAttuale = giocatore.carriera.firstWhere(
+      (c) =>
+          c.campionato == widget.campionato && c.idSquadra == widget.squadra.id,
+      orElse: () => Carriera(
+        campionato: widget.campionato,
+        idSquadra: widget.squadra.id,
+        numero: 0,
+        gol: 0,
+        presenze: 0,
+        espulsioni: 0,
+      ),
+    );
+    return carrieraAttuale.numero;
+  }
+
   Widget _buildDropdown() {
     // Se la lista è vuota, mostra loading
     if (_moduli.isEmpty) {
@@ -267,18 +283,18 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
         widget.squadra.formazione.panchina.isEmpty &&
         widget.squadra.formazione.nonConvocati.isEmpty) {
       List<Giocatore> giocatoriSenzaAllenatore = widget.giocatori
-          .where((giocatore) => giocatore.numero != 0)
+          .where((giocatore) => giocatore.ruolo != 'Allenatore')
           .toList();
       Giocatore allenatore = widget.giocatori.firstWhere(
-        (giocatore) => giocatore.numero == 0,
+        (giocatore) => giocatore.ruolo == 'Allenatore',
       );
       for (var g in giocatoriSenzaAllenatore) {
         // Giocatori con numero > 21 vanno direttamente nei non convocati
-        if (g.numero > 21) {
+        if (_getNumeroGiocatore(g) > 21) {
           widget.squadra.formazione.nonConvocati.add(
             GiocatoreFormazione(
               idGiocatore: g.id,
-              pos: g.numero,
+              pos: _getNumeroGiocatore(g),
               nome: CommonService.decodePlayerName(g.nome),
               inCampo: false,
             ),
@@ -291,7 +307,7 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
           widget.squadra.formazione.titolari.add(
             GiocatoreFormazione(
               idGiocatore: g.id,
-              pos: g.numero,
+              pos: _getNumeroGiocatore(g),
               nome: CommonService.decodePlayerName(g.nome),
               inCampo: currentIndex < 11,
             ),
@@ -300,7 +316,7 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
           widget.squadra.formazione.panchina.add(
             GiocatoreFormazione(
               idGiocatore: g.id,
-              pos: g.numero,
+              pos: _getNumeroGiocatore(g),
               nome: CommonService.decodePlayerName(g.nome),
               inCampo: currentIndex < 11,
             ),
@@ -321,6 +337,11 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
       _panchina = List.from(widget.squadra.formazione.panchina);
       _nonConvocati = List.from(widget.squadra.formazione.nonConvocati);
     }
+
+    Giocatore allenatore = widget.giocatori.firstWhere(
+      (giocatore) => giocatore.ruolo == 'Allenatore',
+    );
+    widget.squadra.formazione.allenatore = allenatore.nome;
 
     return Column(
       children: [

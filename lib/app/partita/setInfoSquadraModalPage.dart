@@ -82,7 +82,6 @@ class _SetInfoSquadraModalPageState extends State<SetInfoSquadraModalPage> {
         orElse: () => Giocatore(
           id: '',
           nome: '',
-          numero: 0,
           eta: 0,
           ruolo: '',
           nazione: '',
@@ -117,6 +116,25 @@ class _SetInfoSquadraModalPageState extends State<SetInfoSquadraModalPage> {
         _moduloSelezionato = _moduli.first;
       }
     });
+  }
+
+  int _getNumeroGiocatore(Giocatore giocatore) {
+    final idSquadra = widget.team == 0
+        ? widget.partita.idTeamHome
+        : widget.partita.idTeamAway;
+
+    final carrieraAttuale = giocatore.carriera.firstWhere(
+      (c) => c.campionato == widget.campionato && c.idSquadra == idSquadra,
+      orElse: () => Carriera(
+        campionato: widget.campionato,
+        idSquadra: idSquadra,
+        numero: 0,
+        gol: 0,
+        presenze: 0,
+        espulsioni: 0,
+      ),
+    );
+    return carrieraAttuale.numero;
   }
 
   Widget _buildModuloDropdown() {
@@ -532,7 +550,7 @@ class _SetInfoSquadraModalPageState extends State<SetInfoSquadraModalPage> {
               value: giocatore.id,
               child: Row(
                 children: [
-                  Text('${giocatore.numero} - '),
+                  Text('${_getNumeroGiocatore(giocatore)} - '),
                   Expanded(
                     child: Text(
                       CommonService.decodePlayerName(giocatore.nome),

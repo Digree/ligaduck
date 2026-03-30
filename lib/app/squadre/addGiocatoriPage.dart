@@ -667,10 +667,15 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
 
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
+      final numeroMaglia = _ruoloSelezionato == 'Allenatore'
+          ? 0
+          : int.tryParse(_numeroMagliaController.text) ?? 1;
+
       Carriera nuovaCarriera = _ruoloSelezionato == 'Allenatore'
           ? Carriera(
               campionato: widget.campionato,
               idSquadra: widget.squadra.id,
+              numero: numeroMaglia,
               gol: 0,
               presenze: 0,
               espulsioni: 0,
@@ -679,6 +684,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
           : Carriera(
               campionato: widget.campionato,
               idSquadra: widget.squadra.id,
+              numero: numeroMaglia,
               gol: 0,
               presenze: 0,
               espulsioni: 0,
@@ -687,9 +693,6 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
       Giocatore nuovoGiocatore = Giocatore(
         id: mongo.ObjectId().toHexString(),
         nome: _nomeController.text,
-        numero: _ruoloSelezionato == 'Allenatore'
-            ? 0
-            : int.tryParse(_numeroMagliaController.text) ?? 1,
         eta: etaCasuale,
         ruolo: _ruoloSelezionato,
         nazione: _nazioneSelezionata.toLowerCase(),
@@ -1003,6 +1006,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
         ? Carriera(
             campionato: widget.campionato,
             idSquadra: widget.squadra.id,
+            numero: numero,
             gol: 0,
             presenze: 0,
             espulsioni: 0,
@@ -1011,6 +1015,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
         : Carriera(
             campionato: widget.campionato,
             idSquadra: widget.squadra.id,
+            numero: numero,
             gol: 0,
             presenze: 0,
             espulsioni: 0,
@@ -1019,7 +1024,6 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
     Giocatore nuovoGiocatore = Giocatore(
       id: mongo.ObjectId().toHexString(),
       nome: nome,
-      numero: numero,
       eta: etaCasuale,
       ruolo: ruolo,
       nazione: nazione.toLowerCase(),

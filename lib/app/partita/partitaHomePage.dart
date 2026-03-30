@@ -427,7 +427,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
           (e) =>
               e.minuto != 121 &&
               e.codAzione == 'aut' &&
-              e.idTeam == partita!.idTeamAway,
+              e.idTeam == partita!.idTeamHome,
         )
         .length;
 
@@ -446,7 +446,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
           (e) =>
               e.minuto != 121 &&
               e.codAzione == 'aut' &&
-              e.idTeam == partita!.idTeamHome,
+              e.idTeam == partita!.idTeamAway,
         )
         .length;
 
@@ -1362,15 +1362,16 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
 
     // Costruisco la lista di widget per il tabellino
     List<Widget> tabellinoWidgets = [];
+    bool hasMostratoDivisore2T = false;
     bool hasMostratoDivisoreTS = false;
     bool hasMostratoDivisoreRigori = false;
 
-    // Controllo se ci sono eventi tra 91 e 120 minuti
-    bool hasEventiTS = partita!.tabellino.any(
-      (e) => e.minuto > 90 && e.minuto < 121,
-    );
-
     for (var evento in partita!.tabellino) {
+      // Se l'evento è oltre il 45' e non ho ancora mostrato il divisore 2° Tempo
+      if (evento.minuto > 45 && !hasMostratoDivisore2T) {
+        tabellinoWidgets.add(buildDivisore2T());
+        hasMostratoDivisore2T = true;
+      }
       // Se l'evento è oltre i 90' e non ho ancora mostrato il divisore TS
       if (evento.minuto > 90 && !hasMostratoDivisoreTS) {
         tabellinoWidgets.add(buildDivisoreTS());
@@ -1470,6 +1471,36 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                 child: Icon(Icons.add, color: Colors.white),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildDivisore2T() {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+      child: Row(
+        children: [
+          Expanded(child: Divider(color: Colors.grey[400], thickness: 1.5)),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              '2° Tempo',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[700],
+                fontFamily: competizione?.id == 5
+                    ? 'champions'
+                    : competizione?.id == 6 || competizione?.id == 7
+                    ? 'europa'
+                    : competizione?.id == 8
+                    ? 'supercup'
+                    : null,
+              ),
+            ),
+          ),
+          Expanded(child: Divider(color: Colors.grey[400], thickness: 1.5)),
         ],
       ),
     );
@@ -2001,6 +2032,12 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                       else if (evento.codAzione == 'gol_ann')
                         Image.asset(
                           'assets/icon/gol_ann.png',
+                          width: 20,
+                          height: 20,
+                        )
+                      else if (evento.codAzione == 'rig_sb')
+                        Image.asset(
+                          'assets/icon/rig_sb.png',
                           width: 20,
                           height: 20,
                         )
@@ -4318,7 +4355,6 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
         orElse: () => Giocatore(
           id: '',
           nome: '',
-          numero: 0,
           eta: 0,
           ruolo: 'Attaccante',
           nazione: '',
@@ -5343,7 +5379,6 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             orElse: () => Giocatore(
               id: '',
               nome: '',
-              numero: 0,
               eta: 0,
               ruolo: '',
               nazione: '',
@@ -5371,7 +5406,6 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             orElse: () => Giocatore(
               id: '',
               nome: '',
-              numero: 0,
               eta: 0,
               ruolo: '',
               nazione: '',

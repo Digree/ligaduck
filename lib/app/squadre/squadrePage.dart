@@ -36,6 +36,7 @@ class _SquadrePageState extends State<SquadrePage> {
   bool _isLoadingGiocatori = false;
   Squadra? _squadra;
   Future<List<Esonero>>? _esoneriFuture;
+  String _selectedSquadType = 'Prima Squadra'; // Nuovo stato per il dropdown
 
   @override
   void initState() {
@@ -110,6 +111,22 @@ class _SquadrePageState extends State<SquadrePage> {
 
   void getGiocatoriSquadra(Squadra squadra) {
     fetchGiocatori();
+  }
+
+  int _getNumeroGiocatore(Giocatore giocatore) {
+    final carrieraAttuale = giocatore.carriera.firstWhere(
+      (c) =>
+          c.campionato == widget.campionato && c.idSquadra == widget.squadra.id,
+      orElse: () => Carriera(
+        campionato: widget.campionato,
+        idSquadra: widget.squadra.id,
+        numero: 0,
+        gol: 0,
+        presenze: 0,
+        espulsioni: 0,
+      ),
+    );
+    return carrieraAttuale.numero;
   }
 
   void _showEditModal(BuildContext context) {
@@ -224,6 +241,19 @@ class _SquadrePageState extends State<SquadrePage> {
                           },
                           child: Text(
                             'Seleziona Capitano',
+                            style: TextStyle(
+                              color: getColor('primary', forText: true),
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 10),
+                        ElevatedButton(
+                          onPressed: () async {
+                            Navigator.of(context).pop();
+                            await _mostraDialogAssegnaNumeri();
+                          },
+                          child: Text(
+                            'Assegna numeri',
                             style: TextStyle(
                               color: getColor('primary', forText: true),
                             ),
@@ -834,7 +864,7 @@ class _SquadrePageState extends State<SquadrePage> {
       child: Padding(
         padding: EdgeInsets.only(top: 20),
         child: DefaultTabController(
-          length: 5,
+          length: 4,
           child: Column(
             children: [
               TabBar(
@@ -849,7 +879,6 @@ class _SquadrePageState extends State<SquadrePage> {
                   Tab(text: 'Palmarès'),
                   Tab(text: 'Formazione'),
                   Tab(text: 'Mercato'),
-                  Tab(text: 'Vivaio'),
                 ],
               ),
               Expanded(
@@ -873,7 +902,6 @@ class _SquadrePageState extends State<SquadrePage> {
                       screenWidth,
                       screenHeight,
                     ),
-                    teamListVivaio(context, isWide, screenWidth, screenHeight),
                   ],
                 ),
               ),
@@ -1050,31 +1078,46 @@ class _SquadrePageState extends State<SquadrePage> {
     double screenWidth,
     double screenHeight,
   ) {
+    // Determina il filtro in base al tipo selezionato
+    bool isPrimaSquadra = _selectedSquadType == 'Prima Squadra';
+
     List<Giocatore> allenatori = giocatori
         .where((giocatore) => giocatore.ruolo == 'Allenatore')
         .toList();
     List<Giocatore> portieri = giocatori
         .where(
           (giocatore) =>
-              giocatore.ruolo == 'Portiere' && giocatore.numero <= 21,
+              giocatore.ruolo == 'Portiere' &&
+              (isPrimaSquadra
+                  ? _getNumeroGiocatore(giocatore) <= 21
+                  : _getNumeroGiocatore(giocatore) > 21),
         )
         .toList();
     List<Giocatore> difensori = giocatori
         .where(
           (giocatore) =>
-              giocatore.ruolo == 'Difensore' && giocatore.numero <= 21,
+              giocatore.ruolo == 'Difensore' &&
+              (isPrimaSquadra
+                  ? _getNumeroGiocatore(giocatore) <= 21
+                  : _getNumeroGiocatore(giocatore) > 21),
         )
         .toList();
     List<Giocatore> centrocampisti = giocatori
         .where(
           (giocatore) =>
-              giocatore.ruolo == 'Centrocampista' && giocatore.numero <= 21,
+              giocatore.ruolo == 'Centrocampista' &&
+              (isPrimaSquadra
+                  ? _getNumeroGiocatore(giocatore) <= 21
+                  : _getNumeroGiocatore(giocatore) > 21),
         )
         .toList();
     List<Giocatore> attaccanti = giocatori
         .where(
           (giocatore) =>
-              giocatore.ruolo == 'Attaccante' && giocatore.numero <= 21,
+              giocatore.ruolo == 'Attaccante' &&
+              (isPrimaSquadra
+                  ? _getNumeroGiocatore(giocatore) <= 21
+                  : _getNumeroGiocatore(giocatore) > 21),
         )
         .toList();
     return _isLoadingGiocatori
@@ -1095,83 +1138,132 @@ class _SquadrePageState extends State<SquadrePage> {
               ],
             ),
           )
-        : ListView(
+        : Column(
             children: [
-              teamListHeader(
-                context,
-                isWide,
-                screenWidth,
-                screenHeight,
-                'Allenatore',
-              ),
-              for (var i = 0; i < allenatori.length; i++)
-                teamListPlayer(
-                  context,
-                  isWide,
-                  screenWidth,
-                  screenHeight,
-                  allenatori[i],
+              // Dropdown per selezionare Prima Squadra o Vivaio
+              Container(
+                width: double.infinity,
+                margin: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: getColor('primary', forText: true).withOpacity(0.3),
+                  ),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-              teamListHeader(
-                context,
-                isWide,
-                screenWidth,
-                screenHeight,
-                'Portieri',
-              ),
-              for (var i = 0; i < portieri.length; i++)
-                teamListPlayer(
-                  context,
-                  isWide,
-                  screenWidth,
-                  screenHeight,
-                  portieri[i],
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedSquadType,
+                    isExpanded: true,
+                    icon: Icon(
+                      Icons.arrow_drop_down,
+                      color: getColor('primary', forText: true),
+                    ),
+                    style: TextStyle(
+                      color: getColor('primary', forText: true),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    items: ['Prima Squadra', 'Vivaio'].map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          _selectedSquadType = newValue;
+                        });
+                      }
+                    },
+                  ),
                 ),
-              teamListHeader(
-                context,
-                isWide,
-                screenWidth,
-                screenHeight,
-                'Difensori',
               ),
-              for (var i = 0; i < difensori.length; i++)
-                teamListPlayer(
-                  context,
-                  isWide,
-                  screenWidth,
-                  screenHeight,
-                  difensori[i],
+              // Lista giocatori
+              Expanded(
+                child: ListView(
+                  children: [
+                    if (isPrimaSquadra) ...[
+                      teamListHeader(
+                        context,
+                        isWide,
+                        screenWidth,
+                        screenHeight,
+                        'Allenatore',
+                      ),
+                      for (var i = 0; i < allenatori.length; i++)
+                        teamListPlayer(
+                          context,
+                          isWide,
+                          screenWidth,
+                          screenHeight,
+                          allenatori[i],
+                        ),
+                    ],
+                    teamListHeader(
+                      context,
+                      isWide,
+                      screenWidth,
+                      screenHeight,
+                      'Portieri',
+                    ),
+                    for (var i = 0; i < portieri.length; i++)
+                      teamListPlayer(
+                        context,
+                        isWide,
+                        screenWidth,
+                        screenHeight,
+                        portieri[i],
+                      ),
+                    teamListHeader(
+                      context,
+                      isWide,
+                      screenWidth,
+                      screenHeight,
+                      'Difensori',
+                    ),
+                    for (var i = 0; i < difensori.length; i++)
+                      teamListPlayer(
+                        context,
+                        isWide,
+                        screenWidth,
+                        screenHeight,
+                        difensori[i],
+                      ),
+                    teamListHeader(
+                      context,
+                      isWide,
+                      screenWidth,
+                      screenHeight,
+                      'Centrocampisti',
+                    ),
+                    for (var i = 0; i < centrocampisti.length; i++)
+                      teamListPlayer(
+                        context,
+                        isWide,
+                        screenWidth,
+                        screenHeight,
+                        centrocampisti[i],
+                      ),
+                    teamListHeader(
+                      context,
+                      isWide,
+                      screenWidth,
+                      screenHeight,
+                      'Attaccanti',
+                    ),
+                    for (var i = 0; i < attaccanti.length; i++)
+                      teamListPlayer(
+                        context,
+                        isWide,
+                        screenWidth,
+                        screenHeight,
+                        attaccanti[i],
+                      ),
+                  ],
                 ),
-              teamListHeader(
-                context,
-                isWide,
-                screenWidth,
-                screenHeight,
-                'Centrocampisti',
               ),
-              for (var i = 0; i < centrocampisti.length; i++)
-                teamListPlayer(
-                  context,
-                  isWide,
-                  screenWidth,
-                  screenHeight,
-                  centrocampisti[i],
-                ),
-              teamListHeader(
-                context,
-                isWide,
-                screenWidth,
-                screenHeight,
-                'Attaccanti',
-              ),
-              for (var i = 0; i < attaccanti.length; i++)
-                teamListPlayer(
-                  context,
-                  isWide,
-                  screenWidth,
-                  screenHeight,
-                  attaccanti[i],
-                ),
             ],
           );
   }
@@ -1184,25 +1276,30 @@ class _SquadrePageState extends State<SquadrePage> {
   ) {
     List<Giocatore> portieri = giocatori
         .where(
-          (giocatore) => giocatore.ruolo == 'Portiere' && giocatore.numero > 21,
+          (giocatore) =>
+              giocatore.ruolo == 'Portiere' &&
+              _getNumeroGiocatore(giocatore) > 21,
         )
         .toList();
     List<Giocatore> difensori = giocatori
         .where(
           (giocatore) =>
-              giocatore.ruolo == 'Difensore' && giocatore.numero > 21,
+              giocatore.ruolo == 'Difensore' &&
+              _getNumeroGiocatore(giocatore) > 21,
         )
         .toList();
     List<Giocatore> centrocampisti = giocatori
         .where(
           (giocatore) =>
-              giocatore.ruolo == 'Centrocampista' && giocatore.numero > 21,
+              giocatore.ruolo == 'Centrocampista' &&
+              _getNumeroGiocatore(giocatore) > 21,
         )
         .toList();
     List<Giocatore> attaccanti = giocatori
         .where(
           (giocatore) =>
-              giocatore.ruolo == 'Attaccante' && giocatore.numero > 21,
+              giocatore.ruolo == 'Attaccante' &&
+              _getNumeroGiocatore(giocatore) > 21,
         )
         .toList();
     return _isLoadingGiocatori
@@ -1366,10 +1463,12 @@ class _SquadrePageState extends State<SquadrePage> {
                       'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_1.png',
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) =>
-                          _buildJerseyPlaceholder(giocatore.numero),
+                          _buildJerseyPlaceholder(
+                            _getNumeroGiocatore(giocatore),
+                          ),
                     ),
                     Text(
-                      '${giocatore.numero}',
+                      '${_getNumeroGiocatore(giocatore)}',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -1425,6 +1524,7 @@ class _SquadrePageState extends State<SquadrePage> {
                   orElse: () => Carriera(
                     campionato: widget.campionato,
                     idSquadra: widget.squadra.id,
+                    numero: 0,
                     gol: 0,
                     presenze: 0,
                     espulsioni: 0,
@@ -1636,7 +1736,7 @@ class _SquadrePageState extends State<SquadrePage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
-              '${giocatore.numero}',
+              '${_getNumeroGiocatore(giocatore)}',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -2011,7 +2111,6 @@ class _SquadrePageState extends State<SquadrePage> {
     final allenatoraAggiornato = Giocatore(
       id: allenatore.id,
       nome: allenatore.nome,
-      numero: allenatore.numero,
       eta: allenatore.eta,
       ruolo: allenatore.ruolo,
       nazione: allenatore.nazione,
@@ -2065,6 +2164,7 @@ class _SquadrePageState extends State<SquadrePage> {
           orElse: () => Carriera(
             campionato: widget.campionato,
             idSquadra: widget.squadra.id,
+            numero: 0,
             gol: 0,
             presenze: 0,
             espulsioni: 0,
@@ -2111,7 +2211,6 @@ class _SquadrePageState extends State<SquadrePage> {
                             orElse: () => Giocatore(
                               id: titolare.idGiocatore,
                               nome: titolare.nome,
-                              numero: 0,
                               eta: 0,
                               ruolo: '',
                               nazione: '',
@@ -2124,7 +2223,7 @@ class _SquadrePageState extends State<SquadrePage> {
                             title: Row(
                               children: [
                                 Text(
-                                  '${giocatore.numero}',
+                                  '${_getNumeroGiocatore(giocatore)}',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: getColor('primary', forText: true),
@@ -2218,6 +2317,259 @@ class _SquadrePageState extends State<SquadrePage> {
                       }
                     } else {
                       Navigator.of(context).pop();
+                    }
+                  },
+                  child: Text('Salva'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _mostraDialogAssegnaNumeri() async {
+    final giocatoriProvider = Provider.of<GiocatoriProvider>(
+      context,
+      listen: false,
+    );
+
+    // Lista dei giocatori (escludendo Allenatore)
+    List<Giocatore> giocatoriNonAllenatori =
+        giocatori.where((g) => g.ruolo != 'Allenatore').toList()..sort((a, b) {
+          // Ottieni il numero dalla carriera per il campionato corrente
+          final numeroA = a.carriera
+              .firstWhere(
+                (c) =>
+                    c.campionato == widget.campionato &&
+                    c.idSquadra == widget.squadra.id,
+                orElse: () => Carriera(
+                  campionato: widget.campionato,
+                  idSquadra: widget.squadra.id,
+                  numero: 0,
+                  gol: 0,
+                  presenze: 0,
+                  espulsioni: 0,
+                ),
+              )
+              .numero;
+          final numeroB = b.carriera
+              .firstWhere(
+                (c) =>
+                    c.campionato == widget.campionato &&
+                    c.idSquadra == widget.squadra.id,
+                orElse: () => Carriera(
+                  campionato: widget.campionato,
+                  idSquadra: widget.squadra.id,
+                  numero: 0,
+                  gol: 0,
+                  presenze: 0,
+                  espulsioni: 0,
+                ),
+              )
+              .numero;
+          return numeroA.compareTo(numeroB);
+        });
+
+    // Crea una mappa dei controller per ogni giocatore
+    Map<String, TextEditingController> controllers = {};
+
+    // Inizializza i controller con i valori dal database
+    for (var giocatore in giocatoriNonAllenatori) {
+      final carrieraAttuale = giocatore.carriera.firstWhere(
+        (c) =>
+            c.campionato == widget.campionato &&
+            c.idSquadra == widget.squadra.id,
+        orElse: () => Carriera(
+          campionato: widget.campionato,
+          idSquadra: widget.squadra.id,
+          numero: 0,
+          gol: 0,
+          presenze: 0,
+          espulsioni: 0,
+        ),
+      );
+      controllers[giocatore.id] = TextEditingController(
+        text: carrieraAttuale.numero.toString(),
+      );
+    }
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text(
+                'Assegna numeri',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 500,
+                child: giocatoriNonAllenatori.isEmpty
+                    ? Center(
+                        child: Text(
+                          'Nessun giocatore disponibile.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 14, color: Colors.grey),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: giocatoriNonAllenatori.length,
+                        itemBuilder: (context, index) {
+                          final giocatore = giocatoriNonAllenatori[index];
+                          final controller = controllers[giocatore.id]!;
+
+                          return Card(
+                            margin: EdgeInsets.symmetric(
+                              vertical: 4,
+                              horizontal: 8,
+                            ),
+                            child: ListTile(
+                              leading: SizedBox(
+                                width: 60,
+                                child: TextFormField(
+                                  controller: controller,
+                                  keyboardType: TextInputType.number,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: getColor('primary', forText: true),
+                                    fontSize: 16,
+                                  ),
+                                  decoration: InputDecoration(
+                                    border: OutlineInputBorder(),
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 8,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              title: Text(
+                                CommonService.decodePlayerName(giocatore.nome),
+                                style: TextStyle(fontSize: 14),
+                              ),
+                              subtitle: Text(
+                                giocatore.ruolo,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    // Dispose dei controller prima di chiudere
+                    for (var controller in controllers.values) {
+                      controller.dispose();
+                    }
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('Annulla', style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: getColor('primary'),
+                    foregroundColor:
+                        widget.squadra.colori.isNotEmpty &&
+                            (widget.squadra.colori[0].toLowerCase() ==
+                                    'bianco' ||
+                                widget.squadra.colori[0].toLowerCase() ==
+                                    'giallo') &&
+                            widget.squadra.colori.length > 1
+                        ? getColor('secondary')
+                        : Colors.white,
+                  ),
+                  onPressed: () async {
+                    // Raccogli tutti i numeri dai controller
+                    Map<String, int> numeriDaSalvare = {};
+
+                    for (var giocatore in giocatoriNonAllenatori) {
+                      final controller = controllers[giocatore.id]!;
+                      final numeroInserito = int.tryParse(controller.text);
+
+                      if (numeroInserito != null && numeroInserito > 0) {
+                        // Ottieni il numero attuale dal database
+                        final carrieraAttuale = giocatore.carriera.firstWhere(
+                          (c) =>
+                              c.campionato == widget.campionato &&
+                              c.idSquadra == widget.squadra.id,
+                          orElse: () => Carriera(
+                            campionato: widget.campionato,
+                            idSquadra: widget.squadra.id,
+                            numero: 0,
+                            gol: 0,
+                            presenze: 0,
+                            espulsioni: 0,
+                          ),
+                        );
+
+                        // Salva solo se il numero è cambiato
+                        if (numeroInserito != carrieraAttuale.numero) {
+                          numeriDaSalvare[giocatore.id] = numeroInserito;
+                        }
+                      }
+                    }
+
+                    // Dispose dei controller
+                    for (var controller in controllers.values) {
+                      controller.dispose();
+                    }
+
+                    if (numeriDaSalvare.isNotEmpty) {
+                      bool allSuccess = true;
+
+                      // Aggiorna tutti i numeri modificati
+                      for (var entry in numeriDaSalvare.entries) {
+                        bool success = await giocatoriProvider
+                            .aggiornaNumeroGiocatore(
+                              widget.campionato,
+                              entry.key,
+                              entry.value,
+                            );
+                        if (!success) {
+                          allSuccess = false;
+                        }
+                      }
+
+                      Navigator.of(context).pop();
+
+                      if (!mounted) return;
+
+                      if (allSuccess) {
+                        await _loadGiocatori();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Numeri aggiornati con successo'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Errore nell\'aggiornamento di alcuni numeri',
+                            ),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    } else {
+                      Navigator.of(context).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Nessuna modifica da salvare'),
+                          backgroundColor: Colors.grey[700],
+                        ),
+                      );
                     }
                   },
                   child: Text('Salva'),

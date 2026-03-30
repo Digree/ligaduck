@@ -14,6 +14,7 @@ import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/service/partiteProvider.dart';
 import 'package:ligaduck/app/service/squadreProvider.dart';
 import 'package:ligaduck/app/squadre/inserisciSquadraPage.dart';
+import 'package:ligaduck/app/campionato/searchPage.dart';
 import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
@@ -140,6 +141,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blueAccent,
+        centerTitle: true,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
@@ -161,6 +163,18 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
                 _showAddSquadraModal(context);
               },
             ),
+          IconButton(
+            icon: Icon(Icons.search, color: Colors.white),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      SearchPage(campionato: widget.campionato),
+                ),
+              );
+            },
+          ),
           SettingsIcon(
             iconColor: Colors.white,
             onDismiss: () {

@@ -64,7 +64,9 @@ class _ListaSquadreStateWidget extends State<_ListaSquadreState> {
                   child: DropdownButton<String>(
                     value: _selectedCampionato,
                     underline: SizedBox(),
-                    items: ['Paperi', 'Estero'].map((String value) {
+                    items: ['Paperi', 'Europa', 'Resto del Mondo'].map((
+                      String value,
+                    ) {
                       return DropdownMenuItem<String>(
                         value: value,
                         child: Text(value),
@@ -84,7 +86,12 @@ class _ListaSquadreStateWidget extends State<_ListaSquadreState> {
           ),
           _selectedCampionato == 'Paperi'
               ? _buildPaperiTabs(widget.model, isWide, screenHeight)
-              : _buildEsteroTabs(widget.model, isWide, screenHeight),
+              : _buildEsteroTabs(
+                  widget.model,
+                  isWide,
+                  screenHeight,
+                  _selectedCampionato,
+                ),
         ],
       ),
     );
@@ -143,44 +150,86 @@ class _ListaSquadreStateWidget extends State<_ListaSquadreState> {
     ListaSquadreModel model,
     bool isWide,
     double screenHeight,
+    String categoria,
   ) {
-    final nazioni = [
-      'Austria',
-      'Belgio',
-      'Bulgaria',
-      'Cipro',
-      'Croazia',
-      'Danimarca',
-      'Estonia',
-      'Finlandia',
-      'Francia',
-      'Georgia',
-      'Germania',
-      'Grecia',
-      'Inghilterra',
-      'Irlanda',
-      'Islanda',
-      'Israele',
-      'Lussemburgo',
-      'Malta',
-      'Norvegia',
-      'Olanda',
-      'Polonia',
-      'Portogallo',
-      'Repubblica Ceca',
-      'Romania',
-      'Russia',
-      'Scozia',
-      'Serbia',
-      'Slovacchia',
-      'Slovenia',
-      'Spagna',
-      'Svezia',
-      'Svizzera',
-      'Turchia',
-      'Ucraina',
-      'Ungheria',
-    ];
+    final List<String> nazioni;
+    if (categoria == 'Europa') {
+      nazioni = [
+        'Austria',
+        'Belgio',
+        'Bulgaria',
+        'Cipro',
+        'Croazia',
+        'Danimarca',
+        'Estonia',
+        'Finlandia',
+        'Francia',
+        'Georgia',
+        'Germania',
+        'Grecia',
+        'Inghilterra',
+        'Irlanda',
+        'Islanda',
+        'Israele',
+        'Lussemburgo',
+        'Malta',
+        'Norvegia',
+        'Olanda',
+        'Polonia',
+        'Portogallo',
+        'Repubblica Ceca',
+        'Romania',
+        'Russia',
+        'Scozia',
+        'Serbia',
+        'Slovacchia',
+        'Slovenia',
+        'Spagna',
+        'Svezia',
+        'Svizzera',
+        'Turchia',
+        'Ucraina',
+        'Ungheria',
+      ];
+    } else if (categoria == 'Resto del Mondo') {
+      nazioni = [
+        'Argentina',
+        'Australia',
+        'Brasile',
+        'Uruguay',
+        'Cile',
+        'Colombia',
+        'Perù',
+        'Venezuela',
+        'Ecuador',
+        'Paraguay',
+        'Bolivia',
+        'Costa Rica',
+        'Panama',
+        'Giamaica',
+        'Honduras',
+        'El Salvador',
+        'Nicaragua',
+        'Cuba',
+        'Repubblica Dominicana',
+        'Haiti',
+        'Giappone',
+        'Corea del Sud',
+        'Stati Uniti',
+        'Canada',
+        'Messico',
+        'Cina',
+        'India',
+        'Sudafrica',
+        'Nigeria',
+        'Egitto',
+        'Marocco',
+      ];
+    } else {
+      nazioni = [];
+    }
+
+    nazioni.sort();
 
     return DefaultTabController(
       length: nazioni.length,
