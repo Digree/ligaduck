@@ -28,6 +28,7 @@ import 'package:provider/provider.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
 import 'package:ligaduck/app/widgets/settingsIcon.dart';
 import 'package:ligaduck/app/widgets/fireworks.dart';
+import 'package:ligaduck/main.dart' show routeObserver;
 
 class CompetizioneHomePage extends StatefulWidget {
   final String title;
@@ -46,7 +47,7 @@ class CompetizioneHomePage extends StatefulWidget {
 }
 
 class _CompetizioneHomePageState extends State<CompetizioneHomePage>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, RouteAware {
   String? selectedGiornata;
   bool? giornataChiusa;
   List<Giornata> giornate = [];
@@ -84,9 +85,32 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Registra questa route con il RouteObserver
+    routeObserver.subscribe(this, ModalRoute.of(context)! as PageRoute);
+  }
+
+  @override
   void dispose() {
+    routeObserver.unsubscribe(this);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    // Chiamato quando si torna a questa pagina da una route successiva (con swipe o back button)
+    // Ricarica i dati
+    _refreshData();
+  }
+
+  void _refreshData() {
+    setState(() {
+      _invalidateCacheKey++;
+    });
+    _caricaGiornate();
+    _caricaClassifica();
   }
 
   @override
@@ -1627,14 +1651,16 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       if (giornata?.statistiche!.rigoriSbagliati.isEmpty ?? true) {
         return Center(child: Text('Nessun rigore sbagliato disponibile'));
       } else {
+        final sortedRigSb = List<Malus>.from(
+          giornata!.statistiche!.rigoriSbagliati,
+        )..sort((a, b) => b.quantita.compareTo(a.quantita));
         return Column(
           children: [
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    for (var rigoreSbagliato
-                        in giornata!.statistiche!.rigoriSbagliati.take(3))
+                    for (var rigoreSbagliato in sortedRigSb.take(3))
                       FutureBuilder<Squadra>(
                         future: getSquadra(
                           Provider.of<SquadreProvider>(context, listen: false),
@@ -1893,7 +1919,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     }
 
     if (giornata?.statistiche != null) {
-      giornata?.statistiche!.marcatori.sort(
+      giornata?.statistiche!.golAnnullati.sort(
         (a, b) => b.quantita.compareTo(a.quantita),
       );
       if (giornata?.statistiche!.golAnnullati.isEmpty ?? true) {

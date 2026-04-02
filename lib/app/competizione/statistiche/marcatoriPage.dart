@@ -25,6 +25,9 @@ class MarcatoriPage extends StatefulWidget {
 
 class _MarcatoriPageState extends State<MarcatoriPage> {
   late final Future<List<Squadra>> _squadreFuture;
+  List<Marcatura> _displayedMarcatori = [];
+  Map<int, String> _squadreMap = {};
+  String _sortBy = 'Quantità';
 
   @override
   void initState() {
@@ -34,6 +37,30 @@ class _MarcatoriPageState extends State<MarcatoriPage> {
       listen: false,
     );
     _squadreFuture = squadreProvider.fetchSquadre(widget.campionato);
+    _displayedMarcatori = List.from(widget.marcatori);
+    _loadSquadreAndSort();
+  }
+
+  Future<void> _loadSquadreAndSort() async {
+    final squadre = await _squadreFuture;
+    _squadreMap = {for (var s in squadre) s.id: s.nome};
+    _sortMarcatori();
+  }
+
+  void _sortMarcatori() {
+    setState(() {
+      if (_sortBy == 'Quantità') {
+        _displayedMarcatori.sort((a, b) => b.quantita.compareTo(a.quantita));
+      } else if (_sortBy == 'Nome') {
+        _displayedMarcatori.sort((a, b) => a.nome.compareTo(b.nome));
+      } else if (_sortBy == 'Squadra') {
+        _displayedMarcatori.sort((a, b) {
+          final nomeA = _squadreMap[a.idSquadra] ?? '';
+          final nomeB = _squadreMap[b.idSquadra] ?? '';
+          return nomeA.compareTo(nomeB);
+        });
+      }
+    });
   }
 
   Color _parseColor(String colorString) {
@@ -161,11 +188,41 @@ class _MarcatoriPageState extends State<MarcatoriPage> {
       body: Column(
         children: [
           buildHeader(context),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  'Ordina per:',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                SizedBox(width: 8),
+                DropdownButton<String>(
+                  value: _sortBy,
+                  items: ['Quantità', 'Nome', 'Squadra'].map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      setState(() {
+                        _sortBy = newValue;
+                        _sortMarcatori();
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
           Expanded(
             child: ListView.builder(
-              itemCount: widget.marcatori.length,
+              itemCount: _displayedMarcatori.length,
               itemBuilder: (context, index) {
-                final marcatore = widget.marcatori[index];
+                final marcatore = _displayedMarcatori[index];
                 return FutureBuilder<Squadra>(
                   future: getSquadra(
                     Provider.of<SquadreProvider>(context, listen: false),

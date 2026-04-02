@@ -258,4 +258,45 @@ class GiocatoriProvider with ChangeNotifier {
       return [];
     }
   }
+
+  Future<List<Giocatore>> fetchGiocatoriByNome(
+    String campionato,
+    String nome,
+    String? ruolo,
+    String? nazione,
+  ) async {
+    try {
+      Map<String, String> queryParams = {};
+      if (ruolo != null && ruolo.isNotEmpty) {
+        queryParams['ruolo'] = ruolo;
+      }
+      if (nazione != null && nazione.isNotEmpty) {
+        queryParams['nazione'] = nazione;
+      }
+
+      final uri = Uri.parse(
+        '${Env.apiUrl}/$campionato/giocatori/nome/$nome',
+      ).replace(queryParameters: queryParams);
+
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        _giocatori = data.map((item) => Giocatore.fromJson(item)).toList();
+
+        for (var giocatore in _giocatori) {
+          giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
+        }
+
+        notifyListeners();
+        return _giocatori;
+      } else {
+        throw Exception('Errore nel caricamento: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Tipo errore: ${e.runtimeType}');
+      print('Dettaglio errore: $e');
+      return [];
+    }
+  }
 }

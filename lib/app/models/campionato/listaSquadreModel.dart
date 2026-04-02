@@ -224,6 +224,8 @@ class _ListaSquadreStateWidget extends State<_ListaSquadreState> {
         'Nigeria',
         'Egitto',
         'Marocco',
+        'Arabia Saudita',
+        'Nuova Zelanda',
       ];
     } else {
       nazioni = [];

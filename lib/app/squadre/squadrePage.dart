@@ -1758,7 +1758,7 @@ class _SquadrePageState extends State<SquadrePage> {
                     ),
                   ),
                   Text(
-                    '${giocatore.eta} anni • ${giocatore.nazione}',
+                    '${giocatore.eta} anni • ${CommonService.decodePlayerName(giocatore.nazione)}',
                     style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
                 ],

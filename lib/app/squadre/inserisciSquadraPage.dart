@@ -103,12 +103,16 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
     'Nigeria',
     'Egitto',
     'Marocco',
+    'Arabia Saudita',
+    'Nuova Zelanda',
   ];
 
   List<String> get _categorieCorrente {
     if (_campionatoSelezionato == 'Europa') {
+      _nazioniEuropa.sort();
       return _nazioniEuropa;
     } else if (_campionatoSelezionato == 'Resto del Mondo') {
+      _nazioniRestoMondo.sort();
       return _nazioniRestoMondo;
     } else {
       return _categorie;

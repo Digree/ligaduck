@@ -25,6 +25,9 @@ class GolAnnullatiPage extends StatefulWidget {
 
 class _GolAnnullatiPageState extends State<GolAnnullatiPage> {
   late final Future<List<Squadra>> _squadreFuture;
+  List<Malus> _displayedGolAnnullati = [];
+  Map<int, String> _squadreMap = {};
+  String _sortBy = 'Quantità';
 
   @override
   void initState() {
@@ -34,6 +37,30 @@ class _GolAnnullatiPageState extends State<GolAnnullatiPage> {
       listen: false,
     );
     _squadreFuture = squadreProvider.fetchSquadre(widget.campionato);
+    _displayedGolAnnullati = List.from(widget.golAnnullati);
+    _loadSquadreAndSort();
+  }
+
+  Future<void> _loadSquadreAndSort() async {
+    final squadre = await _squadreFuture;
+    _squadreMap = {for (var s in squadre) s.id: s.nome};
+    _sortGolAnnullati();
+  }
+
+  void _sortGolAnnullati() {
+    setState(() {
+      if (_sortBy == 'Quantità') {
+        _displayedGolAnnullati.sort((a, b) => b.quantita.compareTo(a.quantita));
+      } else if (_sortBy == 'Nome') {
+        _displayedGolAnnullati.sort((a, b) => a.nome.compareTo(b.nome));
+      } else if (_sortBy == 'Squadra') {
+        _displayedGolAnnullati.sort((a, b) {
+          final nomeA = _squadreMap[a.idSquadra] ?? '';
+          final nomeB = _squadreMap[b.idSquadra] ?? '';
+          return nomeA.compareTo(nomeB);
+        });
+      }
+    });
   }
 
   Color _parseColor(String colorString) {
@@ -160,11 +187,41 @@ class _GolAnnullatiPageState extends State<GolAnnullatiPage> {
       ),
       body: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  'Ordina per:',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                SizedBox(width: 8),
+                DropdownButton<String>(
+                  value: _sortBy,
+                  items: ['Quantità', 'Nome', 'Squadra'].map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      setState(() {
+                        _sortBy = newValue;
+                        _sortGolAnnullati();
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
           Expanded(
             child: ListView.builder(
-              itemCount: widget.golAnnullati.length,
+              itemCount: _displayedGolAnnullati.length,
               itemBuilder: (context, index) {
-                final golAnnullato = widget.golAnnullati[index];
+                final golAnnullato = _displayedGolAnnullati[index];
                 return FutureBuilder<Squadra>(
                   future: getSquadra(
                     Provider.of<SquadreProvider>(context, listen: false),

@@ -109,6 +109,20 @@ class Country {
       commonName = json['translations']['ita']['common'] ?? commonName;
     }
 
+    // Normalizza i nomi delle nazioni per usare versioni più comuni
+    final Map<String, String> nameNormalization = {
+      'Paesi Bassi': 'Olanda',
+      'Stati Uniti d\'America': 'Stati Uniti',
+      'Macedonia del Nord': 'Macedonia',
+      'Bosnia ed Erzegovina': 'Bosnia',
+      'Regno Unito': 'Inghilterra',
+    };
+
+    // Applica la normalizzazione se il nome è nella mappa
+    if (nameNormalization.containsKey(commonName)) {
+      commonName = nameNormalization[commonName]!;
+    }
+
     // Estrazione bandiera
     String flagUrl = '';
     String flagEmoji = json['flag'] ?? '';

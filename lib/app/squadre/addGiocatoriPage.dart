@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:ligaduck/app/models/country.dart';
 import 'package:ligaduck/app/service/countryService.dart';
 import 'package:ligaduck/app/service/giocatoriProvider.dart';
+import 'package:ligaduck/services/commonService.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:mongo_dart/mongo_dart.dart' as mongo;
@@ -394,7 +395,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
                             child: SizedBox(
                               width: double.infinity,
                               child: Text(
-                                nazione,
+                                CommonService.decodePlayerName(nazione),
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: 1,
                               ),
@@ -634,7 +635,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
                               return ListTile(
                                 title: Text(giocatore.nome),
                                 subtitle: Text(
-                                  '${giocatore.ruolo} - ${giocatore.nazione}',
+                                  '${giocatore.ruolo} - ${CommonService.decodePlayerName(giocatore.nazione)}',
                                 ),
                                 onTap: () {
                                   setState(() {
@@ -808,8 +809,10 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
       }
 
       setState(() {
-        // Estrai solo i nomi (già in italiano)
-        _nazioni = countries.map((c) => c.commonName).toList();
+        // Estrai solo i nomi (già in italiano) e decodificali
+        _nazioni = countries
+            .map((c) => CommonService.decodePlayerName(c.commonName))
+            .toList();
         _nazioni.sort();
         if (!_nazioni.contains(_nazioneSelezionata)) {
           _nazioneSelezionata = _nazioni.isNotEmpty ? _nazioni.first : 'Italia';

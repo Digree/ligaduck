@@ -154,9 +154,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
         ),
         title: Text(widget.title, style: TextStyle(color: Colors.white)),
         actions: [
-          if (admin &&
-              ((isWide && _selectedIndex == 0) ||
-                  (!isWide && _selectedIndex == 1)))
+          if (admin && (_selectedIndex == 0 || _selectedIndex == 1))
             IconButton(
               icon: Icon(Icons.add, color: Colors.white),
               onPressed: () {

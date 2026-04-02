@@ -9,6 +9,9 @@ import 'package:ligaduck/app/service/squadreProvider.dart';
 import 'package:ligaduck/app/service/giocatoriProvider.dart';
 import 'package:provider/provider.dart';
 
+// RouteObserver globale per rilevare quando si torna a una route
+final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
+
 void main() => runApp(
   MultiProvider(
     providers: [
@@ -34,6 +37,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorObservers: [routeObserver],
       home: FutureBuilder(
         future: configs(context),
         builder: (context, snapshot) {
