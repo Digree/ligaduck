@@ -868,8 +868,7 @@ class _SquadrePageState extends State<SquadrePage> {
           child: Column(
             children: [
               TabBar(
-                isScrollable: !isWide,
-                tabAlignment: isWide ? null : TabAlignment.start,
+                tabAlignment: TabAlignment.fill,
                 padding: EdgeInsets.zero,
                 labelColor: getColor('primary', forText: true),
                 unselectedLabelColor: Colors.grey,
@@ -923,6 +922,7 @@ class _SquadrePageState extends State<SquadrePage> {
       child: Column(
         children: [
           TabBar(
+            tabAlignment: TabAlignment.fill,
             labelColor: getColor('primary', forText: true),
             unselectedLabelColor: Colors.grey,
             indicatorColor: getColor('primary', forText: true),
@@ -1783,8 +1783,9 @@ class _SquadrePageState extends State<SquadrePage> {
       'bianco': Colors.white,
       'grigio': Colors.grey,
       'fucsia': Colors.pink[700]!,
+      'rosa': Color.fromARGB(255, 255, 147, 183),
       'ciano': Colors.lightBlue[300]!,
-      'marrone': Colors.brown[900]!,
+      'marrone': Color.fromARGB(255, 122, 54, 34),
     };
 
     if (type.contains('primary')) {
@@ -2828,8 +2829,9 @@ class _SquadrePageState extends State<SquadrePage> {
       'bianco': Colors.white,
       'grigio': Colors.grey,
       'fucsia': Colors.pink[700]!,
+      'rosa': Color.fromARGB(255, 255, 147, 183),
       'ciano': Colors.lightBlue[300]!,
-      'marrone': Colors.brown[900]!,
+      'marrone': Color.fromARGB(255, 122, 54, 34),
     };
 
     for (var c in colori) {

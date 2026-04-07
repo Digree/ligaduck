@@ -171,6 +171,7 @@ class _ListaSquadreStateWidget extends State<_ListaSquadreState> {
         'Irlanda',
         'Islanda',
         'Israele',
+        'Kosovo',
         'Lussemburgo',
         'Malta',
         'Norvegia',
@@ -224,7 +225,10 @@ class _ListaSquadreStateWidget extends State<_ListaSquadreState> {
         'Nigeria',
         'Egitto',
         'Marocco',
+        'Tunisia',
         'Arabia Saudita',
+        'Emirati Arabi Uniti',
+        'Filippine',
         'Nuova Zelanda',
       ];
     } else {

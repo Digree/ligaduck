@@ -233,6 +233,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     pos: g.pos,
                     nome: g.nome,
                     inCampo: g.inCampo,
+                    capitano: g.capitano,
                   ),
                 )
                 .toList(),
@@ -247,6 +248,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     pos: g.pos,
                     nome: g.nome,
                     inCampo: g.inCampo,
+                    capitano: g.capitano,
                   ),
                 )
                 .toList(),
@@ -296,6 +298,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     pos: g.pos,
                     nome: g.nome,
                     inCampo: g.inCampo,
+                    capitano: g.capitano,
                   ),
                 )
                 .toList(),
@@ -310,6 +313,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     pos: g.pos,
                     nome: g.nome,
                     inCampo: g.inCampo,
+                    capitano: g.capitano,
                   ),
                 )
                 .toList(),
@@ -5235,8 +5239,9 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             'bianco': Colors.white,
             'grigio': Colors.grey,
             'fucsia': Colors.pink[700]!,
+            'rosa': Color.fromARGB(255, 255, 147, 183),
             'ciano': Colors.lightBlue[300]!,
-            'marrone': Colors.brown[900]!,
+            'marrone': Color.fromARGB(255, 122, 54, 34),
           };
 
           for (var c in squadra.colori) {
@@ -5810,8 +5815,9 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                           'bianco': Colors.white,
                           'grigio': Colors.grey,
                           'fucsia': Colors.pink[700]!,
+                          'rosa': Color.fromARGB(255, 255, 147, 183),
                           'ciano': Colors.lightBlue[300]!,
-                          'marrone': Colors.brown[900]!,
+                          'marrone': Color.fromARGB(255, 122, 54, 34),
                         };
 
                         for (var c in snapshot.data!) {

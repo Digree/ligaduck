@@ -28,6 +28,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
   final List<Competizione> _competizioniSelezionate = [];
   List<Competizione> _competizioniDisponibili = [];
   List<String> _anniTrofei = [];
+  bool _isSaving = false;
 
   final List<String> _campionati = ['Paperi', 'Europa', 'Resto del Mondo'];
 
@@ -50,6 +51,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
     'Irlanda',
     'Islanda',
     'Israele',
+    'Kosovo',
     'Lussemburgo',
     'Malta',
     'Norvegia',
@@ -103,7 +105,10 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
     'Nigeria',
     'Egitto',
     'Marocco',
+    'Tunisia',
     'Arabia Saudita',
+    'Emirati Arabi Uniti',
+    'Filippine',
     'Nuova Zelanda',
   ];
 
@@ -131,6 +136,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
     'bianco',
     'grigio',
     'fucsia',
+    'rosa',
     'ciano',
     'marrone',
   ];
@@ -183,6 +189,10 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
   }
 
   Future<void> _salvaSquadra() async {
+    setState(() {
+      _isSaving = true;
+    });
+
     final provider = Provider.of<SquadreProvider>(context, listen: false);
 
     final squadra = Squadra(
@@ -233,6 +243,9 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
         }
       } else {
         if (mounted) {
+          setState(() {
+            _isSaving = false;
+          });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Errore nel salvataggio della squadra'),
@@ -244,6 +257,9 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
       }
     } catch (e) {
       if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Errore: ${e.toString()}'),
@@ -371,8 +387,9 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
       'bianco': Colors.white,
       'grigio': Colors.grey,
       'fucsia': Colors.pink[700]!,
+      'rosa': Color.fromARGB(255, 255, 147, 183),
       'ciano': Colors.lightBlue[300]!,
-      'marrone': Colors.brown[900]!,
+      'marrone': Color.fromARGB(255, 122, 54, 34),
     };
     return colorMap[colorName] ?? Colors.grey;
   }
@@ -993,12 +1010,31 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
                   ],
                   _buildCompetizioniField(),
                   SizedBox(height: 32),
+                  if (_isSaving)
+                    Center(
+                      child: Column(
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text(
+                            'Salvataggio in corso...',
+                            style: TextStyle(
+                              color: Colors.blueAccent,
+                              fontSize: 16,
+                            ),
+                          ),
+                          SizedBox(height: 16),
+                        ],
+                      ),
+                    ),
                   ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        _salvaSquadra();
-                      }
-                    },
+                    onPressed: _isSaving
+                        ? null
+                        : () {
+                            if (_formKey.currentState!.validate()) {
+                              _salvaSquadra();
+                            }
+                          },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blueAccent,
                       foregroundColor: Colors.white,

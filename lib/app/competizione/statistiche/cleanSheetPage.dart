@@ -76,8 +76,9 @@ class _CleanSheetPageState extends State<CleanSheetPage> {
       'bianco': Colors.white,
       'grigio': Colors.grey,
       'fucsia': Colors.pink[700]!,
+      'rosa': Color.fromARGB(255, 255, 147, 183),
       'ciano': Colors.lightBlue[300]!,
-      'marrone': Colors.brown[900]!,
+      'marrone': Color.fromARGB(255, 122, 54, 34),
     };
 
     try {

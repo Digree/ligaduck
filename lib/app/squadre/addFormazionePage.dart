@@ -285,9 +285,14 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
       List<Giocatore> giocatoriSenzaAllenatore = widget.giocatori
           .where((giocatore) => giocatore.ruolo != 'Allenatore')
           .toList();
-      Giocatore allenatore = widget.giocatori.firstWhere(
-        (giocatore) => giocatore.ruolo == 'Allenatore',
-      );
+      Giocatore? allenatore;
+      try {
+        allenatore = widget.giocatori.firstWhere(
+          (giocatore) => giocatore.ruolo == 'Allenatore',
+        );
+      } catch (e) {
+        allenatore = null;
+      }
       for (var g in giocatoriSenzaAllenatore) {
         // Giocatori con numero > 21 vanno direttamente nei non convocati
         if (_getNumeroGiocatore(g) > 21) {
@@ -323,7 +328,7 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
           );
         }
       }
-      widget.squadra.formazione.allenatore = allenatore.nome;
+      widget.squadra.formazione.allenatore = allenatore?.nome ?? 'N/D';
 
       // Ordina i non convocati per numero di maglia
       widget.squadra.formazione.nonConvocati.sort(
@@ -338,10 +343,15 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
       _nonConvocati = List.from(widget.squadra.formazione.nonConvocati);
     }
 
-    Giocatore allenatore = widget.giocatori.firstWhere(
-      (giocatore) => giocatore.ruolo == 'Allenatore',
-    );
-    widget.squadra.formazione.allenatore = allenatore.nome;
+    Giocatore? allenatore;
+    try {
+      allenatore = widget.giocatori.firstWhere(
+        (giocatore) => giocatore.ruolo == 'Allenatore',
+      );
+    } catch (e) {
+      allenatore = null;
+    }
+    widget.squadra.formazione.allenatore = allenatore?.nome ?? 'N/D';
 
     return Column(
       children: [
@@ -500,8 +510,9 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
       'bianco': Colors.white,
       'grigio': Colors.grey,
       'fucsia': Colors.pink[700]!,
+      'rosa': Color.fromARGB(255, 255, 147, 183),
       'ciano': Colors.lightBlue[300]!,
-      'marrone': Colors.brown[900]!,
+      'marrone': Color.fromARGB(255, 122, 54, 34),
     };
 
     if (type.contains('primary')) {

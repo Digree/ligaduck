@@ -656,7 +656,7 @@ class _SearchPageState extends State<SearchPage> {
                           SizedBox(width: 6),
                           Flexible(
                             child: Text(
-                              squadra.nome,
+                              CommonService.decodePlayerName(squadra.nome),
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.grey[700],

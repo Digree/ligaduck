@@ -165,8 +165,9 @@ class CommonService {
       'bianco': Colors.white,
       'grigio': Colors.grey,
       'fucsia': Colors.pink[700]!,
+      'rosa': Color.fromARGB(255, 255, 147, 183),
       'ciano': Colors.lightBlue[300]!,
-      'marrone': Colors.brown[900]!,
+      'marrone': Color.fromARGB(255, 122, 54, 34),
     };
 
     // Se il colore primario è bianco e siamo in un testo, usa il colore secondario
@@ -207,6 +208,8 @@ class CommonService {
       'olanda': 'nl',
       'belgium': 'be',
       'belgio': 'be',
+      'belarus': 'by',
+      'bielorussia': 'by',
       'austria': 'at',
       'switzerland': 'ch',
       'svizzera': 'ch',
@@ -276,6 +279,12 @@ class CommonService {
       'iran': 'ir',
       'saudi arabia': 'sa',
       'arabia saudita': 'sa',
+      'emirati arabi uniti': 'ae',
+      'united arab emirates': 'ae',
+      'nuova zelanda': 'nz',
+      'new zealand': 'nz',
+      'filippine': 'ph',
+      'philippines': 'ph',
       'czech republic': 'cz',
       'repubblica ceca': 'cz',
       'slovakia': 'sk',
@@ -292,6 +301,7 @@ class CommonService {
       'macedonia': 'mk',
       'albania': 'al',
       'montenegro': 'me',
+      'kosovo': 'xk',
       'finland': 'fi',
       'finlandia': 'fi',
       'estonia': 'ee',
@@ -340,8 +350,9 @@ class CommonService {
       'bianco': Colors.white,
       'grigio': Colors.grey,
       'fucsia': Colors.pink[700]!,
+      'rosa': Color.fromARGB(255, 255, 147, 183),
       'ciano': Colors.lightBlue[300]!,
-      'marrone': Colors.brown[900]!,
+      'marrone': Color.fromARGB(255, 122, 54, 34),
     };
 
     if (type.contains('primary')) {

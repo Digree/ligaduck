@@ -116,6 +116,7 @@ class Country {
       'Macedonia del Nord': 'Macedonia',
       'Bosnia ed Erzegovina': 'Bosnia',
       'Regno Unito': 'Inghilterra',
+      'Cechia': 'Repubblica Ceca',
     };
 
     // Applica la normalizzazione se il nome è nella mappa
