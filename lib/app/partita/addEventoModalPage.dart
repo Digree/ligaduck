@@ -1095,51 +1095,90 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
             ),
           ),
           SizedBox(height: 8),
-          Row(
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
             children: [
-              Expanded(
-                child: RadioListTile<String>(
-                  title: Text('No', style: TextStyle(fontSize: 12)),
-                  value: 'no',
-                  groupValue: tipoGolSelezionato,
-                  activeColor: getColor(),
-                  contentPadding: EdgeInsets.zero,
-                  dense: true,
-                  onChanged: (String? value) {
-                    setState(() {
-                      tipoGolSelezionato = value ?? 'no';
-                    });
-                  },
+              FilterChip(
+                label: Text(
+                  'No',
+                  style: TextStyle(
+                    color: tipoGolSelezionato == 'no'
+                        ? Colors.white
+                        : getColor(),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                selected: tipoGolSelezionato == 'no',
+                onSelected: (bool selected) {
+                  setState(() {
+                    tipoGolSelezionato = 'no';
+                  });
+                },
+                backgroundColor: Colors.white,
+                selectedColor: getColor(),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: BorderSide(
+                    color: tipoGolSelezionato == 'no'
+                        ? getColor()
+                        : getColor().withOpacity(0.3),
+                  ),
                 ),
               ),
-              Expanded(
-                child: RadioListTile<String>(
-                  title: Text('Rig', style: TextStyle(fontSize: 12)),
-                  value: 'rig',
-                  groupValue: tipoGolSelezionato,
-                  activeColor: getColor(),
-                  contentPadding: EdgeInsets.zero,
-                  dense: true,
-                  onChanged: (String? value) {
-                    setState(() {
-                      tipoGolSelezionato = value ?? 'no';
-                    });
-                  },
+              FilterChip(
+                label: Text(
+                  'Rig',
+                  style: TextStyle(
+                    color: tipoGolSelezionato == 'rig'
+                        ? Colors.white
+                        : getColor(),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                selected: tipoGolSelezionato == 'rig',
+                onSelected: (bool selected) {
+                  setState(() {
+                    tipoGolSelezionato = 'rig';
+                  });
+                },
+                backgroundColor: Colors.white,
+                selectedColor: getColor(),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: BorderSide(
+                    color: tipoGolSelezionato == 'rig'
+                        ? getColor()
+                        : getColor().withOpacity(0.3),
+                  ),
                 ),
               ),
-              Expanded(
-                child: RadioListTile<String>(
-                  title: Text('Pun', style: TextStyle(fontSize: 12)),
-                  value: 'pun',
-                  groupValue: tipoGolSelezionato,
-                  activeColor: getColor(),
-                  contentPadding: EdgeInsets.zero,
-                  dense: true,
-                  onChanged: (String? value) {
-                    setState(() {
-                      tipoGolSelezionato = value ?? 'pun';
-                    });
-                  },
+              FilterChip(
+                label: Text(
+                  'Pun',
+                  style: TextStyle(
+                    color: tipoGolSelezionato == 'pun'
+                        ? Colors.white
+                        : getColor(),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                selected: tipoGolSelezionato == 'pun',
+                onSelected: (bool selected) {
+                  setState(() {
+                    tipoGolSelezionato = 'pun';
+                  });
+                },
+                backgroundColor: Colors.white,
+                selectedColor: getColor(),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: BorderSide(
+                    color: tipoGolSelezionato == 'pun'
+                        ? getColor()
+                        : getColor().withOpacity(0.3),
+                  ),
                 ),
               ),
             ],
@@ -1168,36 +1207,63 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
             ),
           ),
           SizedBox(height: 8),
-          Row(
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
             children: [
-              Expanded(
-                child: RadioListTile<String>(
-                  title: Text('No', style: TextStyle(fontSize: 12)),
-                  value: 'no',
-                  groupValue: infortunioSelezionato,
-                  activeColor: getColor(),
-                  contentPadding: EdgeInsets.zero,
-                  dense: true,
-                  onChanged: (String? value) {
-                    setState(() {
-                      infortunioSelezionato = value ?? 'no';
-                    });
-                  },
+              FilterChip(
+                label: Text(
+                  'No',
+                  style: TextStyle(
+                    color: infortunioSelezionato == 'no'
+                        ? Colors.white
+                        : getColor(),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                selected: infortunioSelezionato == 'no',
+                onSelected: (bool selected) {
+                  setState(() {
+                    infortunioSelezionato = 'no';
+                  });
+                },
+                backgroundColor: Colors.white,
+                selectedColor: getColor(),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: BorderSide(
+                    color: infortunioSelezionato == 'no'
+                        ? getColor()
+                        : getColor().withOpacity(0.3),
+                  ),
                 ),
               ),
-              Expanded(
-                child: RadioListTile<String>(
-                  title: Text('Si', style: TextStyle(fontSize: 12)),
-                  value: 'si',
-                  groupValue: infortunioSelezionato,
-                  activeColor: getColor(),
-                  contentPadding: EdgeInsets.zero,
-                  dense: true,
-                  onChanged: (String? value) {
-                    setState(() {
-                      infortunioSelezionato = value ?? 'no';
-                    });
-                  },
+              FilterChip(
+                label: Text(
+                  'Si',
+                  style: TextStyle(
+                    color: infortunioSelezionato == 'si'
+                        ? Colors.white
+                        : getColor(),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                selected: infortunioSelezionato == 'si',
+                onSelected: (bool selected) {
+                  setState(() {
+                    infortunioSelezionato = 'si';
+                  });
+                },
+                backgroundColor: Colors.white,
+                selectedColor: getColor(),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: BorderSide(
+                    color: infortunioSelezionato == 'si'
+                        ? getColor()
+                        : getColor().withOpacity(0.3),
+                  ),
                 ),
               ),
             ],
@@ -1287,39 +1353,63 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                   ),
                 ),
                 SizedBox(height: 8),
-                Row(
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
-                    Expanded(
-                      child: RadioListTile<String>(
-                        title: Text('Segnato', style: TextStyle(fontSize: 12)),
-                        value: 'segnato',
-                        groupValue: esitoRigoreSelezionato,
-                        activeColor: getColor(),
-                        contentPadding: EdgeInsets.zero,
-                        dense: true,
-                        onChanged: (String? value) {
-                          setState(() {
-                            esitoRigoreSelezionato = value ?? 'segnato';
-                          });
-                        },
+                    FilterChip(
+                      label: Text(
+                        'Segnato',
+                        style: TextStyle(
+                          color: esitoRigoreSelezionato == 'segnato'
+                              ? Colors.white
+                              : getColor(),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      selected: esitoRigoreSelezionato == 'segnato',
+                      onSelected: (bool selected) {
+                        setState(() {
+                          esitoRigoreSelezionato = 'segnato';
+                        });
+                      },
+                      backgroundColor: Colors.white,
+                      selectedColor: getColor(),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        side: BorderSide(
+                          color: esitoRigoreSelezionato == 'segnato'
+                              ? getColor()
+                              : getColor().withOpacity(0.3),
+                        ),
                       ),
                     ),
-                    Expanded(
-                      child: RadioListTile<String>(
-                        title: Text(
-                          'Sbagliato',
-                          style: TextStyle(fontSize: 12),
+                    FilterChip(
+                      label: Text(
+                        'Sbagliato',
+                        style: TextStyle(
+                          color: esitoRigoreSelezionato == 'sbagliato'
+                              ? Colors.white
+                              : getColor(),
+                          fontWeight: FontWeight.bold,
                         ),
-                        value: 'sbagliato',
-                        groupValue: esitoRigoreSelezionato,
-                        activeColor: getColor(),
-                        contentPadding: EdgeInsets.zero,
-                        dense: true,
-                        onChanged: (String? value) {
-                          setState(() {
-                            esitoRigoreSelezionato = value ?? 'segnato';
-                          });
-                        },
+                      ),
+                      selected: esitoRigoreSelezionato == 'sbagliato',
+                      onSelected: (bool selected) {
+                        setState(() {
+                          esitoRigoreSelezionato = 'sbagliato';
+                        });
+                      },
+                      backgroundColor: Colors.white,
+                      selectedColor: getColor(),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        side: BorderSide(
+                          color: esitoRigoreSelezionato == 'sbagliato'
+                              ? getColor()
+                              : getColor().withOpacity(0.3),
+                        ),
                       ),
                     ),
                   ],

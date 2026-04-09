@@ -231,6 +231,7 @@ class _SearchPageState extends State<SearchPage> {
                               ),
                               SizedBox(height: 8),
                               Wrap(
+                                alignment: WrapAlignment.center,
                                 spacing: 8,
                                 runSpacing: 8,
                                 children: [
@@ -808,37 +809,70 @@ class _SearchPageState extends State<SearchPage> {
                 ),
               ],
             ),
-            // Radio buttons per il tipo di ricerca
-            Row(
+            SizedBox(height: 16),
+            // Tipo di ricerca
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                Expanded(
-                  child: RadioListTile<String>(
-                    title: Text('Giocatori'),
-                    value: 'Giocatori',
-                    groupValue: _searchType,
-                    activeColor: Colors.blueAccent,
-                    onChanged: (String? value) {
-                      setState(() {
-                        _searchType = value!;
-                      });
-                    },
+                FilterChip(
+                  label: Text(
+                    'Giocatori',
+                    style: TextStyle(
+                      color: _searchType == 'Giocatori'
+                          ? Colors.white
+                          : Colors.blueAccent,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  selected: _searchType == 'Giocatori',
+                  onSelected: (bool selected) {
+                    setState(() {
+                      _searchType = 'Giocatori';
+                    });
+                  },
+                  backgroundColor: Colors.white,
+                  selectedColor: Colors.blueAccent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(
+                      color: _searchType == 'Giocatori'
+                          ? Colors.blueAccent
+                          : Colors.blueAccent.withOpacity(0.3),
+                    ),
                   ),
                 ),
-                Expanded(
-                  child: RadioListTile<String>(
-                    title: Text('Squadre'),
-                    value: 'Squadre',
-                    groupValue: _searchType,
-                    activeColor: Colors.blueAccent,
-                    onChanged: (String? value) {
-                      setState(() {
-                        _searchType = value!;
-                      });
-                    },
+                FilterChip(
+                  label: Text(
+                    'Squadre',
+                    style: TextStyle(
+                      color: _searchType == 'Squadre'
+                          ? Colors.white
+                          : Colors.blueAccent,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  selected: _searchType == 'Squadre',
+                  onSelected: (bool selected) {
+                    setState(() {
+                      _searchType = 'Squadre';
+                    });
+                  },
+                  backgroundColor: Colors.white,
+                  selectedColor: Colors.blueAccent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(
+                      color: _searchType == 'Squadre'
+                          ? Colors.blueAccent
+                          : Colors.blueAccent.withOpacity(0.3),
+                    ),
                   ),
                 ),
               ],
             ),
+            SizedBox(height: 16),
             ElevatedButton(
               onPressed: _performSearch,
               style: ElevatedButton.styleFrom(

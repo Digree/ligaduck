@@ -64,12 +64,14 @@ Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
               model.squadraHome?.categoria != null &&
               model.squadraHome!.categoria != 'Serie A' &&
               model.squadraHome!.categoria != 'Serie B' &&
-              model.squadraHome!.categoria != 'Serie C';
+              model.squadraHome!.categoria != 'Serie C' &&
+              model.squadraHome!.categoria != 'Serie D';
           bool isAwayEstera =
               model.squadraAway?.categoria != null &&
               model.squadraAway!.categoria != 'Serie A' &&
               model.squadraAway!.categoria != 'Serie B' &&
-              model.squadraAway!.categoria != 'Serie C';
+              model.squadraAway!.categoria != 'Serie C' &&
+              model.squadraAway!.categoria != 'Serie D';
 
           if (isHomeEstera && isAwayEstera) {
             // Controlla se l'utente è admin e se la partita non è già salvata

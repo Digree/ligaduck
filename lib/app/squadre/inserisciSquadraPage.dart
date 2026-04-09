@@ -32,7 +32,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
 
   final List<String> _campionati = ['Paperi', 'Europa', 'Resto del Mondo'];
 
-  final List<String> _categorie = ['Serie A', 'Serie B', 'Serie C'];
+  final List<String> _categorie = ['Serie A', 'Serie B', 'Serie C', 'Serie D'];
 
   final List<String> _nazioniEuropa = [
     'Austria',

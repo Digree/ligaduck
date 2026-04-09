@@ -3675,8 +3675,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                 padding: EdgeInsets.only(top: 32, bottom: 16),
                 child: Center(
                   child: Text(
-                    'Carica un file CSV con il calendario',
+                    'Carica un file CSV con il calendario oppure inserisci manualmente una giornata e le partite',
                     style: TextStyle(color: Colors.white),
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ),
@@ -3693,8 +3694,23 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                   await _pickAndProcessCsvFile();
                 },
               ),
+              SizedBox(height: 16),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent.withOpacity(0.1),
+                ),
+                icon: Icon(Icons.add, color: Colors.white),
+                label: Text(
+                  'Crea giornata',
+                  style: TextStyle(color: Colors.white),
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                  _showCreaGiornataDialog();
+                },
+              ),
               Padding(
-                padding: EdgeInsets.only(top: 130.0),
+                padding: EdgeInsets.only(top: 90.0),
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.pop(context);
@@ -3707,6 +3723,917 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
         );
       },
     );
+  }
+
+  Future<void> _showCreaGiornataDialog() async {
+    final TextEditingController nomeGiornataController =
+        TextEditingController();
+    String selectedFase = 'G';
+    String tipoTurno = 'singolo';
+    DateTime selectedDate = DateTime(1970, 1, 1);
+    List<Map<String, int?>> partite =
+        []; // Lista di partite con idHome e idAway
+
+    // Carica le squadre abilitate
+    final squadre = await _squadreCompetizioneFuture;
+    squadre.sort((a, b) => a.nome.compareTo(b.nome));
+
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        bool isWide = MediaQuery.of(context).size.width > 600;
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text(
+                'Crea nuova giornata',
+                style: TextStyle(color: getColor("primary")),
+              ),
+              content: SingleChildScrollView(
+                child: SizedBox(
+                  width: isWide ? 600 : double.maxFinite,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (isWide)
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: TextFormField(
+                                controller: nomeGiornataController,
+                                decoration: InputDecoration(
+                                  labelText: 'Nome giornata',
+                                  labelStyle: TextStyle(
+                                    color: getColor("primary"),
+                                  ),
+                                  hintText: 'es: 1, Ottavi, Semifinale...',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: getColor("primary"),
+                                      width: 2,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              flex: 1,
+                              child: DropdownButtonFormField<String>(
+                                initialValue: selectedFase,
+                                isExpanded: true,
+                                decoration: InputDecoration(
+                                  labelText: 'Fase',
+                                  labelStyle: TextStyle(
+                                    color: getColor("primary"),
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: getColor("primary"),
+                                      width: 2,
+                                    ),
+                                  ),
+                                ),
+                                items: [
+                                  DropdownMenuItem(
+                                    value: 'G',
+                                    child: Text('Girone'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'E',
+                                    child: Text('Elim. diretta'),
+                                  ),
+                                ],
+                                onChanged: (value) {
+                                  setState(() {
+                                    selectedFase = value!;
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
+                        )
+                      else ...[
+                        TextFormField(
+                          controller: nomeGiornataController,
+                          decoration: InputDecoration(
+                            labelText: 'Nome giornata',
+                            labelStyle: TextStyle(color: getColor("primary")),
+                            hintText: 'es: 1, Ottavi, Semifinale...',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: getColor("primary"),
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 16),
+                        DropdownButtonFormField<String>(
+                          initialValue: selectedFase,
+                          decoration: InputDecoration(
+                            labelText: 'Fase',
+                            labelStyle: TextStyle(color: getColor("primary")),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: getColor("primary"),
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                          items: [
+                            DropdownMenuItem(value: 'G', child: Text('Girone')),
+                            DropdownMenuItem(
+                              value: 'E',
+                              child: Text('Eliminazione diretta'),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            setState(() {
+                              selectedFase = value!;
+                            });
+                          },
+                        ),
+                      ],
+                      if (selectedFase == 'E') ...[
+                        SizedBox(height: 16),
+                        Text(
+                          'Tipo turno',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: getColor("primary"),
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            FilterChip(
+                              label: Text(
+                                'Andata/Ritorno',
+                                style: TextStyle(
+                                  color: tipoTurno == 'andata-ritorno'
+                                      ? Colors.white
+                                      : getColor("primary"),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              selected: tipoTurno == 'andata-ritorno',
+                              onSelected: (bool selected) {
+                                setState(() {
+                                  tipoTurno = 'andata-ritorno';
+                                });
+                              },
+                              backgroundColor: Colors.white,
+                              selectedColor: getColor("primary"),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                                side: BorderSide(
+                                  color: tipoTurno == 'andata-ritorno'
+                                      ? getColor("primary")
+                                      : getColor("primary").withOpacity(0.3),
+                                ),
+                              ),
+                            ),
+                            FilterChip(
+                              label: Text(
+                                'Singolo',
+                                style: TextStyle(
+                                  color: tipoTurno == 'singolo'
+                                      ? Colors.white
+                                      : getColor("primary"),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              selected: tipoTurno == 'singolo',
+                              onSelected: (bool selected) {
+                                setState(() {
+                                  tipoTurno = 'singolo';
+                                });
+                              },
+                              backgroundColor: Colors.white,
+                              selectedColor: getColor("primary"),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                                side: BorderSide(
+                                  color: tipoTurno == 'singolo'
+                                      ? getColor("primary")
+                                      : getColor("primary").withOpacity(0.3),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      SizedBox(height: 16),
+                      Text(
+                        'Data',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: getColor("primary"),
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      InkWell(
+                        onTap: () async {
+                          final DateTime? picked = await showDatePicker(
+                            context: context,
+                            initialDate: selectedDate,
+                            firstDate: DateTime(1970),
+                            lastDate: DateTime(2100),
+                            locale: Locale('it', 'IT'),
+                            builder: (context, child) {
+                              return Theme(
+                                data: Theme.of(context).copyWith(
+                                  colorScheme: ColorScheme.light(
+                                    primary: getColor("primary"),
+                                    onPrimary: Colors.white,
+                                    surface: Colors.white,
+                                    onSurface: Colors.black87,
+                                  ),
+                                  dialogTheme: DialogThemeData(
+                                    backgroundColor: Colors.white,
+                                  ),
+                                ),
+                                child: child!,
+                              );
+                            },
+                          );
+                          if (picked != null) {
+                            setState(() {
+                              selectedDate = picked;
+                            });
+                          }
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 16,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: getColor("primary").withOpacity(0.3),
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today,
+                                color: getColor("primary"),
+                                size: 20,
+                              ),
+                              SizedBox(width: 12),
+                              Text(
+                                '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                      Divider(),
+                      SizedBox(height: 8),
+                      Text(
+                        'Partite',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: getColor("primary"),
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      if (partite.isEmpty)
+                        Center(
+                          child: Text(
+                            'Nessuna partita aggiunta',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ),
+                      ...partite.asMap().entries.map((entry) {
+                        int index = entry.key;
+                        Map<String, int?> partita = entry.value;
+                        return Card(
+                          margin: EdgeInsets.symmetric(vertical: 4),
+                          child: Padding(
+                            padding: EdgeInsets.all(isWide ? 12 : 8),
+                            child: isWide
+                                ? Row(
+                                    children: [
+                                      Expanded(
+                                        child: DropdownButtonFormField<int>(
+                                          initialValue: partita['idHome'],
+                                          decoration: InputDecoration(
+                                            labelText: 'Casa',
+                                            labelStyle: TextStyle(
+                                              color: getColor("primary"),
+                                            ),
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                          ),
+                                          items: squadre.map((squadra) {
+                                            return DropdownMenuItem<int>(
+                                              value: squadra.id,
+                                              child: Text(
+                                                CommonService.decodePlayerName(
+                                                  squadra.nome,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            );
+                                          }).toList(),
+                                          onChanged: (value) {
+                                            setState(() {
+                                              partite[index]['idHome'] = value;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      SizedBox(width: 8),
+                                      Padding(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 4,
+                                        ),
+                                        child: Text(
+                                          '-',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 8),
+                                      Expanded(
+                                        child: DropdownButtonFormField<int>(
+                                          initialValue: partita['idAway'],
+                                          decoration: InputDecoration(
+                                            labelText: 'Trasferta',
+                                            labelStyle: TextStyle(
+                                              color: getColor("primary"),
+                                            ),
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                          ),
+                                          items: squadre.map((squadra) {
+                                            return DropdownMenuItem<int>(
+                                              value: squadra.id,
+                                              child: Text(
+                                                CommonService.decodePlayerName(
+                                                  squadra.nome,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            );
+                                          }).toList(),
+                                          onChanged: (value) {
+                                            setState(() {
+                                              partite[index]['idAway'] = value;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: 40,
+                                        child: IconButton(
+                                          padding: EdgeInsets.zero,
+                                          constraints: BoxConstraints(),
+                                          icon: Icon(
+                                            Icons.delete,
+                                            color: Colors.red,
+                                            size: 20,
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              partite.removeAt(index);
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : Row(
+                                    children: [
+                                      Expanded(
+                                        child: DropdownButtonFormField<int>(
+                                          initialValue: partita['idHome'],
+                                          isExpanded: true,
+                                          decoration: InputDecoration(
+                                            labelText: 'Casa',
+                                            labelStyle: TextStyle(
+                                              color: getColor("primary"),
+                                              fontSize: 12,
+                                            ),
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            contentPadding:
+                                                EdgeInsets.symmetric(
+                                                  horizontal: 8,
+                                                  vertical: 8,
+                                                ),
+                                          ),
+                                          items: squadre.map((squadra) {
+                                            return DropdownMenuItem<int>(
+                                              value: squadra.id,
+                                              child: Text(
+                                                CommonService.decodePlayerName(
+                                                  squadra.nome,
+                                                ),
+                                                style: TextStyle(fontSize: 12),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            );
+                                          }).toList(),
+                                          onChanged: (value) {
+                                            setState(() {
+                                              partite[index]['idHome'] = value;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 4,
+                                        ),
+                                        child: Text(
+                                          '-',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: DropdownButtonFormField<int>(
+                                          initialValue: partita['idAway'],
+                                          isExpanded: true,
+                                          decoration: InputDecoration(
+                                            labelText: 'Trasferta',
+                                            labelStyle: TextStyle(
+                                              color: getColor("primary"),
+                                              fontSize: 12,
+                                            ),
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            contentPadding:
+                                                EdgeInsets.symmetric(
+                                                  horizontal: 8,
+                                                  vertical: 8,
+                                                ),
+                                          ),
+                                          items: squadre.map((squadra) {
+                                            return DropdownMenuItem<int>(
+                                              value: squadra.id,
+                                              child: Text(
+                                                CommonService.decodePlayerName(
+                                                  squadra.nome,
+                                                ),
+                                                style: TextStyle(fontSize: 12),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            );
+                                          }).toList(),
+                                          onChanged: (value) {
+                                            setState(() {
+                                              partite[index]['idAway'] = value;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: 40,
+                                        child: IconButton(
+                                          padding: EdgeInsets.zero,
+                                          constraints: BoxConstraints(),
+                                          icon: Icon(
+                                            Icons.delete,
+                                            color: Colors.red,
+                                            size: 20,
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              partite.removeAt(index);
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                          ),
+                        );
+                      }),
+                      SizedBox(height: 8),
+                      Center(
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: getColor("primary"),
+                            foregroundColor: Colors.white,
+                          ),
+                          icon: Icon(Icons.add),
+                          label: Text('Aggiungi partita'),
+                          onPressed: () {
+                            setState(() {
+                              partite.add({'idHome': null, 'idAway': null});
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: TextButton.styleFrom(
+                    foregroundColor: getColor("primary"),
+                  ),
+                  child: Text('Annulla'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: getColor("primary"),
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () async {
+                    if (nomeGiornataController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Inserisci un nome per la giornata'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                    // Valida che tutte le partite abbiano entrambe le squadre
+                    for (int i = 0; i < partite.length; i++) {
+                      if (partite[i]['idHome'] == null ||
+                          partite[i]['idAway'] == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Partita ${i + 1}: seleziona entrambe le squadre',
+                            ),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+                      if (partite[i]['idHome'] == partite[i]['idAway']) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Partita ${i + 1}: le squadre devono essere diverse',
+                            ),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+                    }
+
+                    await _creaGiornata(
+                      nomeGiornataController.text.trim(),
+                      selectedFase,
+                      tipoTurno,
+                      selectedDate,
+                      squadre,
+                      partite,
+                    );
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('Crea'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _creaGiornata(
+    String nomeGiornata,
+    String fase,
+    String tipoTurno,
+    DateTime dataPartite,
+    List<Squadra> squadre,
+    List<Map<String, int?>> partite,
+  ) async {
+    try {
+      final giornateProvider = Provider.of<GiornateProvider>(
+        context,
+        listen: false,
+      );
+
+      // Genera classifica iniziale in base alle squadre abilitate
+      List<PosizioneClassifica> classificaIniziale = [];
+      try {
+        final squadre = await _squadreCompetizioneFuture;
+        squadre.sort((a, b) => a.nome.compareTo(b.nome));
+
+        for (int i = 0; i < squadre.length; i++) {
+          classificaIniziale.add(
+            PosizioneClassifica(
+              posizione: i + 1,
+              idSquadra: squadre[i].id,
+              nomeSquadra: squadre[i].nome,
+              codSquadra: squadre[i].cod,
+              punti: 0,
+              partiteGiocate: 0,
+              win: 0,
+              draw: 0,
+              loss: 0,
+              gFatti: 0,
+              gSubiti: 0,
+              diff: 0,
+            ),
+          );
+        }
+      } catch (e) {
+        _showMessage('Errore nella generazione della classifica: $e');
+      }
+
+      // Gestione andata/ritorno per eliminazione diretta
+      if (fase == 'E' && tipoTurno == 'andata-ritorno') {
+        // Crea giornata di andata
+        final giornataAndata = Giornata(
+          id: mongo.ObjectId().toHexString(),
+          idCompetizione: widget.competizione.id,
+          giornata: '$nomeGiornata Andata',
+          fase: fase,
+          classifica: classificaIniziale,
+          statistiche: StatisticheGiornata(
+            marcatori: [],
+            espulsi: [],
+            rigoriSbagliati: [],
+            golAnnullati: [],
+            cleanSheet: [],
+            autogol: [],
+          ),
+          conclusa: false,
+        );
+
+        // Crea giornata di ritorno
+        final giornataRitorno = Giornata(
+          id: mongo.ObjectId().toHexString(),
+          idCompetizione: widget.competizione.id,
+          giornata: '$nomeGiornata Ritorno',
+          fase: fase,
+          classifica: classificaIniziale,
+          statistiche: StatisticheGiornata(
+            marcatori: [],
+            espulsi: [],
+            rigoriSbagliati: [],
+            golAnnullati: [],
+            cleanSheet: [],
+            autogol: [],
+          ),
+          conclusa: false,
+        );
+
+        await giornateProvider.aggiungiGiornate(widget.campionato, [
+          giornataAndata,
+          giornataRitorno,
+        ], widget.competizione.id);
+
+        // Crea le partite se presenti
+        if (partite.isNotEmpty) {
+          final partiteProvider = Provider.of<PartiteProvider>(
+            context,
+            listen: false,
+          );
+
+          List<Partita> nuovePartite = [];
+
+          // Partite di andata
+          for (var partita in partite) {
+            final squadraHome = squadre.firstWhere(
+              (s) => s.id == partita['idHome'],
+            );
+            final squadraAway = squadre.firstWhere(
+              (s) => s.id == partita['idAway'],
+            );
+
+            nuovePartite.add(
+              Partita(
+                id: mongo.ObjectId().toHexString(),
+                idGiornata: giornataAndata.id,
+                teamHome: squadraHome.nome,
+                teamAway: squadraAway.nome,
+                idTeamHome: squadraHome.id,
+                idTeamAway: squadraAway.id,
+                codHome: squadraHome.cod,
+                codAway: squadraAway.cod,
+                risultatoHome: 0,
+                risultatoAway: 0,
+                formazioneHome: Formazione(
+                  titolari: [],
+                  panchina: [],
+                  indisponibili: [],
+                  nonConvocati: [],
+                  allenatore: '',
+                  modulo: '',
+                ),
+                formazioneAway: Formazione(
+                  titolari: [],
+                  panchina: [],
+                  indisponibili: [],
+                  nonConvocati: [],
+                  allenatore: '',
+                  modulo: '',
+                ),
+                divisaHome: 1,
+                divisaAway: 1,
+                tabellino: [],
+                data: dataPartite,
+                salvata: false,
+              ),
+            );
+
+            // Partita di ritorno (squadre invertite)
+            nuovePartite.add(
+              Partita(
+                id: mongo.ObjectId().toHexString(),
+                idGiornata: giornataRitorno.id,
+                teamHome: squadraAway.nome,
+                teamAway: squadraHome.nome,
+                idTeamHome: squadraAway.id,
+                idTeamAway: squadraHome.id,
+                codHome: squadraAway.cod,
+                codAway: squadraHome.cod,
+                risultatoHome: 0,
+                risultatoAway: 0,
+                formazioneHome: Formazione(
+                  titolari: [],
+                  panchina: [],
+                  indisponibili: [],
+                  nonConvocati: [],
+                  allenatore: '',
+                  modulo: '',
+                ),
+                formazioneAway: Formazione(
+                  titolari: [],
+                  panchina: [],
+                  indisponibili: [],
+                  nonConvocati: [],
+                  allenatore: '',
+                  modulo: '',
+                ),
+                divisaHome: 1,
+                divisaAway: 1,
+                tabellino: [],
+                data: dataPartite,
+                salvata: false,
+              ),
+            );
+          }
+
+          await partiteProvider.aggiungiPartite(
+            widget.campionato,
+            nuovePartite,
+          );
+          _showMessage(
+            'Giornate "$nomeGiornata Andata" e "$nomeGiornata Ritorno" create con ${partite.length} partite ciascuna!',
+          );
+        } else {
+          _showMessage(
+            'Giornate "$nomeGiornata Andata" e "$nomeGiornata Ritorno" create con successo!',
+          );
+        }
+      } else {
+        // Creazione giornata singola (comportamento normale)
+        final nuovaGiornata = Giornata(
+          id: mongo.ObjectId().toHexString(),
+          idCompetizione: widget.competizione.id,
+          giornata: nomeGiornata,
+          fase: fase,
+          classifica: classificaIniziale,
+          statistiche: StatisticheGiornata(
+            marcatori: [],
+            espulsi: [],
+            rigoriSbagliati: [],
+            golAnnullati: [],
+            cleanSheet: [],
+            autogol: [],
+          ),
+          conclusa: false,
+        );
+
+        await giornateProvider.aggiungiGiornate(widget.campionato, [
+          nuovaGiornata,
+        ], widget.competizione.id);
+
+        // Crea le partite se presenti
+        if (partite.isNotEmpty) {
+          final partiteProvider = Provider.of<PartiteProvider>(
+            context,
+            listen: false,
+          );
+
+          List<Partita> nuovePartite = [];
+          for (var partita in partite) {
+            final squadraHome = squadre.firstWhere(
+              (s) => s.id == partita['idHome'],
+            );
+            final squadraAway = squadre.firstWhere(
+              (s) => s.id == partita['idAway'],
+            );
+
+            nuovePartite.add(
+              Partita(
+                id: mongo.ObjectId().toHexString(),
+                idGiornata: nuovaGiornata.id,
+                teamHome: squadraHome.nome,
+                teamAway: squadraAway.nome,
+                idTeamHome: squadraHome.id,
+                idTeamAway: squadraAway.id,
+                codHome: squadraHome.cod,
+                codAway: squadraAway.cod,
+                risultatoHome: 0,
+                risultatoAway: 0,
+                formazioneHome: Formazione(
+                  titolari: [],
+                  panchina: [],
+                  indisponibili: [],
+                  nonConvocati: [],
+                  allenatore: '',
+                  modulo: '',
+                ),
+                formazioneAway: Formazione(
+                  titolari: [],
+                  panchina: [],
+                  indisponibili: [],
+                  nonConvocati: [],
+                  allenatore: '',
+                  modulo: '',
+                ),
+                divisaHome: 1,
+                divisaAway: 1,
+                tabellino: [],
+                data: dataPartite,
+                salvata: false,
+              ),
+            );
+          }
+
+          await partiteProvider.aggiungiPartite(
+            widget.campionato,
+            nuovePartite,
+          );
+          _showMessage(
+            'Giornata "$nomeGiornata" creata con ${nuovePartite.length} partite!',
+          );
+        } else {
+          _showMessage('Giornata "$nomeGiornata" creata con successo!');
+        }
+      }
+
+      // Ricarica le giornate
+      _partiteCache.clear();
+      _partiteWidgetCache.clear();
+      _invalidateCacheKey++;
+      _caricaGiornate();
+      _caricaClassifica();
+      setState(() {});
+    } catch (e) {
+      _showMessage('Errore nella creazione della giornata: $e');
+    }
   }
 
   Future<Squadra> getSquadra(SquadreProvider provider, int idSquadra) async {

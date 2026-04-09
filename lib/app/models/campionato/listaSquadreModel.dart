@@ -103,7 +103,7 @@ class _ListaSquadreStateWidget extends State<_ListaSquadreState> {
     double screenHeight,
   ) {
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: SizedBox(
         height: isWide ? screenHeight * 0.5 : screenHeight * 0.7,
         child: Column(
@@ -123,6 +123,7 @@ class _ListaSquadreStateWidget extends State<_ListaSquadreState> {
                     Tab(text: 'Serie A'),
                     Tab(text: 'Serie B'),
                     Tab(text: 'Serie C'),
+                    Tab(text: 'Serie D'),
                   ],
                 ),
               ),
@@ -136,6 +137,7 @@ class _ListaSquadreStateWidget extends State<_ListaSquadreState> {
                     showSquadre(model, 'Serie A'),
                     showSquadre(model, 'Serie B'),
                     showSquadre(model, 'Serie C'),
+                    showSquadre(model, 'Serie D'),
                   ],
                 ),
               ),

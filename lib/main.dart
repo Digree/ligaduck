@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:ligaduck/app/campionato/campionatoHomePage.dart';
 import 'package:ligaduck/app/config/models/config.dart';
 import 'package:ligaduck/app/config/models/service/configProvider.dart';
@@ -37,6 +38,13 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: [Locale('it', 'IT')],
+      locale: Locale('it', 'IT'),
       navigatorObservers: [routeObserver],
       home: FutureBuilder(
         future: configs(context),
