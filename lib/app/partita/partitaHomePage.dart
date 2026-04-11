@@ -162,7 +162,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                   ),
                 ),
                 backgroundColor: Colors.red,
-                duration: Duration(seconds: 5),
+                duration: Duration(seconds: 2),
               ),
             );
           }
@@ -363,24 +363,58 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       });
 
       print('Formazioni caricate con successo dalle squadre');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Formazioni caricate con successo dalle squadre',
-            style: TextStyle(
-              fontFamily: competizione?.id == 5
-                  ? 'champions'
-                  : competizione?.id == 6 || competizione?.id == 7
-                  ? 'europa'
-                  : competizione?.id == 8
-                  ? 'supercup'
-                  : null,
-            ),
-          ),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
+
+      // Salva automaticamente la formazione dopo averla caricata
+      bool success = await saveFormazione(
+        widget.campionato,
+        partita!.id,
+        selectedFormazione == 0
+            ? partita!.formazioneHome
+            : partita!.formazioneAway,
+        selectedFormazione == 0 ? partita!.idTeamHome : partita!.idTeamAway,
+        showMessage: false,
       );
+
+      // Mostra il messaggio di formazioni caricate
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Formazioni caricate con successo dalle squadre',
+              style: TextStyle(
+                fontFamily: competizione?.id == 5
+                    ? 'champions'
+                    : competizione?.id == 6 || competizione?.id == 7
+                    ? 'europa'
+                    : competizione?.id == 8
+                    ? 'supercup'
+                    : null,
+              ),
+            ),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Errore nel salvataggio della formazione',
+              style: TextStyle(
+                fontFamily: competizione?.id == 5
+                    ? 'champions'
+                    : competizione?.id == 6 || competizione?.id == 7
+                    ? 'europa'
+                    : competizione?.id == 8
+                    ? 'supercup'
+                    : null,
+              ),
+            ),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     } catch (e) {
       print('Errore nel caricamento delle formazioni: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -398,7 +432,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             ),
           ),
           backgroundColor: Colors.red,
-          duration: Duration(seconds: 3),
+          duration: Duration(seconds: 2),
         ),
       );
     }
@@ -5433,12 +5467,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     return partita;
   }
 
-  Future<void> saveFormazione(
+  Future<bool> saveFormazione(
     campionato,
     idPartita,
     formazione,
-    idSquadra,
-  ) async {
+    idSquadra, {
+    bool showMessage = true,
+  }) async {
     // Mostra il loader
     showDialog(
       context: context,
@@ -5474,44 +5509,50 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
         partita = updatedPartita;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Formazione salvata con successo',
-            style: TextStyle(
-              fontFamily: competizione?.id == 5
-                  ? 'champions'
-                  : competizione?.id == 6 || competizione?.id == 7
-                  ? 'europa'
-                  : competizione?.id == 8
-                  ? 'supercup'
-                  : null,
+      if (showMessage) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Formazione salvata con successo',
+              style: TextStyle(
+                fontFamily: competizione?.id == 5
+                    ? 'champions'
+                    : competizione?.id == 6 || competizione?.id == 7
+                    ? 'europa'
+                    : competizione?.id == 8
+                    ? 'supercup'
+                    : null,
+              ),
             ),
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.green,
           ),
-          duration: Duration(seconds: 2),
-          backgroundColor: Colors.green,
-        ),
-      );
+        );
+      }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Errore nel salvataggio della formazione',
-            style: TextStyle(
-              fontFamily: competizione?.id == 5
-                  ? 'champions'
-                  : competizione?.id == 6 || competizione?.id == 7
-                  ? 'europa'
-                  : competizione?.id == 8
-                  ? 'supercup'
-                  : null,
+      if (showMessage) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Errore nel salvataggio della formazione',
+              style: TextStyle(
+                fontFamily: competizione?.id == 5
+                    ? 'champions'
+                    : competizione?.id == 6 || competizione?.id == 7
+                    ? 'europa'
+                    : competizione?.id == 8
+                    ? 'supercup'
+                    : null,
+              ),
             ),
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.red,
           ),
-          duration: Duration(seconds: 2),
-          backgroundColor: Colors.red,
-        ),
-      );
+        );
+      }
     }
+
+    return success;
   }
 
   Widget buildInfoSquadra(int team) {
@@ -5624,7 +5665,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                       ),
                     ),
                     backgroundColor: Colors.red,
-                    duration: Duration(seconds: 3),
+                    duration: Duration(seconds: 2),
                   ),
                 );
               }
@@ -5636,7 +5677,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                 SnackBar(
                   content: Text('Errore: ${e.toString()}'),
                   backgroundColor: Colors.red,
-                  duration: Duration(seconds: 3),
+                  duration: Duration(seconds: 2),
                 ),
               );
             }

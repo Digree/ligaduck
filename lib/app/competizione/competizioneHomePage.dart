@@ -2777,6 +2777,14 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                         allenatore: 'Allenatore',
                         modulo: '4-4-2',
                       ),
+                      formazioneOld: Formazione(
+                        titolari: [],
+                        panchina: [],
+                        indisponibili: [],
+                        nonConvocati: [],
+                        allenatore: 'Allenatore',
+                        modulo: '4-4-2',
+                      ),
                       indisponibili: [],
                       competizioni: [],
                     ),
@@ -2794,6 +2802,14 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                       colori: [],
                       trofei: [],
                       formazione: Formazione(
+                        titolari: [],
+                        panchina: [],
+                        indisponibili: [],
+                        nonConvocati: [],
+                        allenatore: 'Allenatore',
+                        modulo: '4-4-2',
+                      ),
+                      formazioneOld: Formazione(
                         titolari: [],
                         panchina: [],
                         indisponibili: [],
@@ -3672,7 +3688,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
           child: Column(
             children: [
               Padding(
-                padding: EdgeInsets.only(top: 32, bottom: 16),
+                padding: EdgeInsets.only(top: 20, bottom: 16),
                 child: Center(
                   child: Text(
                     'Carica un file CSV con il calendario oppure inserisci manualmente una giornata e le partite',
@@ -3710,7 +3726,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                 },
               ),
               Padding(
-                padding: EdgeInsets.only(top: 90.0),
+                padding: EdgeInsets.only(top: 70.0),
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.pop(context);
@@ -3746,9 +3762,22 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text(
-                'Crea nuova giornata',
-                style: TextStyle(color: getColor("primary")),
+              title: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Crea nuova giornata',
+                      style: TextStyle(color: getColor("primary")),
+                    ),
+                  ),
+                  SizedBox(width: isWide ? 16 : 4),
+                  IconButton(
+                    icon: Icon(Icons.close, color: getColor("primary")),
+                    onPressed: () => Navigator.of(context).pop(),
+                    padding: EdgeInsets.zero,
+                    constraints: BoxConstraints(),
+                  ),
+                ],
               ),
               content: SingleChildScrollView(
                 child: SizedBox(
@@ -4295,6 +4324,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                         SnackBar(
                           content: Text('Inserisci un nome per la giornata'),
                           backgroundColor: Colors.red,
+                          duration: Duration(seconds: 2),
                         ),
                       );
                       return;
@@ -4310,6 +4340,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                               'Partita ${i + 1}: seleziona entrambe le squadre',
                             ),
                             backgroundColor: Colors.red,
+                            duration: Duration(seconds: 2),
                           ),
                         );
                         return;
@@ -4321,6 +4352,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                               'Partita ${i + 1}: le squadre devono essere diverse',
                             ),
                             backgroundColor: Colors.red,
+                            duration: Duration(seconds: 2),
                           ),
                         );
                         return;
@@ -4992,7 +5024,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
 
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), duration: Duration(seconds: 3)),
+      SnackBar(content: Text(message), duration: Duration(seconds: 2)),
     );
   }
 
@@ -5030,7 +5062,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                 content: giornataChiusa!
                     ? Text('Giornata chiusa con successo')
                     : Text('Giornata riaperta con successo'),
-                duration: Duration(seconds: 3),
+                duration: Duration(seconds: 2),
               ),
             );
             // Invalida cache delle partite
@@ -5063,7 +5095,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Errore nella chiusura della giornata: $error'),
-                duration: Duration(seconds: 3),
+                duration: Duration(seconds: 2),
               ),
             );
           });

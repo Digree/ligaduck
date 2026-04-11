@@ -73,6 +73,7 @@ class CountryService {
       {'name': 'Polonia', 'code': 'PL'},
       {'name': 'Portogallo', 'code': 'PT'},
       {'name': 'Russia', 'code': 'RU'},
+      {'name': 'Siria', 'code': 'SY'},
       {'name': 'Spagna', 'code': 'ES'},
       {'name': 'Stati Uniti', 'code': 'US'},
       {'name': 'Sudafrica', 'code': 'ZA'},

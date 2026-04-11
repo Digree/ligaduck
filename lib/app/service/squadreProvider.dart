@@ -298,6 +298,35 @@ class SquadreProvider with ChangeNotifier {
     }
   }
 
+  Future<bool> aggiornaFormazionePreMercato(
+    String campionato,
+    int idSquadra,
+    dynamic formazione,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse(
+          '${Env.apiUrl}/$campionato/squadra/$idSquadra/formazione/old',
+        ),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(formazione),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        notifyListeners();
+        return true;
+      } else {
+        print(
+          'Errore POST formazione pre-mercato: ${response.statusCode} - ${response.body}',
+        );
+        return false;
+      }
+    } catch (e) {
+      print('Errore POST formazione pre-mercato: $e');
+      return false;
+    }
+  }
+
   Future<List<Partita>> fetchUltime5Partite(
     String campionato,
     int idSquadra,
@@ -316,6 +345,74 @@ class SquadreProvider with ChangeNotifier {
             .map((item) => Partita.fromJson(item))
             .toList();
         return partite;
+      } else {
+        throw Exception('Errore nel caricamento: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Tipo errore: ${e.runtimeType}');
+      print('Dettaglio errore: $e');
+      return [];
+    }
+  }
+
+  Future<List<String>> fetchNazioniSquadre(String campionato) async {
+    try {
+      String url = '${Env.apiUrl}/$campionato/squadre/nazionalita';
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        List<String> nazioni = data.map((item) => item.toString()).toList();
+        notifyListeners();
+        return nazioni;
+      } else {
+        throw Exception('Errore nel caricamento: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Tipo errore: ${e.runtimeType}');
+      print('Dettaglio errore: $e');
+      return [];
+    }
+  }
+
+  Future<List<Squadra>> fetchSquadreByNome(
+    String campionato,
+    String nome,
+    String? nazione,
+  ) async {
+    try {
+      // Costruisci l'URL base
+      String url = '${Env.apiUrl}/$campionato/squadre/nome/$nome';
+
+      // Aggiungi il query parameter se la nazione è specificata
+      if (nazione != null && nazione.isNotEmpty) {
+        url += '?nazione=$nazione';
+      }
+
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        List<Squadra> squadre = data
+            .map((item) => Squadra.fromJson(item))
+            .toList();
+
+        for (var squadra in squadre) {
+          for (var giocatore in squadra.formazione.titolari) {
+            giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
+          }
+
+          for (var giocatore in squadra.formazione.panchina) {
+            giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
+          }
+
+          for (var giocatore in squadra.indisponibili) {
+            giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
+          }
+        }
+
+        notifyListeners();
+        return squadre;
       } else {
         throw Exception('Errore nel caricamento: ${response.statusCode}');
       }

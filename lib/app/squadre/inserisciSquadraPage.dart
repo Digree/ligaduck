@@ -174,6 +174,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
           SnackBar(
             content: Text('Errore caricamento competizioni: $e'),
             backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
           ),
         );
       }
@@ -223,6 +224,14 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
         indisponibili: [],
         nonConvocati: [],
       ),
+      formazioneOld: Formazione(
+        titolari: [],
+        panchina: [],
+        allenatore: '',
+        modulo: '',
+        indisponibili: [],
+        nonConvocati: [],
+      ),
       indisponibili: [],
       competizioni: _competizioniSelezionate.map((c) => c.id).toList(),
     );
@@ -250,7 +259,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
             SnackBar(
               content: Text('Errore nel salvataggio della squadra'),
               backgroundColor: Colors.red,
-              duration: Duration(seconds: 3),
+              duration: Duration(seconds: 2),
             ),
           );
         }
@@ -264,7 +273,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
           SnackBar(
             content: Text('Errore: ${e.toString()}'),
             backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
+            duration: Duration(seconds: 2),
           ),
         );
       }
@@ -601,6 +610,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
                                 'Il numero di anni deve corrispondere alla quantità ($quantita)',
                               ),
                               backgroundColor: Colors.orange,
+                              duration: Duration(seconds: 2),
                             ),
                           );
                           return;
@@ -612,6 +622,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
                               'Formato anni non valido. Usa: 2020, 2022, 2024',
                             ),
                             backgroundColor: Colors.red,
+                            duration: Duration(seconds: 2),
                           ),
                         );
                         return;
@@ -633,6 +644,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
                       SnackBar(
                         content: Text('Inserisci una quantità valida'),
                         backgroundColor: Colors.red,
+                        duration: Duration(seconds: 2),
                       ),
                     );
                   }
@@ -728,6 +740,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
                         'Nessuna competizione disponibile. Caricamento in corso...',
                       ),
                       backgroundColor: Colors.orange,
+                      duration: Duration(seconds: 2),
                     ),
                   );
                 },

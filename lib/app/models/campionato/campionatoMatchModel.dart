@@ -405,6 +405,7 @@ Future<void> _showRisultatoDialog(
                                 'Inserisci numeri validi per i risultati',
                               ),
                               backgroundColor: Colors.red,
+                              duration: Duration(seconds: 2),
                             ),
                           );
                           return;
@@ -452,6 +453,7 @@ Future<void> _showRisultatoDialog(
                             SnackBar(
                               content: Text('Risultato salvato con successo'),
                               backgroundColor: Colors.green,
+                              duration: Duration(seconds: 2),
                             ),
                           );
 
@@ -466,6 +468,7 @@ Future<void> _showRisultatoDialog(
                                 'Errore nel salvataggio del risultato',
                               ),
                               backgroundColor: Colors.red,
+                              duration: Duration(seconds: 2),
                             ),
                           );
                         }

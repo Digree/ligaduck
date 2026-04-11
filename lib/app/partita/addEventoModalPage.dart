@@ -1078,6 +1078,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
 
   Widget buildTipoGolRadioButton() {
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey.shade300),
         borderRadius: BorderRadius.circular(8),
@@ -1095,89 +1096,99 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
             ),
           ),
           SizedBox(height: 8),
-          Wrap(
-            alignment: WrapAlignment.center,
+          Row(
             spacing: 8,
-            runSpacing: 8,
             children: [
-              FilterChip(
-                label: Text(
-                  'No',
-                  style: TextStyle(
-                    color: tipoGolSelezionato == 'no'
-                        ? Colors.white
-                        : getColor(),
-                    fontWeight: FontWeight.bold,
+              Expanded(
+                child: FilterChip(
+                  label: Center(
+                    child: Text(
+                      'No',
+                      style: TextStyle(
+                        color: tipoGolSelezionato == 'no'
+                            ? Colors.white
+                            : getColor(),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                ),
-                selected: tipoGolSelezionato == 'no',
-                onSelected: (bool selected) {
-                  setState(() {
-                    tipoGolSelezionato = 'no';
-                  });
-                },
-                backgroundColor: Colors.white,
-                selectedColor: getColor(),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  side: BorderSide(
-                    color: tipoGolSelezionato == 'no'
-                        ? getColor()
-                        : getColor().withOpacity(0.3),
-                  ),
-                ),
-              ),
-              FilterChip(
-                label: Text(
-                  'Rig',
-                  style: TextStyle(
-                    color: tipoGolSelezionato == 'rig'
-                        ? Colors.white
-                        : getColor(),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                selected: tipoGolSelezionato == 'rig',
-                onSelected: (bool selected) {
-                  setState(() {
-                    tipoGolSelezionato = 'rig';
-                  });
-                },
-                backgroundColor: Colors.white,
-                selectedColor: getColor(),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  side: BorderSide(
-                    color: tipoGolSelezionato == 'rig'
-                        ? getColor()
-                        : getColor().withOpacity(0.3),
+                  selected: tipoGolSelezionato == 'no',
+                  onSelected: (bool selected) {
+                    setState(() {
+                      tipoGolSelezionato = 'no';
+                    });
+                  },
+                  backgroundColor: Colors.white,
+                  selectedColor: getColor(),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(
+                      color: tipoGolSelezionato == 'no'
+                          ? getColor()
+                          : getColor().withOpacity(0.3),
+                    ),
                   ),
                 ),
               ),
-              FilterChip(
-                label: Text(
-                  'Pun',
-                  style: TextStyle(
-                    color: tipoGolSelezionato == 'pun'
-                        ? Colors.white
-                        : getColor(),
-                    fontWeight: FontWeight.bold,
+              Expanded(
+                child: FilterChip(
+                  label: Center(
+                    child: Text(
+                      'Rig',
+                      style: TextStyle(
+                        color: tipoGolSelezionato == 'rig'
+                            ? Colors.white
+                            : getColor(),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  selected: tipoGolSelezionato == 'rig',
+                  onSelected: (bool selected) {
+                    setState(() {
+                      tipoGolSelezionato = 'rig';
+                    });
+                  },
+                  backgroundColor: Colors.white,
+                  selectedColor: getColor(),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(
+                      color: tipoGolSelezionato == 'rig'
+                          ? getColor()
+                          : getColor().withOpacity(0.3),
+                    ),
                   ),
                 ),
-                selected: tipoGolSelezionato == 'pun',
-                onSelected: (bool selected) {
-                  setState(() {
-                    tipoGolSelezionato = 'pun';
-                  });
-                },
-                backgroundColor: Colors.white,
-                selectedColor: getColor(),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  side: BorderSide(
-                    color: tipoGolSelezionato == 'pun'
-                        ? getColor()
-                        : getColor().withOpacity(0.3),
+              ),
+              Expanded(
+                child: FilterChip(
+                  label: Center(
+                    child: Text(
+                      'Pun',
+                      style: TextStyle(
+                        color: tipoGolSelezionato == 'pun'
+                            ? Colors.white
+                            : getColor(),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  selected: tipoGolSelezionato == 'pun',
+                  onSelected: (bool selected) {
+                    setState(() {
+                      tipoGolSelezionato = 'pun';
+                    });
+                  },
+                  backgroundColor: Colors.white,
+                  selectedColor: getColor(),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(
+                      color: tipoGolSelezionato == 'pun'
+                          ? getColor()
+                          : getColor().withOpacity(0.3),
+                    ),
                   ),
                 ),
               ),
@@ -1190,6 +1201,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
 
   Widget buildInfortunioRadioButton() {
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey.shade300),
         borderRadius: BorderRadius.circular(8),
@@ -1207,62 +1219,68 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
             ),
           ),
           SizedBox(height: 8),
-          Wrap(
-            alignment: WrapAlignment.center,
+          Row(
             spacing: 8,
-            runSpacing: 8,
             children: [
-              FilterChip(
-                label: Text(
-                  'No',
-                  style: TextStyle(
-                    color: infortunioSelezionato == 'no'
-                        ? Colors.white
-                        : getColor(),
-                    fontWeight: FontWeight.bold,
+              Expanded(
+                child: FilterChip(
+                  label: Center(
+                    child: Text(
+                      'No',
+                      style: TextStyle(
+                        color: infortunioSelezionato == 'no'
+                            ? Colors.white
+                            : getColor(),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                ),
-                selected: infortunioSelezionato == 'no',
-                onSelected: (bool selected) {
-                  setState(() {
-                    infortunioSelezionato = 'no';
-                  });
-                },
-                backgroundColor: Colors.white,
-                selectedColor: getColor(),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  side: BorderSide(
-                    color: infortunioSelezionato == 'no'
-                        ? getColor()
-                        : getColor().withOpacity(0.3),
+                  selected: infortunioSelezionato == 'no',
+                  onSelected: (bool selected) {
+                    setState(() {
+                      infortunioSelezionato = 'no';
+                    });
+                  },
+                  backgroundColor: Colors.white,
+                  selectedColor: getColor(),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(
+                      color: infortunioSelezionato == 'no'
+                          ? getColor()
+                          : getColor().withOpacity(0.3),
+                    ),
                   ),
                 ),
               ),
-              FilterChip(
-                label: Text(
-                  'Si',
-                  style: TextStyle(
-                    color: infortunioSelezionato == 'si'
-                        ? Colors.white
-                        : getColor(),
-                    fontWeight: FontWeight.bold,
+              Expanded(
+                child: FilterChip(
+                  label: Center(
+                    child: Text(
+                      'Si',
+                      style: TextStyle(
+                        color: infortunioSelezionato == 'si'
+                            ? Colors.white
+                            : getColor(),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                ),
-                selected: infortunioSelezionato == 'si',
-                onSelected: (bool selected) {
-                  setState(() {
-                    infortunioSelezionato = 'si';
-                  });
-                },
-                backgroundColor: Colors.white,
-                selectedColor: getColor(),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  side: BorderSide(
-                    color: infortunioSelezionato == 'si'
-                        ? getColor()
-                        : getColor().withOpacity(0.3),
+                  selected: infortunioSelezionato == 'si',
+                  onSelected: (bool selected) {
+                    setState(() {
+                      infortunioSelezionato = 'si';
+                    });
+                  },
+                  backgroundColor: Colors.white,
+                  selectedColor: getColor(),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(
+                      color: infortunioSelezionato == 'si'
+                          ? getColor()
+                          : getColor().withOpacity(0.3),
+                    ),
                   ),
                 ),
               ),
@@ -1336,6 +1354,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
       child: Column(
         children: [
           Container(
+            width: double.infinity,
             decoration: BoxDecoration(
               border: Border.all(color: Colors.grey.shade300),
               borderRadius: BorderRadius.circular(8),
@@ -1353,62 +1372,68 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                   ),
                 ),
                 SizedBox(height: 8),
-                Wrap(
-                  alignment: WrapAlignment.center,
+                Row(
                   spacing: 8,
-                  runSpacing: 8,
                   children: [
-                    FilterChip(
-                      label: Text(
-                        'Segnato',
-                        style: TextStyle(
-                          color: esitoRigoreSelezionato == 'segnato'
-                              ? Colors.white
-                              : getColor(),
-                          fontWeight: FontWeight.bold,
+                    Expanded(
+                      child: FilterChip(
+                        label: Center(
+                          child: Text(
+                            'Segnato',
+                            style: TextStyle(
+                              color: esitoRigoreSelezionato == 'segnato'
+                                  ? Colors.white
+                                  : getColor(),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                      ),
-                      selected: esitoRigoreSelezionato == 'segnato',
-                      onSelected: (bool selected) {
-                        setState(() {
-                          esitoRigoreSelezionato = 'segnato';
-                        });
-                      },
-                      backgroundColor: Colors.white,
-                      selectedColor: getColor(),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        side: BorderSide(
-                          color: esitoRigoreSelezionato == 'segnato'
-                              ? getColor()
-                              : getColor().withOpacity(0.3),
+                        selected: esitoRigoreSelezionato == 'segnato',
+                        onSelected: (bool selected) {
+                          setState(() {
+                            esitoRigoreSelezionato = 'segnato';
+                          });
+                        },
+                        backgroundColor: Colors.white,
+                        selectedColor: getColor(),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          side: BorderSide(
+                            color: esitoRigoreSelezionato == 'segnato'
+                                ? getColor()
+                                : getColor().withOpacity(0.3),
+                          ),
                         ),
                       ),
                     ),
-                    FilterChip(
-                      label: Text(
-                        'Sbagliato',
-                        style: TextStyle(
-                          color: esitoRigoreSelezionato == 'sbagliato'
-                              ? Colors.white
-                              : getColor(),
-                          fontWeight: FontWeight.bold,
+                    Expanded(
+                      child: FilterChip(
+                        label: Center(
+                          child: Text(
+                            'Sbagliato',
+                            style: TextStyle(
+                              color: esitoRigoreSelezionato == 'sbagliato'
+                                  ? Colors.white
+                                  : getColor(),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                      ),
-                      selected: esitoRigoreSelezionato == 'sbagliato',
-                      onSelected: (bool selected) {
-                        setState(() {
-                          esitoRigoreSelezionato = 'sbagliato';
-                        });
-                      },
-                      backgroundColor: Colors.white,
-                      selectedColor: getColor(),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        side: BorderSide(
-                          color: esitoRigoreSelezionato == 'sbagliato'
-                              ? getColor()
-                              : getColor().withOpacity(0.3),
+                        selected: esitoRigoreSelezionato == 'sbagliato',
+                        onSelected: (bool selected) {
+                          setState(() {
+                            esitoRigoreSelezionato = 'sbagliato';
+                          });
+                        },
+                        backgroundColor: Colors.white,
+                        selectedColor: getColor(),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          side: BorderSide(
+                            color: esitoRigoreSelezionato == 'sbagliato'
+                                ? getColor()
+                                : getColor().withOpacity(0.3),
+                          ),
                         ),
                       ),
                     ),
@@ -1615,7 +1640,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
               SnackBar(
                 content: Text('Errore nel salvare la squalifica'),
                 backgroundColor: Colors.red,
-                duration: Duration(seconds: 3),
+                duration: Duration(seconds: 2),
               ),
             );
           }
@@ -1672,7 +1697,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                 SnackBar(
                   content: Text('Errore nel salvare la squalifica'),
                   backgroundColor: Colors.red,
-                  duration: Duration(seconds: 3),
+                  duration: Duration(seconds: 2),
                 ),
               );
             }
@@ -1734,7 +1759,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
           SnackBar(
             content: Text('Errore durante il salvataggio'),
             backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
+            duration: Duration(seconds: 2),
           ),
         );
       }

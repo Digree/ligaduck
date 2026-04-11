@@ -317,6 +317,8 @@ class CommonService {
       'iceland': 'is',
       'islanda': 'is',
       'israele': 'il',
+      'siria': 'sy',
+      'syria': 'sy',
     };
 
     if (countryMap.containsKey(nazioneNome)) {

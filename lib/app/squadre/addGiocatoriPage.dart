@@ -1043,7 +1043,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
 
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), duration: Duration(seconds: 3)),
+      SnackBar(content: Text(message), duration: Duration(seconds: 2)),
     );
   }
 
@@ -1076,6 +1076,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
           SnackBar(
             content: Text('Giocatore aggiunto correttamente'),
             backgroundColor: getColor("primary"),
+            duration: Duration(seconds: 2),
           ),
         );
         _clearForm();

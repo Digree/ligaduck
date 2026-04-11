@@ -37,6 +37,8 @@ class _SquadrePageState extends State<SquadrePage> {
   Squadra? _squadra;
   Future<List<Esonero>>? _esoneriFuture;
   String _selectedSquadType = 'Prima Squadra'; // Nuovo stato per il dropdown
+  String _selectedFormazioneType =
+      'Attuale'; // Tipo di formazione: Attuale o Pre-mercato
 
   @override
   void initState() {
@@ -97,6 +99,50 @@ class _SquadrePageState extends State<SquadrePage> {
       setState(() {
         _isLoadingGiocatori = false;
       });
+    }
+  }
+
+  Future<void> _aggiornaFormazionePreMercato() async {
+    try {
+      final squadreProvider = Provider.of<SquadreProvider>(
+        context,
+        listen: false,
+      );
+
+      // Chiamata al backend per copiare la formazione attuale nella pre-mercato
+      final success = await squadreProvider.aggiornaFormazionePreMercato(
+        widget.campionato,
+        widget.squadra.id,
+        widget.squadra.formazione,
+      );
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Formazione pre mercato aggiornata con successo'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        await _loadGiocatori();
+        setState(() {});
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Errore durante l\'aggiornamento della formazione'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Errore: $e'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
+        ),
+      );
     }
   }
 
@@ -374,7 +420,11 @@ class _SquadrePageState extends State<SquadrePage> {
     );
 
     return isWide
-        ? Row(mainAxisAlignment: MainAxisAlignment.center, children: children)
+        ? Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: children,
+          )
         : Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: children,
@@ -1624,6 +1674,7 @@ class _SquadrePageState extends State<SquadrePage> {
               content: Text(
                 'Allenatore ${CommonService.decodePlayerName(giocatore.nome)} esonerato',
               ),
+              duration: Duration(seconds: 2),
             ),
           );
 
@@ -1662,7 +1713,7 @@ class _SquadrePageState extends State<SquadrePage> {
                   trofei != null
                       ? 'Campionato: ${trofei[i].anni.join(", ")}'
                       : '',
-                  duration: Duration(seconds: 5),
+                  duration: Duration(seconds: 2),
                   position: ToastPosition.bottom,
                   backgroundColor: getColor('primary'),
                 );
@@ -2133,6 +2184,7 @@ class _SquadrePageState extends State<SquadrePage> {
             content: Text(
               'Allenatore ${allenatore.nome} aggiunto con successo',
             ),
+            duration: Duration(seconds: 2),
           ),
         );
       }
@@ -2142,6 +2194,7 @@ class _SquadrePageState extends State<SquadrePage> {
           SnackBar(
             content: Text('Errore nell\'aggiunta dell\'allenatore'),
             backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
           ),
         );
       }
@@ -2304,6 +2357,7 @@ class _SquadrePageState extends State<SquadrePage> {
                           SnackBar(
                             content: Text('Capitano aggiornato con successo'),
                             backgroundColor: Colors.green,
+                            duration: Duration(seconds: 2),
                           ),
                         );
                       } else {
@@ -2313,6 +2367,7 @@ class _SquadrePageState extends State<SquadrePage> {
                               'Errore nell\'aggiornamento del capitano',
                             ),
                             backgroundColor: Colors.red,
+                            duration: Duration(seconds: 2),
                           ),
                         );
                       }
@@ -2551,6 +2606,7 @@ class _SquadrePageState extends State<SquadrePage> {
                           SnackBar(
                             content: Text('Numeri aggiornati con successo'),
                             backgroundColor: Colors.green,
+                            duration: Duration(seconds: 2),
                           ),
                         );
                       } else {
@@ -2560,6 +2616,7 @@ class _SquadrePageState extends State<SquadrePage> {
                               'Errore nell\'aggiornamento di alcuni numeri',
                             ),
                             backgroundColor: Colors.red,
+                            duration: Duration(seconds: 2),
                           ),
                         );
                       }
@@ -2569,6 +2626,7 @@ class _SquadrePageState extends State<SquadrePage> {
                         SnackBar(
                           content: Text('Nessuna modifica da salvare'),
                           backgroundColor: Colors.grey[700],
+                          duration: Duration(seconds: 2),
                         ),
                       );
                     }
@@ -2696,6 +2754,7 @@ class _SquadrePageState extends State<SquadrePage> {
                       stadio: widget.squadra.stadio,
                       competizioni: competizioniAbilitate,
                       formazione: widget.squadra.formazione,
+                      formazioneOld: widget.squadra.formazioneOld,
                       indisponibili: widget.squadra.indisponibili,
                       trofei: widget.squadra.trofei,
                     );
@@ -2718,6 +2777,7 @@ class _SquadrePageState extends State<SquadrePage> {
                         SnackBar(
                           content: Text('Competizioni aggiornate con successo'),
                           backgroundColor: Colors.green,
+                          duration: Duration(seconds: 2),
                         ),
                       );
                     } else {
@@ -2727,6 +2787,7 @@ class _SquadrePageState extends State<SquadrePage> {
                             'Errore nell\'aggiornamento delle competizioni',
                           ),
                           backgroundColor: Colors.red,
+                          duration: Duration(seconds: 2),
                         ),
                       );
                     }
@@ -2743,8 +2804,42 @@ class _SquadrePageState extends State<SquadrePage> {
 
   Widget showFormazione() {
     final isWide = MediaQuery.of(context).size.width > 600;
+    // Seleziona la formazione corretta in base al dropdown
+    final formazioneSelezionata = _selectedFormazioneType == 'Attuale'
+        ? widget.squadra.formazione
+        : widget.squadra.formazioneOld;
+
     return Column(
       children: [
+        Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: isWide ? 490 : 8,
+            vertical: 8,
+          ),
+          child: DropdownButton<String>(
+            value: _selectedFormazioneType,
+            isExpanded: true,
+            items: ['Attuale', 'Pre-mercato'].map((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(
+                  value,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: getColor('primary', forText: true),
+                  ),
+                ),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              if (newValue != null) {
+                setState(() {
+                  _selectedFormazioneType = newValue;
+                });
+              }
+            },
+          ),
+        ),
         SizedBox(
           height: isWide ? 80 : 40,
           child: Padding(
@@ -2755,7 +2850,7 @@ class _SquadrePageState extends State<SquadrePage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Modulo: ${widget.squadra.formazione.modulo}',
+                  'Modulo: ${formazioneSelezionata.modulo}',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: getColor('primary', forText: true),
@@ -2793,21 +2888,40 @@ class _SquadrePageState extends State<SquadrePage> {
             border: Border.all(color: Colors.grey[200]!, width: 1),
           ),
           child: Center(
-            child: widget.squadra.formazione.titolari.isEmpty
+            child: formazioneSelezionata.titolari.isEmpty
                 ? Center()
                 : buildPartitaFormazione(
                     PartitaFormazioneModel(
                       codSquadra: widget.squadra.cod,
-                      formazione: widget.squadra.formazione.titolari,
+                      formazione: formazioneSelezionata.titolari,
                       campionato: widget.campionato,
-                      modulo: widget.squadra.formazione.modulo,
+                      modulo: formazioneSelezionata.modulo,
                       coloriSquadra: widget.squadra.colori,
-                      giocatoriDisponibili: widget.squadra.formazione.panchina,
+                      giocatoriDisponibili: formazioneSelezionata.panchina,
                       competizioneId: null,
                     ),
                   ),
           ),
         ),
+        if (_selectedFormazioneType == 'Attuale' && globals.admin)
+          Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: isWide ? 490 : 8,
+              vertical: 8,
+            ),
+            child: SizedBox(
+              width: isWide ? 400 : double.infinity,
+              child: ElevatedButton(
+                onPressed: () async {
+                  await _aggiornaFormazionePreMercato();
+                },
+                child: Text(
+                  'Aggiorna formazione pre mercato',
+                  style: TextStyle(color: getColor('primary', forText: true)),
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }

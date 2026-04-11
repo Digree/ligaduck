@@ -12,6 +12,7 @@ class Squadra {
   final List<String> colori;
   final List<Trofeo>? trofei;
   final Formazione formazione;
+  final Formazione formazioneOld;
   final List<GiocatoreNonDisponibile> indisponibili;
   final List<int> competizioni;
 
@@ -26,6 +27,7 @@ class Squadra {
     required this.colori,
     this.trofei,
     required this.formazione,
+    required this.formazioneOld,
     required this.indisponibili,
     required this.competizioni,
   });
@@ -52,6 +54,7 @@ class Squadra {
       indisponibili: (json['indisponibili'] as List)
           .map((e) => GiocatoreNonDisponibile.fromJson(e))
           .toList(),
+      formazioneOld: Formazione.fromJson(json['formazioneOld']),
     );
   }
 
@@ -68,6 +71,7 @@ class Squadra {
       'trofei': trofei?.map((t) => t.toJson()).toList(),
       'competizioni': competizioni,
       'formazione': formazione.toJson(),
+      'formazioneOld': formazioneOld.toJson(),
       'indisponibili': indisponibili.map((e) => e.toJson()).toList(),
     };
   }

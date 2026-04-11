@@ -344,11 +344,14 @@ class _AutogolPageState extends State<AutogolPage> {
                                       '${CommonService.decodePlayerName(autogolItem.nome)} - ${() {
                                         for (var g in widget.giornate) {
                                           if (g.id == autogolItem.idGiornata) {
-                                            return g.giornata;
+                                            final giornataText = CommonService.decodePlayerName(g.giornata);
+                                            // Verifica se la giornata è numerica
+                                            final isNumeric = int.tryParse(g.giornata) != null;
+                                            return isNumeric ? '$giornataText^ Giornata' : giornataText;
                                           }
                                         }
                                         return 'N/A';
-                                      }()}^ Giornata',
+                                      }()}',
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w500,

@@ -6,6 +6,7 @@ import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/widgets/squadra_logo_widget.dart';
 import 'package:ligaduck/services/commonService.dart';
 import 'package:provider/provider.dart';
+import 'package:ligaduck/app/squadre/squadrePage.dart';
 
 class SearchPage extends StatefulWidget {
   final String campionato;
@@ -20,9 +21,12 @@ class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchType = 'Giocatori'; // Default selection
   String? _selectedNazione;
+  String? _selectedNazioneSquadre;
   String? _selectedRuolo;
   List<String> _nazionalita = ['Tutte'];
+  List<String> _nazionalitaSquadre = ['Tutte'];
   List<Giocatore> _risultatiRicerca = [];
+  List<Squadra> _risultatiRicercaSquadre = [];
   bool _isSearching = false;
   bool _hasSearched = false;
   List<Squadra> _squadre = [];
@@ -32,6 +36,7 @@ class _SearchPageState extends State<SearchPage> {
   void initState() {
     super.initState();
     _loadNazionalita();
+    _loadNazionalitaSquadre();
     _loadSquadre();
   }
 
@@ -66,6 +71,25 @@ class _SearchPageState extends State<SearchPage> {
       });
     } catch (e) {
       print('Errore caricamento nazionalità: $e');
+    }
+  }
+
+  Future<void> _loadNazionalitaSquadre() async {
+    final provider = Provider.of<SquadreProvider>(context, listen: false);
+    try {
+      final nazioni = await provider.fetchNazioniSquadre(widget.campionato);
+      // Filtra campi vuoti, capitalizza e ordina
+      final nazioniProcessate =
+          nazioni
+              .where((n) => n.trim().isNotEmpty)
+              .map((n) => n[0].toUpperCase() + n.substring(1).toLowerCase())
+              .toList()
+            ..sort();
+      setState(() {
+        _nazionalitaSquadre = ['Tutte', ...nazioniProcessate];
+      });
+    } catch (e) {
+      print('Errore caricamento nazionalità squadre: $e');
     }
   }
 
@@ -119,17 +143,52 @@ class _SearchPageState extends State<SearchPage> {
           SnackBar(
             content: Text('Errore durante la ricerca'),
             backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
           ),
         );
       }
     } else {
-      // TODO: Implementare ricerca squadre
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Ricerca squadre in arrivo...'),
-          backgroundColor: Colors.blueAccent,
-        ),
-      );
+      // Ricerca squadre
+      setState(() {
+        _isSearching = true;
+        _hasSearched = true;
+      });
+
+      try {
+        final provider = Provider.of<SquadreProvider>(context, listen: false);
+
+        // Se il nome è vuoto, passa "All"
+        final nomeRicerca = searchQuery.isEmpty ? 'All' : searchQuery;
+
+        // Prepara parametro nazione
+        String? nazioneParam =
+            (_selectedNazioneSquadre != null &&
+                _selectedNazioneSquadre != 'Tutte')
+            ? _selectedNazioneSquadre
+            : null;
+
+        final risultati = await provider.fetchSquadreByNome(
+          widget.campionato,
+          nomeRicerca,
+          nazioneParam,
+        );
+
+        setState(() {
+          _risultatiRicercaSquadre = risultati;
+          _isSearching = false;
+        });
+      } catch (e) {
+        setState(() {
+          _isSearching = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Errore durante la ricerca'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 
@@ -263,12 +322,48 @@ class _SearchPageState extends State<SearchPage> {
                                 ],
                               ),
                             ] else ...[
-                              // Filtri per Squadre (placeholder)
+                              // Filtri per Squadre
                               Text(
-                                'Filtri per squadre in arrivo...',
+                                'Nazionalità',
                                 style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[600],
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey[700],
+                                ),
+                              ),
+                              SizedBox(height: 12),
+                              Container(
+                                width: double.infinity,
+                                padding: EdgeInsets.symmetric(horizontal: 12),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: Colors.blueAccent.withOpacity(0.3),
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: _selectedNazioneSquadre,
+                                    hint: Text('Seleziona nazionalità'),
+                                    isExpanded: true,
+                                    icon: Icon(
+                                      Icons.arrow_drop_down,
+                                      color: Colors.blueAccent,
+                                    ),
+                                    items: _nazionalitaSquadre.map((
+                                      String value,
+                                    ) {
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value),
+                                      );
+                                    }).toList(),
+                                    onChanged: (String? newValue) {
+                                      setDialogState(() {
+                                        _selectedNazioneSquadre = newValue;
+                                      });
+                                    },
+                                  ),
                                 ),
                               ),
                             ],
@@ -285,6 +380,7 @@ class _SearchPageState extends State<SearchPage> {
                           onPressed: () {
                             setDialogState(() {
                               _selectedNazione = null;
+                              _selectedNazioneSquadre = null;
                               _selectedRuolo = null;
                             });
                           },
@@ -301,6 +397,7 @@ class _SearchPageState extends State<SearchPage> {
                               SnackBar(
                                 content: Text('Filtri applicati'),
                                 backgroundColor: Colors.blueAccent,
+                                duration: Duration(seconds: 2),
                               ),
                             );
                           },
@@ -400,6 +497,15 @@ class _SearchPageState extends State<SearchPage> {
       );
     }
 
+    // Mostra risultati in base al tipo di ricerca
+    if (_searchType == 'Giocatori') {
+      return _buildRisultatiGiocatori();
+    } else {
+      return _buildRisultatiSquadre();
+    }
+  }
+
+  Widget _buildRisultatiGiocatori() {
     if (_risultatiRicerca.isEmpty) {
       return Container(
         decoration: BoxDecoration(
@@ -434,7 +540,7 @@ class _SearchPageState extends State<SearchPage> {
 
     // Ordina i risultati in base al tipo selezionato
     List<Giocatore> risultatiOrdinati = List.from(_risultatiRicerca);
-    _sortRisultati(risultatiOrdinati);
+    _sortRisultatiGiocatori(risultatiOrdinati);
 
     return Container(
       decoration: BoxDecoration(
@@ -523,7 +629,129 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  void _sortRisultati(List<Giocatore> risultati) {
+  Widget _buildRisultatiSquadre() {
+    if (_risultatiRicercaSquadre.isEmpty) {
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.blueAccent[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[300]!),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
+              SizedBox(height: 16),
+              Text(
+                'Nessun risultato trovato',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Prova a modificare i filtri o il termine di ricerca',
+                style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Ordina i risultati in base al tipo selezionato
+    List<Squadra> risultatiOrdinati = List.from(_risultatiRicercaSquadre);
+    _sortRisultatiSquadre(risultatiOrdinati);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.blueAccent[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              children: [
+                Text(
+                  'Trovate ${_risultatiRicercaSquadre.length} squadre',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blueAccent,
+                  ),
+                ),
+                SizedBox(height: 12),
+                Row(
+                  children: [
+                    Text(
+                      'Ordina per:',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[700],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Colors.blueAccent.withOpacity(0.3),
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.white,
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _sortType,
+                            isExpanded: true,
+                            icon: Icon(
+                              Icons.arrow_drop_down,
+                              color: Colors.blueAccent,
+                            ),
+                            items: ['Nome', 'Nazione'].map((String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                _sortType = newValue!;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1),
+          Expanded(
+            child: ListView.builder(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              itemCount: risultatiOrdinati.length,
+              itemBuilder: (context, index) {
+                return _buildSquadraCard(risultatiOrdinati[index]);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _sortRisultatiGiocatori(List<Giocatore> risultati) {
     switch (_sortType) {
       case 'Nome':
         risultati.sort((a, b) => a.nome.compareTo(b.nome));
@@ -587,6 +815,19 @@ class _SearchPageState extends State<SearchPage> {
           return ordineA.compareTo(ordineB);
         });
         break;
+    }
+  }
+
+  void _sortRisultatiSquadre(List<Squadra> risultati) {
+    switch (_sortType) {
+      case 'Nome':
+        risultati.sort((a, b) => a.nome.compareTo(b.nome));
+        break;
+      case 'Nazione':
+        risultati.sort((a, b) => a.categoria.compareTo(b.categoria));
+        break;
+      default:
+        risultati.sort((a, b) => a.nome.compareTo(b.nome));
     }
   }
 
@@ -692,6 +933,76 @@ class _SearchPageState extends State<SearchPage> {
         ),
       ),
     );
+  }
+
+  Widget _buildSquadraCard(Squadra squadra) {
+    return Card(
+      margin: EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  SquadrePage(campionato: widget.campionato, squadra: squadra),
+            ),
+          );
+        },
+        child: Padding(
+          padding: EdgeInsets.all(12),
+          child: Row(
+            children: [
+              // Logo squadra
+              SquadraLogoWidget(
+                codSquadra: squadra.cod,
+                squadra: squadra,
+                size: 40,
+              ),
+              SizedBox(width: 12),
+              // Nome squadra
+              Expanded(
+                child: Text(
+                  CommonService.decodePlayerName(squadra.nome),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+              SizedBox(width: 8),
+              // Bandiera nazione
+              if (squadra.categoria.isNotEmpty)
+                CircleAvatar(
+                  radius: 16,
+                  backgroundImage: NetworkImage(
+                    CommonService.getFlagUrl(
+                      _getNazioneBandiera(squadra.categoria),
+                    ),
+                  ),
+                  onBackgroundImageError: (_, __) {},
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.grey[300]!, width: 1),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getNazioneBandiera(String categoria) {
+    // Se la categoria è Serie A, B o C (Paperi), mostra bandiera Italia
+    final categoriaLower = categoria.toLowerCase();
+    if (categoriaLower == 'serie a' ||
+        categoriaLower == 'serie b' ||
+        categoriaLower == 'serie c') {
+      return 'italia';
+    }
+    return categoria;
   }
 
   Widget _buildRuoloBadge(String ruolo) {
