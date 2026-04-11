@@ -73,15 +73,15 @@ Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
               model.squadraAway!.categoria != 'Serie C' &&
               model.squadraAway!.categoria != 'Serie D';
 
-          if (isHomeEstera && isAwayEstera) {
-            // Controlla se l'utente è admin e se la partita non è già salvata
-            if (globals.admin && !model.partita.salvata) {
-              // Mostra dialog per inserire risultato manualmente
-              await _showRisultatoDialog(context, model);
-            }
-            // Se non è admin o la partita è salvata, non fa nulla
+          if (isHomeEstera &&
+              isAwayEstera &&
+              globals.admin &&
+              !model.partita.salvata) {
+            // Se entrambe le squadre sono estere, l'utente è admin e la partita non è salvata
+            // mostra dialog per inserire risultato manualmente
+            await _showRisultatoDialog(context, model);
           } else {
-            // Naviga alla pagina di dettaglio
+            // In tutti gli altri casi, naviga alla pagina di dettaglio
             final shouldRefresh = await Navigator.push(
               context,
               MaterialPageRoute(
