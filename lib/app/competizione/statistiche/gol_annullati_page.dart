@@ -1,31 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:ligaduck/app/competizione/competizioneHomePage.dart';
+import 'package:ligaduck/app/competizione/competizione_home_page.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/giornata.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
-import 'package:ligaduck/app/service/squadreProvider.dart';
+import 'package:ligaduck/app/service/squadre_provider.dart';
 import 'package:ligaduck/services/commonService.dart';
 import 'package:provider/provider.dart';
 
-class MarcatoriPage extends StatefulWidget {
+class GolAnnullatiPage extends StatefulWidget {
+  final List<Malus> golAnnullati;
   final String campionato;
   final Competizione competizione;
-  final List<Marcatura> marcatori;
 
-  const MarcatoriPage({
+  const GolAnnullatiPage({
     super.key,
+    required this.golAnnullati,
     required this.campionato,
     required this.competizione,
-    required this.marcatori,
   });
 
   @override
-  State<MarcatoriPage> createState() => _MarcatoriPageState();
+  State<GolAnnullatiPage> createState() => _GolAnnullatiPageState();
 }
 
-class _MarcatoriPageState extends State<MarcatoriPage> {
+class _GolAnnullatiPageState extends State<GolAnnullatiPage> {
   late final Future<List<Squadra>> _squadreFuture;
-  List<Marcatura> _displayedMarcatori = [];
+  List<Malus> _displayedGolAnnullati = [];
   Map<int, String> _squadreMap = {};
   String _sortBy = 'Quantità';
 
@@ -37,24 +37,24 @@ class _MarcatoriPageState extends State<MarcatoriPage> {
       listen: false,
     );
     _squadreFuture = squadreProvider.fetchSquadre(widget.campionato);
-    _displayedMarcatori = List.from(widget.marcatori);
+    _displayedGolAnnullati = List.from(widget.golAnnullati);
     _loadSquadreAndSort();
   }
 
   Future<void> _loadSquadreAndSort() async {
     final squadre = await _squadreFuture;
     _squadreMap = {for (var s in squadre) s.id: s.nome};
-    _sortMarcatori();
+    _sortGolAnnullati();
   }
 
-  void _sortMarcatori() {
+  void _sortGolAnnullati() {
     setState(() {
       if (_sortBy == 'Quantità') {
-        _displayedMarcatori.sort((a, b) => b.quantita.compareTo(a.quantita));
+        _displayedGolAnnullati.sort((a, b) => b.quantita.compareTo(a.quantita));
       } else if (_sortBy == 'Nome') {
-        _displayedMarcatori.sort((a, b) => a.nome.compareTo(b.nome));
+        _displayedGolAnnullati.sort((a, b) => a.nome.compareTo(b.nome));
       } else if (_sortBy == 'Squadra') {
-        _displayedMarcatori.sort((a, b) {
+        _displayedGolAnnullati.sort((a, b) {
           final nomeA = _squadreMap[a.idSquadra] ?? '';
           final nomeB = _squadreMap[b.idSquadra] ?? '';
           return nomeA.compareTo(nomeB);
@@ -169,7 +169,7 @@ class _MarcatoriPageState extends State<MarcatoriPage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Classifica Marcatori',
+                          'Gol Annullati',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 20,
@@ -188,7 +188,6 @@ class _MarcatoriPageState extends State<MarcatoriPage> {
       ),
       body: Column(
         children: [
-          buildHeader(context),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
@@ -211,7 +210,7 @@ class _MarcatoriPageState extends State<MarcatoriPage> {
                     if (newValue != null) {
                       setState(() {
                         _sortBy = newValue;
-                        _sortMarcatori();
+                        _sortGolAnnullati();
                       });
                     }
                   },
@@ -221,13 +220,13 @@ class _MarcatoriPageState extends State<MarcatoriPage> {
           ),
           Expanded(
             child: ListView.builder(
-              itemCount: _displayedMarcatori.length,
+              itemCount: _displayedGolAnnullati.length,
               itemBuilder: (context, index) {
-                final marcatore = _displayedMarcatori[index];
+                final golAnnullato = _displayedGolAnnullati[index];
                 return FutureBuilder<Squadra>(
                   future: getSquadra(
                     Provider.of<SquadreProvider>(context, listen: false),
-                    marcatore.idSquadra,
+                    golAnnullato.idSquadra,
                   ),
                   builder: (context, snapshot) {
                     return Container(
@@ -394,7 +393,7 @@ class _MarcatoriPageState extends State<MarcatoriPage> {
                                                 ).createShader(bounds),
                                             child: Icon(
                                               Icons.shield,
-                                              size: 40,
+                                              size: 30,
                                               color: Colors.white,
                                             ),
                                           ),
@@ -406,7 +405,7 @@ class _MarcatoriPageState extends State<MarcatoriPage> {
                                 Expanded(
                                   child: Text(
                                     CommonService.decodePlayerName(
-                                      marcatore.nome,
+                                      golAnnullato.nome,
                                     ),
                                     style: TextStyle(
                                       fontSize: 16,
@@ -421,29 +420,7 @@ class _MarcatoriPageState extends State<MarcatoriPage> {
                           Padding(
                             padding: EdgeInsets.only(right: 32),
                             child: Text(
-                              '${marcatore.quantita}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.right,
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.only(right: 32),
-                            child: Text(
-                              '${marcatore.rig}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.right,
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.only(right: 32),
-                            child: Text(
-                              '${marcatore.pun}',
+                              '${golAnnullato.quantita}',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -457,73 +434,6 @@ class _MarcatoriPageState extends State<MarcatoriPage> {
                   },
                 );
               },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget buildHeader(BuildContext context) {
-    return Container(
-      width: MediaQuery.of(context).size.width * 1,
-      height: 45,
-      decoration: BoxDecoration(
-        color: Color(
-          widget.competizione.colori.isNotEmpty
-              ? int.parse(
-                  widget.competizione.colori[0].replaceFirst('#', 'FF'),
-                  radix: 16,
-                )
-              : 0xFF000000,
-        ),
-        border: Border(
-          bottom: BorderSide(
-            color: Colors.grey[350] ?? Colors.grey,
-            width: 1.0,
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          Padding(
-            padding: EdgeInsets.only(left: 16),
-            child: Text(
-              'Squadra',
-              style: TextStyle(fontSize: 12, color: Colors.white),
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(left: 8),
-              child: Text(
-                'Giocatore',
-                style: TextStyle(fontSize: 12, color: Colors.white),
-              ),
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.only(right: 26),
-            child: Text(
-              'Gol',
-              style: TextStyle(fontSize: 12, color: Colors.white),
-              textAlign: TextAlign.right,
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.only(right: 26),
-            child: Text(
-              'Rig',
-              style: TextStyle(fontSize: 12, color: Colors.white),
-              textAlign: TextAlign.right,
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.only(right: 28),
-            child: Text(
-              'Pun',
-              style: TextStyle(fontSize: 12, color: Colors.white),
-              textAlign: TextAlign.right,
             ),
           ),
         ],

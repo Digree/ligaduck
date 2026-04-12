@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:ligaduck/app/partita/partitaHomePage.dart';
+import 'package:ligaduck/app/partita/partita_home_page.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
-import 'package:ligaduck/app/service/partiteProvider.dart';
+import 'package:ligaduck/app/service/partite_provider.dart';
 import 'package:ligaduck/app/widgets/squadra_logo_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;

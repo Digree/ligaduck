@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
-import 'package:ligaduck/app/models/partita/partitaFormazioneModel.dart';
-import 'package:ligaduck/app/service/giocatoriProvider.dart';
+import 'package:ligaduck/app/models/partita/partita_formazione_model.dart';
+import 'package:ligaduck/app/service/giocatori_provider.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
-import 'package:ligaduck/app/service/competizioniProvider.dart';
+import 'package:ligaduck/app/service/competizioni_provider.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
-import 'package:ligaduck/app/service/squadreProvider.dart';
+import 'package:ligaduck/app/service/squadre_provider.dart';
 import 'package:ligaduck/app/campionato/mercato/models/esonero.dart';
 import 'package:provider/provider.dart';
-import 'package:ligaduck/app/squadre/addFormazionePage.dart';
-import 'package:ligaduck/app/squadre/addGiocatoriPage.dart';
+import 'package:ligaduck/app/squadre/add_formazione_page.dart';
+import 'package:ligaduck/app/squadre/add_giocatori_page.dart';
+import 'package:ligaduck/app/mercato/acquisto_page.dart';
+import 'package:ligaduck/app/mercato/cessione_page.dart';
+import 'package:ligaduck/app/widgets/search_giocatori_widgets.dart';
 import 'package:oktoast/oktoast.dart';
 import '../../services/commonService.dart';
-import 'package:ligaduck/app/widgets/settingsIcon.dart';
+import 'package:ligaduck/app/widgets/settings_icon.dart';
 
 class SquadrePage extends StatefulWidget {
   final Squadra squadra;
@@ -1100,11 +1103,27 @@ class _SquadrePageState extends State<SquadrePage> {
     double screenWidth,
     double screenHeight,
   ) {
-    return Center(
-      child: Text(
-        'Mercato Estivo in arrivo...',
-        style: TextStyle(fontSize: 16, color: Colors.grey),
-      ),
+    return Stack(
+      children: [
+        Center(
+          child: Text(
+            'Mercato Estivo in arrivo...',
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ),
+        if (globals.admin)
+          Positioned(
+            bottom: 16,
+            right: 16,
+            child: FloatingActionButton(
+              onPressed: () {
+                _mostraDialogSceltaMercato('estivo');
+              },
+              backgroundColor: getColor('primary'),
+              child: Icon(Icons.add, color: getIconColor('primary')),
+            ),
+          ),
+      ],
     );
   }
 
@@ -1114,11 +1133,27 @@ class _SquadrePageState extends State<SquadrePage> {
     double screenWidth,
     double screenHeight,
   ) {
-    return Center(
-      child: Text(
-        'Mercato Invernale in arrivo...',
-        style: TextStyle(fontSize: 16, color: Colors.grey),
-      ),
+    return Stack(
+      children: [
+        Center(
+          child: Text(
+            'Mercato Invernale in arrivo...',
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ),
+        if (globals.admin)
+          Positioned(
+            bottom: 16,
+            right: 16,
+            child: FloatingActionButton(
+              onPressed: () {
+                _mostraDialogSceltaMercato('invernale');
+              },
+              backgroundColor: getColor('primary'),
+              child: Icon(Icons.add, color: getIconColor('primary')),
+            ),
+          ),
+      ],
     );
   }
 
@@ -2636,6 +2671,229 @@ class _SquadrePageState extends State<SquadrePage> {
               ],
             );
           },
+        );
+      },
+    );
+  }
+
+  Future<void> _mostraDialogSceltaMercato(String tipoMercato) async {
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Operazione di Mercato ${tipoMercato == "estivo" ? "Estivo" : "Invernale"}',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              InkWell(
+                onTap: () async {
+                  Navigator.of(context).pop();
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AcquistoPage(
+                        campionato: widget.campionato,
+                        squadra: widget.squadra,
+                        tipoMercato: tipoMercato,
+                      ),
+                    ),
+                  );
+                  // Se necessario, ricarica i dati
+                  if (result == true) {
+                    await _loadGiocatori();
+                  }
+                },
+                child: Card(
+                  elevation: 4,
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: getColor('primary').withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.arrow_downward,
+                            color: getColor('primary', forText: true),
+                            size: 32,
+                          ),
+                        ),
+                        SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Acquisto',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Aggiungi un nuovo giocatore alla squadra',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(Icons.arrow_forward_ios, size: 16),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 12),
+              InkWell(
+                onTap: () async {
+                  Navigator.of(context).pop();
+                  await _mostraDialogSelezioneGiocatore(tipoMercato);
+                },
+                child: Card(
+                  elevation: 4,
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: getColor('primary').withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.arrow_upward,
+                            color: getColor('primary', forText: true),
+                            size: 32,
+                          ),
+                        ),
+                        SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Cessione',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Vendi un giocatore della squadra',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(Icons.arrow_forward_ios, size: 16),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Annulla', style: TextStyle(color: Colors.grey)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _mostraDialogSelezioneGiocatore(String tipoMercato) async {
+    // Filtra solo i giocatori attivi
+    final giocatoriDisponibili = giocatori
+        .where((g) => g.attivo && g.idSquadraAttuale == widget.squadra.id)
+        .toList();
+
+    if (giocatoriDisponibili.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Nessun giocatore disponibile per la cessione'),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Seleziona Giocatore da Cedere',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+          content: Container(
+            width: double.maxFinite,
+            constraints: BoxConstraints(maxHeight: 400),
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: giocatoriDisponibili.length,
+              itemBuilder: (context, index) {
+                final giocatore = giocatoriDisponibili[index];
+                return Card(
+                  margin: EdgeInsets.symmetric(vertical: 4),
+                  child: ListTile(
+                    leading: buildRuoloBadge(giocatore.ruolo),
+                    title: Text(
+                      giocatore.nome,
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () async {
+                      Navigator.of(context).pop();
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CessionePage(
+                            campionato: widget.campionato,
+                            squadra: widget.squadra,
+                            giocatore: giocatore,
+                            tipoMercato: tipoMercato,
+                          ),
+                        ),
+                      );
+                      // Se necessario, ricarica i dati
+                      if (result == true) {
+                        await _loadGiocatori();
+                      }
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Annulla', style: TextStyle(color: Colors.grey)),
+            ),
+          ],
         );
       },
     );

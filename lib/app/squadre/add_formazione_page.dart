@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:ligaduck/app/models/partita/partitaFormazioneModel.dart';
+import 'package:ligaduck/app/models/partita/partita_formazione_model.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
-import 'package:ligaduck/app/service/squadreProvider.dart';
+import 'package:ligaduck/app/service/squadre_provider.dart';
 import 'package:ligaduck/services/commonService.dart';
 import 'package:provider/provider.dart';
 

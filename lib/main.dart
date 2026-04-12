@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:ligaduck/app/campionato/campionatoHomePage.dart';
+import 'package:ligaduck/app/campionato/campionato_home_page.dart';
 import 'package:ligaduck/app/config/models/config.dart';
-import 'package:ligaduck/app/config/models/service/configProvider.dart';
-import 'package:ligaduck/app/service/competizioniProvider.dart';
-import 'package:ligaduck/app/service/giornateProvider.dart';
-import 'package:ligaduck/app/service/partiteProvider.dart';
-import 'package:ligaduck/app/service/squadreProvider.dart';
-import 'package:ligaduck/app/service/giocatoriProvider.dart';
+import 'package:ligaduck/app/config/models/service/config_provider.dart';
+import 'package:ligaduck/app/service/competizioni_provider.dart';
+import 'package:ligaduck/app/service/giornate_provider.dart';
+import 'package:ligaduck/app/service/partite_provider.dart';
+import 'package:ligaduck/app/service/squadre_provider.dart';
+import 'package:ligaduck/app/service/giocatori_provider.dart';
 import 'package:provider/provider.dart';
 
 // RouteObserver globale per rilevare quando si torna a una route

@@ -1,31 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:ligaduck/app/competizione/competizioneHomePage.dart';
+import 'package:ligaduck/app/competizione/competizione_home_page.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/giornata.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
-import 'package:ligaduck/app/service/squadreProvider.dart';
+import 'package:ligaduck/app/service/squadre_provider.dart';
 import 'package:ligaduck/services/commonService.dart';
 import 'package:provider/provider.dart';
 
-class CleanSheetPage extends StatefulWidget {
-  final List<Marcatura> cleanSheet;
+class EspulsiPage extends StatefulWidget {
+  final List<Malus> espulsi;
   final String campionato;
   final Competizione competizione;
 
-  const CleanSheetPage({
+  const EspulsiPage({
     super.key,
-    required this.cleanSheet,
+    required this.espulsi,
     required this.campionato,
     required this.competizione,
   });
 
   @override
-  State<CleanSheetPage> createState() => _CleanSheetPageState();
+  State<EspulsiPage> createState() => _EspulsiPageState();
 }
 
-class _CleanSheetPageState extends State<CleanSheetPage> {
+class _EspulsiPageState extends State<EspulsiPage> {
   late final Future<List<Squadra>> _squadreFuture;
-  List<Marcatura> _displayedCleanSheet = [];
+  List<Malus> _displayedEspulsi = [];
   Map<int, String> _squadreMap = {};
   String _sortBy = 'Quantità';
 
@@ -37,24 +37,24 @@ class _CleanSheetPageState extends State<CleanSheetPage> {
       listen: false,
     );
     _squadreFuture = squadreProvider.fetchSquadre(widget.campionato);
-    _displayedCleanSheet = List.from(widget.cleanSheet);
+    _displayedEspulsi = List.from(widget.espulsi);
     _loadSquadreAndSort();
   }
 
   Future<void> _loadSquadreAndSort() async {
     final squadre = await _squadreFuture;
     _squadreMap = {for (var s in squadre) s.id: s.nome};
-    _sortCleanSheet();
+    _sortEspulsi();
   }
 
-  void _sortCleanSheet() {
+  void _sortEspulsi() {
     setState(() {
       if (_sortBy == 'Quantità') {
-        _displayedCleanSheet.sort((a, b) => b.quantita.compareTo(a.quantita));
+        _displayedEspulsi.sort((a, b) => b.quantita.compareTo(a.quantita));
       } else if (_sortBy == 'Nome') {
-        _displayedCleanSheet.sort((a, b) => a.nome.compareTo(b.nome));
+        _displayedEspulsi.sort((a, b) => a.nome.compareTo(b.nome));
       } else if (_sortBy == 'Squadra') {
-        _displayedCleanSheet.sort((a, b) {
+        _displayedEspulsi.sort((a, b) {
           final nomeA = _squadreMap[a.idSquadra] ?? '';
           final nomeB = _squadreMap[b.idSquadra] ?? '';
           return nomeA.compareTo(nomeB);
@@ -169,7 +169,7 @@ class _CleanSheetPageState extends State<CleanSheetPage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Reti Inviolate',
+                          'Espulsioni',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 20,
@@ -210,7 +210,7 @@ class _CleanSheetPageState extends State<CleanSheetPage> {
                     if (newValue != null) {
                       setState(() {
                         _sortBy = newValue;
-                        _sortCleanSheet();
+                        _sortEspulsi();
                       });
                     }
                   },
@@ -220,13 +220,13 @@ class _CleanSheetPageState extends State<CleanSheetPage> {
           ),
           Expanded(
             child: ListView.builder(
-              itemCount: _displayedCleanSheet.length,
+              itemCount: _displayedEspulsi.length,
               itemBuilder: (context, index) {
-                final cleanSheet = _displayedCleanSheet[index];
+                final espulso = _displayedEspulsi[index];
                 return FutureBuilder<Squadra>(
                   future: getSquadra(
                     Provider.of<SquadreProvider>(context, listen: false),
-                    cleanSheet.idSquadra,
+                    espulso.idSquadra,
                   ),
                   builder: (context, snapshot) {
                     return Container(
@@ -405,7 +405,7 @@ class _CleanSheetPageState extends State<CleanSheetPage> {
                                 Expanded(
                                   child: Text(
                                     CommonService.decodePlayerName(
-                                      cleanSheet.nome,
+                                      espulso.nome,
                                     ),
                                     style: TextStyle(
                                       fontSize: 16,
@@ -420,7 +420,7 @@ class _CleanSheetPageState extends State<CleanSheetPage> {
                           Padding(
                             padding: EdgeInsets.only(right: 32),
                             child: Text(
-                              '${cleanSheet.quantita}',
+                              '${espulso.quantita}',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,

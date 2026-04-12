@@ -1,31 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:ligaduck/app/competizione/competizioneHomePage.dart';
+import 'package:ligaduck/app/competizione/competizione_home_page.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/giornata.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
-import 'package:ligaduck/app/service/squadreProvider.dart';
+import 'package:ligaduck/app/service/squadre_provider.dart';
 import 'package:ligaduck/services/commonService.dart';
 import 'package:provider/provider.dart';
 
-class EspulsiPage extends StatefulWidget {
-  final List<Malus> espulsi;
+class RigoriSbagliatiPage extends StatefulWidget {
+  final List<Malus> rigSb;
   final String campionato;
   final Competizione competizione;
 
-  const EspulsiPage({
+  const RigoriSbagliatiPage({
     super.key,
-    required this.espulsi,
+    required this.rigSb,
     required this.campionato,
     required this.competizione,
   });
 
   @override
-  State<EspulsiPage> createState() => _EspulsiPageState();
+  State<RigoriSbagliatiPage> createState() => _RigoriSbagliatiPageState();
 }
 
-class _EspulsiPageState extends State<EspulsiPage> {
+class _RigoriSbagliatiPageState extends State<RigoriSbagliatiPage> {
   late final Future<List<Squadra>> _squadreFuture;
-  List<Malus> _displayedEspulsi = [];
+  List<Malus> _displayedRigSb = [];
   Map<int, String> _squadreMap = {};
   String _sortBy = 'Quantità';
 
@@ -37,24 +37,24 @@ class _EspulsiPageState extends State<EspulsiPage> {
       listen: false,
     );
     _squadreFuture = squadreProvider.fetchSquadre(widget.campionato);
-    _displayedEspulsi = List.from(widget.espulsi);
+    _displayedRigSb = List.from(widget.rigSb);
     _loadSquadreAndSort();
   }
 
   Future<void> _loadSquadreAndSort() async {
     final squadre = await _squadreFuture;
     _squadreMap = {for (var s in squadre) s.id: s.nome};
-    _sortEspulsi();
+    _sortRigSb();
   }
 
-  void _sortEspulsi() {
+  void _sortRigSb() {
     setState(() {
       if (_sortBy == 'Quantità') {
-        _displayedEspulsi.sort((a, b) => b.quantita.compareTo(a.quantita));
+        _displayedRigSb.sort((a, b) => b.quantita.compareTo(a.quantita));
       } else if (_sortBy == 'Nome') {
-        _displayedEspulsi.sort((a, b) => a.nome.compareTo(b.nome));
+        _displayedRigSb.sort((a, b) => a.nome.compareTo(b.nome));
       } else if (_sortBy == 'Squadra') {
-        _displayedEspulsi.sort((a, b) {
+        _displayedRigSb.sort((a, b) {
           final nomeA = _squadreMap[a.idSquadra] ?? '';
           final nomeB = _squadreMap[b.idSquadra] ?? '';
           return nomeA.compareTo(nomeB);
@@ -76,7 +76,7 @@ class _EspulsiPageState extends State<EspulsiPage> {
       'bianco': Colors.white,
       'grigio': Colors.grey,
       'fucsia': Colors.pink[700]!,
-      'rosa': Color.fromARGB(255, 255, 147, 183),
+      'rosa': const Color.fromARGB(255, 255, 147, 183),
       'ciano': Colors.lightBlue[300]!,
       'marrone': Color.fromARGB(255, 122, 54, 34),
     };
@@ -169,7 +169,7 @@ class _EspulsiPageState extends State<EspulsiPage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Espulsioni',
+                          'Rigori Sbagliati',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 20,
@@ -210,7 +210,7 @@ class _EspulsiPageState extends State<EspulsiPage> {
                     if (newValue != null) {
                       setState(() {
                         _sortBy = newValue;
-                        _sortEspulsi();
+                        _sortRigSb();
                       });
                     }
                   },
@@ -220,13 +220,13 @@ class _EspulsiPageState extends State<EspulsiPage> {
           ),
           Expanded(
             child: ListView.builder(
-              itemCount: _displayedEspulsi.length,
+              itemCount: _displayedRigSb.length,
               itemBuilder: (context, index) {
-                final espulso = _displayedEspulsi[index];
+                final rigoreSbagliato = _displayedRigSb[index];
                 return FutureBuilder<Squadra>(
                   future: getSquadra(
                     Provider.of<SquadreProvider>(context, listen: false),
-                    espulso.idSquadra,
+                    rigoreSbagliato.idSquadra,
                   ),
                   builder: (context, snapshot) {
                     return Container(
@@ -405,7 +405,7 @@ class _EspulsiPageState extends State<EspulsiPage> {
                                 Expanded(
                                   child: Text(
                                     CommonService.decodePlayerName(
-                                      espulso.nome,
+                                      rigoreSbagliato.nome,
                                     ),
                                     style: TextStyle(
                                       fontSize: 16,
@@ -420,7 +420,7 @@ class _EspulsiPageState extends State<EspulsiPage> {
                           Padding(
                             padding: EdgeInsets.only(right: 32),
                             child: Text(
-                              '${espulso.quantita}',
+                              '${rigoreSbagliato.quantita}',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,

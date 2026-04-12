@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
-import 'package:ligaduck/app/squadre/squadrePage.dart';
+import 'package:ligaduck/app/squadre/squadre_page.dart';
 import 'package:ligaduck/services/commonService.dart';
 
 class ListaSquadreModel {

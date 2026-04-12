@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:ligaduck/app/campionato/campionatoHomePage.dart';
+import 'package:ligaduck/app/campionato/campionato_home_page.dart';
 import 'package:ligaduck/app/config/models/config.dart';
-import 'package:ligaduck/app/config/models/service/configProvider.dart';
-import 'package:ligaduck/app/models/campionato/campionatoButtonModel.dart';
+import 'package:ligaduck/app/config/models/service/config_provider.dart';
+import 'package:ligaduck/app/models/campionato/campionato_button_model.dart';
 import 'package:provider/provider.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
 

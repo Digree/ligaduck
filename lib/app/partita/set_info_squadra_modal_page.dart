@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
-import 'package:ligaduck/app/service/partiteProvider.dart';
-import 'package:ligaduck/app/service/squadreProvider.dart';
+import 'package:ligaduck/app/service/partite_provider.dart';
+import 'package:ligaduck/app/service/squadre_provider.dart';
 import 'package:provider/provider.dart';
 import '../../services/commonService.dart';
 

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
-import '../app/models/partita/partitaFormazioneModel.dart';
+import '../app/models/partita/partita_formazione_model.dart';
 
 class CommonService {
   /// Decodifica i nomi dei giocatori per gestire i caratteri speciali

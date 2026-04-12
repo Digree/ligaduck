@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:ligaduck/app/service/competizioniProvider.dart';
+import 'package:ligaduck/app/service/competizioni_provider.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/service/models/trofeo.dart';
-import 'package:ligaduck/app/service/squadreProvider.dart';
+import 'package:ligaduck/app/service/squadre_provider.dart';
 import 'package:provider/provider.dart';
 
 class InserisciSquadraPage extends StatefulWidget {
