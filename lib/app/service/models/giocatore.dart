@@ -68,6 +68,7 @@ class Carriera {
   final int? cleanSheet;
   final bool? esonero;
   final bool? capitano;
+  final bool attivo;
 
   Carriera({
     required this.campionato,
@@ -83,6 +84,7 @@ class Carriera {
     this.cleanSheet,
     this.esonero,
     this.capitano,
+    required this.attivo,
   });
 
   factory Carriera.fromJson(Map<String, dynamic> json) {
@@ -100,6 +102,7 @@ class Carriera {
       cleanSheet: json['cleanSheet'],
       esonero: json['esonero'],
       capitano: json['capitano'],
+      attivo: json['attivo'],
     );
   }
 
@@ -118,6 +121,7 @@ class Carriera {
       'cleanSheet': cleanSheet,
       'esonero': esonero,
       'capitano': capitano,
+      'attivo': attivo,
     };
   }
 }

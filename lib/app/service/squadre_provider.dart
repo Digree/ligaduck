@@ -327,6 +327,30 @@ class SquadreProvider with ChangeNotifier {
     }
   }
 
+  Future<bool> deleteFormazione(String campionato, int idSquadra) async {
+    try {
+      final response = await http.delete(
+        Uri.parse(
+          '${Env.apiUrl}/$campionato/squadra/$idSquadra/delete/formazione',
+        ),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        notifyListeners();
+        return true;
+      } else {
+        print(
+          'Errore DELETE formazione: ${response.statusCode} - ${response.body}',
+        );
+        return false;
+      }
+    } catch (e) {
+      print('Errore DELETE formazione: $e');
+      return false;
+    }
+  }
+
   Future<List<Partita>> fetchUltime5Partite(
     String campionato,
     int idSquadra,

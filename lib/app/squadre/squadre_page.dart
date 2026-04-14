@@ -9,6 +9,8 @@ import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/competizioni_provider.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/squadre_provider.dart';
+import 'package:ligaduck/app/service/mercato_provider.dart';
+import 'package:ligaduck/app/service/models/trasferimento.dart';
 import 'package:ligaduck/app/campionato/mercato/models/esonero.dart';
 import 'package:provider/provider.dart';
 import 'package:ligaduck/app/squadre/add_formazione_page.dart';
@@ -16,6 +18,7 @@ import 'package:ligaduck/app/squadre/add_giocatori_page.dart';
 import 'package:ligaduck/app/mercato/acquisto_page.dart';
 import 'package:ligaduck/app/mercato/cessione_page.dart';
 import 'package:ligaduck/app/widgets/search_giocatori_widgets.dart';
+import 'package:ligaduck/app/widgets/squadra_logo_widget.dart';
 import 'package:oktoast/oktoast.dart';
 import '../../services/commonService.dart';
 import 'package:ligaduck/app/widgets/settings_icon.dart';
@@ -42,6 +45,8 @@ class _SquadrePageState extends State<SquadrePage> {
   String _selectedSquadType = 'Prima Squadra'; // Nuovo stato per il dropdown
   String _selectedFormazioneType =
       'Attuale'; // Tipo di formazione: Attuale o Pre-mercato
+  String _selectedMercatoView =
+      'Esoneri'; // Esoneri, Mercato Estivo, Mercato Invernale
 
   @override
   void initState() {
@@ -149,6 +154,81 @@ class _SquadrePageState extends State<SquadrePage> {
     }
   }
 
+  Future<void> _resetFormazione() async {
+    // Mostra dialog di conferma
+    final conferma = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Conferma Reset'),
+          content: Text(
+            'Sei sicuro di voler resettare la formazione? Questa azione svuoterà titolari, panchina e non convocati.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('Annulla', style: TextStyle(color: Colors.grey)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text('Reset', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (conferma != true) return;
+
+    try {
+      final squadreProvider = Provider.of<SquadreProvider>(
+        context,
+        listen: false,
+      );
+
+      // Cancella la formazione tramite endpoint DELETE
+      final success = await squadreProvider.deleteFormazione(
+        widget.campionato,
+        widget.squadra.id,
+      );
+
+      if (success) {
+        setState(() {
+          widget.squadra.formazione.titolari.clear();
+          widget.squadra.formazione.panchina.clear();
+          widget.squadra.formazione.nonConvocati.clear();
+          widget.squadra.formazione.indisponibili.clear();
+          widget.squadra.formazione.allenatore = '';
+          widget.squadra.formazione.modulo = '4-3-3';
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Formazione resettata con successo'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Errore durante il reset della formazione'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Errore: $e'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
   List<dynamic>? getTrofeiSquadra(Squadra squadra) {
     final currentSquadra = _squadra ?? widget.squadra;
     if (currentSquadra.trofei != null) {
@@ -173,6 +253,7 @@ class _SquadrePageState extends State<SquadrePage> {
         gol: 0,
         presenze: 0,
         espulsioni: 0,
+        attivo: true,
       ),
     );
     return carrieraAttuale.numero;
@@ -970,38 +1051,100 @@ class _SquadrePageState extends State<SquadrePage> {
     double screenWidth,
     double screenHeight,
   ) {
-    return DefaultTabController(
-      length: 3,
-      child: Column(
-        children: [
-          TabBar(
-            tabAlignment: TabAlignment.fill,
-            labelColor: getColor('primary', forText: true),
-            unselectedLabelColor: Colors.grey,
-            indicatorColor: getColor('primary', forText: true),
-            tabs: [
-              Tab(text: 'Esoneri'),
-              Tab(text: 'Mercato Estivo'),
-              Tab(text: 'Mercato Invernale'),
+    return Column(
+      children: [
+        // Dropdown per selezionare la vista
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              Text(
+                'Vista:',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[700],
+                ),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: getColor(
+                        'primary',
+                        forText: true,
+                      ).withOpacity(0.3),
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.white,
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedMercatoView,
+                      isExpanded: true,
+                      icon: Icon(
+                        Icons.arrow_drop_down,
+                        color: getColor('primary', forText: true),
+                      ),
+                      items: ['Esoneri', 'Mercato Estivo', 'Mercato Invernale']
+                          .map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          })
+                          .toList(),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _selectedMercatoView = newValue;
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
-          Expanded(
-            child: TabBarView(
-              children: [
-                buildEsoneri(context, isWide, screenWidth, screenHeight),
-                buildMercatoEstivo(context, isWide, screenWidth, screenHeight),
-                buildMercatoInvernale(
-                  context,
-                  isWide,
-                  screenWidth,
-                  screenHeight,
-                ),
-              ],
-            ),
+        ),
+        Divider(height: 1),
+        // Contenuto in base alla selezione
+        Expanded(
+          child: _buildSelectedMercatoView(
+            context,
+            isWide,
+            screenWidth,
+            screenHeight,
           ),
-        ],
-      ),
+        ),
+      ],
     );
+  }
+
+  Widget _buildSelectedMercatoView(
+    BuildContext context,
+    bool isWide,
+    double screenWidth,
+    double screenHeight,
+  ) {
+    switch (_selectedMercatoView) {
+      case 'Esoneri':
+        return buildEsoneri(context, isWide, screenWidth, screenHeight);
+      case 'Mercato Estivo':
+        return buildMercatoEstivo(context, isWide, screenWidth, screenHeight);
+      case 'Mercato Invernale':
+        return buildMercatoInvernale(
+          context,
+          isWide,
+          screenWidth,
+          screenHeight,
+        );
+      default:
+        return buildEsoneri(context, isWide, screenWidth, screenHeight);
+    }
   }
 
   Widget buildEsoneri(
@@ -1103,28 +1246,7 @@ class _SquadrePageState extends State<SquadrePage> {
     double screenWidth,
     double screenHeight,
   ) {
-    return Stack(
-      children: [
-        Center(
-          child: Text(
-            'Mercato Estivo in arrivo...',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
-          ),
-        ),
-        if (globals.admin)
-          Positioned(
-            bottom: 16,
-            right: 16,
-            child: FloatingActionButton(
-              onPressed: () {
-                _mostraDialogSceltaMercato('estivo');
-              },
-              backgroundColor: getColor('primary'),
-              child: Icon(Icons.add, color: getIconColor('primary')),
-            ),
-          ),
-      ],
-    );
+    return _buildMercatoTab(context, 'estivo');
   }
 
   Widget buildMercatoInvernale(
@@ -1133,28 +1255,309 @@ class _SquadrePageState extends State<SquadrePage> {
     double screenWidth,
     double screenHeight,
   ) {
-    return Stack(
-      children: [
-        Center(
-          child: Text(
-            'Mercato Invernale in arrivo...',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
-          ),
-        ),
-        if (globals.admin)
-          Positioned(
-            bottom: 16,
-            right: 16,
-            child: FloatingActionButton(
-              onPressed: () {
-                _mostraDialogSceltaMercato('invernale');
-              },
-              backgroundColor: getColor('primary'),
-              child: Icon(Icons.add, color: getIconColor('primary')),
-            ),
-          ),
-      ],
+    return _buildMercatoTab(context, 'invernale');
+  }
+
+  Widget _buildMercatoTab(BuildContext context, String sessione) {
+    final mercatoProvider = Provider.of<MercatoProvider>(
+      context,
+      listen: false,
     );
+    final squadreProvider = Provider.of<SquadreProvider>(
+      context,
+      listen: false,
+    );
+
+    return FutureBuilder<List<Trasferimento>>(
+      future: mercatoProvider.fetchTrasferimenti(
+        widget.campionato,
+        widget.squadra.id,
+        sessione,
+      ),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Errore nel caricamento dei trasferimenti',
+              style: TextStyle(color: Colors.red),
+            ),
+          );
+        }
+
+        final trasferimenti = snapshot.data ?? [];
+
+        if (trasferimenti.isEmpty) {
+          return Stack(
+            children: [
+              Center(
+                child: Text(
+                  'Nessun trasferimento per il mercato ${sessione == "estivo" ? "estivo" : "invernale"}',
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+              ),
+              if (globals.admin)
+                Positioned(
+                  bottom: 16,
+                  right: 16,
+                  child: FloatingActionButton(
+                    onPressed: () {
+                      _mostraDialogSceltaMercato(sessione);
+                    },
+                    backgroundColor: getColor('primary'),
+                    child: Icon(Icons.add, color: getIconColor('primary')),
+                  ),
+                ),
+            ],
+          );
+        }
+
+        return Stack(
+          children: [
+            ListView.builder(
+              padding: EdgeInsets.all(16),
+              itemCount: trasferimenti.length,
+              itemBuilder: (context, index) {
+                return _buildTrasferimentoCard(
+                  context,
+                  trasferimenti[index],
+                  squadreProvider.squadre,
+                );
+              },
+            ),
+            if (globals.admin)
+              Positioned(
+                bottom: 16,
+                right: 16,
+                child: FloatingActionButton(
+                  onPressed: () {
+                    _mostraDialogSceltaMercato(sessione);
+                  },
+                  backgroundColor: getColor('primary'),
+                  child: Icon(Icons.add, color: getIconColor('primary')),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildTrasferimentoCard(
+    BuildContext context,
+    Trasferimento trasferimento,
+    List<Squadra> squadre,
+  ) {
+    // Trova le squadre coinvolte
+    final squadraCessione = squadre.firstWhere(
+      (s) => s.id == trasferimento.idSquadraCessione,
+      orElse: () => Squadra(
+        id: 0,
+        nome: 'Squadra sconosciuta',
+        citta: '',
+        stadio: '',
+        cod: '',
+        campionato: '',
+        categoria: '',
+        colori: [],
+        formazione: Formazione(
+          titolari: [],
+          panchina: [],
+          indisponibili: [],
+          nonConvocati: [],
+          allenatore: '',
+          modulo: '',
+        ),
+        formazioneOld: Formazione(
+          titolari: [],
+          panchina: [],
+          indisponibili: [],
+          nonConvocati: [],
+          allenatore: '',
+          modulo: '',
+        ),
+        indisponibili: [],
+        competizioni: [],
+      ),
+    );
+
+    final squadraAcquisto = squadre.firstWhere(
+      (s) => s.id == trasferimento.idSquadraAcquisto,
+      orElse: () => Squadra(
+        id: 0,
+        nome: 'Squadra sconosciuta',
+        citta: '',
+        stadio: '',
+        cod: '',
+        campionato: '',
+        categoria: '',
+        colori: [],
+        formazione: Formazione(
+          titolari: [],
+          panchina: [],
+          indisponibili: [],
+          nonConvocati: [],
+          allenatore: '',
+          modulo: '',
+        ),
+        formazioneOld: Formazione(
+          titolari: [],
+          panchina: [],
+          indisponibili: [],
+          nonConvocati: [],
+          allenatore: '',
+          modulo: '',
+        ),
+        indisponibili: [],
+        competizioni: [],
+      ),
+    );
+
+    // Determina se è acquisto o cessione per questa squadra
+    final isAcquisto = trasferimento.idSquadraAcquisto == widget.squadra.id;
+
+    return Card(
+      margin: EdgeInsets.only(bottom: 16),
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Row(
+          children: [
+            // Squadra cedente (sinistra)
+            Expanded(
+              flex: 2,
+              child: Column(
+                children: [
+                  SquadraLogoWidget(
+                    codSquadra: squadraCessione.cod,
+                    squadra: squadraCessione,
+                    size: 50,
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    CommonService.decodePlayerName(squadraCessione.nome),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            // Centro - Giocatore e freccia
+            Expanded(
+              flex: 3,
+              child: FutureBuilder<Giocatore?>(
+                future: _fetchGiocatore(trasferimento.idGiocatore),
+                builder: (context, snapshot) {
+                  final nomeGiocatore = snapshot.data?.nome ?? 'Caricamento...';
+                  return Column(
+                    children: [
+                      Text(
+                        CommonService.decodePlayerName(nomeGiocatore),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: 8),
+                      Icon(
+                        Icons.arrow_forward,
+                        color: isAcquisto ? Colors.green : Colors.orange,
+                        size: 32,
+                      ),
+                      SizedBox(height: 4),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isAcquisto
+                              ? Colors.green[50]
+                              : Colors.orange[50],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isAcquisto
+                                ? Colors.green[300]!
+                                : Colors.orange[300]!,
+                          ),
+                        ),
+                        child: Text(
+                          isAcquisto
+                              ? (trasferimento.definitivo
+                                    ? 'ACQUISTO'
+                                    : 'PRESTITO')
+                              : (trasferimento.definitivo
+                                    ? 'CESSIONE'
+                                    : 'PRESTITO'),
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: isAcquisto
+                                ? (trasferimento.definitivo
+                                      ? Colors.green[900]
+                                      : Colors.orange[700])
+                                : (trasferimento.definitivo
+                                      ? Colors.orange[900]
+                                      : Colors.orange[700]),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+            // Squadra acquirente (destra)
+            Expanded(
+              flex: 2,
+              child: Column(
+                children: [
+                  SquadraLogoWidget(
+                    codSquadra: squadraAcquisto.cod,
+                    squadra: squadraAcquisto,
+                    size: 50,
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    CommonService.decodePlayerName(squadraAcquisto.nome),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<Giocatore?> _fetchGiocatore(String idGiocatore) async {
+    try {
+      final giocatoriProvider = Provider.of<GiocatoriProvider>(
+        context,
+        listen: false,
+      );
+      final giocatore = await giocatoriProvider.fetchGiocatoreById(
+        widget.campionato,
+        idGiocatore,
+      );
+      return giocatore;
+    } catch (e) {
+      print('Errore nel recupero del giocatore: $e');
+      return null;
+    }
   }
 
   Widget teamList(
@@ -1166,45 +1569,63 @@ class _SquadrePageState extends State<SquadrePage> {
     // Determina il filtro in base al tipo selezionato
     bool isPrimaSquadra = _selectedSquadType == 'Prima Squadra';
 
-    List<Giocatore> allenatori = giocatori
-        .where((giocatore) => giocatore.ruolo == 'Allenatore')
-        .toList();
-    List<Giocatore> portieri = giocatori
-        .where(
-          (giocatore) =>
-              giocatore.ruolo == 'Portiere' &&
-              (isPrimaSquadra
-                  ? _getNumeroGiocatore(giocatore) <= 21
-                  : _getNumeroGiocatore(giocatore) > 21),
-        )
-        .toList();
-    List<Giocatore> difensori = giocatori
-        .where(
-          (giocatore) =>
-              giocatore.ruolo == 'Difensore' &&
-              (isPrimaSquadra
-                  ? _getNumeroGiocatore(giocatore) <= 21
-                  : _getNumeroGiocatore(giocatore) > 21),
-        )
-        .toList();
-    List<Giocatore> centrocampisti = giocatori
-        .where(
-          (giocatore) =>
-              giocatore.ruolo == 'Centrocampista' &&
-              (isPrimaSquadra
-                  ? _getNumeroGiocatore(giocatore) <= 21
-                  : _getNumeroGiocatore(giocatore) > 21),
-        )
-        .toList();
-    List<Giocatore> attaccanti = giocatori
-        .where(
-          (giocatore) =>
-              giocatore.ruolo == 'Attaccante' &&
-              (isPrimaSquadra
-                  ? _getNumeroGiocatore(giocatore) <= 21
-                  : _getNumeroGiocatore(giocatore) > 21),
-        )
-        .toList();
+    List<Giocatore> allenatori =
+        giocatori.where((giocatore) => giocatore.ruolo == 'Allenatore').toList()
+          ..sort(
+            (a, b) => _getNumeroGiocatore(a).compareTo(_getNumeroGiocatore(b)),
+          );
+    List<Giocatore> portieri =
+        giocatori
+            .where(
+              (giocatore) =>
+                  giocatore.ruolo == 'Portiere' &&
+                  (isPrimaSquadra
+                      ? _getNumeroGiocatore(giocatore) <= 21
+                      : _getNumeroGiocatore(giocatore) > 21),
+            )
+            .toList()
+          ..sort(
+            (a, b) => _getNumeroGiocatore(a).compareTo(_getNumeroGiocatore(b)),
+          );
+    List<Giocatore> difensori =
+        giocatori
+            .where(
+              (giocatore) =>
+                  giocatore.ruolo == 'Difensore' &&
+                  (isPrimaSquadra
+                      ? _getNumeroGiocatore(giocatore) <= 21
+                      : _getNumeroGiocatore(giocatore) > 21),
+            )
+            .toList()
+          ..sort(
+            (a, b) => _getNumeroGiocatore(a).compareTo(_getNumeroGiocatore(b)),
+          );
+    List<Giocatore> centrocampisti =
+        giocatori
+            .where(
+              (giocatore) =>
+                  giocatore.ruolo == 'Centrocampista' &&
+                  (isPrimaSquadra
+                      ? _getNumeroGiocatore(giocatore) <= 21
+                      : _getNumeroGiocatore(giocatore) > 21),
+            )
+            .toList()
+          ..sort(
+            (a, b) => _getNumeroGiocatore(a).compareTo(_getNumeroGiocatore(b)),
+          );
+    List<Giocatore> attaccanti =
+        giocatori
+            .where(
+              (giocatore) =>
+                  giocatore.ruolo == 'Attaccante' &&
+                  (isPrimaSquadra
+                      ? _getNumeroGiocatore(giocatore) <= 21
+                      : _getNumeroGiocatore(giocatore) > 21),
+            )
+            .toList()
+          ..sort(
+            (a, b) => _getNumeroGiocatore(a).compareTo(_getNumeroGiocatore(b)),
+          );
     return _isLoadingGiocatori
         ? Center(
             child: Column(
@@ -1359,34 +1780,50 @@ class _SquadrePageState extends State<SquadrePage> {
     double screenWidth,
     double screenHeight,
   ) {
-    List<Giocatore> portieri = giocatori
-        .where(
-          (giocatore) =>
-              giocatore.ruolo == 'Portiere' &&
-              _getNumeroGiocatore(giocatore) > 21,
-        )
-        .toList();
-    List<Giocatore> difensori = giocatori
-        .where(
-          (giocatore) =>
-              giocatore.ruolo == 'Difensore' &&
-              _getNumeroGiocatore(giocatore) > 21,
-        )
-        .toList();
-    List<Giocatore> centrocampisti = giocatori
-        .where(
-          (giocatore) =>
-              giocatore.ruolo == 'Centrocampista' &&
-              _getNumeroGiocatore(giocatore) > 21,
-        )
-        .toList();
-    List<Giocatore> attaccanti = giocatori
-        .where(
-          (giocatore) =>
-              giocatore.ruolo == 'Attaccante' &&
-              _getNumeroGiocatore(giocatore) > 21,
-        )
-        .toList();
+    List<Giocatore> portieri =
+        giocatori
+            .where(
+              (giocatore) =>
+                  giocatore.ruolo == 'Portiere' &&
+                  _getNumeroGiocatore(giocatore) > 21,
+            )
+            .toList()
+          ..sort(
+            (a, b) => _getNumeroGiocatore(a).compareTo(_getNumeroGiocatore(b)),
+          );
+    List<Giocatore> difensori =
+        giocatori
+            .where(
+              (giocatore) =>
+                  giocatore.ruolo == 'Difensore' &&
+                  _getNumeroGiocatore(giocatore) > 21,
+            )
+            .toList()
+          ..sort(
+            (a, b) => _getNumeroGiocatore(a).compareTo(_getNumeroGiocatore(b)),
+          );
+    List<Giocatore> centrocampisti =
+        giocatori
+            .where(
+              (giocatore) =>
+                  giocatore.ruolo == 'Centrocampista' &&
+                  _getNumeroGiocatore(giocatore) > 21,
+            )
+            .toList()
+          ..sort(
+            (a, b) => _getNumeroGiocatore(a).compareTo(_getNumeroGiocatore(b)),
+          );
+    List<Giocatore> attaccanti =
+        giocatori
+            .where(
+              (giocatore) =>
+                  giocatore.ruolo == 'Attaccante' &&
+                  _getNumeroGiocatore(giocatore) > 21,
+            )
+            .toList()
+          ..sort(
+            (a, b) => _getNumeroGiocatore(a).compareTo(_getNumeroGiocatore(b)),
+          );
     return _isLoadingGiocatori
         ? Center(
             child: Column(
@@ -1613,6 +2050,7 @@ class _SquadrePageState extends State<SquadrePage> {
                     gol: 0,
                     presenze: 0,
                     espulsioni: 0,
+                    attivo: true,
                   ),
                 );
 
@@ -2257,6 +2695,7 @@ class _SquadrePageState extends State<SquadrePage> {
             gol: 0,
             presenze: 0,
             espulsioni: 0,
+            attivo: true,
           ),
         );
         if (carrieraAttuale.capitano == true) {
@@ -2442,6 +2881,7 @@ class _SquadrePageState extends State<SquadrePage> {
                   gol: 0,
                   presenze: 0,
                   espulsioni: 0,
+                  attivo: true,
                 ),
               )
               .numero;
@@ -2457,6 +2897,7 @@ class _SquadrePageState extends State<SquadrePage> {
                   gol: 0,
                   presenze: 0,
                   espulsioni: 0,
+                  attivo: true,
                 ),
               )
               .numero;
@@ -2479,6 +2920,7 @@ class _SquadrePageState extends State<SquadrePage> {
           gol: 0,
           presenze: 0,
           espulsioni: 0,
+          attivo: true,
         ),
       );
       controllers[giocatore.id] = TextEditingController(
@@ -2600,6 +3042,7 @@ class _SquadrePageState extends State<SquadrePage> {
                             gol: 0,
                             presenze: 0,
                             espulsioni: 0,
+                            attivo: true,
                           ),
                         );
 
@@ -2624,6 +3067,7 @@ class _SquadrePageState extends State<SquadrePage> {
                             .aggiornaNumeroGiocatore(
                               widget.campionato,
                               entry.key,
+                              widget.squadra.id,
                               entry.value,
                             );
                         if (!success) {
@@ -3161,7 +3605,7 @@ class _SquadrePageState extends State<SquadrePage> {
                   ),
           ),
         ),
-        if (_selectedFormazioneType == 'Attuale' && globals.admin)
+        if (_selectedFormazioneType == 'Attuale' && globals.admin) ...[
           Padding(
             padding: EdgeInsets.symmetric(
               horizontal: isWide ? 490 : 8,
@@ -3180,6 +3624,29 @@ class _SquadrePageState extends State<SquadrePage> {
               ),
             ),
           ),
+          Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: isWide ? 490 : 8,
+              vertical: 4,
+            ),
+            child: SizedBox(
+              width: isWide ? 400 : double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red[700],
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () async {
+                  await _resetFormazione();
+                },
+                child: Text(
+                  'Reset formazione',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }

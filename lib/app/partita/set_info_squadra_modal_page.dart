@@ -132,6 +132,7 @@ class _SetInfoSquadraModalPageState extends State<SetInfoSquadraModalPage> {
         gol: 0,
         presenze: 0,
         espulsioni: 0,
+        attivo: true,
       ),
     );
     return carrieraAttuale.numero;

@@ -8,6 +8,7 @@ import 'package:ligaduck/app/service/giornate_provider.dart';
 import 'package:ligaduck/app/service/partite_provider.dart';
 import 'package:ligaduck/app/service/squadre_provider.dart';
 import 'package:ligaduck/app/service/giocatori_provider.dart';
+import 'package:ligaduck/app/service/mercato_provider.dart';
 import 'package:provider/provider.dart';
 
 // RouteObserver globale per rilevare quando si torna a una route
@@ -22,6 +23,7 @@ void main() => runApp(
       ChangeNotifierProvider(create: (_) => GiornateProvider()),
       ChangeNotifierProvider(create: (_) => PartiteProvider()),
       ChangeNotifierProvider(create: (_) => GiocatoriProvider()),
+      ChangeNotifierProvider(create: (_) => MercatoProvider()),
     ],
     child: MyApp(),
   ),

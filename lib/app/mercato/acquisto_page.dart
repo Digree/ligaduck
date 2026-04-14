@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:ligaduck/app/service/giocatori_provider.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/squadre_provider.dart';
+import 'package:ligaduck/app/service/mercato_provider.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
-import 'package:ligaduck/app/service/models/acquisto.dart';
+import 'package:ligaduck/app/service/models/trasferimento.dart';
 import 'package:ligaduck/app/widgets/search_giocatori_widgets.dart';
 import 'package:provider/provider.dart';
 
@@ -310,7 +311,7 @@ class _AcquistoPageState extends State<AcquistoPage> {
 
     if (conferma == true) {
       // Crea l'oggetto Acquisto
-      final acquisto = Acquisto(
+      final acquisto = Trasferimento(
         idGiocatore: giocatore.id,
         idSquadraAcquisto: widget.squadra.id,
         idSquadraCessione: giocatore.idSquadraAttuale,
@@ -324,23 +325,41 @@ class _AcquistoPageState extends State<AcquistoPage> {
       print(acquisto.toString());
       print('JSON: ${acquisto.toJson()}');
 
-      // TODO: Implementa la chiamata API per l'acquisto
-      // Es: await squadreProvider.acquistoGiocatore(acquisto);
+      // Chiama il backend per salvare il trasferimento
+      final mercatoProvider = Provider.of<MercatoProvider>(
+        context,
+        listen: false,
+      );
+      final success = await mercatoProvider.addTrasferimento(
+        widget.campionato,
+        acquisto,
+      );
 
-      // Per ora mostra un messaggio di successo
+      // Mostra messaggio in base al risultato
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Acquisto ${tipoAcquisto == 'definitivo' ? 'definitivo' : 'in prestito'} di ${giocatore.nome} completato!',
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Acquisto ${tipoAcquisto == 'definitivo' ? 'definitivo' : 'in prestito'} di ${giocatore.nome} completato!',
+              ),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
             ),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 3),
-          ),
-        );
-
-        // Opzionalmente, ricarica la lista o torna indietro
-        // Navigator.pop(context, true);
+          );
+          // Torna alla pagina precedente
+          Navigator.pop(context, true);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Errore durante l\'acquisto di ${giocatore.nome}. Riprova.',
+              ),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
       }
     }
   }

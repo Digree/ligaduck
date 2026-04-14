@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/squadre_provider.dart';
+import 'package:ligaduck/app/service/mercato_provider.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
-import 'package:ligaduck/app/service/models/acquisto.dart';
+import 'package:ligaduck/app/service/models/trasferimento.dart';
 import 'package:ligaduck/app/widgets/squadra_logo_widget.dart';
 import 'package:ligaduck/services/commonService.dart';
 import 'package:provider/provider.dart';
@@ -289,13 +290,6 @@ class _CessionePageState extends State<CessionePage> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          Text(
-                            '${widget.giocatore.ruolo} - ${widget.giocatore.nazione}',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey[600],
-                            ),
-                          ),
                         ],
                       ),
                     ),
@@ -313,7 +307,11 @@ class _CessionePageState extends State<CessionePage> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.shield, color: Colors.green, size: 28),
+                    SquadraLogoWidget(
+                      codSquadra: squadraDestinazione.cod,
+                      squadra: squadraDestinazione,
+                      size: 32,
+                    ),
                     SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -382,14 +380,6 @@ class _CessionePageState extends State<CessionePage> {
                                 color: Colors.green[900],
                               ),
                             ),
-                            SizedBox(height: 4),
-                            Text(
-                              'Il giocatore viene ceduto a titolo definitivo',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.green[700],
-                              ),
-                            ),
                           ],
                         ),
                       ),
@@ -429,14 +419,6 @@ class _CessionePageState extends State<CessionePage> {
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.orange[900],
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'Il giocatore viene ceduto in prestito',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.orange[700],
                               ),
                             ),
                           ],
@@ -501,7 +483,7 @@ class _CessionePageState extends State<CessionePage> {
 
     if (conferma == true) {
       // Crea l'oggetto Acquisto (per cessione idSquadraAcquisto è la destinazione)
-      final cessione = Acquisto(
+      final cessione = Trasferimento(
         idGiocatore: widget.giocatore.id,
         idSquadraAcquisto: squadraDestinazione.id,
         idSquadraCessione: widget.squadra.id,
@@ -515,23 +497,41 @@ class _CessionePageState extends State<CessionePage> {
       print(cessione.toString());
       print('JSON: ${cessione.toJson()}');
 
-      // TODO: Implementa la chiamata API per la cessione
-      // Es: await squadreProvider.cessioneGiocatore(cessione);
+      // Chiama il backend per salvare il trasferimento
+      final mercatoProvider = Provider.of<MercatoProvider>(
+        context,
+        listen: false,
+      );
+      final success = await mercatoProvider.addTrasferimento(
+        widget.campionato,
+        cessione,
+      );
 
-      // Per ora mostra un messaggio di successo
+      // Mostra messaggio in base al risultato
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Cessione ${tipoCessione == 'definitivo' ? 'definitiva' : 'in prestito'} di ${widget.giocatore.nome} a ${squadraDestinazione.nome} completata!',
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Cessione ${tipoCessione == 'definitivo' ? 'definitiva' : 'in prestito'} di ${widget.giocatore.nome} a ${squadraDestinazione.nome} completata!',
+              ),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
             ),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 3),
-          ),
-        );
-
-        // Torna alla pagina precedente
-        Navigator.pop(context, true);
+          );
+          // Torna alla pagina precedente
+          Navigator.pop(context, true);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Errore durante la cessione di ${widget.giocatore.nome}. Riprova.',
+              ),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
       }
     }
   }

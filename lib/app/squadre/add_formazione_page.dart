@@ -107,6 +107,7 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
         gol: 0,
         presenze: 0,
         espulsioni: 0,
+        attivo: true,
       ),
     );
     return carrieraAttuale.numero;
@@ -282,9 +283,14 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
     if (widget.squadra.formazione.titolari.isEmpty &&
         widget.squadra.formazione.panchina.isEmpty &&
         widget.squadra.formazione.nonConvocati.isEmpty) {
-      List<Giocatore> giocatoriSenzaAllenatore = widget.giocatori
-          .where((giocatore) => giocatore.ruolo != 'Allenatore')
-          .toList();
+      List<Giocatore> giocatoriSenzaAllenatore =
+          widget.giocatori
+              .where((giocatore) => giocatore.ruolo != 'Allenatore')
+              .toList()
+            ..sort(
+              (a, b) =>
+                  _getNumeroGiocatore(a).compareTo(_getNumeroGiocatore(b)),
+            );
       Giocatore? allenatore;
       try {
         allenatore = widget.giocatori.firstWhere(

@@ -212,13 +212,14 @@ class GiocatoriProvider with ChangeNotifier {
   Future<bool> aggiornaNumeroGiocatore(
     String campionato,
     String idGiocatore,
+    int idSquadra,
     int numero,
   ) async {
     try {
       final response = await http.put(
         Uri.parse('${Env.apiUrl}/$campionato/giocatore/$idGiocatore/numero'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode(numero),
+        body: json.encode({'numero': numero, 'idSquadra': idSquadra}),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -297,6 +298,30 @@ class GiocatoriProvider with ChangeNotifier {
       print('Tipo errore: ${e.runtimeType}');
       print('Dettaglio errore: $e');
       return [];
+    }
+  }
+
+  Future<Giocatore?> fetchGiocatoreById(
+    String campionato,
+    String idGiocatore,
+  ) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${Env.apiUrl}/$campionato/giocatore/$idGiocatore'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final giocatore = Giocatore.fromJson(data);
+        giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
+        return giocatore;
+      } else {
+        print('Errore nel caricamento giocatore: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      print('Errore GET giocatore: $e');
+      return null;
     }
   }
 }

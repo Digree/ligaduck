@@ -681,6 +681,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
               presenze: 0,
               espulsioni: 0,
               esonero: false,
+              attivo: true,
             )
           : Carriera(
               campionato: widget.campionato,
@@ -689,6 +690,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
               gol: 0,
               presenze: 0,
               espulsioni: 0,
+              attivo: true,
             );
       int etaCasuale = Random().nextInt(3) + 18;
       Giocatore nuovoGiocatore = Giocatore(
@@ -1015,6 +1017,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
             presenze: 0,
             espulsioni: 0,
             esonero: false,
+            attivo: true,
           )
         : Carriera(
             campionato: widget.campionato,
@@ -1023,6 +1026,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
             gol: 0,
             presenze: 0,
             espulsioni: 0,
+            attivo: true,
           );
 
     Giocatore nuovoGiocatore = Giocatore(
