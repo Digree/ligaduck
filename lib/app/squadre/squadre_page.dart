@@ -1058,15 +1058,6 @@ class _SquadrePageState extends State<SquadrePage> {
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
             children: [
-              Text(
-                'Vista:',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey[700],
-                ),
-              ),
-              SizedBox(width: 12),
               Expanded(
                 child: Container(
                   padding: EdgeInsets.symmetric(horizontal: 12),
@@ -1269,7 +1260,7 @@ class _SquadrePageState extends State<SquadrePage> {
     );
 
     return FutureBuilder<List<Trasferimento>>(
-      future: mercatoProvider.fetchTrasferimenti(
+      future: mercatoProvider.fetchTrasferimentiBySquadra(
         widget.campionato,
         widget.squadra.id,
         sessione,
@@ -1430,22 +1421,38 @@ class _SquadrePageState extends State<SquadrePage> {
             // Squadra cedente (sinistra)
             Expanded(
               flex: 2,
-              child: Column(
-                children: [
-                  SquadraLogoWidget(
-                    codSquadra: squadraCessione.cod,
-                    squadra: squadraCessione,
-                    size: 50,
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    CommonService.decodePlayerName(squadraCessione.nome),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SquadrePage(
+                        squadra: squadraCessione,
+                        campionato: widget.campionato,
+                      ),
+                    ),
+                  );
+                },
+                child: Column(
+                  children: [
+                    SquadraLogoWidget(
+                      codSquadra: squadraCessione.cod,
+                      squadra: squadraCessione,
+                      size: 50,
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      CommonService.decodePlayerName(squadraCessione.nome),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
             ),
             // Centro - Giocatore e freccia
@@ -1457,37 +1464,24 @@ class _SquadrePageState extends State<SquadrePage> {
                   final nomeGiocatore = snapshot.data?.nome ?? 'Caricamento...';
                   return Column(
                     children: [
-                      Text(
-                        CommonService.decodePlayerName(nomeGiocatore),
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      SizedBox(height: 8),
-                      Icon(
-                        Icons.arrow_forward,
-                        color: isAcquisto ? Colors.green : Colors.orange,
-                        size: 32,
-                      ),
-                      SizedBox(height: 4),
                       Container(
                         padding: EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: isAcquisto
-                              ? Colors.green[50]
-                              : Colors.orange[50],
+                          color: !trasferimento.definitivo
+                              ? Colors.orange[50]
+                              : (isAcquisto
+                                    ? Colors.green[50]
+                                    : Colors.red[50]),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isAcquisto
-                                ? Colors.green[300]!
-                                : Colors.orange[300]!,
+                            color: !trasferimento.definitivo
+                                ? Colors.orange[300]!
+                                : (isAcquisto
+                                      ? Colors.green[300]!
+                                      : Colors.red[300]!),
                           ),
                         ),
                         child: Text(
@@ -1501,15 +1495,32 @@ class _SquadrePageState extends State<SquadrePage> {
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            color: isAcquisto
-                                ? (trasferimento.definitivo
+                            color: !trasferimento.definitivo
+                                ? Colors.orange[900]
+                                : (isAcquisto
                                       ? Colors.green[900]
-                                      : Colors.orange[700])
-                                : (trasferimento.definitivo
-                                      ? Colors.orange[900]
-                                      : Colors.orange[700]),
+                                      : Colors.red[900]),
                           ),
                         ),
+                      ),
+                      SizedBox(height: 4),
+                      Icon(
+                        Icons.arrow_forward,
+                        color: !trasferimento.definitivo
+                            ? Colors.orange
+                            : (isAcquisto ? Colors.green : Colors.red),
+                        size: 32,
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        CommonService.decodePlayerName(nomeGiocatore),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   );
@@ -1519,22 +1530,38 @@ class _SquadrePageState extends State<SquadrePage> {
             // Squadra acquirente (destra)
             Expanded(
               flex: 2,
-              child: Column(
-                children: [
-                  SquadraLogoWidget(
-                    codSquadra: squadraAcquisto.cod,
-                    squadra: squadraAcquisto,
-                    size: 50,
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    CommonService.decodePlayerName(squadraAcquisto.nome),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SquadrePage(
+                        squadra: squadraAcquisto,
+                        campionato: widget.campionato,
+                      ),
+                    ),
+                  );
+                },
+                child: Column(
+                  children: [
+                    SquadraLogoWidget(
+                      codSquadra: squadraAcquisto.cod,
+                      squadra: squadraAcquisto,
+                      size: 50,
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      CommonService.decodePlayerName(squadraAcquisto.nome),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

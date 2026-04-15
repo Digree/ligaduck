@@ -217,9 +217,11 @@ class GiocatoriProvider with ChangeNotifier {
   ) async {
     try {
       final response = await http.put(
-        Uri.parse('${Env.apiUrl}/$campionato/giocatore/$idGiocatore/numero'),
+        Uri.parse(
+          '${Env.apiUrl}/$campionato/giocatore/$idGiocatore/numero/$idSquadra',
+        ),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({'numero': numero, 'idSquadra': idSquadra}),
+        body: json.encode(numero),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {

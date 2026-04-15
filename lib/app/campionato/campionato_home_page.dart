@@ -11,8 +11,13 @@ import 'package:ligaduck/app/service/competizioni_provider.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
+import 'package:ligaduck/app/service/models/giocatore.dart';
+import 'package:ligaduck/app/service/models/trasferimento.dart';
 import 'package:ligaduck/app/service/partite_provider.dart';
 import 'package:ligaduck/app/service/squadre_provider.dart';
+import 'package:ligaduck/app/service/mercato_provider.dart';
+import 'package:ligaduck/app/service/giocatori_provider.dart';
+import 'package:ligaduck/app/widgets/squadra_logo_widget.dart';
 import 'package:ligaduck/app/squadre/inserisci_squadra_page.dart';
 import 'package:ligaduck/app/campionato/search_page.dart';
 import 'package:provider/provider.dart';
@@ -31,7 +36,8 @@ class CampionatoHomePage extends StatefulWidget {
   State<CampionatoHomePage> createState() => _CampionatoHomePageState();
 }
 
-class _CampionatoHomePageState extends State<CampionatoHomePage> {
+class _CampionatoHomePageState extends State<CampionatoHomePage>
+    with SingleTickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
   final PageController _pageController = PageController();
   final partitaCompList = [];
@@ -39,10 +45,12 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
   late final Future<List<Squadra>> _squadreFuture;
   late final Future<List<Competizione>> _competizioniFuture;
   late final Future<List<Partita>> _partiteFuture;
+  late TabController _mercatoTabController;
 
   @override
   void dispose() {
     _scrollController.dispose();
+    _mercatoTabController.dispose();
     super.dispose();
   }
 
@@ -67,6 +75,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
       widget.campionato,
     );
     _partiteFuture = _loadPartite(partiteProvider);
+    _mercatoTabController = TabController(length: 2, vsync: this);
   }
 
   void _showAddSquadraModal(BuildContext context) {
@@ -334,12 +343,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
               context,
             ),
           ),
-          Center(
-            child: Text(
-              'Mercato in arrivo...',
-              style: TextStyle(fontSize: 18, color: Colors.grey[600]),
-            ),
-          ),
+          _buildMercatoSection(),
         ],
       ),
     );
@@ -678,6 +682,373 @@ class _CampionatoHomePageState extends State<CampionatoHomePage> {
       partitaCompList.add(partitaComp);
     }
     return partite;
+  }
+
+  Widget _buildMercatoSection() {
+    return Column(
+      children: [
+        // Header con TabBar
+        Container(
+          color: Colors.white,
+          child: Column(
+            children: [
+              // TabBar Estivo/Invernale
+              Container(
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: Colors.grey[300]!, width: 1),
+                  ),
+                ),
+                child: TabBar(
+                  controller: _mercatoTabController,
+                  labelColor: Colors.blueAccent,
+                  unselectedLabelColor: Colors.grey,
+                  indicatorColor: Colors.blueAccent,
+                  tabs: [
+                    Tab(text: 'ESTIVO'),
+                    Tab(text: 'INVERNALE'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Contenuto della tab selezionata
+        Expanded(
+          child: TabBarView(
+            controller: _mercatoTabController,
+            children: [
+              _buildMercatoContent('estivo'),
+              _buildMercatoContent('invernale'),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMercatoContent(String sessione) {
+    final mercatoProvider = Provider.of<MercatoProvider>(
+      context,
+      listen: false,
+    );
+
+    return FutureBuilder<List<Squadra>>(
+      future: _squadreFuture,
+      builder: (context, squadreSnapshot) {
+        if (squadreSnapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        if (squadreSnapshot.hasError) {
+          return Center(
+            child: Text(
+              'Errore nel caricamento delle squadre',
+              style: TextStyle(color: Colors.red),
+            ),
+          );
+        }
+
+        final squadre = squadreSnapshot.data ?? [];
+
+        // Carica tutti i trasferimenti della sessione usando fetchTrasferimenti
+        return FutureBuilder<List<Trasferimento>>(
+          future: mercatoProvider.fetchTrasferimenti(
+            widget.campionato,
+            sessione,
+          ),
+          builder: (context, trasferimentiSnapshot) {
+            if (trasferimentiSnapshot.connectionState ==
+                ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            }
+
+            if (trasferimentiSnapshot.hasError) {
+              return Center(
+                child: Text(
+                  'Errore nel caricamento dei trasferimenti',
+                  style: TextStyle(color: Colors.red),
+                ),
+              );
+            }
+
+            final tuttiTrasferimenti = trasferimentiSnapshot.data ?? [];
+
+            // Filtra solo i trasferimenti che coinvolgono squadre del campionato
+            final trasferimentiFiltrati = tuttiTrasferimenti.where((t) {
+              // Verifica se almeno una squadra del campionato è coinvolta
+              final haSquadraAcquisto = squadre.any(
+                (s) => s.id == t.idSquadraAcquisto,
+              );
+              final haSquadraCessione = squadre.any(
+                (s) => s.id == t.idSquadraCessione,
+              );
+
+              return haSquadraAcquisto || haSquadraCessione;
+            }).toList();
+
+            // Ordina dall'ultimo al primo (ordine inverso per ID)
+            trasferimentiFiltrati.sort((a, b) {
+              if (a.id == null && b.id == null) return 0;
+              if (a.id == null) return 1;
+              if (b.id == null) return -1;
+              return b.id!.compareTo(a.id!);
+            });
+
+            if (trasferimentiFiltrati.isEmpty) {
+              return Center(
+                child: Text(
+                  'Nessun trasferimento per il mercato $sessione',
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+              );
+            }
+
+            return ListView.builder(
+              padding: EdgeInsets.all(16),
+              itemCount: trasferimentiFiltrati.length,
+              itemBuilder: (context, index) {
+                return _buildTrasferimentoCard(
+                  context,
+                  trasferimentiFiltrati[index],
+                  squadre,
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildTrasferimentoCard(
+    BuildContext context,
+    Trasferimento trasferimento,
+    List<Squadra> squadre,
+  ) {
+    // Trova le squadre coinvolte
+    final squadraCessione = squadre.firstWhere(
+      (s) => s.id == trasferimento.idSquadraCessione,
+      orElse: () => Squadra(
+        id: 0,
+        nome: 'Squadra sconosciuta',
+        citta: '',
+        stadio: '',
+        cod: '',
+        campionato: '',
+        categoria: '',
+        colori: [],
+        formazione: Formazione(
+          titolari: [],
+          panchina: [],
+          indisponibili: [],
+          nonConvocati: [],
+          allenatore: '',
+          modulo: '',
+        ),
+        formazioneOld: Formazione(
+          titolari: [],
+          panchina: [],
+          indisponibili: [],
+          nonConvocati: [],
+          allenatore: '',
+          modulo: '',
+        ),
+        indisponibili: [],
+        competizioni: [],
+      ),
+    );
+
+    final squadraAcquisto = squadre.firstWhere(
+      (s) => s.id == trasferimento.idSquadraAcquisto,
+      orElse: () => Squadra(
+        id: 0,
+        nome: 'Squadra sconosciuta',
+        citta: '',
+        stadio: '',
+        cod: '',
+        campionato: '',
+        categoria: '',
+        colori: [],
+        formazione: Formazione(
+          titolari: [],
+          panchina: [],
+          indisponibili: [],
+          nonConvocati: [],
+          allenatore: '',
+          modulo: '',
+        ),
+        formazioneOld: Formazione(
+          titolari: [],
+          panchina: [],
+          indisponibili: [],
+          nonConvocati: [],
+          allenatore: '',
+          modulo: '',
+        ),
+        indisponibili: [],
+        competizioni: [],
+      ),
+    );
+
+    return Card(
+      margin: EdgeInsets.only(bottom: 16),
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Row(
+          children: [
+            // Squadra cedente (sinistra)
+            Expanded(
+              flex: 2,
+              child: Column(
+                children: [
+                  SquadraLogoWidget(
+                    codSquadra: squadraCessione.cod,
+                    squadra: squadraCessione,
+                    size: 50,
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    squadraCessione.nome,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            // Centro - Giocatore e freccia
+            Expanded(
+              flex: 3,
+              child: FutureBuilder<Giocatore?>(
+                future: _fetchGiocatore(trasferimento.idGiocatore),
+                builder: (context, snapshot) {
+                  final nomeGiocatore = snapshot.data?.nome ?? 'Caricamento...';
+
+                  // Determina se è acquisto o cessione
+                  final isAcquisto = squadre.any(
+                    (s) => s.id == trasferimento.idSquadraAcquisto,
+                  );
+                  final isCessione = squadre.any(
+                    (s) => s.id == trasferimento.idSquadraCessione,
+                  );
+
+                  // Determina il tipo di trasferimento
+                  String tipoTrasferimento;
+                  Color backgroundColor;
+                  Color borderColor;
+                  Color textColor;
+                  Color arrowColor;
+
+                  if (!trasferimento.definitivo) {
+                    tipoTrasferimento = 'PRESTITO';
+                    backgroundColor = Colors.orange[50]!;
+                    borderColor = Colors.orange[300]!;
+                    textColor = Colors.orange[900]!;
+                    arrowColor = Colors.orange;
+                  } else if (isAcquisto && !isCessione) {
+                    tipoTrasferimento = 'ACQUISTO';
+                    backgroundColor = Colors.green[50]!;
+                    borderColor = Colors.green[300]!;
+                    textColor = Colors.green[900]!;
+                    arrowColor = Colors.green;
+                  } else if (isCessione && !isAcquisto) {
+                    tipoTrasferimento = 'CESSIONE';
+                    backgroundColor = Colors.red[50]!;
+                    borderColor = Colors.red[300]!;
+                    textColor = Colors.red[900]!;
+                    arrowColor = Colors.red;
+                  } else {
+                    tipoTrasferimento = 'TRASFERIMENTO';
+                    backgroundColor = Colors.blue[50]!;
+                    borderColor = Colors.blue[300]!;
+                    textColor = Colors.blue[900]!;
+                    arrowColor = Colors.blueAccent;
+                  }
+
+                  return Column(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: backgroundColor,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: borderColor),
+                        ),
+                        child: Text(
+                          tipoTrasferimento,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Icon(Icons.arrow_forward, color: arrowColor, size: 32),
+                      SizedBox(height: 8),
+                      Text(
+                        nomeGiocatore,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+            // Squadra acquirente (destra)
+            Expanded(
+              flex: 2,
+              child: Column(
+                children: [
+                  SquadraLogoWidget(
+                    codSquadra: squadraAcquisto.cod,
+                    squadra: squadraAcquisto,
+                    size: 50,
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    squadraAcquisto.nome,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<Giocatore?> _fetchGiocatore(String idGiocatore) async {
+    try {
+      final giocatoriProvider = Provider.of<GiocatoriProvider>(
+        context,
+        listen: false,
+      );
+      final giocatore = await giocatoriProvider.fetchGiocatoreById(
+        widget.campionato,
+        idGiocatore,
+      );
+      return giocatore;
+    } catch (e) {
+      return null;
+    }
   }
 
   Future<Competizione> getCompetizione(
