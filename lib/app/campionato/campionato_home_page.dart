@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:glassmorphism/glassmorphism.dart';
 import 'package:ligaduck/app/competizione/competizione_home_page.dart';
 import 'package:ligaduck/app/config/models/global.dart';
 import 'package:ligaduck/app/home_page.dart';
@@ -190,162 +191,273 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
           ),
         ],
       ),
-      bottomNavigationBar: !isWide
-          ? BottomNavigationBar(
-              type: BottomNavigationBarType.fixed,
-              backgroundColor: Colors.blueAccent.withOpacity(0.8),
-              selectedItemColor: Colors.white,
-              unselectedItemColor: Colors.white70,
-              currentIndex: _selectedIndex,
-              items: [
-                BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.shield),
-                  label: 'Squadre',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.compare_arrows_outlined),
-                  label: 'Mercato',
-                ),
-              ],
-              onTap: (index) {
-                setState(() {
-                  _selectedIndex = index;
-                });
-              },
-            )
-          : null,
-      body: IndexedStack(
-        index: _selectedIndex,
+      body: Stack(
         children: [
-          Align(
-            alignment: Alignment.topCenter,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.only(top: 15.0, bottom: 8.0),
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 16.0, top: 8.0),
-                      child: Align(
-                        alignment: Alignment.topLeft,
-                        child: Text(
-                          'Competizioni:',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
+          IndexedStack(
+            index: _selectedIndex,
+            children: [
+              Align(
+                alignment: Alignment.topCenter,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (!isWide) SizedBox(height: 0), // Spazio per la navbar
+                      const Padding(
+                        padding: EdgeInsets.only(top: 15.0, bottom: 8.0),
+                        child: Padding(
+                          padding: EdgeInsets.only(left: 16.0, top: 8.0),
+                          child: Align(
+                            alignment: Alignment.topLeft,
+                            child: Text(
+                              'Competizioni:',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                  Listener(
-                    onPointerSignal: (pointerSignal) {
-                      if (pointerSignal is PointerScrollEvent) {
-                        _scrollController.jumpTo(
-                          _scrollController.offset +
-                              pointerSignal.scrollDelta.dy,
-                        );
-                      }
-                    },
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 16.0),
-                      child: SingleChildScrollView(
-                        controller: _scrollController,
-                        scrollDirection: Axis.horizontal,
-                        child: FutureBuilder(
-                          future: _competizioniFuture,
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return Center(child: CircularProgressIndicator());
-                            }
-
-                            if (snapshot.hasError) {
-                              return Center(
-                                child: Text('Errore: ${snapshot.error}'),
-                              );
-                            }
-
-                            final competizioni = snapshot.data ?? [];
-
-                            competizioni.removeWhere(
-                              (comp) => comp.attiva == false,
+                      Listener(
+                        onPointerSignal: (pointerSignal) {
+                          if (pointerSignal is PointerScrollEvent) {
+                            _scrollController.jumpTo(
+                              _scrollController.offset +
+                                  pointerSignal.scrollDelta.dy,
                             );
+                          }
+                        },
+                        child: Padding(
+                          padding: EdgeInsets.only(left: 16.0),
+                          child: SingleChildScrollView(
+                            controller: _scrollController,
+                            scrollDirection: Axis.horizontal,
+                            child: FutureBuilder(
+                              future: _competizioniFuture,
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return Center(
+                                    child: CircularProgressIndicator(),
+                                  );
+                                }
 
-                            return Row(
-                              children: [
-                                for (var competizione in competizioni)
-                                  buildCompetizioneButton(
-                                    CompetizioneButtonModel(
-                                      text: competizione.nome,
-                                      imagePath:
-                                          'assets/logos/logo_${competizione.cod}.png',
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                CompetizioneHomePage(
-                                                  title: competizione.nome,
-                                                  campionato: widget.campionato,
-                                                  competizione: competizione,
-                                                ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                    context,
-                                  ),
-                              ],
-                            );
-                          },
+                                if (snapshot.hasError) {
+                                  return Center(
+                                    child: Text('Errore: ${snapshot.error}'),
+                                  );
+                                }
+
+                                final competizioni = snapshot.data ?? [];
+
+                                competizioni.removeWhere(
+                                  (comp) => comp.attiva == false,
+                                );
+
+                                return Row(
+                                  children: [
+                                    for (var competizione in competizioni)
+                                      buildCompetizioneButton(
+                                        CompetizioneButtonModel(
+                                          text: competizione.nome,
+                                          imagePath:
+                                              'assets/logos/logo_${competizione.cod}.png',
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    CompetizioneHomePage(
+                                                      title: competizione.nome,
+                                                      campionato:
+                                                          widget.campionato,
+                                                      competizione:
+                                                          competizione,
+                                                    ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                        context,
+                                      ),
+                                  ],
+                                );
+                              },
+                            ),
+                          ),
                         ),
                       ),
+                      isWide
+                          ? Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Column(
+                                  children: [buildProssimePartite(context)],
+                                ),
+                                Expanded(
+                                  child: SingleChildScrollView(
+                                    child: Column(
+                                      children: [
+                                        buildListaSquadre(
+                                          ListaSquadreModel(
+                                            campionato: widget.campionato,
+                                            squadreFuture: _squadreFuture,
+                                            competizioniFuture:
+                                                _competizioniFuture,
+                                          ),
+                                          context,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Column(children: [buildProssimePartite(context)]),
+                      if (!isWide)
+                        SizedBox(height: 100), // Padding finale per la navbar
+                    ],
+                  ),
+                ),
+              ),
+              SingleChildScrollView(
+                child: Column(
+                  children: [
+                    buildListaSquadre(
+                      ListaSquadreModel(
+                        campionato: widget.campionato,
+                        squadreFuture: _squadreFuture,
+                        competizioniFuture: _competizioniFuture,
+                      ),
+                      context,
+                    ),
+                    SizedBox(height: isWide ? 0 : 100),
+                  ],
+                ),
+              ),
+              _buildMercatoSection(),
+              _buildAlboDOroSection(),
+            ],
+          ),
+          if (!isWide)
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 16,
+              child: GlassmorphicContainer(
+                width: MediaQuery.of(context).size.width - 32,
+                height: 70,
+                borderRadius: 35,
+                blur: 20,
+                alignment: Alignment.center,
+                border: 2,
+                linearGradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.blueAccent.withOpacity(0.8),
+                    Colors.blueAccent.withOpacity(0.5),
+                  ],
+                ),
+                borderGradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withOpacity(0.5),
+                    Colors.white.withOpacity(0.2),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildNavItem(Icons.home, 'Home', 0),
+                    _buildNavItem(Icons.shield, 'Squadre', 1),
+                    _buildNavItem(Icons.compare_arrows_outlined, 'Mercato', 2),
+                    _buildNavItem(Icons.emoji_events, "Albo d'oro", 3),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, String label, int index) {
+    final isSelected = _selectedIndex == index;
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedIndex = index;
+        });
+      },
+      borderRadius: BorderRadius.circular(25),
+      child: isSelected
+          ? GlassmorphicContainer(
+              width: 90,
+              height: 60,
+              borderRadius: 25,
+              blur: 10,
+              alignment: Alignment.center,
+              border: 1.5,
+              linearGradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withOpacity(0.1),
+                  Colors.white.withOpacity(0.1),
+                ],
+              ),
+              borderGradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withOpacity(0.1),
+                  Colors.white.withOpacity(0.1),
+                ],
+              ),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(icon, color: Colors.white, size: 24),
+                    SizedBox(height: 4),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : Container(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(25),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, color: Colors.white70, size: 24),
+                  SizedBox(height: 4),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 11,
+                      fontWeight: FontWeight.normal,
                     ),
                   ),
-                  isWide
-                      ? Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Column(children: [buildProssimePartite(context)]),
-                            Expanded(
-                              child: SingleChildScrollView(
-                                child: Column(
-                                  children: [
-                                    buildListaSquadre(
-                                      ListaSquadreModel(
-                                        campionato: widget.campionato,
-                                        squadreFuture: _squadreFuture,
-                                        competizioniFuture: _competizioniFuture,
-                                      ),
-                                      context,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        )
-                      : Column(children: [buildProssimePartite(context)]),
                 ],
               ),
             ),
-          ),
-          SingleChildScrollView(
-            child: buildListaSquadre(
-              ListaSquadreModel(
-                campionato: widget.campionato,
-                squadreFuture: _squadreFuture,
-                competizioniFuture: _competizioniFuture,
-              ),
-              context,
-            ),
-          ),
-          _buildMercatoSection(),
-        ],
-      ),
     );
   }
 
@@ -554,6 +666,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                                                   })(),
                                                 ),
                                                 context,
+                                                null, // currentFase non disponibile in questo contesto
                                               ),
                                             ),
                                         ],
@@ -804,8 +917,9 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
               );
             }
 
+            final isWide = MediaQuery.of(context).size.width > 600;
             return ListView.builder(
-              padding: EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(16, 16, 16, isWide ? 16 : 116),
               itemCount: trasferimentiFiltrati.length,
               itemBuilder: (context, index) {
                 return _buildTrasferimentoCard(
@@ -1032,6 +1146,214 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildAlboDOroSection() {
+    final competizioniProvider = Provider.of<CompetizioniProvider>(
+      context,
+      listen: false,
+    );
+
+    return FutureBuilder<List<CompetizioneVincitore>>(
+      future: competizioniProvider.fetchVincitori(widget.campionato),
+      builder: (context, vincitoriSnapshot) {
+        if (vincitoriSnapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        final vincitori = vincitoriSnapshot.data ?? [];
+
+        return FutureBuilder<List<Competizione>>(
+          future: _competizioniFuture,
+          builder: (context, competizioniSnapshot) {
+            if (competizioniSnapshot.connectionState ==
+                ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            }
+
+            if (competizioniSnapshot.hasError) {
+              return Center(
+                child: Text(
+                  'Errore nel caricamento delle competizioni',
+                  style: TextStyle(color: Colors.red),
+                ),
+              );
+            }
+
+            final competizioni = competizioniSnapshot.data ?? [];
+
+            if (competizioni.isEmpty) {
+              return Center(
+                child: Text(
+                  'Nessuna competizione disponibile',
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+              );
+            }
+
+            final isWide = MediaQuery.of(context).size.width > 600;
+            return ListView.builder(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, isWide ? 16 : 116),
+              itemCount: competizioni.length,
+              itemBuilder: (context, index) {
+                final competizione = competizioni[index];
+
+                // Trova il vincitore per questa competizione
+                final vincitore = vincitori.firstWhere(
+                  (v) => v.idCompetizione == competizione.id,
+                  orElse: () => CompetizioneVincitore(
+                    idCompetizione: competizione.id,
+                    idSquadraVincitrice: 0,
+                  ),
+                );
+
+                final hasVincitore = vincitore.idSquadraVincitrice != 0;
+
+                return Card(
+                  margin: EdgeInsets.only(bottom: 16),
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Image.asset(
+                              'assets/logos/logo_${competizione.cod}_comp.png',
+                              height: 40,
+                              width: 40,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Icon(
+                                  Icons.emoji_events,
+                                  size: 40,
+                                  color: Colors.amber,
+                                );
+                              },
+                            ),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                competizione.nome,
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+                        // Sezione vincitore
+                        Container(
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: hasVincitore
+                                ? Colors.amber[50]
+                                : Colors.grey[100],
+                            borderRadius: BorderRadius.circular(8),
+                            border: hasVincitore
+                                ? Border.all(
+                                    color: Colors.amber[300]!,
+                                    width: 2,
+                                  )
+                                : null,
+                          ),
+                          child: hasVincitore
+                              ? Row(
+                                  children: [
+                                    Icon(
+                                      Icons.emoji_events,
+                                      color: Colors.amber[700],
+                                      size: 24,
+                                    ),
+                                    SizedBox(width: 12),
+                                    _buildSquadraLogo(vincitore),
+                                    SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        vincitore.nomeSquadra,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Vincitore',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey[700],
+                                      ),
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'Competizione non ancora conclusa',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildSquadraLogo(CompetizioneVincitore vincitore) {
+    // Crea un oggetto Squadra temporaneo per usare SquadraLogoWidget
+    final squadraTemp = Squadra(
+      id: vincitore.idSquadraVincitrice,
+      nome: vincitore.nomeSquadra,
+      cod: vincitore.cod,
+      citta: '',
+      stadio: '',
+      campionato: widget.campionato,
+      categoria: '',
+      colori: vincitore.colori,
+      formazione: Formazione(
+        titolari: [],
+        panchina: [],
+        indisponibili: [],
+        nonConvocati: [],
+        allenatore: '',
+        modulo: '',
+      ),
+      formazioneOld: Formazione(
+        titolari: [],
+        panchina: [],
+        indisponibili: [],
+        nonConvocati: [],
+        allenatore: '',
+        modulo: '',
+      ),
+      indisponibili: [],
+      competizioni: [],
+    );
+
+    return SquadraLogoWidget(
+      codSquadra: vincitore.cod,
+      squadra: squadraTemp,
+      size: 40,
     );
   }
 

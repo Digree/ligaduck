@@ -29,7 +29,11 @@ class CampionatoMatchModel {
   });
 }
 
-Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
+Widget buildCampionatoMatch(
+  CampionatoMatchModel model,
+  BuildContext context,
+  String? currentFase,
+) {
   final screenWidth = MediaQuery.of(context).size.width;
   bool isWide = MediaQuery.of(context).size.width > 1000;
 
@@ -73,15 +77,33 @@ Widget buildCampionatoMatch(CampionatoMatchModel model, BuildContext context) {
               model.squadraAway!.categoria != 'Serie C' &&
               model.squadraAway!.categoria != 'Serie D';
 
-          if (isHomeEstera &&
-              isAwayEstera &&
-              globals.admin &&
-              !model.partita.salvata) {
-            // Se entrambe le squadre sono estere, l'utente è admin e la partita non è salvata
-            // mostra dialog per inserire risultato manualmente
-            await _showRisultatoDialog(context, model);
+          // Check phase logic
+          bool isPhaseE = (currentFase ?? '').toUpperCase() == 'E';
+
+          // Se la fase è E, apri sempre la pagina normalmente
+          if (isPhaseE) {
+            final shouldRefresh = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PartitaHomePage(
+                  partitaId: model.partita.id,
+                  campionato: model.campionato,
+                ),
+              ),
+            );
+
+            if (shouldRefresh == true && model.onRefreshRequired != null) {
+              model.onRefreshRequired!();
+            }
+          } else if (isHomeEstera && isAwayEstera) {
+            // Per partite tra squadre estere (non in fase E)
+            if (globals.admin && !model.partita.salvata) {
+              // Se è admin e partita non salvata, mostra dialog
+              await _showRisultatoDialog(context, model);
+            }
+            // Se non è admin, non fare nulla
           } else {
-            // In tutti gli altri casi, naviga alla pagina di dettaglio
+            // Per tutte le altre partite (non estere), naviga alla pagina di dettaglio
             final shouldRefresh = await Navigator.push(
               context,
               MaterialPageRoute(
@@ -288,13 +310,13 @@ Future<void> _showRisultatoDialog(
         )
       : Colors.blue;
 
+  bool isLoading = false;
+
   return showDialog(
     context: context,
     builder: (BuildContext dialogContext) {
       return StatefulBuilder(
         builder: (context, setState) {
-          bool isLoading = false;
-
           return AlertDialog(
             title: Text('Inserisci Risultato'),
             content: Column(

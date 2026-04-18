@@ -2748,6 +2748,14 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
           if (partite.isEmpty) {
             return Center(child: Text('Nessuna partita disponibile'));
           } else {
+            // Ottieni la fase della giornata corrente
+            String? currentFase;
+            try {
+              final giornata = giornate_.firstWhere((g) => g.id == idGiornata);
+              currentFase = giornata.fase;
+            } catch (e) {
+              currentFase = null;
+            }
             return Padding(
               padding: EdgeInsets.only(top: 16),
               child: ListView.builder(
@@ -2839,6 +2847,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                       },
                     ),
                     context,
+                    currentFase,
                   );
                 },
               ),
@@ -2997,9 +3006,84 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
   }
 
   Widget buildStatistiche() {
+    final partiteProvider = Provider.of<PartiteProvider>(
+      context,
+      listen: false,
+    );
+
     return SingleChildScrollView(
       child: Column(
         children: [
+          // Conteggio gol segnati dalla giornata
+          FutureBuilder<List<Partita>>(
+            future: partiteProvider.fetchPartite(
+              widget.campionato,
+              selectedGiornata!,
+            ),
+            builder: (context, snapshot) {
+              int totalGol = 0;
+
+              if (snapshot.hasData && snapshot.data != null) {
+                // Conta i gol dalle partite
+                for (var partita in snapshot.data!) {
+                  for (var evento in partita.tabellino) {
+                    // Conta solo gol reali (no rigori finali al minuto 121)
+                    if (evento.minuto != 121) {
+                      if (evento.codAzione == 'gol' ||
+                          evento.codAzione == 'pun' ||
+                          evento.codAzione == 'aut') {
+                        totalGol++;
+                      } else if (evento.codAzione == 'rig' &&
+                          evento.esitoRigore == true) {
+                        totalGol++;
+                      }
+                    }
+                  }
+                }
+              }
+
+              return Padding(
+                padding: EdgeInsets.all(8),
+                child: Card(
+                  color: Colors.blue.shade50,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.sports_soccer, color: Colors.blue, size: 24),
+                        SizedBox(width: 12),
+                        Text(
+                          'Gol segnati: ',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue.shade900,
+                          ),
+                        ),
+                        snapshot.connectionState == ConnectionState.waiting
+                            ? SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                '$totalGol',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue.shade700,
+                                ),
+                              ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
           Padding(
             padding: EdgeInsets.all(8),
             child: Card(
@@ -4733,6 +4817,31 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       );
 
       if (result != null) {
+        // Mostra loader
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return WillPopScope(
+              onWillPop: () async => false,
+              child: AlertDialog(
+                content: Row(
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(width: 20),
+                    Expanded(
+                      child: Text(
+                        'Caricamento in corso...\nElaborazione file CSV',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+
         // Se siamo su web, path è null, usiamo bytes
         if (result.files.single.bytes != null) {
           // Prova prima con UTF-8, poi con latin1 se fallisce
@@ -4753,12 +4862,18 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
           final file = File(result.files.single.path!);
           await _processCsvFile(file);
         } else {
+          // Chiudi loader
+          Navigator.pop(context);
           _showMessage('Nessun file selezionato');
         }
       } else {
         _showMessage('Nessun file selezionato');
       }
     } catch (e) {
+      // Chiudi loader se aperto
+      try {
+        Navigator.pop(context);
+      } catch (_) {}
       _showMessage('Errore nella selezione del file: $e');
     }
   }
@@ -4804,8 +4919,11 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
           );
         }
       } catch (e) {
+        // Chiudi loader
+        Navigator.pop(context);
         _showMessage('Errore nella generazione della classifica: $e');
         classifica = [];
+        return;
       }
 
       List<List<dynamic>> csvData = const CsvToListConverter(
@@ -4813,6 +4931,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       ).convert(input);
 
       if (csvData.length < 2) {
+        // Chiudi loader
+        Navigator.pop(context);
         _showMessage(
           'Il file CSV deve avere almeno intestazione e una riga dati',
         );
@@ -4824,6 +4944,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       List<List<dynamic>> dataRows = csvData.sublist(1);
 
       if (dataRows.isEmpty) {
+        // Chiudi loader
+        Navigator.pop(context);
         _showMessage('Nessuna riga dati trovata nel CSV');
         return;
       }
@@ -4849,6 +4971,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
         _showMessage('Errore nel caricamento delle partite: $e');
       }
 
+      // Chiudi loader
+      Navigator.pop(context);
+
       _showMessage('File CSV caricato con successo: ${dataRows.length} righe');
 
       _partiteCache.clear();
@@ -4859,6 +4984,10 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       setState(() {});
       Navigator.pop(context);
     } catch (e) {
+      // Chiudi loader
+      try {
+        Navigator.pop(context);
+      } catch (_) {}
       _showMessage('Errore nell\'elaborazione del CSV: $e');
     }
   }
@@ -4880,6 +5009,10 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       }
       await _processCsvString(input);
     } catch (e) {
+      // Chiudi loader
+      try {
+        Navigator.pop(context);
+      } catch (_) {}
       _showMessage('Errore nella lettura del file CSV: $e');
     }
   }

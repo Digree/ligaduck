@@ -43,3 +43,39 @@ class Competizione {
     };
   }
 }
+
+class CompetizioneVincitore {
+  final int idCompetizione;
+  final int idSquadraVincitrice;
+  final String nomeSquadra;
+  final List<String> colori;
+  final String cod;
+
+  CompetizioneVincitore({
+    required this.idCompetizione,
+    required this.idSquadraVincitrice,
+    this.nomeSquadra = '',
+    this.colori = const [],
+    this.cod = '',
+  });
+
+  factory CompetizioneVincitore.fromJson(Map<String, dynamic> json) {
+    return CompetizioneVincitore(
+      idCompetizione: json['idCompetizione'],
+      idSquadraVincitrice: json['idSquadraVincitrice'],
+      nomeSquadra: json['nomeSquadra'] ?? json['nome'] ?? '',
+      colori: json['colori'] != null ? List<String>.from(json['colori']) : [],
+      cod: json['cod'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'idCompetizione': idCompetizione,
+      'idSquadraVincitrice': idSquadraVincitrice,
+      'nomeSquadra': nomeSquadra,
+      'colori': colori,
+      'cod': cod,
+    };
+  }
+}

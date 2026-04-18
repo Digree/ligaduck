@@ -62,6 +62,11 @@ class SquadreProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final dynamic data = json.decode(response.body);
+
+        if (data == null) {
+          throw Exception('Dati squadra non disponibili');
+        }
+
         Squadra squadra = Squadra.fromJson(data);
 
         for (var giocatore in squadra.formazione.titolari) {

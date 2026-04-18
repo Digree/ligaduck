@@ -50,11 +50,31 @@ class Squadra {
       competizioni: json['competizioni'] != null
           ? List<int>.from(json['competizioni'])
           : [],
-      formazione: Formazione.fromJson(json['formazione']),
-      indisponibili: (json['indisponibili'] as List)
-          .map((e) => GiocatoreNonDisponibile.fromJson(e))
-          .toList(),
-      formazioneOld: Formazione.fromJson(json['formazioneOld']),
+      formazione: json['formazione'] != null
+          ? Formazione.fromJson(json['formazione'])
+          : Formazione(
+              titolari: [],
+              panchina: [],
+              indisponibili: [],
+              nonConvocati: [],
+              allenatore: '',
+              modulo: '',
+            ),
+      indisponibili: json['indisponibili'] != null
+          ? (json['indisponibili'] as List)
+                .map((e) => GiocatoreNonDisponibile.fromJson(e))
+                .toList()
+          : [],
+      formazioneOld: json['formazioneOld'] != null
+          ? Formazione.fromJson(json['formazioneOld'])
+          : Formazione(
+              titolari: [],
+              panchina: [],
+              indisponibili: [],
+              nonConvocati: [],
+              allenatore: '',
+              modulo: '',
+            ),
     );
   }
 

@@ -62,4 +62,31 @@ class CompetizioniProvider with ChangeNotifier {
       return Future.error('Competizione non trovata');
     }
   }
+
+  Future<List<CompetizioneVincitore>> fetchVincitori(String campionato) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${Env.apiUrl}/$campionato/competizioni/vincitori'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        // L'endpoint può ritornare una lista o un singolo oggetto
+        if (data is List) {
+          return data
+              .map((item) => CompetizioneVincitore.fromJson(item))
+              .toList();
+        } else if (data is Map) {
+          // Se ritorna una mappa singola
+          return [CompetizioneVincitore.fromJson(data as Map<String, dynamic>)];
+        }
+        return [];
+      } else {
+        throw Exception('Errore nel caricamento: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Errore: $e');
+      return [];
+    }
+  }
 }

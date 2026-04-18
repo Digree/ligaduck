@@ -103,20 +103,28 @@ class Formazione {
 
   factory Formazione.fromJson(Map<String, dynamic> json) {
     return Formazione(
-      titolari: (json['titolari'] as List)
-          .map((e) => GiocatoreFormazione.fromJson(e))
-          .toList(),
-      panchina: (json['panchina'] as List)
-          .map((e) => GiocatoreFormazione.fromJson(e))
-          .toList(),
-      indisponibili: (json['indisponibili'] as List)
-          .map((e) => GiocatoreNonDisponibile.fromJson(e))
-          .toList(),
-      nonConvocati: (json['nonConvocati'] as List)
-          .map((e) => GiocatoreFormazione.fromJson(e))
-          .toList(),
-      allenatore: json['allenatore'],
-      modulo: json['modulo'],
+      titolari: json['titolari'] != null
+          ? (json['titolari'] as List)
+                .map((e) => GiocatoreFormazione.fromJson(e))
+                .toList()
+          : [],
+      panchina: json['panchina'] != null
+          ? (json['panchina'] as List)
+                .map((e) => GiocatoreFormazione.fromJson(e))
+                .toList()
+          : [],
+      indisponibili: json['indisponibili'] != null
+          ? (json['indisponibili'] as List)
+                .map((e) => GiocatoreNonDisponibile.fromJson(e))
+                .toList()
+          : [],
+      nonConvocati: json['nonConvocati'] != null
+          ? (json['nonConvocati'] as List)
+                .map((e) => GiocatoreFormazione.fromJson(e))
+                .toList()
+          : [],
+      allenatore: json['allenatore'] ?? '',
+      modulo: json['modulo'] ?? '',
     );
   }
 

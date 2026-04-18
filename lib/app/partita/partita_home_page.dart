@@ -1289,7 +1289,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      buildUltime5PartiteWide(),
+                      buildEventiPartitaWide(),
                       SizedBox(height: 16),
                       Padding(
                         padding: EdgeInsets.only(
@@ -1326,7 +1326,18 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                           ),
                         ),
                       ),
-                      Flexible(child: buildTabellino()),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              buildTabellino(),
+                              SizedBox(height: 16),
+                              buildUltime5PartiteWide(),
+                              SizedBox(height: 32),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1339,6 +1350,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             length: 3,
             child: Column(
               children: [
+                buildEventiPartitaMobile(),
                 TabBar(
                   labelColor: Color(
                     competizione!.colori.isNotEmpty
@@ -1423,94 +1435,91 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       tabellinoWidgets.add(buildTabellinoRow(evento));
     }
 
-    return SizedBox(
-      height: MediaQuery.of(context).size.height,
-      child: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Column(
-              children: [
-                if (partita!.tabellino.isEmpty)
-                  Padding(
-                    padding: EdgeInsets.all(32),
-                    child: Center(
-                      child: Text(
-                        'Nessun evento registrato per questa partita.',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[600],
-                          fontFamily: competizione?.id == 5
-                              ? 'champions'
-                              : competizione?.id == 6 || competizione?.id == 7
-                              ? 'europa'
-                              : competizione?.id == 8
-                              ? 'supercup'
-                              : null,
-                        ),
+    return Stack(
+      children: [
+        SingleChildScrollView(
+          child: Column(
+            children: [
+              if (partita!.tabellino.isEmpty)
+                Padding(
+                  padding: EdgeInsets.all(32),
+                  child: Center(
+                    child: Text(
+                      'Nessun evento registrato per questa partita.',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[600],
+                        fontFamily: competizione?.id == 5
+                            ? 'champions'
+                            : competizione?.id == 6 || competizione?.id == 7
+                            ? 'europa'
+                            : competizione?.id == 8
+                            ? 'supercup'
+                            : null,
                       ),
                     ),
                   ),
-                ...tabellinoWidgets,
-              ],
-            ),
+                ),
+              ...tabellinoWidgets,
+            ],
           ),
-          if (admin && !partita!.salvata)
-            Positioned(
-              bottom: 32,
-              right: 32,
-              child: FloatingActionButton(
-                heroTag: "tabellino_fab",
-                onPressed: () async {
-                  final result = await showDialog<Evento>(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return StatefulBuilder(
-                        builder:
-                            (BuildContext context, StateSetter setDialogState) {
-                              return Dialog(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16.0),
-                                ),
-                                child: AddEventoModalPage(
-                                  competizione: competizione,
-                                  partita: partita!,
-                                  dialogState: setDialogState,
-                                  campionato: widget.campionato,
-                                ),
-                              );
-                            },
-                      );
-                    },
-                  );
+        ),
+        if (admin && !partita!.salvata)
+          Positioned(
+            bottom: 32,
+            right: 32,
+            child: FloatingActionButton(
+              heroTag: "tabellino_fab",
+              onPressed: () async {
+                final result = await showDialog<Evento>(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return StatefulBuilder(
+                      builder:
+                          (BuildContext context, StateSetter setDialogState) {
+                            return Dialog(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16.0),
+                              ),
+                              child: AddEventoModalPage(
+                                competizione: competizione,
+                                partita: partita!,
+                                dialogState: setDialogState,
+                                campionato: widget.campionato,
+                              ),
+                            );
+                          },
+                    );
+                  },
+                );
 
-                  // Se l'evento è stato salvato con successo, aggiorna la pagina
-                  if (result != null) {
-                    // Aggiungi il nuovo evento al tabellino locale
-                    setState(() {
-                      partita!.tabellino.add(result);
-                      fetchPartita().then((fetchedPartita) {
-                        setState(() {
-                          partita = fetchedPartita;
-                        });
+                // Se l'evento è stato salvato con successo, aggiorna la pagina
+                if (result != null) {
+                  // Aggiungi il nuovo evento al tabellino locale
+                  setState(() {
+                    partita!.tabellino.add(result);
+                    fetchPartita().then((fetchedPartita) {
+                      setState(() {
+                        partita = fetchedPartita;
                       });
                     });
-                  }
+                  });
+                }
 
-                  print('Admin button pressed - Tabellino');
-                },
-                backgroundColor: Color(
-                  competizione!.colori.isNotEmpty
-                      ? int.parse(
-                          competizione!.colori[0].replaceFirst('#', 'FF'),
-                          radix: 16,
-                        )
-                      : 0xFF007AFF,
-                ),
-                child: Icon(Icons.add, color: Colors.white),
+                print('Admin button pressed - Tabellino');
+              },
+              backgroundColor: Color(
+                competizione!.colori.isNotEmpty
+                    ? int.parse(
+                        competizione!.colori[0].replaceFirst('#', 'FF'),
+                        radix: 16,
+                      )
+                    : 0xFF007AFF,
               ),
+              child: Icon(Icons.add, color: Colors.white),
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 
@@ -3001,6 +3010,505 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             },
           ),
         ],
+      ),
+    );
+  }
+
+  Widget buildEventiPartitaWide() {
+    if (partita == null) return SizedBox.shrink();
+
+    // Filtra eventi rilevanti (gol, rigori, punizioni, espulsioni, gol annullati) - escludi rigori finali (minuto 121)
+    final eventiCasa = partita!.tabellino.where((e) {
+      if (e.minuto == 121) return false; // Ignora rigori finali
+
+      // Rigori: includi sia segnati che sbagliati (ma solo fino al 120')
+      if ((e.codAzione == 'rig' || e.codAzione == 'rig_sb') &&
+          e.idTeam == partita!.idTeamHome) {
+        return true;
+      }
+
+      // Altri eventi
+      return (e.codAzione == 'gol' ||
+              e.codAzione == 'gol_ann' ||
+              e.codAzione == 'pun' ||
+              e.codAzione == 'esp' ||
+              e.codAzione == 'e2g') &&
+          e.idTeam == partita!.idTeamHome;
+    }).toList();
+
+    // Autogol da mostrare in casa: autogol dove beneficia casa (commessi dalla trasferta)
+    final autogolCasa = partita!.tabellino.where((e) {
+      return e.codAzione == 'aut' && e.idTeam == partita!.idTeamHome;
+    }).toList();
+
+    final eventiTrasferta = partita!.tabellino.where((e) {
+      if (e.minuto == 121) return false; // Ignora rigori finali
+
+      // Rigori: includi sia segnati che sbagliati (ma solo fino al 120')
+      if ((e.codAzione == 'rig' || e.codAzione == 'rig_sb') &&
+          e.idTeam == partita!.idTeamAway) {
+        return true;
+      }
+
+      // Altri eventi
+      return (e.codAzione == 'gol' ||
+              e.codAzione == 'gol_ann' ||
+              e.codAzione == 'pun' ||
+              e.codAzione == 'esp' ||
+              e.codAzione == 'e2g') &&
+          e.idTeam == partita!.idTeamAway;
+    }).toList();
+
+    // Autogol da mostrare in trasferta: autogol dove beneficia trasferta (commessi dalla casa)
+    final autogolTrasferta = partita!.tabellino.where((e) {
+      return e.codAzione == 'aut' && e.idTeam == partita!.idTeamAway;
+    }).toList();
+
+    final tuttiEventiCasa = [...eventiCasa, ...autogolCasa]
+      ..sort((a, b) => a.minuto.compareTo(b.minuto));
+
+    final tuttiEventiTrasferta = [...eventiTrasferta, ...autogolTrasferta]
+      ..sort((a, b) => a.minuto.compareTo(b.minuto));
+
+    // Colore della competizione con trasparenza
+    final Color competizioneColor = Color(
+      competizione!.colori.isNotEmpty
+          ? int.parse(
+              competizione!.colori[0].replaceFirst('#', 'FF'),
+              radix: 16,
+            )
+          : 0xFF000000,
+    ).withOpacity(0.1);
+
+    final Color competizioneBorderColor = Color(
+      competizione!.colori.isNotEmpty
+          ? int.parse(
+              competizione!.colori[0].replaceFirst('#', 'FF'),
+              radix: 16,
+            )
+          : 0xFF000000,
+    ).withOpacity(0.3);
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: competizioneColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: competizioneBorderColor, width: 2),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Colonna squadra di casa
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: tuttiEventiCasa.isEmpty
+                  ? [
+                      Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(8),
+                          child: Text(
+                            '-',
+                            style: TextStyle(color: Colors.grey, fontSize: 16),
+                          ),
+                        ),
+                      ),
+                    ]
+                  : tuttiEventiCasa.map((evento) {
+                      // Per gli autogol: cercare il giocatore nella formazione OPPOSTA
+                      final formazioneCorretta = evento.codAzione == 'aut'
+                          ? partita!
+                                .formazioneAway // Autogol in casa = giocatore trasferta
+                          : partita!.formazioneHome;
+                      return _buildEventoRow(evento, true, formazioneCorretta);
+                    }).toList(),
+            ),
+          ),
+          // Divisore
+          Container(
+            width: 2,
+            height: 100,
+            color: competizioneBorderColor,
+            margin: EdgeInsets.symmetric(horizontal: 16),
+          ),
+          // Colonna squadra trasferta
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: tuttiEventiTrasferta.isEmpty
+                  ? [
+                      Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(8),
+                          child: Text(
+                            '-',
+                            style: TextStyle(color: Colors.grey, fontSize: 16),
+                          ),
+                        ),
+                      ),
+                    ]
+                  : tuttiEventiTrasferta.map((evento) {
+                      // Per gli autogol: cercare il giocatore nella formazione OPPOSTA
+                      final formazioneCorretta = evento.codAzione == 'aut'
+                          ? partita!
+                                .formazioneHome // Autogol in trasferta = giocatore casa
+                          : partita!.formazioneAway;
+                      return _buildEventoRow(evento, false, formazioneCorretta);
+                    }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildEventiPartitaMobile() {
+    if (partita == null) return SizedBox.shrink();
+
+    // Filtra eventi rilevanti (gol, rigori, punizioni, espulsioni, gol annullati) - escludi rigori finali (minuto 121)
+    final eventiCasa = partita!.tabellino.where((e) {
+      if (e.minuto == 121) return false; // Ignora rigori finali
+
+      // Rigori: includi sia segnati che sbagliati (ma solo fino al 120')
+      if ((e.codAzione == 'rig' || e.codAzione == 'rig_sb') &&
+          e.idTeam == partita!.idTeamHome) {
+        return true;
+      }
+
+      // Altri eventi
+      return (e.codAzione == 'gol' ||
+              e.codAzione == 'gol_ann' ||
+              e.codAzione == 'pun' ||
+              e.codAzione == 'esp') &&
+          e.idTeam == partita!.idTeamHome;
+    }).toList();
+
+    // Autogol da mostrare in casa: autogol dove beneficia away (commessi dalla casa, mostrati in trasferta)
+    final autogolCasa = partita!.tabellino.where((e) {
+      return e.codAzione == 'aut' && e.idTeam == partita!.idTeamHome;
+    }).toList();
+
+    final eventiTrasferta = partita!.tabellino.where((e) {
+      if (e.minuto == 121) return false; // Ignoraригori finali
+
+      // Rigori: includi sia segnati che sbagliati (ma solo fino al 120')
+      if ((e.codAzione == 'rig' || e.codAzione == 'rig_sb') &&
+          e.idTeam == partita!.idTeamAway) {
+        return true;
+      }
+
+      // Altri eventi
+      return (e.codAzione == 'gol' ||
+              e.codAzione == 'gol_ann' ||
+              e.codAzione == 'pun' ||
+              e.codAzione == 'esp') &&
+          e.idTeam == partita!.idTeamAway;
+    }).toList();
+
+    // Autogol da mostrare in trasferta: autogol dove beneficia casa (commessi dalla trasferta, mostrati in casa)
+    final autogolTrasferta = partita!.tabellino.where((e) {
+      return e.codAzione == 'aut' && e.idTeam == partita!.idTeamAway;
+    }).toList();
+
+    final tuttiEventiCasa = [...eventiCasa, ...autogolCasa]
+      ..sort((a, b) => a.minuto.compareTo(b.minuto));
+
+    final tuttiEventiTrasferta = [...eventiTrasferta, ...autogolTrasferta]
+      ..sort((a, b) => a.minuto.compareTo(b.minuto));
+
+    // Se non ci sono eventi, non mostrare nulla
+    if (tuttiEventiCasa.isEmpty && tuttiEventiTrasferta.isEmpty) {
+      return SizedBox.shrink();
+    }
+
+    // Colore della competizione
+    final Color competizioneColor = Color(
+      competizione!.colori.isNotEmpty
+          ? int.parse(
+              competizione!.colori[0].replaceFirst('#', 'FF'),
+              radix: 16,
+            )
+          : 0xFF000000,
+    );
+
+    return ExpansionTile(
+      tilePadding: EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+      title: Text(
+        'Eventi Partita',
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: competizioneColor,
+          fontFamily: competizione?.id == 5
+              ? 'champions'
+              : competizione?.id == 6 || competizione?.id == 7
+              ? 'europa'
+              : competizione?.id == 8
+              ? 'supercup'
+              : null,
+        ),
+      ),
+      iconColor: competizioneColor,
+      collapsedIconColor: competizioneColor,
+      children: [
+        Container(
+          margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: competizioneColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: competizioneColor.withOpacity(0.3),
+              width: 2,
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Colonna squadra di casa
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: tuttiEventiCasa.isEmpty
+                      ? [
+                          Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(8),
+                              child: Text(
+                                '-',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ]
+                      : tuttiEventiCasa.map((evento) {
+                          // Per gli autogol: cercare il giocatore nella formazione OPPOSTA
+                          final formazioneCorretta = evento.codAzione == 'aut'
+                              ? partita!
+                                    .formazioneAway // Autogol in casa = giocatore trasferta
+                              : partita!.formazioneHome;
+                          return _buildEventoRow(
+                            evento,
+                            true,
+                            formazioneCorretta,
+                          );
+                        }).toList(),
+                ),
+              ),
+              // Divisore
+              Container(
+                width: 2,
+                height: 100,
+                color: competizioneColor.withOpacity(0.3),
+                margin: EdgeInsets.symmetric(horizontal: 16),
+              ),
+              // Colonna squadra trasferta
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: tuttiEventiTrasferta.isEmpty
+                      ? [
+                          Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(8),
+                              child: Text(
+                                '-',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ]
+                      : tuttiEventiTrasferta.map((evento) {
+                          // Per gli autogol: cercare il giocatore nella formazione OPPOSTA
+                          final formazioneCorretta = evento.codAzione == 'aut'
+                              ? partita!
+                                    .formazioneHome // Autogol in trasferta = giocatore casa
+                              : partita!.formazioneAway;
+                          return _buildEventoRow(
+                            evento,
+                            false,
+                            formazioneCorretta,
+                          );
+                        }).toList(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEventoRow(dynamic evento, bool isCasa, Formazione formazione) {
+    IconData icon = Icons.sports_soccer;
+    Color iconColor;
+    String iconPath = '';
+
+    // Determina icona e colore in base al tipo di evento
+    if (evento.codAzione == 'gol' || evento.codAzione == 'pun') {
+      iconPath = 'assets/icon/gol.png';
+      iconColor = Colors.green;
+    } else if (evento.codAzione == 'gol_ann') {
+      // Gol annullato - icona gol ma colore grigio/rosso
+      iconPath = 'assets/icon/gol_ann.png';
+      iconColor = Colors.grey;
+    } else if (evento.codAzione == 'rig') {
+      // Rigori: distingui tra segnati e sbagliati
+      if (evento.esitoRigore == true) {
+        iconPath = 'assets/icon/gol.png';
+        iconColor = Colors.green;
+      } else {
+        iconPath = 'assets/icon/gol.png';
+        iconColor = Colors.red; // Rigore sbagliato in rosso
+      }
+    } else if (evento.codAzione == 'aut') {
+      iconPath = 'assets/icon/aut.png';
+      iconColor = Colors.red;
+    } else if (evento.codAzione == 'esp' || evento.codAzione == 'e2g') {
+      iconPath = 'assets/icon/red_card.png';
+      iconColor = Colors.red;
+    } else if (evento.codAzione == 'rig_sb') {
+      iconPath = 'assets/icon/rig_sb.png';
+      iconColor = Colors.red;
+    } else {
+      icon = Icons.sports_soccer;
+      iconColor = Colors.blue;
+    }
+
+    // Ottieni il nome del giocatore dalla formazione
+    String nomeGiocatore = setNomeTabellino(evento.idGiocatore, formazione);
+    if (nomeGiocatore.isEmpty) {
+      nomeGiocatore = 'Sconosciuto';
+    } else {
+      nomeGiocatore = CommonService.decodePlayerName(nomeGiocatore);
+    }
+
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: isCasa
+            ? [
+                // Casa: nome (espanso), minuto, icona
+                Expanded(
+                  child: Text(
+                    nomeGiocatore,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color:
+                          evento.codAzione == 'aut' ||
+                              evento.codAzione == 'gol_ann' ||
+                              evento.codAzione == 'rig_sb'
+                          ? Colors.red
+                          : Colors.black,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
+                  ),
+                ),
+                SizedBox(width: 8),
+                SizedBox(
+                  width: 24,
+                  child: iconPath.isNotEmpty
+                      ? Image.asset(
+                          iconPath,
+                          width: 20,
+                          height: 20,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Icon(
+                              Icons.sports_soccer,
+                              size: 20,
+                              color: iconColor,
+                            );
+                          },
+                        )
+                      : Icon(icon, size: 20, color: iconColor),
+                ),
+                SizedBox(width: 8),
+                SizedBox(
+                  width: 40,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      "${evento.minuto}'",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ]
+            : [
+                // Trasferta: minuto, icona, nome (espanso)
+                SizedBox(
+                  width: 40,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      "${evento.minuto}'",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 8),
+                SizedBox(
+                  width: 24,
+                  child: iconPath.isNotEmpty
+                      ? Image.asset(
+                          iconPath,
+                          width: 20,
+                          height: 20,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Icon(
+                              Icons.sports_soccer,
+                              size: 20,
+                              color: iconColor,
+                            );
+                          },
+                        )
+                      : Icon(icon, size: 20, color: iconColor),
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    nomeGiocatore,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color:
+                          evento.codAzione == 'aut' ||
+                              evento.codAzione == 'gol_ann' ||
+                              evento.codAzione == 'rig_sb'
+                          ? Colors.red
+                          : Colors.black,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.left,
+                  ),
+                ),
+              ],
       ),
     );
   }
@@ -4931,12 +5439,6 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   }
 
   Future<Widget> buildIndisponibili(int team) async {
-    final provider = Provider.of<SquadreProvider>(context, listen: false);
-    var squadra = await getSquadra(
-      provider,
-      team == 0 ? partita!.idTeamHome : partita!.idTeamAway,
-    );
-
     final indisponibili = team == 0
         ? partita!.formazioneHome.indisponibili
         : partita!.formazioneAway.indisponibili;
