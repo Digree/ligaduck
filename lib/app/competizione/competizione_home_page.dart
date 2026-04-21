@@ -2625,7 +2625,18 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       future: _giornateFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return Center(
+            child: CircularProgressIndicator(
+              color: Color(
+                widget.competizione.colori.isNotEmpty
+                    ? int.parse(
+                        widget.competizione.colori[0].replaceFirst('#', 'FF'),
+                        radix: 16,
+                      )
+                    : 0xFF007AFF,
+              ),
+            ),
+          );
         } else if (snapshot.hasError) {
           return Center(child: Text('Errore nel caricamento delle giornate'));
         } else if (snapshot.hasData) {
@@ -2748,7 +2759,18 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       future: _partiteCache[cacheKey]!,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return Center(
+            child: CircularProgressIndicator(
+              color: Color(
+                widget.competizione.colori.isNotEmpty
+                    ? int.parse(
+                        widget.competizione.colori[0].replaceFirst('#', 'FF'),
+                        radix: 16,
+                      )
+                    : 0xFF007AFF,
+              ),
+            ),
+          );
         } else if (snapshot.hasError) {
           return Center(child: Text('Errore nel caricamento delle partite'));
         } else if (snapshot.hasData) {
@@ -3304,7 +3326,18 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       future: _squadreCompetizioneFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return Center(
+            child: CircularProgressIndicator(
+              color: Color(
+                widget.competizione.colori.isNotEmpty
+                    ? int.parse(
+                        widget.competizione.colori[0].replaceFirst('#', 'FF'),
+                        radix: 16,
+                      )
+                    : 0xFF007AFF,
+              ),
+            ),
+          );
         }
 
         if (snapshot.hasError) {
@@ -3461,7 +3494,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
               padding: EdgeInsets.only(left: 2),
               child: Text(
                 'Pti',
-                style: TextStyle(fontSize: 12, color: Colors.white),
+                style: TextStyle(fontSize: 10, color: Colors.white),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -3472,7 +3505,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
               padding: EdgeInsets.only(left: 2),
               child: Text(
                 'PG',
-                style: TextStyle(fontSize: 12, color: Colors.white),
+                style: TextStyle(fontSize: 10, color: Colors.white),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -3483,7 +3516,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
               padding: EdgeInsets.only(left: 2),
               child: Text(
                 'V',
-                style: TextStyle(fontSize: 12, color: Colors.white),
+                style: TextStyle(fontSize: 10, color: Colors.white),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -3494,7 +3527,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
               padding: EdgeInsets.only(left: 2),
               child: Text(
                 'P',
-                style: TextStyle(fontSize: 12, color: Colors.white),
+                style: TextStyle(fontSize: 10, color: Colors.white),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -3505,7 +3538,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
               padding: EdgeInsets.only(left: 2),
               child: Text(
                 'S',
-                style: TextStyle(fontSize: 12, color: Colors.white),
+                style: TextStyle(fontSize: 10, color: Colors.white),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -3516,7 +3549,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
               padding: EdgeInsets.only(left: 2),
               child: Text(
                 'GF',
-                style: TextStyle(fontSize: 12, color: Colors.white),
+                style: TextStyle(fontSize: 10, color: Colors.white),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -3527,7 +3560,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
               padding: EdgeInsets.only(left: 2),
               child: Text(
                 'GS',
-                style: TextStyle(fontSize: 12, color: Colors.white),
+                style: TextStyle(fontSize: 10, color: Colors.white),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -3538,7 +3571,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
               padding: EdgeInsets.only(left: 2),
               child: Text(
                 'DR',
-                style: TextStyle(fontSize: 12, color: Colors.white),
+                style: TextStyle(fontSize: 10, color: Colors.white),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -3698,7 +3731,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                     '${posizione.punti}',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 20,
+                      fontSize: 18,
                       color: Colors.white,
                     ),
                     textAlign: TextAlign.center,
@@ -3711,7 +3744,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                   padding: EdgeInsets.only(left: 2),
                   child: Text(
                     '${posizione.partiteGiocate}',
-                    style: TextStyle(fontSize: 12, color: Colors.white),
+                    style: TextStyle(fontSize: 10, color: Colors.white),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -3722,7 +3755,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                   padding: EdgeInsets.only(left: 2),
                   child: Text(
                     '${posizione.win}',
-                    style: TextStyle(fontSize: 12, color: Colors.white),
+                    style: TextStyle(fontSize: 10, color: Colors.white),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -3733,7 +3766,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                   padding: EdgeInsets.only(left: 2),
                   child: Text(
                     '${posizione.draw}',
-                    style: TextStyle(fontSize: 12, color: Colors.white),
+                    style: TextStyle(fontSize: 10, color: Colors.white),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -3744,7 +3777,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                   padding: EdgeInsets.only(left: 2),
                   child: Text(
                     '${posizione.loss}',
-                    style: TextStyle(fontSize: 12, color: Colors.white),
+                    style: TextStyle(fontSize: 10, color: Colors.white),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -3755,7 +3788,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                   padding: EdgeInsets.only(left: 2),
                   child: Text(
                     '${posizione.gFatti}',
-                    style: TextStyle(fontSize: 12, color: Colors.white),
+                    style: TextStyle(fontSize: 10, color: Colors.white),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -3766,7 +3799,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                   padding: EdgeInsets.only(left: 2),
                   child: Text(
                     '${posizione.gSubiti}',
-                    style: TextStyle(fontSize: 12, color: Colors.white),
+                    style: TextStyle(fontSize: 10, color: Colors.white),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -3777,7 +3810,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                   padding: EdgeInsets.only(left: 2),
                   child: Text(
                     '${posizione.diff}',
-                    style: TextStyle(fontSize: 12, color: Colors.white),
+                    style: TextStyle(fontSize: 10, color: Colors.white),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -5099,7 +5132,19 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
               child: AlertDialog(
                 content: Row(
                   children: [
-                    CircularProgressIndicator(),
+                    CircularProgressIndicator(
+                      color: Color(
+                        widget.competizione.colori.isNotEmpty
+                            ? int.parse(
+                                widget.competizione.colori[0].replaceFirst(
+                                  '#',
+                                  'FF',
+                                ),
+                                radix: 16,
+                              )
+                            : 0xFF007AFF,
+                      ),
+                    ),
                     SizedBox(width: 20),
                     Expanded(
                       child: Text(

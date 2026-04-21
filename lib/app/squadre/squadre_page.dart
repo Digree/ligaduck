@@ -1259,7 +1259,9 @@ class _SquadrePageState extends State<SquadrePage> {
       ),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return Center(
+            child: CircularProgressIndicator(color: getColor('primary')),
+          );
         }
 
         if (snapshot.hasError) {
@@ -1287,6 +1289,7 @@ class _SquadrePageState extends State<SquadrePage> {
                   bottom: 16,
                   right: 16,
                   child: FloatingActionButton(
+                    heroTag: 'mercato_fab_empty_$sessione',
                     onPressed: () {
                       _mostraDialogSceltaMercato(sessione);
                     },
@@ -1403,6 +1406,7 @@ class _SquadrePageState extends State<SquadrePage> {
                   bottom: 16,
                   right: 16,
                   child: FloatingActionButton(
+                    heroTag: 'mercato_fab_wide_$sessione',
                     onPressed: () {
                       _mostraDialogSceltaMercato(sessione);
                     },
@@ -1433,6 +1437,7 @@ class _SquadrePageState extends State<SquadrePage> {
                 bottom: 16,
                 right: 16,
                 child: FloatingActionButton(
+                  heroTag: 'mercato_fab_mobile_$sessione',
                   onPressed: () {
                     _mostraDialogSceltaMercato(sessione);
                   },

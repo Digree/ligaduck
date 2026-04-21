@@ -170,8 +170,16 @@ class _GolAnnullatiPageState extends State<GolAnnullatiPage> {
                         const SizedBox(height: 8),
                         Text(
                           'Gol Annullati',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
+                            fontFamily: widget.competizione.id == 5
+                                ? 'champions'
+                                : widget.competizione.id == 6 ||
+                                      widget.competizione.id == 7
+                                ? 'europa'
+                                : widget.competizione.id == 8
+                                ? 'supercup'
+                                : null,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
@@ -195,7 +203,18 @@ class _GolAnnullatiPageState extends State<GolAnnullatiPage> {
               children: [
                 Text(
                   'Ordina per:',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: widget.competizione.id == 5
+                        ? 'champions'
+                        : widget.competizione.id == 6 ||
+                              widget.competizione.id == 7
+                        ? 'europa'
+                        : widget.competizione.id == 8
+                        ? 'supercup'
+                        : null,
+                  ),
                 ),
                 SizedBox(width: 8),
                 DropdownButton<String>(
@@ -410,6 +429,14 @@ class _GolAnnullatiPageState extends State<GolAnnullatiPage> {
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w500,
+                                      fontFamily: widget.competizione.id == 5
+                                          ? 'champions'
+                                          : widget.competizione.id == 6 ||
+                                                widget.competizione.id == 7
+                                          ? 'europa'
+                                          : widget.competizione.id == 8
+                                          ? 'supercup'
+                                          : null,
                                     ),
                                     textAlign: TextAlign.left,
                                   ),
@@ -424,6 +451,14 @@ class _GolAnnullatiPageState extends State<GolAnnullatiPage> {
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
+                                fontFamily: widget.competizione.id == 5
+                                    ? 'champions'
+                                    : widget.competizione.id == 6 ||
+                                          widget.competizione.id == 7
+                                    ? 'europa'
+                                    : widget.competizione.id == 8
+                                    ? 'supercup'
+                                    : null,
                               ),
                               textAlign: TextAlign.right,
                             ),

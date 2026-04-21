@@ -71,7 +71,7 @@ Widget buildCompetizioneButton(
                   model.text,
                   style: TextStyle(
                     color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                    //fontWeight: FontWeight.bold,
                     shadows: [
                       Shadow(
                         offset: Offset(1, 1),

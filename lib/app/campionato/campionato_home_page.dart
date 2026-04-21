@@ -285,7 +285,9 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                                 if (snapshot.connectionState ==
                                     ConnectionState.waiting) {
                                   return Center(
-                                    child: CircularProgressIndicator(),
+                                    child: CircularProgressIndicator(
+                                      color: Colors.blueAccent,
+                                    ),
                                   );
                                 }
 
@@ -537,7 +539,9 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
               future: Future.wait([_partiteFuture, _competizioniFuture]),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
+                  return Center(
+                    child: CircularProgressIndicator(color: Colors.blueAccent),
+                  );
                 } else if (snapshot.hasError) {
                   return Center(child: Text('Errore: ${snapshot.error}'));
                 } else {
@@ -935,7 +939,9 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
       future: _squadreFuture,
       builder: (context, squadreSnapshot) {
         if (squadreSnapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return Center(
+            child: CircularProgressIndicator(color: Colors.blueAccent),
+          );
         }
 
         if (squadreSnapshot.hasError) {
@@ -958,7 +964,9 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
           builder: (context, trasferimentiSnapshot) {
             if (trasferimentiSnapshot.connectionState ==
                 ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
+              return Center(
+                child: CircularProgressIndicator(color: Colors.blueAccent),
+              );
             }
 
             if (trasferimentiSnapshot.hasError) {
@@ -1244,7 +1252,9 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
       future: competizioniProvider.fetchVincitori(widget.campionato),
       builder: (context, vincitoriSnapshot) {
         if (vincitoriSnapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return Center(
+            child: CircularProgressIndicator(color: Colors.blueAccent),
+          );
         }
 
         final vincitori = vincitoriSnapshot.data ?? [];
@@ -1254,7 +1264,9 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
           builder: (context, competizioniSnapshot) {
             if (competizioniSnapshot.connectionState ==
                 ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
+              return Center(
+                child: CircularProgressIndicator(color: Colors.blueAccent),
+              );
             }
 
             if (competizioniSnapshot.hasError) {

@@ -1027,7 +1027,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
                     Center(
                       child: Column(
                         children: [
-                          CircularProgressIndicator(),
+                          CircularProgressIndicator(color: Colors.blueAccent),
                           SizedBox(height: 16),
                           Text(
                             'Salvataggio in corso...',

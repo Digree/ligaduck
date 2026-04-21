@@ -170,10 +170,18 @@ class _MarcatoriPageState extends State<MarcatoriPage> {
                         const SizedBox(height: 8),
                         Text(
                           'Classifica Marcatori',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
+                            fontFamily: widget.competizione.id == 5
+                                ? 'champions'
+                                : widget.competizione.id == 6 ||
+                                      widget.competizione.id == 7
+                                ? 'europa'
+                                : widget.competizione.id == 8
+                                ? 'supercup'
+                                : null,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -196,7 +204,18 @@ class _MarcatoriPageState extends State<MarcatoriPage> {
               children: [
                 Text(
                   'Ordina per:',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: widget.competizione.id == 5
+                        ? 'champions'
+                        : widget.competizione.id == 6 ||
+                              widget.competizione.id == 7
+                        ? 'europa'
+                        : widget.competizione.id == 8
+                        ? 'supercup'
+                        : null,
+                  ),
                 ),
                 SizedBox(width: 8),
                 DropdownButton<String>(
@@ -241,9 +260,9 @@ class _MarcatoriPageState extends State<MarcatoriPage> {
                         ),
                       ),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Expanded(
+                          SizedBox(
+                            width: 70,
                             child: Row(
                               children: [
                                 if (snapshot.hasData)
@@ -402,53 +421,88 @@ class _MarcatoriPageState extends State<MarcatoriPage> {
                                       ),
                                     ),
                                   ),
-                                // Nome del marcatore
-                                Expanded(
-                                  child: Text(
-                                    CommonService.decodePlayerName(
-                                      marcatore.nome,
-                                    ),
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    textAlign: TextAlign.left,
-                                  ),
-                                ),
                               ],
                             ),
                           ),
-                          Padding(
-                            padding: EdgeInsets.only(right: 32),
+                          Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.only(left: 8),
+                              child: Text(
+                                CommonService.decodePlayerName(marcatore.nome),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  fontFamily: widget.competizione.id == 5
+                                      ? 'champions'
+                                      : widget.competizione.id == 6 ||
+                                            widget.competizione.id == 7
+                                      ? 'europa'
+                                      : widget.competizione.id == 8
+                                      ? 'supercup'
+                                      : null,
+                                ),
+                                textAlign: TextAlign.left,
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 50,
                             child: Text(
                               '${marcatore.quantita}',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
+                                fontFamily: widget.competizione.id == 5
+                                    ? 'champions'
+                                    : widget.competizione.id == 6 ||
+                                          widget.competizione.id == 7
+                                    ? 'europa'
+                                    : widget.competizione.id == 8
+                                    ? 'supercup'
+                                    : null,
                               ),
-                              textAlign: TextAlign.right,
+                              textAlign: TextAlign.center,
                             ),
                           ),
-                          Padding(
-                            padding: EdgeInsets.only(right: 32),
+                          SizedBox(
+                            width: 50,
                             child: Text(
                               '${marcatore.rig}',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
+                                fontFamily: widget.competizione.id == 5
+                                    ? 'champions'
+                                    : widget.competizione.id == 6 ||
+                                          widget.competizione.id == 7
+                                    ? 'europa'
+                                    : widget.competizione.id == 8
+                                    ? 'supercup'
+                                    : null,
                               ),
-                              textAlign: TextAlign.right,
+                              textAlign: TextAlign.center,
                             ),
                           ),
-                          Padding(
-                            padding: EdgeInsets.only(right: 32),
-                            child: Text(
-                              '${marcatore.pun}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                          SizedBox(
+                            width: 50,
+                            child: Padding(
+                              padding: EdgeInsets.only(right: 16),
+                              child: Text(
+                                '${marcatore.pun}',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: widget.competizione.id == 5
+                                      ? 'champions'
+                                      : widget.competizione.id == 6 ||
+                                            widget.competizione.id == 7
+                                      ? 'europa'
+                                      : widget.competizione.id == 8
+                                      ? 'supercup'
+                                      : null,
+                                ),
+                                textAlign: TextAlign.center,
                               ),
-                              textAlign: TextAlign.right,
                             ),
                           ),
                         ],
@@ -486,11 +540,25 @@ class _MarcatoriPageState extends State<MarcatoriPage> {
       ),
       child: Row(
         children: [
-          Padding(
-            padding: EdgeInsets.only(left: 16),
-            child: Text(
-              'Squadra',
-              style: TextStyle(fontSize: 12, color: Colors.white),
+          SizedBox(
+            width: 70,
+            child: Padding(
+              padding: EdgeInsets.only(left: 16),
+              child: Text(
+                'Squadra',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.white,
+                  fontFamily: widget.competizione.id == 5
+                      ? 'champions'
+                      : widget.competizione.id == 6 ||
+                            widget.competizione.id == 7
+                      ? 'europa'
+                      : widget.competizione.id == 8
+                      ? 'supercup'
+                      : null,
+                ),
+              ),
             ),
           ),
           Expanded(
@@ -498,32 +566,77 @@ class _MarcatoriPageState extends State<MarcatoriPage> {
               padding: EdgeInsets.only(left: 8),
               child: Text(
                 'Giocatore',
-                style: TextStyle(fontSize: 12, color: Colors.white),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.white,
+                  fontFamily: widget.competizione.id == 5
+                      ? 'champions'
+                      : widget.competizione.id == 6 ||
+                            widget.competizione.id == 7
+                      ? 'europa'
+                      : widget.competizione.id == 8
+                      ? 'supercup'
+                      : null,
+                ),
               ),
             ),
           ),
-          Padding(
-            padding: EdgeInsets.only(right: 26),
+          SizedBox(
+            width: 50,
             child: Text(
               'Gol',
-              style: TextStyle(fontSize: 12, color: Colors.white),
-              textAlign: TextAlign.right,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.white,
+                fontFamily: widget.competizione.id == 5
+                    ? 'champions'
+                    : widget.competizione.id == 6 || widget.competizione.id == 7
+                    ? 'europa'
+                    : widget.competizione.id == 8
+                    ? 'supercup'
+                    : null,
+              ),
+              textAlign: TextAlign.center,
             ),
           ),
-          Padding(
-            padding: EdgeInsets.only(right: 26),
+          SizedBox(
+            width: 50,
             child: Text(
               'Rig',
-              style: TextStyle(fontSize: 12, color: Colors.white),
-              textAlign: TextAlign.right,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.white,
+                fontFamily: widget.competizione.id == 5
+                    ? 'champions'
+                    : widget.competizione.id == 6 || widget.competizione.id == 7
+                    ? 'europa'
+                    : widget.competizione.id == 8
+                    ? 'supercup'
+                    : null,
+              ),
+              textAlign: TextAlign.center,
             ),
           ),
-          Padding(
-            padding: EdgeInsets.only(right: 28),
-            child: Text(
-              'Pun',
-              style: TextStyle(fontSize: 12, color: Colors.white),
-              textAlign: TextAlign.right,
+          SizedBox(
+            width: 50,
+            child: Padding(
+              padding: EdgeInsets.only(right: 16),
+              child: Text(
+                'Pun',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.white,
+                  fontFamily: widget.competizione.id == 5
+                      ? 'champions'
+                      : widget.competizione.id == 6 ||
+                            widget.competizione.id == 7
+                      ? 'europa'
+                      : widget.competizione.id == 8
+                      ? 'supercup'
+                      : null,
+                ),
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
         ],

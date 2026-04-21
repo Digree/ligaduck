@@ -5,6 +5,7 @@ import 'package:ligaduck/app/config/models/service/config_provider.dart';
 import 'package:ligaduck/app/models/campionato/campionato_button_model.dart';
 import 'package:provider/provider.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -15,6 +16,31 @@ class HomePage extends StatefulWidget {
 
 class _HomePage extends State<HomePage> {
   bool isAdmin = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreferences();
+  }
+
+  Future<void> _loadPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      globals.admin = prefs.getBool('admin') ?? false;
+      globals.mostraColori = prefs.getBool('mostraColori') ?? true;
+    });
+  }
+
+  Future<void> _savePreferences({bool? admin, bool? mostraColori}) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (admin != null) {
+      await prefs.setBool('admin', admin);
+    }
+    if (mostraColori != null) {
+      await prefs.setBool('mostraColori', mostraColori);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -30,6 +56,7 @@ class _HomePage extends State<HomePage> {
                 context: context,
                 builder: (BuildContext context) {
                   bool isAdmin = globals.admin;
+                  bool isMostraColori = globals.mostraColori;
                   return StatefulBuilder(
                     builder: (context, setModalState) {
                       return Container(
@@ -61,13 +88,43 @@ class _HomePage extends State<HomePage> {
                                         isAdmin = value;
                                         globals.admin = value;
                                       });
+                                      _savePreferences(admin: value);
                                     },
                                   ),
                                 ],
                               ),
                             ),
                             Padding(
-                              padding: EdgeInsets.only(top: 150.0),
+                              padding: EdgeInsets.only(top: 16),
+                              child: Row(
+                                children: [
+                                  Padding(
+                                    padding: EdgeInsets.only(left: 16.0),
+                                    child: Text(
+                                      'Mostra colori',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                  Spacer(),
+                                  Switch(
+                                    value: isMostraColori,
+                                    activeTrackColor: Colors.blueAccent,
+                                    onChanged: (value) {
+                                      setModalState(() {
+                                        isMostraColori = value;
+                                        globals.mostraColori = value;
+                                      });
+                                      _savePreferences(mostraColori: value);
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.only(top: 100.0),
                               child: ElevatedButton(
                                 onPressed: () {
                                   Navigator.pop(context);
@@ -93,7 +150,9 @@ class _HomePage extends State<HomePage> {
         future: configs(context),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return Center(
+              child: CircularProgressIndicator(color: Colors.blueAccent),
+            );
           } else if (snapshot.hasError) {
             return Center(child: Text('Errore nel caricamento dei dati'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {

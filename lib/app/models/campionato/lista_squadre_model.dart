@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:glassmorphism/glassmorphism.dart';
+import 'package:ligaduck/app/config/models/global.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/squadre/squadre_page.dart';
@@ -291,7 +292,9 @@ Widget showSquadre(ListaSquadreModel model, String categoria) {
     future: model.squadreFuture,
     builder: (context, snapshot) {
       if (snapshot.connectionState == ConnectionState.waiting) {
-        return Center(child: CircularProgressIndicator());
+        return Center(
+          child: CircularProgressIndicator(color: Colors.blueAccent),
+        );
       }
 
       if (snapshot.hasError) {
@@ -310,7 +313,9 @@ Widget showSquadre(ListaSquadreModel model, String categoria) {
           future: model.competizioniFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
+              return Center(
+                child: CircularProgressIndicator(color: Colors.blueAccent),
+              );
             }
 
             if (snapshot.hasError) {
@@ -355,24 +360,50 @@ Widget showSquadre(ListaSquadreModel model, String categoria) {
                           linearGradient: LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [
+                            /* colors: [
                               Colors.blueAccent.withOpacity(0.5),
                               Colors.blueAccent.withOpacity(0.1),
+                            ], */
+                            colors: [
+                              mostraColori
+                                  ? CommonService.getColor(
+                                      'primary',
+                                      squadra,
+                                    ).withOpacity(0.5)
+                                  : Colors.blueAccent.withOpacity(0.5),
+                              mostraColori
+                                  ? CommonService.getColor(
+                                      'secondary',
+                                      squadra,
+                                    ).withOpacity(0.1)
+                                  : Colors.blueAccent.withOpacity(0.1),
                             ],
                           ),
                           borderGradient: LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              Colors.white.withOpacity(0.1),
-                              Colors.white.withOpacity(0.2),
+                              mostraColori
+                                  ? CommonService.getColor(
+                                      'primary',
+                                      squadra,
+                                    ).withOpacity(0.5)
+                                  : Colors.white.withOpacity(0.1),
+                              mostraColori
+                                  ? CommonService.getColor(
+                                      'secondary',
+                                      squadra,
+                                    ).withOpacity(0.1)
+                                  : Colors.white.withOpacity(0.2),
                             ],
                           ),
                           child: Text(
                             CommonService.decodePlayerName(squadra.nome),
                             style: TextStyle(
-                              color: Colors.blue[900],
-                              fontWeight: FontWeight.bold,
+                              color: mostraColori
+                                  ? Colors.black
+                                  : Colors.blue[900],
+                              //fontWeight: FontWeight.bold,
                               fontSize: 16,
                             ),
                           ),

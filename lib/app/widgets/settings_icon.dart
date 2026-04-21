@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsIcon extends StatelessWidget {
   final Color iconColor;
@@ -25,11 +26,20 @@ class SettingsIcon extends StatelessWidget {
   }
 
   static Future<void> showSettingsModal(BuildContext context) async {
+    // Carica le preferenze prima di mostrare il modal
+    final prefs = await SharedPreferences.getInstance();
+
     await showModalBottomSheet(
       backgroundColor: Colors.blueAccent.withOpacity(0.8),
       context: context,
       builder: (BuildContext context) {
         bool isAdmin = globals.admin;
+        bool isMostraColori = globals.mostraColori;
+
+        Future<void> savePreference(String key, bool value) async {
+          await prefs.setBool(key, value);
+        }
+
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Container(
@@ -58,13 +68,40 @@ class SettingsIcon extends StatelessWidget {
                               isAdmin = value;
                               globals.admin = value;
                             });
+                            savePreference('admin', value);
                           },
                         ),
                       ],
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.only(top: 150.0),
+                    padding: EdgeInsets.only(top: 16),
+                    child: Row(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.only(left: 16.0),
+                          child: Text(
+                            'Mostra colori',
+                            style: TextStyle(fontSize: 16, color: Colors.white),
+                          ),
+                        ),
+                        Spacer(),
+                        Switch(
+                          value: isMostraColori,
+                          activeTrackColor: Colors.blueAccent,
+                          onChanged: (value) {
+                            setModalState(() {
+                              isMostraColori = value;
+                              globals.mostraColori = value;
+                            });
+                            savePreference('mostraColori', value);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(top: 100.0),
                     child: ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context);

@@ -285,6 +285,14 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                   decoration: InputDecoration(
                     labelText: 'Evento',
                     labelStyle: TextStyle(
+                      fontFamily: widget.competizione?.id == 5
+                          ? 'champions'
+                          : widget.competizione?.id == 6 ||
+                                widget.competizione?.id == 7
+                          ? 'europa'
+                          : widget.competizione?.id == 8
+                          ? 'supercup'
+                          : null,
                       color: Color(
                         widget.competizione!.colori.isNotEmpty
                             ? int.parse(
@@ -476,6 +484,14 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                   decoration: InputDecoration(
                     labelText: 'Minuto',
                     labelStyle: TextStyle(
+                      fontFamily: widget.competizione?.id == 5
+                          ? 'champions'
+                          : widget.competizione?.id == 6 ||
+                                widget.competizione?.id == 7
+                          ? 'europa'
+                          : widget.competizione?.id == 8
+                          ? 'supercup'
+                          : null,
                       color: Color(
                         widget.competizione!.colori.isNotEmpty
                             ? int.parse(
@@ -548,7 +564,17 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                   ],
                   decoration: InputDecoration(
                     labelText: 'Recupero',
-                    labelStyle: TextStyle(color: getColor()),
+                    labelStyle: TextStyle(
+                      color: getColor(),
+                      fontFamily: widget.competizione?.id == 5
+                          ? 'champions'
+                          : widget.competizione?.id == 6 ||
+                                widget.competizione?.id == 7
+                          ? 'europa'
+                          : widget.competizione?.id == 8
+                          ? 'supercup'
+                          : null,
+                    ),
                     prefixIcon: Icon(
                       Icons.add,
                       color: Color(
@@ -596,6 +622,14 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
               decoration: InputDecoration(
                 labelText: 'Seleziona Giocatore',
                 labelStyle: TextStyle(
+                  fontFamily: widget.competizione?.id == 5
+                      ? 'champions'
+                      : widget.competizione?.id == 6 ||
+                            widget.competizione?.id == 7
+                      ? 'europa'
+                      : widget.competizione?.id == 8
+                      ? 'supercup'
+                      : null,
                   color: Color(
                     widget.competizione!.colori.isNotEmpty
                         ? int.parse(
@@ -713,6 +747,14 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                   decoration: InputDecoration(
                     labelText: 'Minuto',
                     labelStyle: TextStyle(
+                      fontFamily: widget.competizione?.id == 5
+                          ? 'champions'
+                          : widget.competizione?.id == 6 ||
+                                widget.competizione?.id == 7
+                          ? 'europa'
+                          : widget.competizione?.id == 8
+                          ? 'supercup'
+                          : null,
                       color: Color(
                         widget.competizione!.colori.isNotEmpty
                             ? int.parse(
@@ -785,7 +827,17 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                   ],
                   decoration: InputDecoration(
                     labelText: 'Recupero',
-                    labelStyle: TextStyle(color: getColor()),
+                    labelStyle: TextStyle(
+                      color: getColor(),
+                      fontFamily: widget.competizione?.id == 5
+                          ? 'champions'
+                          : widget.competizione?.id == 6 ||
+                                widget.competizione?.id == 7
+                          ? 'europa'
+                          : widget.competizione?.id == 8
+                          ? 'supercup'
+                          : null,
+                    ),
                     prefixIcon: Icon(
                       Icons.add,
                       color: Color(
@@ -847,6 +899,14 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
               decoration: InputDecoration(
                 labelText: 'Seleziona Giocatore',
                 labelStyle: TextStyle(
+                  fontFamily: widget.competizione?.id == 5
+                      ? 'champions'
+                      : widget.competizione?.id == 6 ||
+                            widget.competizione?.id == 7
+                      ? 'europa'
+                      : widget.competizione?.id == 8
+                      ? 'supercup'
+                      : null,
                   color: Color(
                     widget.competizione!.colori.isNotEmpty
                         ? int.parse(
@@ -951,6 +1011,14 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
               decoration: InputDecoration(
                 labelText: 'Seleziona Giocatore',
                 labelStyle: TextStyle(
+                  fontFamily: widget.competizione?.id == 5
+                      ? 'champions'
+                      : widget.competizione?.id == 6 ||
+                            widget.competizione?.id == 7
+                      ? 'europa'
+                      : widget.competizione?.id == 8
+                      ? 'supercup'
+                      : null,
                   color: Color(
                     widget.competizione!.colori.isNotEmpty
                         ? int.parse(
@@ -1047,6 +1115,13 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
           Text(
             'Giornate di Squalifica',
             style: TextStyle(
+              fontFamily: widget.competizione?.id == 5
+                  ? 'champions'
+                  : widget.competizione?.id == 6 || widget.competizione?.id == 7
+                  ? 'europa'
+                  : widget.competizione?.id == 8
+                  ? 'supercup'
+                  : null,
               fontSize: 16,
               fontWeight: FontWeight.w500,
               color: getColor(),
@@ -1064,8 +1139,28 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
             ],
             decoration: InputDecoration(
               labelText: 'Numero giornate',
-              labelStyle: TextStyle(color: getColor()),
-              hintStyle: TextStyle(color: Colors.grey[500]),
+              labelStyle: TextStyle(
+                color: getColor(),
+                fontFamily: widget.competizione?.id == 5
+                    ? 'champions'
+                    : widget.competizione?.id == 6 ||
+                          widget.competizione?.id == 7
+                    ? 'europa'
+                    : widget.competizione?.id == 8
+                    ? 'supercup'
+                    : null,
+              ),
+              hintStyle: TextStyle(
+                color: Colors.grey[500],
+                fontFamily: widget.competizione?.id == 5
+                    ? 'champions'
+                    : widget.competizione?.id == 6 ||
+                          widget.competizione?.id == 7
+                    ? 'europa'
+                    : widget.competizione?.id == 8
+                    ? 'supercup'
+                    : null,
+              ),
               prefixIcon: Icon(Icons.event_busy, color: getColor()),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -1108,6 +1203,13 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
               fontSize: 16,
               fontWeight: FontWeight.w500,
               color: getColor(),
+              fontFamily: widget.competizione?.id == 5
+                  ? 'champions'
+                  : widget.competizione?.id == 6 || widget.competizione?.id == 7
+                  ? 'europa'
+                  : widget.competizione?.id == 8
+                  ? 'supercup'
+                  : null,
             ),
           ),
           SizedBox(height: 8),
@@ -1124,6 +1226,14 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                             ? Colors.white
                             : getColor(),
                         fontWeight: FontWeight.bold,
+                        fontFamily: widget.competizione?.id == 5
+                            ? 'champions'
+                            : widget.competizione?.id == 6 ||
+                                  widget.competizione?.id == 7
+                            ? 'europa'
+                            : widget.competizione?.id == 8
+                            ? 'supercup'
+                            : null,
                       ),
                     ),
                   ),
@@ -1155,6 +1265,14 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                             ? Colors.white
                             : getColor(),
                         fontWeight: FontWeight.bold,
+                        fontFamily: widget.competizione?.id == 5
+                            ? 'champions'
+                            : widget.competizione?.id == 6 ||
+                                  widget.competizione?.id == 7
+                            ? 'europa'
+                            : widget.competizione?.id == 8
+                            ? 'supercup'
+                            : null,
                       ),
                     ),
                   ),
@@ -1186,6 +1304,14 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                             ? Colors.white
                             : getColor(),
                         fontWeight: FontWeight.bold,
+                        fontFamily: widget.competizione?.id == 5
+                            ? 'champions'
+                            : widget.competizione?.id == 6 ||
+                                  widget.competizione?.id == 7
+                            ? 'europa'
+                            : widget.competizione?.id == 8
+                            ? 'supercup'
+                            : null,
                       ),
                     ),
                   ),
@@ -1231,6 +1357,13 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
               fontSize: 16,
               fontWeight: FontWeight.w500,
               color: getColor(),
+              fontFamily: widget.competizione?.id == 5
+                  ? 'champions'
+                  : widget.competizione?.id == 6 || widget.competizione?.id == 7
+                  ? 'europa'
+                  : widget.competizione?.id == 8
+                  ? 'supercup'
+                  : null,
             ),
           ),
           SizedBox(height: 8),
@@ -1247,6 +1380,14 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                             ? Colors.white
                             : getColor(),
                         fontWeight: FontWeight.bold,
+                        fontFamily: widget.competizione?.id == 5
+                            ? 'champions'
+                            : widget.competizione?.id == 6 ||
+                                  widget.competizione?.id == 7
+                            ? 'europa'
+                            : widget.competizione?.id == 8
+                            ? 'supercup'
+                            : null,
                       ),
                     ),
                   ),
@@ -1278,6 +1419,14 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                             ? Colors.white
                             : getColor(),
                         fontWeight: FontWeight.bold,
+                        fontFamily: widget.competizione?.id == 5
+                            ? 'champions'
+                            : widget.competizione?.id == 6 ||
+                                  widget.competizione?.id == 7
+                            ? 'europa'
+                            : widget.competizione?.id == 8
+                            ? 'supercup'
+                            : null,
                       ),
                     ),
                   ),
@@ -1312,6 +1461,14 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                     color: getColor(),
+                    fontFamily: widget.competizione?.id == 5
+                        ? 'champions'
+                        : widget.competizione?.id == 6 ||
+                              widget.competizione?.id == 7
+                        ? 'europa'
+                        : widget.competizione?.id == 8
+                        ? 'supercup'
+                        : null,
                   ),
                 ),
                 SizedBox(height: 8),
@@ -1324,8 +1481,28 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                   ],
                   decoration: InputDecoration(
                     labelText: 'Numero giornate',
-                    labelStyle: TextStyle(color: getColor()),
-                    hintStyle: TextStyle(color: Colors.grey[500]),
+                    labelStyle: TextStyle(
+                      color: getColor(),
+                      fontFamily: widget.competizione?.id == 5
+                          ? 'champions'
+                          : widget.competizione?.id == 6 ||
+                                widget.competizione?.id == 7
+                          ? 'europa'
+                          : widget.competizione?.id == 8
+                          ? 'supercup'
+                          : null,
+                    ),
+                    hintStyle: TextStyle(
+                      color: Colors.grey[500],
+                      fontFamily: widget.competizione?.id == 5
+                          ? 'champions'
+                          : widget.competizione?.id == 6 ||
+                                widget.competizione?.id == 7
+                          ? 'europa'
+                          : widget.competizione?.id == 8
+                          ? 'supercup'
+                          : null,
+                    ),
                     prefixIcon: Icon(Icons.event_busy, color: getColor()),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -1384,6 +1561,14 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                     color: getColor(),
+                    fontFamily: widget.competizione?.id == 5
+                        ? 'champions'
+                        : widget.competizione?.id == 6 ||
+                              widget.competizione?.id == 7
+                        ? 'europa'
+                        : widget.competizione?.id == 8
+                        ? 'supercup'
+                        : null,
                   ),
                 ),
                 SizedBox(height: 8),
@@ -1399,6 +1584,14 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                               color: esitoRigoreSelezionato == 'segnato'
                                   ? Colors.white
                                   : getColor(),
+                              fontFamily: widget.competizione?.id == 5
+                                  ? 'champions'
+                                  : widget.competizione?.id == 6 ||
+                                        widget.competizione?.id == 7
+                                  ? 'europa'
+                                  : widget.competizione?.id == 8
+                                  ? 'supercup'
+                                  : null,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -1431,6 +1624,14 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                                   ? Colors.white
                                   : getColor(),
                               fontWeight: FontWeight.bold,
+                              fontFamily: widget.competizione?.id == 5
+                                  ? 'champions'
+                                  : widget.competizione?.id == 6 ||
+                                        widget.competizione?.id == 7
+                                  ? 'europa'
+                                  : widget.competizione?.id == 8
+                                  ? 'supercup'
+                                  : null,
                             ),
                           ),
                         ),
@@ -1465,6 +1666,14 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
               decoration: InputDecoration(
                 labelText: 'Seleziona Giocatore',
                 labelStyle: TextStyle(
+                  fontFamily: widget.competizione?.id == 5
+                      ? 'champions'
+                      : widget.competizione?.id == 6 ||
+                            widget.competizione?.id == 7
+                      ? 'europa'
+                      : widget.competizione?.id == 8
+                      ? 'supercup'
+                      : null,
                   color: Color(
                     widget.competizione!.colori.isNotEmpty
                         ? int.parse(

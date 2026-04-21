@@ -445,8 +445,27 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       context,
       listen: false,
     );
+    final screenWidth = MediaQuery.of(context).size.width;
+    final columnWidth = screenWidth > 600 ? 120.0 : 100.0;
+    final spacingWidth = screenWidth > 600 ? 40.0 : 20.0;
+
     if (partita == null || competizione == null) {
-      return Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(
+            color: competizione != null
+                ? Color(
+                    competizione!.colori.isNotEmpty
+                        ? int.parse(
+                            competizione!.colori[0].replaceFirst('#', 'FF'),
+                            radix: 16,
+                          )
+                        : 0xFF007AFF,
+                  )
+                : Colors.blueAccent,
+          ),
+        ),
+      );
     }
 
     // Calcola il risultato escludendo i rigori al minuto 121
@@ -643,6 +662,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                                     fontFamily:
                                                         competizione?.id == 5
                                                         ? 'champions'
+                                                        : competizione?.id ==
+                                                                  6 ||
+                                                              competizione
+                                                                      ?.id ==
+                                                                  7
+                                                        ? 'europa'
+                                                        : competizione?.id == 8
+                                                        ? 'supercup'
                                                         : null,
                                                   ),
                                                 ),
@@ -660,36 +687,48 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                                 data: CupertinoThemeData(
                                                   brightness: Brightness.dark,
                                                   primaryColor: Colors.white,
-                                                  textTheme:
-                                                      CupertinoTextThemeData(
-                                                        dateTimePickerTextStyle:
-                                                            TextStyle(
-                                                              color:
-                                                                  Colors.white,
-                                                              fontSize: 20,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .normal,
-                                                              fontFamily:
-                                                                  competizione
-                                                                          ?.id ==
-                                                                      5
-                                                                  ? 'champions'
-                                                                  : null,
-                                                            ),
-                                                        pickerTextStyle:
-                                                            TextStyle(
-                                                              color:
-                                                                  Colors.white,
-                                                              fontSize: 20,
-                                                              fontFamily:
-                                                                  competizione
-                                                                          ?.id ==
-                                                                      5
-                                                                  ? 'champions'
-                                                                  : null,
-                                                            ),
-                                                      ),
+                                                  textTheme: CupertinoTextThemeData(
+                                                    dateTimePickerTextStyle:
+                                                        TextStyle(
+                                                          color: Colors.white,
+                                                          fontSize: 20,
+                                                          fontWeight:
+                                                              FontWeight.normal,
+                                                          fontFamily:
+                                                              competizione
+                                                                      ?.id ==
+                                                                  5
+                                                              ? 'champions'
+                                                              : competizione?.id ==
+                                                                        6 ||
+                                                                    competizione
+                                                                            ?.id ==
+                                                                        7
+                                                              ? 'europa'
+                                                              : competizione
+                                                                        ?.id ==
+                                                                    8
+                                                              ? 'supercup'
+                                                              : null,
+                                                        ),
+                                                    pickerTextStyle: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 20,
+                                                      fontFamily:
+                                                          competizione?.id == 5
+                                                          ? 'champions'
+                                                          : competizione?.id ==
+                                                                    6 ||
+                                                                competizione
+                                                                        ?.id ==
+                                                                    7
+                                                          ? 'europa'
+                                                          : competizione?.id ==
+                                                                8
+                                                          ? 'supercup'
+                                                          : null,
+                                                    ),
+                                                  ),
                                                 ),
                                                 child: CupertinoDatePicker(
                                                   backgroundColor:
@@ -736,6 +775,16 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                                             competizione?.id ==
                                                                 5
                                                             ? 'champions'
+                                                            : competizione?.id ==
+                                                                      6 ||
+                                                                  competizione
+                                                                          ?.id ==
+                                                                      7
+                                                            ? 'europa'
+                                                            : competizione
+                                                                      ?.id ==
+                                                                  8
+                                                            ? 'supercup'
                                                             : null,
                                                       ),
                                                     ),
@@ -764,6 +813,16 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                                             competizione?.id ==
                                                                 5
                                                             ? 'champions'
+                                                            : competizione?.id ==
+                                                                      6 ||
+                                                                  competizione
+                                                                          ?.id ==
+                                                                      7
+                                                            ? 'europa'
+                                                            : competizione
+                                                                      ?.id ==
+                                                                  8
+                                                            ? 'supercup'
                                                             : null,
                                                       ),
                                                     ),
@@ -786,7 +845,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                           children: [
                             InkWell(
                               child: SizedBox(
-                                width: 80,
+                                width: columnWidth,
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -799,7 +858,20 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                         if (snapshot.connectionState ==
                                             ConnectionState.waiting) {
                                           return Center(
-                                            child: CircularProgressIndicator(),
+                                            child: CircularProgressIndicator(
+                                              color: Color(
+                                                competizione!.colori.isNotEmpty
+                                                    ? int.parse(
+                                                        competizione!.colori[0]
+                                                            .replaceFirst(
+                                                              '#',
+                                                              'FF',
+                                                            ),
+                                                        radix: 16,
+                                                      )
+                                                    : 0xFF007AFF,
+                                              ),
+                                            ),
                                           );
                                         } else if (snapshot.hasError) {
                                           return Center(
@@ -987,22 +1059,16 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                 );
                               },
                             ),
-                            SizedBox(width: 40),
+                            SizedBox(width: spacingWidth),
                             SizedBox(
                               width: 80,
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    '$risultatoHomeSenzaRigori - $risultatoAwaySenzaRigori',
+                                    '$risultatoHomeSenzaRigori-$risultatoAwaySenzaRigori',
                                     style: TextStyle(
-                                      fontSize:
-                                          competizione?.id == 6 ||
-                                              competizione?.id == 7
-                                          ? 36.0
-                                          : competizione?.id == 8
-                                          ? 36.0
-                                          : 40.0,
+                                      fontSize: 40.0,
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
                                       fontFamily: competizione?.id == 5
@@ -1095,10 +1161,10 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                 ],
                               ),
                             ),
-                            SizedBox(width: 40),
+                            SizedBox(width: spacingWidth),
                             InkWell(
                               child: SizedBox(
-                                width: 80,
+                                width: columnWidth,
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -1111,7 +1177,20 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                         if (snapshot.connectionState ==
                                             ConnectionState.waiting) {
                                           return Center(
-                                            child: CircularProgressIndicator(),
+                                            child: CircularProgressIndicator(
+                                              color: Color(
+                                                competizione!.colori.isNotEmpty
+                                                    ? int.parse(
+                                                        competizione!.colori[0]
+                                                            .replaceFirst(
+                                                              '#',
+                                                              'FF',
+                                                            ),
+                                                        radix: 16,
+                                                      )
+                                                    : 0xFF007AFF,
+                                              ),
+                                            ),
                                           );
                                         } else if (snapshot.hasError) {
                                           return Center(
@@ -1473,92 +1552,189 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       tabellinoWidgets.add(buildTabellinoRow(evento));
     }
 
-    return Stack(
-      children: [
-        SingleChildScrollView(
-          child: Column(
-            children: [
-              if (partita!.tabellino.isEmpty)
-                Padding(
-                  padding: EdgeInsets.all(32),
-                  child: Center(
-                    child: Text(
-                      'Nessun evento registrato per questa partita.',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                        fontFamily: competizione?.id == 5
-                            ? 'champions'
-                            : competizione?.id == 6 || competizione?.id == 7
-                            ? 'europa'
-                            : competizione?.id == 8
-                            ? 'supercup'
-                            : null,
-                      ),
+    bool isWide = MediaQuery.of(context).size.width > 600;
+
+    // Quando è wide, il pulsante va sotto il contenuto
+    // Quando NON è wide, il pulsante è fluttuante sopra il contenuto
+    if (isWide) {
+      return SingleChildScrollView(
+        child: Column(
+          children: [
+            if (partita!.tabellino.isEmpty)
+              Padding(
+                padding: EdgeInsets.all(32),
+                child: Center(
+                  child: Text(
+                    'Nessun evento registrato per questa partita.',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                      fontFamily: competizione?.id == 5
+                          ? 'champions'
+                          : competizione?.id == 6 || competizione?.id == 7
+                          ? 'europa'
+                          : competizione?.id == 8
+                          ? 'supercup'
+                          : null,
                     ),
                   ),
                 ),
-              ...tabellinoWidgets,
-            ],
-          ),
-        ),
-        if (admin && !partita!.salvata)
-          Positioned(
-            bottom: 32,
-            right: 32,
-            child: FloatingActionButton(
-              heroTag: "tabellino_fab",
-              onPressed: () async {
-                final result = await showDialog<Evento>(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return StatefulBuilder(
-                      builder:
-                          (BuildContext context, StateSetter setDialogState) {
-                            return Dialog(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16.0),
-                              ),
-                              child: AddEventoModalPage(
-                                competizione: competizione,
-                                partita: partita!,
-                                dialogState: setDialogState,
-                                campionato: widget.campionato,
-                              ),
-                            );
-                          },
-                    );
-                  },
-                );
-
-                // Se l'evento è stato salvato con successo, aggiorna la pagina
-                if (result != null) {
-                  // Aggiungi il nuovo evento al tabellino locale
-                  setState(() {
-                    partita!.tabellino.add(result);
-                    fetchPartita().then((fetchedPartita) {
-                      setState(() {
-                        partita = fetchedPartita;
-                      });
-                    });
-                  });
-                }
-
-                print('Admin button pressed - Tabellino');
-              },
-              backgroundColor: Color(
-                competizione!.colori.isNotEmpty
-                    ? int.parse(
-                        competizione!.colori[0].replaceFirst('#', 'FF'),
-                        radix: 16,
-                      )
-                    : 0xFF007AFF,
               ),
-              child: Icon(Icons.add, color: Colors.white),
+            ...tabellinoWidgets,
+            if (admin && !partita!.salvata) ...[
+              SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Padding(
+                  padding: EdgeInsets.only(right: 32),
+                  child: FloatingActionButton(
+                    heroTag: "tabellino_fab",
+                    onPressed: () async {
+                      final result = await showDialog<Evento>(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return StatefulBuilder(
+                            builder:
+                                (
+                                  BuildContext context,
+                                  StateSetter setDialogState,
+                                ) {
+                                  return Dialog(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16.0),
+                                    ),
+                                    child: AddEventoModalPage(
+                                      competizione: competizione,
+                                      partita: partita!,
+                                      dialogState: setDialogState,
+                                      campionato: widget.campionato,
+                                    ),
+                                  );
+                                },
+                          );
+                        },
+                      );
+
+                      // Se l'evento è stato salvato con successo, aggiorna la pagina
+                      if (result != null) {
+                        // Aggiungi il nuovo evento al tabellino locale
+                        setState(() {
+                          partita!.tabellino.add(result);
+                          fetchPartita().then((fetchedPartita) {
+                            setState(() {
+                              partita = fetchedPartita;
+                            });
+                          });
+                        });
+                      }
+
+                      print('Admin button pressed - Tabellino');
+                    },
+                    backgroundColor: Color(
+                      competizione!.colori.isNotEmpty
+                          ? int.parse(
+                              competizione!.colori[0].replaceFirst('#', 'FF'),
+                              radix: 16,
+                            )
+                          : 0xFF007AFF,
+                    ),
+                    child: Icon(Icons.add, color: Colors.white),
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+            ],
+          ],
+        ),
+      );
+    } else {
+      return Stack(
+        children: [
+          SingleChildScrollView(
+            child: Column(
+              children: [
+                if (partita!.tabellino.isEmpty)
+                  Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Center(
+                      child: Text(
+                        'Nessun evento registrato per questa partita.',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[600],
+                          fontFamily: competizione?.id == 5
+                              ? 'champions'
+                              : competizione?.id == 6 || competizione?.id == 7
+                              ? 'europa'
+                              : competizione?.id == 8
+                              ? 'supercup'
+                              : null,
+                        ),
+                      ),
+                    ),
+                  ),
+                ...tabellinoWidgets,
+              ],
             ),
           ),
-      ],
-    );
+          if (admin && !partita!.salvata)
+            Positioned(
+              bottom: 32,
+              right: 32,
+              child: FloatingActionButton(
+                heroTag: "tabellino_fab",
+                onPressed: () async {
+                  final result = await showDialog<Evento>(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return StatefulBuilder(
+                        builder:
+                            (BuildContext context, StateSetter setDialogState) {
+                              return Dialog(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16.0),
+                                ),
+                                child: AddEventoModalPage(
+                                  competizione: competizione,
+                                  partita: partita!,
+                                  dialogState: setDialogState,
+                                  campionato: widget.campionato,
+                                ),
+                              );
+                            },
+                      );
+                    },
+                  );
+
+                  // Se l'evento è stato salvato con successo, aggiorna la pagina
+                  if (result != null) {
+                    // Aggiungi il nuovo evento al tabellino locale
+                    setState(() {
+                      partita!.tabellino.add(result);
+                      fetchPartita().then((fetchedPartita) {
+                        setState(() {
+                          partita = fetchedPartita;
+                        });
+                      });
+                    });
+                  }
+
+                  print('Admin button pressed - Tabellino');
+                },
+                backgroundColor: Color(
+                  competizione!.colori.isNotEmpty
+                      ? int.parse(
+                          competizione!.colori[0].replaceFirst('#', 'FF'),
+                          radix: 16,
+                        )
+                      : 0xFF007AFF,
+                ),
+                child: Icon(Icons.add, color: Colors.white),
+              ),
+            ),
+        ],
+      );
+    }
   }
 
   Widget buildDivisore2T() {
@@ -3319,6 +3495,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                 style: TextStyle(
                                   color: Colors.grey,
                                   fontSize: 16,
+                                  fontFamily: competizione?.id == 5
+                                      ? 'champions'
+                                      : competizione?.id == 6 ||
+                                            competizione?.id == 7
+                                      ? 'europa'
+                                      : competizione?.id == 8
+                                      ? 'supercup'
+                                      : null,
                                 ),
                               ),
                             ),
@@ -3359,6 +3543,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                 style: TextStyle(
                                   color: Colors.grey,
                                   fontSize: 16,
+                                  fontFamily: competizione?.id == 5
+                                      ? 'champions'
+                                      : competizione?.id == 6 ||
+                                            competizione?.id == 7
+                                      ? 'europa'
+                                      : competizione?.id == 8
+                                      ? 'supercup'
+                                      : null,
                                 ),
                               ),
                             ),
@@ -3441,6 +3633,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
+                      fontFamily: competizione?.id == 5
+                          ? 'champions'
+                          : competizione?.id == 6 || competizione?.id == 7
+                          ? 'europa'
+                          : competizione?.id == 8
+                          ? 'supercup'
+                          : null,
                       color:
                           evento.codAzione == 'aut' ||
                               evento.codAzione == 'gol_ann' ||
@@ -3484,6 +3683,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
+                        fontFamily: competizione?.id == 5
+                            ? 'champions'
+                            : competizione?.id == 6 || competizione?.id == 7
+                            ? 'europa'
+                            : competizione?.id == 8
+                            ? 'supercup'
+                            : null,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -3505,6 +3711,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
+                        fontFamily: competizione?.id == 5
+                            ? 'champions'
+                            : competizione?.id == 6 || competizione?.id == 7
+                            ? 'europa'
+                            : competizione?.id == 8
+                            ? 'supercup'
+                            : null,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -3535,6 +3748,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
+                      fontFamily: competizione?.id == 5
+                          ? 'champions'
+                          : competizione?.id == 6 || competizione?.id == 7
+                          ? 'europa'
+                          : competizione?.id == 8
+                          ? 'supercup'
+                          : null,
                       color:
                           evento.codAzione == 'aut' ||
                               evento.codAzione == 'gol_ann' ||
@@ -3566,6 +3786,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
               'Ultime 5 Partite',
               style: TextStyle(
                 fontSize: 12,
+                fontFamily: competizione?.id == 5
+                    ? 'champions'
+                    : competizione?.id == 6 || competizione?.id == 7
+                    ? 'europa'
+                    : competizione?.id == 8
+                    ? 'supercup'
+                    : null,
                 fontWeight: FontWeight.bold,
                 color: Color(
                   competizione!.colori.isNotEmpty
@@ -3595,7 +3822,19 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                       return Center(
                         child: Padding(
                           padding: EdgeInsets.all(8),
-                          child: CircularProgressIndicator(),
+                          child: CircularProgressIndicator(
+                            color: Color(
+                              competizione!.colori.isNotEmpty
+                                  ? int.parse(
+                                      competizione!.colori[0].replaceFirst(
+                                        '#',
+                                        'FF',
+                                      ),
+                                      radix: 16,
+                                    )
+                                  : 0xFF007AFF,
+                            ),
+                          ),
                         ),
                       );
                     }
@@ -3757,7 +3996,19 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                       return Center(
                         child: Padding(
                           padding: EdgeInsets.all(8),
-                          child: CircularProgressIndicator(),
+                          child: CircularProgressIndicator(
+                            color: Color(
+                              competizione!.colori.isNotEmpty
+                                  ? int.parse(
+                                      competizione!.colori[0].replaceFirst(
+                                        '#',
+                                        'FF',
+                                      ),
+                                      radix: 16,
+                                    )
+                                  : 0xFF007AFF,
+                            ),
+                          ),
                         ),
                       );
                     }
@@ -3953,7 +4204,20 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                     return Padding(
                                       padding: EdgeInsets.all(16),
                                       child: Center(
-                                        child: CircularProgressIndicator(),
+                                        child: CircularProgressIndicator(
+                                          color: Color(
+                                            competizione!.colori.isNotEmpty
+                                                ? int.parse(
+                                                    competizione!.colori[0]
+                                                        .replaceFirst(
+                                                          '#',
+                                                          'FF',
+                                                        ),
+                                                    radix: 16,
+                                                  )
+                                                : 0xFF007AFF,
+                                          ),
+                                        ),
                                       ),
                                     );
                                   }
@@ -4103,7 +4367,17 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                               return Padding(
                                 padding: EdgeInsets.all(16),
                                 child: Center(
-                                  child: CircularProgressIndicator(),
+                                  child: CircularProgressIndicator(
+                                    color: Color(
+                                      competizione!.colori.isNotEmpty
+                                          ? int.parse(
+                                              competizione!.colori[0]
+                                                  .replaceFirst('#', 'FF'),
+                                              radix: 16,
+                                            )
+                                          : 0xFF007AFF,
+                                    ),
+                                  ),
                                 ),
                               );
                             }
@@ -4414,7 +4688,21 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                       ),
                       builder: (context, snapshot) {
                         if (!snapshot.hasData) {
-                          return Center(child: CircularProgressIndicator());
+                          return Center(
+                            child: CircularProgressIndicator(
+                              color: Color(
+                                competizione!.colori.isNotEmpty
+                                    ? int.parse(
+                                        competizione!.colori[0].replaceFirst(
+                                          '#',
+                                          'FF',
+                                        ),
+                                        radix: 16,
+                                      )
+                                    : 0xFF007AFF,
+                              ),
+                            ),
+                          );
                         }
                         return buildPartitaFormazione(
                           team == 0
@@ -4604,7 +4892,21 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                   ),
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) {
-                      return Center(child: CircularProgressIndicator());
+                      return Center(
+                        child: CircularProgressIndicator(
+                          color: Color(
+                            competizione!.colori.isNotEmpty
+                                ? int.parse(
+                                    competizione!.colori[0].replaceFirst(
+                                      '#',
+                                      'FF',
+                                    ),
+                                    radix: 16,
+                                  )
+                                : 0xFF007AFF,
+                          ),
+                        ),
+                      );
                     }
                     return buildPartitaFormazione(
                       team == 0
@@ -4795,6 +5097,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w900,
+                      fontFamily: competizione?.id == 5
+                          ? 'champions'
+                          : competizione?.id == 6 || competizione?.id == 7
+                          ? 'europa'
+                          : competizione?.id == 8
+                          ? 'supercup'
+                          : null,
                       fontSize: 16,
                       shadows: [
                         Shadow(
@@ -5553,6 +5862,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                               color: Colors.white,
                               fontWeight: FontWeight.w900,
                               fontSize: 16,
+                              fontFamily: competizione?.id == 5
+                                  ? 'champions'
+                                  : competizione?.id == 6 ||
+                                        competizione?.id == 7
+                                  ? 'europa'
+                                  : competizione?.id == 8
+                                  ? 'supercup'
+                                  : null,
                               shadows: [
                                 Shadow(
                                   offset: Offset(-1.0, -1.0),

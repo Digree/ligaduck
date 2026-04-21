@@ -179,7 +179,7 @@ Widget buildPartitaFormazione(
                                 padding: EdgeInsets.only(bottom: 4),
                                 child: Center(
                                   child: SizedBox(
-                                    width: 80,
+                                    width: 100,
                                     child: Text(
                                       _formatPlayerName(
                                         j < model.formazione.length

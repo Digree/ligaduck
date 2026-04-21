@@ -49,6 +49,78 @@ Widget buildCampionatoMatch(
         )
       : Colors.blueGrey;
 
+  // Determina se siamo in fase eliminazione diretta
+  bool isPhaseE = (currentFase ?? '').toUpperCase() == 'E';
+  bool isRitorno = model.partita.id.endsWith('_rit');
+  bool isAndata = model.partita.id.endsWith('_and');
+
+  // Determina quale squadra sottolineare (se necessario)
+  bool underlineHome = false;
+  bool underlineAway = false;
+
+  if (isPhaseE && !isAndata) {
+    // Conta rigori a tempo regolamentare (minuto 121)
+    int rigoriHome121 = model.partita.tabellino
+        .where(
+          (e) =>
+              e.minuto == 121 &&
+              e.codAzione == 'rig' &&
+              e.esitoRigore == true &&
+              e.idTeam == model.partita.idTeamHome,
+        )
+        .length;
+
+    int rigoriAway121 = model.partita.tabellino
+        .where(
+          (e) =>
+              e.minuto == 121 &&
+              e.codAzione == 'rig' &&
+              e.esitoRigore == true &&
+              e.idTeam == model.partita.idTeamAway,
+        )
+        .length;
+
+    if (!isRitorno) {
+      // Partita secca (non andata, non ritorno): sottolinea chi vince direttamente
+      if (model.partita.risultatoHome > model.partita.risultatoAway) {
+        underlineHome = true;
+      } else if (model.partita.risultatoAway > model.partita.risultatoHome) {
+        underlineAway = true;
+      } else {
+        // Risultato pari: verifica rigori
+        if (rigoriHome121 > rigoriAway121) {
+          underlineHome = true;
+        } else if (rigoriAway121 > rigoriHome121) {
+          underlineAway = true;
+        }
+      }
+    } else {
+      // Partita di ritorno: calcola aggregato
+      // Per ora assumiamo di avere i dati dell'andata dal tabellino o da altre fonti
+      // In assenza di dati certi, controlliamo solo questa partita
+      // TODO: Se serve l'aggregato completo, bisogna fare una query per l'andata
+
+      // Calcola risultato senza rigori (esclude minuto 121)
+      int homeNoRigori = model.partita.risultatoHome;
+      int awayNoRigori = model.partita.risultatoAway;
+
+      // Per le partite di ritorno, verifica se c'è pareggio in aggregato
+      // Nota: questa è una semplificazione. Idealmente dovresti avere l'andata
+      if (homeNoRigori > awayNoRigori) {
+        underlineHome = true;
+      } else if (awayNoRigori > homeNoRigori) {
+        underlineAway = true;
+      } else {
+        // Risultato pari: verifica rigori
+        if (rigoriHome121 > rigoriAway121) {
+          underlineHome = true;
+        } else if (rigoriAway121 > rigoriHome121) {
+          underlineAway = true;
+        }
+      }
+    }
+  }
+
   return Padding(
     padding: const EdgeInsets.only(
       left: 16.0,
@@ -118,7 +190,7 @@ Widget buildCampionatoMatch(
       borderRadius: BorderRadius.circular(16),
       child: GlassmorphicContainer(
         width: double.infinity,
-        height: 60,
+        height: 50,
         borderRadius: 16,
         blur: 15,
         alignment: Alignment.center,
@@ -156,7 +228,7 @@ Widget buildCampionatoMatch(
               Padding(
                 padding: EdgeInsets.only(left: 10.0, right: isWide ? 20 : 10),
                 child: SizedBox(
-                  width: isWide ? 120 : 80,
+                  width: isWide ? 200 : 103,
                   child: Center(
                     child: Text(
                       () {
@@ -208,6 +280,9 @@ Widget buildCampionatoMatch(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
                         color: Colors.black,
+                        decoration: underlineHome
+                            ? TextDecoration.underline
+                            : null,
                       ),
                     ),
                   ),
@@ -216,8 +291,8 @@ Widget buildCampionatoMatch(
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 10.0),
                 child: Container(
-                  width: isWide ? 60 : screenWidth * 0.1,
-                  height: 30,
+                  width: isWide ? 60 : screenWidth * 0.12,
+                  height: 32,
                   decoration: BoxDecoration(
                     color: competizioneColor.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(32),
@@ -233,7 +308,7 @@ Widget buildCampionatoMatch(
               Padding(
                 padding: EdgeInsets.only(left: isWide ? 20 : 10, right: 10.0),
                 child: SizedBox(
-                  width: isWide ? 120 : 80,
+                  width: isWide ? 200 : 103,
                   child: Center(
                     child: Text(
                       () {
@@ -285,6 +360,9 @@ Widget buildCampionatoMatch(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
                         color: Colors.black,
+                        decoration: underlineAway
+                            ? TextDecoration.underline
+                            : null,
                       ),
                     ),
                   ),

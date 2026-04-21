@@ -170,10 +170,18 @@ class _CleanSheetPageState extends State<CleanSheetPage> {
                         const SizedBox(height: 8),
                         Text(
                           'Reti Inviolate',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
+                            fontFamily: widget.competizione.id == 5
+                                ? 'champions'
+                                : widget.competizione.id == 6 ||
+                                      widget.competizione.id == 7
+                                ? 'europa'
+                                : widget.competizione.id == 8
+                                ? 'supercup'
+                                : null,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -195,7 +203,18 @@ class _CleanSheetPageState extends State<CleanSheetPage> {
               children: [
                 Text(
                   'Ordina per:',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: widget.competizione.id == 5
+                        ? 'champions'
+                        : widget.competizione.id == 6 ||
+                              widget.competizione.id == 7
+                        ? 'europa'
+                        : widget.competizione.id == 8
+                        ? 'supercup'
+                        : null,
+                  ),
                 ),
                 SizedBox(width: 8),
                 DropdownButton<String>(
@@ -410,6 +429,14 @@ class _CleanSheetPageState extends State<CleanSheetPage> {
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w500,
+                                      fontFamily: widget.competizione.id == 5
+                                          ? 'champions'
+                                          : widget.competizione.id == 6 ||
+                                                widget.competizione.id == 7
+                                          ? 'europa'
+                                          : widget.competizione.id == 8
+                                          ? 'supercup'
+                                          : null,
                                     ),
                                     textAlign: TextAlign.left,
                                   ),
@@ -424,6 +451,14 @@ class _CleanSheetPageState extends State<CleanSheetPage> {
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
+                                fontFamily: widget.competizione.id == 5
+                                    ? 'champions'
+                                    : widget.competizione.id == 6 ||
+                                          widget.competizione.id == 7
+                                    ? 'europa'
+                                    : widget.competizione.id == 8
+                                    ? 'supercup'
+                                    : null,
                               ),
                               textAlign: TextAlign.right,
                             ),

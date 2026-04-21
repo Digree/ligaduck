@@ -2,3 +2,4 @@
 library;
 
 bool admin = false;
+bool mostraColori = true;

@@ -145,10 +145,18 @@ class _AutogolPageState extends State<AutogolPage> {
                         const SizedBox(height: 8),
                         Text(
                           'Autogol',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
+                            fontFamily: widget.competizione.id == 5
+                                ? 'champions'
+                                : widget.competizione.id == 6 ||
+                                      widget.competizione.id == 7
+                                ? 'europa'
+                                : widget.competizione.id == 8
+                                ? 'supercup'
+                                : null,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -355,6 +363,14 @@ class _AutogolPageState extends State<AutogolPage> {
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w500,
+                                        fontFamily: widget.competizione.id == 5
+                                            ? 'champions'
+                                            : widget.competizione.id == 6 ||
+                                                  widget.competizione.id == 7
+                                            ? 'europa'
+                                            : widget.competizione.id == 8
+                                            ? 'supercup'
+                                            : null,
                                       ),
                                       textAlign: TextAlign.left,
                                     ),
@@ -370,6 +386,14 @@ class _AutogolPageState extends State<AutogolPage> {
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
+                                  fontFamily: widget.competizione.id == 5
+                                      ? 'champions'
+                                      : widget.competizione.id == 6 ||
+                                            widget.competizione.id == 7
+                                      ? 'europa'
+                                      : widget.competizione.id == 8
+                                      ? 'supercup'
+                                      : null,
                                 ),
                                 textAlign: TextAlign.right,
                               ),

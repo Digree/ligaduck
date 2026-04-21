@@ -52,7 +52,11 @@ class _MyAppState extends State<MyApp> {
         future: configs(context),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Scaffold(body: Center(child: CircularProgressIndicator()));
+            return Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(color: Colors.blueAccent),
+              ),
+            );
           } else if (snapshot.hasError) {
             return Scaffold(
               body: Center(child: Text('Errore nel caricamento dei dati')),
