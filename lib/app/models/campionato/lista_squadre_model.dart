@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:glassmorphism/glassmorphism.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/squadre/squadre_page.dart';
@@ -331,8 +332,8 @@ Widget showSquadre(ListaSquadreModel model, String categoria) {
                         horizontal: 16.0,
                         vertical: 4.0,
                       ),
-                      child: ElevatedButton(
-                        onPressed: () {
+                      child: InkWell(
+                        onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -343,9 +344,38 @@ Widget showSquadre(ListaSquadreModel model, String categoria) {
                             ),
                           );
                         },
-                        child: Text(
-                          CommonService.decodePlayerName(squadra.nome),
-                          style: TextStyle(color: Colors.blueAccent),
+                        borderRadius: BorderRadius.circular(12),
+                        child: GlassmorphicContainer(
+                          width: double.infinity,
+                          height: 40,
+                          borderRadius: 30,
+                          blur: 15,
+                          alignment: Alignment.center,
+                          border: 2,
+                          linearGradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.blueAccent.withOpacity(0.5),
+                              Colors.blueAccent.withOpacity(0.1),
+                            ],
+                          ),
+                          borderGradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.white.withOpacity(0.1),
+                              Colors.white.withOpacity(0.2),
+                            ],
+                          ),
+                          child: Text(
+                            CommonService.decodePlayerName(squadra.nome),
+                            style: TextStyle(
+                              color: Colors.blue[900],
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
                         ),
                       ),
                     ),

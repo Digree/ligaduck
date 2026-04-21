@@ -666,6 +666,11 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                 });
               },
               validator: (value) {
+                if (team == 0
+                    ? widget.partita.formazioneHome.titolari.isEmpty
+                    : widget.partita.formazioneAway.titolari.isEmpty) {
+                  return null;
+                }
                 if (value == null || value.isEmpty) {
                   return 'Inserisci il giocatore';
                 }
@@ -912,7 +917,12 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                 });
               },
               validator: (value) {
-                if (value == null || value.isEmpty) {
+                if (team == 0
+                    ? widget.partita.formazioneHome.titolari.isEmpty
+                    : widget.partita.formazioneAway.titolari.isEmpty) {
+                  return null;
+                }
+                if ((value == null || value.isEmpty)) {
                   return 'Inserisci il giocatore';
                 }
                 return null;
@@ -1011,6 +1021,11 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                 });
               },
               validator: (value) {
+                if (team == 0
+                    ? widget.partita.formazioneHome.titolari.isEmpty
+                    : widget.partita.formazioneAway.titolari.isEmpty) {
+                  return null;
+                }
                 if (value == null || value.isEmpty) {
                   return 'Inserisci il giocatore';
                 }
@@ -1520,6 +1535,11 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                 });
               },
               validator: (value) {
+                if (team == 0
+                    ? widget.partita.formazioneHome.titolari.isEmpty
+                    : widget.partita.formazioneAway.titolari.isEmpty) {
+                  return null;
+                }
                 if (value == null || value.isEmpty) {
                   return 'Inserisci il giocatore';
                 }

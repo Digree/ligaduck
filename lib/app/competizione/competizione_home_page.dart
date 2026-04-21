@@ -50,6 +50,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     with WidgetsBindingObserver, RouteAware {
   String? selectedGiornata;
   bool? giornataChiusa;
+  bool tuttePartiteSalvate = false; // Verifica se tutte le partite sono salvate
   List<Giornata> giornate = [];
   List<Giornata> giornate_ = [];
   List<Giornata> giornateToPush = [];
@@ -111,6 +112,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     });
     _caricaGiornate();
     _caricaClassifica();
+    _verificaPartiteSalvate();
   }
 
   @override
@@ -277,15 +279,22 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                   giornate_.isNotEmpty &&
                                   widget.competizione.conclusa == false)
                                 IconButton(
-                                  onPressed: () {
-                                    giornataChiusa = !giornataChiusa!;
-                                    closeGiornata();
-                                  },
+                                  onPressed:
+                                      (tuttePartiteSalvate || giornataChiusa!)
+                                      ? () {
+                                          giornataChiusa = !giornataChiusa!;
+                                          closeGiornata();
+                                        }
+                                      : null,
                                   icon: giornataChiusa!
                                       ? Icon(Icons.lock, color: Colors.white)
                                       : Icon(
                                           Icons.lock_open,
-                                          color: Colors.white,
+                                          color:
+                                              (tuttePartiteSalvate ||
+                                                  giornataChiusa!)
+                                              ? Colors.white
+                                              : Colors.grey,
                                         ),
                                 ),
                               if (widget.competizione.conclusa == false)
@@ -2664,6 +2673,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                     }
                   }
                 });
+                _verificaPartiteSalvate();
               });
             }
 
@@ -2693,6 +2703,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                   setState(() {
                     selectedGiornata = newValue;
                   });
+                  _verificaPartiteSalvate();
                 },
               ),
             );
@@ -2844,6 +2855,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                           _invalidateCacheKey++; // Invalida la cache
                         });
                         _caricaGiornate();
+                        _verificaPartiteSalvate();
                       },
                     ),
                     context,
@@ -3026,19 +3038,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
               if (snapshot.hasData && snapshot.data != null) {
                 // Conta i gol dalle partite
                 for (var partita in snapshot.data!) {
-                  for (var evento in partita.tabellino) {
-                    // Conta solo gol reali (no rigori finali al minuto 121)
-                    if (evento.minuto != 121) {
-                      if (evento.codAzione == 'gol' ||
-                          evento.codAzione == 'pun' ||
-                          evento.codAzione == 'aut') {
-                        totalGol++;
-                      } else if (evento.codAzione == 'rig' &&
-                          evento.esitoRigore == true) {
-                        totalGol++;
-                      }
-                    }
-                  }
+                  totalGol += partita.risultatoHome + partita.risultatoAway;
                 }
               }
 
@@ -3394,6 +3394,35 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     partite.sort((a, b) => a.id.compareTo(b.id));
 
     return {'partite': partite, 'squadre': squadre};
+  }
+
+  Future<void> _verificaPartiteSalvate() async {
+    if (selectedGiornata == null) {
+      setState(() {
+        tuttePartiteSalvate = false;
+      });
+      return;
+    }
+
+    try {
+      final partiteProvider = Provider.of<PartiteProvider>(
+        context,
+        listen: false,
+      );
+      final partite = await partiteProvider.fetchPartite(
+        widget.campionato,
+        selectedGiornata!,
+      );
+
+      setState(() {
+        tuttePartiteSalvate =
+            partite.isNotEmpty && partite.every((p) => p.salvata);
+      });
+    } catch (e) {
+      setState(() {
+        tuttePartiteSalvate = false;
+      });
+    }
   }
 
   Widget buildHeader(bool isWide) {
@@ -3831,6 +3860,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     String selectedFase = 'G';
     String tipoTurno = 'singolo';
     DateTime selectedDate = DateTime(1970, 1, 1);
+    TimeOfDay selectedTime = TimeOfDay(hour: 15, minute: 0);
+    DateTime selectedDateRitorno = DateTime(1970, 1, 1);
+    TimeOfDay selectedTimeRitorno = TimeOfDay(hour: 15, minute: 0);
     List<Map<String, int?>> partite =
         []; // Lista di partite con idHome e idAway
 
@@ -4062,7 +4094,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                       ],
                       SizedBox(height: 16),
                       Text(
-                        'Data',
+                        tipoTurno == 'andata-ritorno' && selectedFase == 'E'
+                            ? 'Data e Ora Andata'
+                            : 'Data e Ora',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -4070,67 +4104,280 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                         ),
                       ),
                       SizedBox(height: 8),
-                      InkWell(
-                        onTap: () async {
-                          final DateTime? picked = await showDatePicker(
-                            context: context,
-                            initialDate: selectedDate,
-                            firstDate: DateTime(1970),
-                            lastDate: DateTime(2100),
-                            locale: Locale('it', 'IT'),
-                            builder: (context, child) {
-                              return Theme(
-                                data: Theme.of(context).copyWith(
-                                  colorScheme: ColorScheme.light(
-                                    primary: getColor("primary"),
-                                    onPrimary: Colors.white,
-                                    surface: Colors.white,
-                                    onSurface: Colors.black87,
-                                  ),
-                                  dialogTheme: DialogThemeData(
-                                    backgroundColor: Colors.white,
-                                  ),
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 2,
+                            child: InkWell(
+                              onTap: () async {
+                                final DateTime? picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: selectedDate,
+                                  firstDate: DateTime(1970),
+                                  lastDate: DateTime(2100),
+                                  locale: Locale('it', 'IT'),
+                                  builder: (context, child) {
+                                    return Theme(
+                                      data: Theme.of(context).copyWith(
+                                        colorScheme: ColorScheme.light(
+                                          primary: getColor("primary"),
+                                          onPrimary: Colors.white,
+                                          surface: Colors.white,
+                                          onSurface: Colors.black87,
+                                        ),
+                                        dialogTheme: DialogThemeData(
+                                          backgroundColor: Colors.white,
+                                        ),
+                                      ),
+                                      child: child!,
+                                    );
+                                  },
+                                );
+                                if (picked != null) {
+                                  setState(() {
+                                    selectedDate = picked;
+                                  });
+                                }
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 16,
                                 ),
-                                child: child!,
-                              );
-                            },
-                          );
-                          if (picked != null) {
-                            setState(() {
-                              selectedDate = picked;
-                            });
-                          }
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 16,
-                          ),
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: getColor("primary").withOpacity(0.3),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: getColor("primary").withOpacity(0.3),
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.calendar_today,
+                                      color: getColor("primary"),
+                                      size: 20,
+                                    ),
+                                    SizedBox(width: 12),
+                                    Text(
+                                      '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                            borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.calendar_today,
-                                color: getColor("primary"),
-                                size: 20,
-                              ),
-                              SizedBox(width: 12),
-                              Text(
-                                '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.black87,
+                          SizedBox(width: 8),
+                          Expanded(
+                            flex: 1,
+                            child: InkWell(
+                              onTap: () async {
+                                final TimeOfDay? picked = await showTimePicker(
+                                  context: context,
+                                  initialTime: selectedTime,
+                                  builder: (context, child) {
+                                    return Theme(
+                                      data: Theme.of(context).copyWith(
+                                        colorScheme: ColorScheme.light(
+                                          primary: getColor("primary"),
+                                          onPrimary: Colors.white,
+                                          surface: Colors.white,
+                                          onSurface: Colors.black87,
+                                        ),
+                                      ),
+                                      child: child!,
+                                    );
+                                  },
+                                );
+                                if (picked != null) {
+                                  setState(() {
+                                    selectedTime = picked;
+                                  });
+                                }
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 16,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: getColor("primary").withOpacity(0.3),
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.access_time,
+                                      color: getColor("primary"),
+                                      size: 20,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (selectedFase == 'E' &&
+                          tipoTurno == 'andata-ritorno') ...[
+                        SizedBox(height: 16),
+                        Text(
+                          'Data e Ora Ritorno',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: getColor("primary"),
                           ),
                         ),
-                      ),
+                        SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: InkWell(
+                                onTap: () async {
+                                  final DateTime? picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: selectedDateRitorno,
+                                    firstDate: DateTime(1970),
+                                    lastDate: DateTime(2100),
+                                    locale: Locale('it', 'IT'),
+                                    builder: (context, child) {
+                                      return Theme(
+                                        data: Theme.of(context).copyWith(
+                                          colorScheme: ColorScheme.light(
+                                            primary: getColor("primary"),
+                                            onPrimary: Colors.white,
+                                            surface: Colors.white,
+                                            onSurface: Colors.black87,
+                                          ),
+                                          dialogTheme: DialogThemeData(
+                                            backgroundColor: Colors.white,
+                                          ),
+                                        ),
+                                        child: child!,
+                                      );
+                                    },
+                                  );
+                                  if (picked != null) {
+                                    setState(() {
+                                      selectedDateRitorno = picked;
+                                    });
+                                  }
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 16,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: getColor(
+                                        "primary",
+                                      ).withOpacity(0.3),
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.calendar_today,
+                                        color: getColor("primary"),
+                                        size: 20,
+                                      ),
+                                      SizedBox(width: 12),
+                                      Text(
+                                        '${selectedDateRitorno.day}/${selectedDateRitorno.month}/${selectedDateRitorno.year}',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Expanded(
+                              flex: 1,
+                              child: InkWell(
+                                onTap: () async {
+                                  final TimeOfDay? picked =
+                                      await showTimePicker(
+                                        context: context,
+                                        initialTime: selectedTimeRitorno,
+                                        builder: (context, child) {
+                                          return Theme(
+                                            data: Theme.of(context).copyWith(
+                                              colorScheme: ColorScheme.light(
+                                                primary: getColor("primary"),
+                                                onPrimary: Colors.white,
+                                                surface: Colors.white,
+                                                onSurface: Colors.black87,
+                                              ),
+                                            ),
+                                            child: child!,
+                                          );
+                                        },
+                                      );
+                                  if (picked != null) {
+                                    setState(() {
+                                      selectedTimeRitorno = picked;
+                                    });
+                                  }
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 16,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: getColor(
+                                        "primary",
+                                      ).withOpacity(0.3),
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.access_time,
+                                        color: getColor("primary"),
+                                        size: 20,
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        '${selectedTimeRitorno.hour.toString().padLeft(2, '0')}:${selectedTimeRitorno.minute.toString().padLeft(2, '0')}',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                       SizedBox(height: 16),
                       Divider(),
                       SizedBox(height: 8),
@@ -4443,11 +4690,29 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                       }
                     }
 
+                    // Combina data e ora
+                    final DateTime dataPartiteAndata = DateTime(
+                      selectedDate.year,
+                      selectedDate.month,
+                      selectedDate.day,
+                      selectedTime.hour,
+                      selectedTime.minute,
+                    );
+
+                    final DateTime dataPartiteRitorno = DateTime(
+                      selectedDateRitorno.year,
+                      selectedDateRitorno.month,
+                      selectedDateRitorno.day,
+                      selectedTimeRitorno.hour,
+                      selectedTimeRitorno.minute,
+                    );
+
                     await _creaGiornata(
                       nomeGiornataController.text.trim(),
                       selectedFase,
                       tipoTurno,
-                      selectedDate,
+                      dataPartiteAndata,
+                      dataPartiteRitorno,
                       squadre,
                       partite,
                     );
@@ -4467,7 +4732,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     String nomeGiornata,
     String fase,
     String tipoTurno,
-    DateTime dataPartite,
+    DateTime dataPartiteAndata,
+    DateTime dataPartiteRitorno,
     List<Squadra> squadre,
     List<Map<String, int?>> partite,
   ) async {
@@ -4507,11 +4773,14 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
 
       // Gestione andata/ritorno per eliminazione diretta
       if (fase == 'E' && tipoTurno == 'andata-ritorno') {
+        // Genera un ID base unico per andata e ritorno
+        final String idBaseGiornata = mongo.ObjectId().toHexString();
+
         // Crea giornata di andata
         final giornataAndata = Giornata(
-          id: mongo.ObjectId().toHexString(),
+          id: '${idBaseGiornata}_and',
           idCompetizione: widget.competizione.id,
-          giornata: '$nomeGiornata Andata',
+          giornata: '$nomeGiornata andata',
           fase: fase,
           classifica: classificaIniziale,
           statistiche: StatisticheGiornata(
@@ -4527,9 +4796,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
 
         // Crea giornata di ritorno
         final giornataRitorno = Giornata(
-          id: mongo.ObjectId().toHexString(),
+          id: '${idBaseGiornata}_rit',
           idCompetizione: widget.competizione.id,
-          giornata: '$nomeGiornata Ritorno',
+          giornata: '$nomeGiornata ritorno',
           fase: fase,
           classifica: classificaIniziale,
           statistiche: StatisticheGiornata(
@@ -4566,12 +4835,14 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
               (s) => s.id == partita['idAway'],
             );
 
+            String id = mongo.ObjectId().toHexString();
+
             nuovePartite.add(
               Partita(
-                id: mongo.ObjectId().toHexString(),
+                id: '${id}_and',
                 idGiornata: giornataAndata.id,
-                teamHome: squadraHome.nome,
-                teamAway: squadraAway.nome,
+                teamHome: CommonService.decodePlayerName(squadraHome.nome),
+                teamAway: CommonService.decodePlayerName(squadraAway.nome),
                 idTeamHome: squadraHome.id,
                 idTeamAway: squadraAway.id,
                 codHome: squadraHome.cod,
@@ -4597,7 +4868,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                 divisaHome: 1,
                 divisaAway: 1,
                 tabellino: [],
-                data: dataPartite,
+                data: dataPartiteAndata,
                 salvata: false,
               ),
             );
@@ -4605,10 +4876,10 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
             // Partita di ritorno (squadre invertite)
             nuovePartite.add(
               Partita(
-                id: mongo.ObjectId().toHexString(),
+                id: '${id}_rit',
                 idGiornata: giornataRitorno.id,
-                teamHome: squadraAway.nome,
-                teamAway: squadraHome.nome,
+                teamHome: CommonService.decodePlayerName(squadraAway.nome),
+                teamAway: CommonService.decodePlayerName(squadraHome.nome),
                 idTeamHome: squadraAway.id,
                 idTeamAway: squadraHome.id,
                 codHome: squadraAway.cod,
@@ -4634,7 +4905,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                 divisaHome: 1,
                 divisaAway: 1,
                 tabellino: [],
-                data: dataPartite,
+                data: dataPartiteRitorno,
                 salvata: false,
               ),
             );
@@ -4695,8 +4966,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
               Partita(
                 id: mongo.ObjectId().toHexString(),
                 idGiornata: nuovaGiornata.id,
-                teamHome: squadraHome.nome,
-                teamAway: squadraAway.nome,
+                teamHome: CommonService.decodePlayerName(squadraHome.nome),
+                teamAway: CommonService.decodePlayerName(squadraAway.nome),
                 idTeamHome: squadraHome.id,
                 idTeamAway: squadraAway.id,
                 codHome: squadraHome.cod,
@@ -4722,7 +4993,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                 divisaHome: 1,
                 divisaAway: 1,
                 tabellino: [],
-                data: dataPartite,
+                data: dataPartiteAndata,
                 salvata: false,
               ),
             );
@@ -4746,6 +5017,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       _invalidateCacheKey++;
       _caricaGiornate();
       _caricaClassifica();
+      _verificaPartiteSalvate();
       setState(() {});
     } catch (e) {
       _showMessage('Errore nella creazione della giornata: $e');
@@ -4890,6 +5162,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       );
 
       final idToGiornataList = [];
+      // Mappa per tracciare gli ID base delle partite per ogni coppia di squadre
+      final Map<String, String> partitaBaseIds = {};
 
       // Genera classifica iniziale in base alle squadre abilitate
       try {
@@ -4952,7 +5226,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
 
       for (int i = 0; i < dataRows.length; i++) {
         List<dynamic> row = dataRows[i];
-        await _processRow(row, i + 2, idToGiornataList);
+        await _processRow(row, i + 2, idToGiornataList, partitaBaseIds);
       }
 
       try {
@@ -4981,6 +5255,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       _invalidateCacheKey++;
       _caricaGiornate();
       _caricaClassifica();
+      _verificaPartiteSalvate();
       setState(() {});
       Navigator.pop(context);
     } catch (e) {
@@ -5021,6 +5296,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     List<dynamic> row,
     int rowNumber,
     idToGiornataList,
+    Map<String, String> partitaBaseIds,
   ) async {
     try {
       if (row.length < 3) {
@@ -5046,6 +5322,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
         squadraTrasferta,
         fase,
         idToGiornataList,
+        partitaBaseIds,
       );
     } catch (e) {
       print('Errore nell\'elaborazione della riga $rowNumber: $e');
@@ -5058,6 +5335,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     String squadraTrasferta,
     String fase,
     idToGiornataList,
+    Map<String, String> partitaBaseIds,
   ) async {
     var id;
 
@@ -5091,6 +5369,14 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       idToGiornataList.add({'giornata': numeroGiornata, 'id': id});
     }
 
+    // Determina il suffisso per giornata e partita
+    String suffisso = '';
+    if (numeroGiornata.contains('andata')) {
+      suffisso = '_and';
+    } else if (numeroGiornata.contains('ritorno')) {
+      suffisso = '_rit';
+    }
+
     if (!giornateToPush.any(
           (g) =>
               g.giornata == numeroGiornata &&
@@ -5098,7 +5384,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
         ) &&
         giornataEsistente == null) {
       final giornata = Giornata(
-        id: id,
+        id: id + suffisso,
         idCompetizione: widget.competizione.id,
         giornata: numeroGiornata,
         fase: fase.isNotEmpty ? fase : 'G',
@@ -5115,8 +5401,21 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       );
       giornateToPush.add(giornata);
     }
+
+    // Crea chiave unica per la coppia di squadre (ordinate alfabeticamente)
+    final List<String> squadre = [squadraCasa, squadraTrasferta]..sort();
+    final String chiavePartita = '${squadre[0]}_vs_${squadre[1]}';
+
+    // Ottieni o crea l'ID base per questa coppia di squadre
+    String idBasePartita;
+    if (partitaBaseIds.containsKey(chiavePartita)) {
+      idBasePartita = partitaBaseIds[chiavePartita]!;
+    } else {
+      idBasePartita = mongo.ObjectId().toHexString();
+      partitaBaseIds[chiavePartita] = idBasePartita;
+    }
     final partita = Partita(
-      id: mongo.ObjectId().toHexString(),
+      id: idBasePartita + suffisso,
       idGiornata: id,
       teamHome: squadraCasa,
       teamAway: squadraTrasferta,
@@ -5222,6 +5521,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                 giornate_ = updated;
                 selectedGiornata = nuovaSelezione ?? selectedGiornata;
               });
+              _verificaPartiteSalvate();
             }
           })
           .catchError((error) {

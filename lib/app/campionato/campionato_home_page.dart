@@ -80,65 +80,81 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
   }
 
   void _showAddSquadraModal(BuildContext context) {
-    bool isWide = MediaQuery.of(context).size.width > 600;
-    showDialog(
+    showModalBottomSheet(
+      backgroundColor: Colors.blueAccent.withOpacity(0.8),
       context: context,
       builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Container(
-            width: isWide ? 400 : null,
-            padding: EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Aggiungi Elemento',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      icon: Icon(Icons.close),
-                      padding: EdgeInsets.zero,
-                      constraints: BoxConstraints(),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => InserisciSquadraPage(
-                            campionato: widget.campionato,
-                          ),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueAccent,
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: Text('Inserisci squadra'),
+        return Container(
+          padding: EdgeInsets.all(16),
+          height: 300,
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.only(top: 20, bottom: 16),
+                child: Text(
+                  'Aggiungi Elemento',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
-              ],
-            ),
+              ),
+              InkWell(
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          InserisciSquadraPage(campionato: widget.campionato),
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: GlassmorphicContainer(
+                  width: double.infinity,
+                  height: 50,
+                  borderRadius: 12,
+                  blur: 15,
+                  alignment: Alignment.center,
+                  border: 2,
+                  linearGradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withOpacity(0.3),
+                      Colors.white.withOpacity(0.1),
+                    ],
+                  ),
+                  borderGradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withOpacity(0.1),
+                      Colors.white.withOpacity(0.1),
+                    ],
+                  ),
+                  child: Text(
+                    'Inserisci squadra',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.only(top: 70.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Icon(Icons.close, color: Colors.blueAccent),
+                ),
+              ),
+            ],
           ),
         );
       },
@@ -183,6 +199,36 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
               );
             },
           ),
+          if (isWide && (_selectedIndex == 2 || _selectedIndex == 3))
+            IconButton(
+              icon: Icon(Icons.home, color: Colors.white),
+              onPressed: () {
+                setState(() {
+                  _selectedIndex = 0;
+                });
+              },
+              tooltip: 'Home',
+            ),
+          if (isWide && _selectedIndex != 2)
+            IconButton(
+              icon: Icon(Icons.compare_arrows_outlined, color: Colors.white),
+              onPressed: () {
+                setState(() {
+                  _selectedIndex = 2;
+                });
+              },
+              tooltip: 'Mercato',
+            ),
+          if (isWide && _selectedIndex != 3)
+            IconButton(
+              icon: Icon(Icons.emoji_events, color: Colors.white),
+              onPressed: () {
+                setState(() {
+                  _selectedIndex = 3;
+                });
+              },
+              tooltip: "Albo d'oro",
+            ),
           SettingsIcon(
             iconColor: Colors.white,
             onDismiss: () {
@@ -392,12 +438,12 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
           _selectedIndex = index;
         });
       },
-      borderRadius: BorderRadius.circular(25),
+      borderRadius: BorderRadius.circular(35),
       child: isSelected
           ? GlassmorphicContainer(
-              width: 90,
+              width: 100,
               height: 60,
-              borderRadius: 25,
+              borderRadius: 35,
               blur: 10,
               alignment: Alignment.center,
               border: 1.5,
@@ -475,7 +521,12 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
+              padding: EdgeInsets.only(
+                top: isWide ? 20 : 0,
+                bottom: 16,
+                left: 16,
+                right: 16,
+              ),
               child: Text(
                 'Prossime Partite:',
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
@@ -562,180 +613,214 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                         : MediaQuery.of(context).size.height * 0.49,
                     child: Padding(
                       padding: EdgeInsetsGeometry.only(left: 16),
-                      child: Card(
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 8,
-                        ),
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
+                      child: Container(
+                        decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 12,
+                              spreadRadius: 2,
+                              offset: Offset(0, 6),
+                            ),
+                          ],
                         ),
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 16),
-                          child: Column(
-                            children: [
-                              SizedBox(
-                                height: isWide
-                                    ? isTall
-                                          ? MediaQuery.of(context).size.height *
-                                                0.4
-                                          : MediaQuery.of(context).size.height *
-                                                0.35
-                                    : MediaQuery.of(context).size.height * 0.4,
-                                child: PageView.builder(
-                                  controller: _pageController,
-                                  itemCount: pages.length,
-                                  itemBuilder: (context, pageIndex) {
-                                    final page = pages[pageIndex];
-                                    final String competizione =
-                                        page['competizione'];
-                                    final List<Partita> pagePartite =
-                                        page['partite'];
-                                    return SingleChildScrollView(
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        children: [
-                                          // Titolo della giornata
-                                          Padding(
-                                            padding: EdgeInsets.only(
-                                              bottom: 8.0,
-                                              top: 4.0,
-                                              left: 16.0,
-                                            ),
-                                            child: Align(
-                                              alignment: Alignment.centerLeft,
-                                              child: Row(
-                                                children: [
-                                                  Image.asset(
-                                                    'assets/logos/logo_${page['cod']}_comp.png',
-                                                    height: 24,
-                                                    width: 24,
-                                                  ),
-                                                  SizedBox(width: 8),
-                                                  Text(
-                                                    competizione,
-                                                    style: TextStyle(
-                                                      fontSize: 15,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: Colors.blueAccent,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                          // Partite della giornata
-                                          for (var partita in pagePartite)
-                                            SizedBox(
-                                              width: MediaQuery.of(
-                                                context,
-                                              ).size.width,
-                                              height: isWide
-                                                  ? isTall
-                                                        ? 60
-                                                        : 70
-                                                  : 55,
-                                              child: buildCampionatoMatch(
-                                                CampionatoMatchModel(
-                                                  match: partita.id,
-                                                  partita: partita,
-                                                  campionato: widget.campionato,
-                                                  squadraHome:
-                                                      partiteDataMap[partita
-                                                          .id]?['squadraHome'],
-                                                  squadraAway:
-                                                      partiteDataMap[partita
-                                                          .id]?['squadraAway'],
-                                                  competizione: (() {
-                                                    try {
-                                                      final idCompetizione =
-                                                          partiteDataMap[partita
-                                                              .id]?['idCompetizione'];
-                                                      return competizioni
-                                                          .firstWhere(
-                                                            (c) =>
-                                                                c.id ==
-                                                                idCompetizione,
-                                                          );
-                                                    } catch (e) {
-                                                      return null;
-                                                    }
-                                                  })(),
-                                                ),
-                                                context,
-                                                null, // currentFase non disponibile in questo contesto
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              if (isWide && pages.length > 1)
-                                Padding(
-                                  padding: EdgeInsets.only(top: 32),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Padding(
-                                        padding: EdgeInsetsGeometry.only(
-                                          left: 16,
-                                        ),
-                                        child: IconButton(
-                                          onPressed: () {
-                                            if (_pageController.hasClients) {
-                                              _pageController.previousPage(
-                                                duration: Duration(
-                                                  milliseconds: 300,
-                                                ),
-                                                curve: Curves.easeInOut,
-                                              );
-                                            }
-                                          },
-                                          icon: Icon(Icons.arrow_back_ios),
-                                          tooltip: 'Pagina precedente',
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: EdgeInsetsGeometry.only(
-                                          right: 16,
-                                        ),
-                                        child: IconButton(
-                                          onPressed: () {
-                                            if (_pageController.hasClients) {
-                                              _pageController.nextPage(
-                                                duration: Duration(
-                                                  milliseconds: 300,
-                                                ),
-                                                curve: Curves.easeInOut,
-                                              );
-                                            }
-                                          },
-                                          icon: Icon(Icons.arrow_forward_ios),
-                                          tooltip: 'Pagina successiva',
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              const SizedBox(height: 0),
-                              if (!isWide)
-                                SmoothPageIndicator(
-                                  controller: _pageController,
-                                  count: pages.length,
-                                  effect: WormEffect(
-                                    dotHeight: 10,
-                                    dotWidth: 10,
-                                    activeDotColor: Colors.blueAccent,
-                                    dotColor: Colors.grey.shade300,
-                                  ),
-                                ),
+                        child: GlassmorphicContainer(
+                          width: double.infinity,
+                          height: double.infinity,
+                          borderRadius: 16,
+                          blur: 20,
+                          alignment: Alignment.topCenter,
+                          border: 2,
+                          linearGradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.white.withOpacity(0.8),
+                              Colors.white.withOpacity(0.5),
                             ],
+                          ),
+                          borderGradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.white.withOpacity(0.5),
+                              Colors.white.withOpacity(0.2),
+                            ],
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 16),
+                            child: Column(
+                              children: [
+                                SizedBox(
+                                  height: isWide
+                                      ? isTall
+                                            ? MediaQuery.of(
+                                                    context,
+                                                  ).size.height *
+                                                  0.4
+                                            : MediaQuery.of(
+                                                    context,
+                                                  ).size.height *
+                                                  0.35
+                                      : MediaQuery.of(context).size.height *
+                                            0.4,
+                                  child: PageView.builder(
+                                    controller: _pageController,
+                                    itemCount: pages.length,
+                                    itemBuilder: (context, pageIndex) {
+                                      final page = pages[pageIndex];
+                                      final String competizione =
+                                          page['competizione'];
+                                      final List<Partita> pagePartite =
+                                          page['partite'];
+                                      return SingleChildScrollView(
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.start,
+                                          children: [
+                                            // Titolo della giornata
+                                            Padding(
+                                              padding: EdgeInsets.only(
+                                                bottom: 8.0,
+                                                top: 4.0,
+                                                left: 16.0,
+                                              ),
+                                              child: Align(
+                                                alignment: Alignment.centerLeft,
+                                                child: Row(
+                                                  children: [
+                                                    Image.asset(
+                                                      'assets/logos/logo_${page['cod']}_comp.png',
+                                                      height: 24,
+                                                      width: 24,
+                                                    ),
+                                                    SizedBox(width: 8),
+                                                    Text(
+                                                      competizione,
+                                                      style: TextStyle(
+                                                        fontSize: 15,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color:
+                                                            Colors.blueAccent,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                            // Partite della giornata
+                                            for (var partita in pagePartite)
+                                              SizedBox(
+                                                width: MediaQuery.of(
+                                                  context,
+                                                ).size.width,
+                                                height: isWide
+                                                    ? isTall
+                                                          ? 60
+                                                          : 70
+                                                    : 55,
+                                                child: buildCampionatoMatch(
+                                                  CampionatoMatchModel(
+                                                    match: partita.id,
+                                                    partita: partita,
+                                                    campionato:
+                                                        widget.campionato,
+                                                    squadraHome:
+                                                        partiteDataMap[partita
+                                                            .id]?['squadraHome'],
+                                                    squadraAway:
+                                                        partiteDataMap[partita
+                                                            .id]?['squadraAway'],
+                                                    competizione: (() {
+                                                      try {
+                                                        final idCompetizione =
+                                                            partiteDataMap[partita
+                                                                .id]?['idCompetizione'];
+                                                        return competizioni
+                                                            .firstWhere(
+                                                              (c) =>
+                                                                  c.id ==
+                                                                  idCompetizione,
+                                                            );
+                                                      } catch (e) {
+                                                        return null;
+                                                      }
+                                                    })(),
+                                                  ),
+                                                  context,
+                                                  null, // currentFase non disponibile in questo contesto
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                if (isWide && pages.length > 1)
+                                  Padding(
+                                    padding: EdgeInsets.only(top: 32),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Padding(
+                                          padding: EdgeInsetsGeometry.only(
+                                            left: 16,
+                                          ),
+                                          child: IconButton(
+                                            onPressed: () {
+                                              if (_pageController.hasClients) {
+                                                _pageController.previousPage(
+                                                  duration: Duration(
+                                                    milliseconds: 300,
+                                                  ),
+                                                  curve: Curves.easeInOut,
+                                                );
+                                              }
+                                            },
+                                            icon: Icon(Icons.arrow_back_ios),
+                                            tooltip: 'Pagina precedente',
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: EdgeInsetsGeometry.only(
+                                            right: 16,
+                                          ),
+                                          child: IconButton(
+                                            onPressed: () {
+                                              if (_pageController.hasClients) {
+                                                _pageController.nextPage(
+                                                  duration: Duration(
+                                                    milliseconds: 300,
+                                                  ),
+                                                  curve: Curves.easeInOut,
+                                                );
+                                              }
+                                            },
+                                            icon: Icon(Icons.arrow_forward_ios),
+                                            tooltip: 'Pagina successiva',
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                const SizedBox(height: 0),
+                                if (!isWide)
+                                  SmoothPageIndicator(
+                                    controller: _pageController,
+                                    count: pages.length,
+                                    effect: WormEffect(
+                                      dotHeight: 10,
+                                      dotWidth: 10,
+                                      activeDotColor: Colors.blueAccent,
+                                      dotColor: Colors.grey.shade300,
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
                       ),

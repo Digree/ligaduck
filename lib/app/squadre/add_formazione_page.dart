@@ -474,26 +474,50 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
     // Assicurati che le liste locali siano sincronizzate con la formazione
     widget.squadra.formazione.titolari.clear();
     widget.squadra.formazione.titolari.addAll(_titolari);
-    widget.squadra.formazione.panchina.clear();
-    widget.squadra.formazione.panchina.addAll(_panchina);
 
-    // Sposta i giocatori con numero > 21 dalla panchina ai non convocati
-    final giocatoriDaSpostare = widget.squadra.formazione.panchina
-        .where((giocatore) => giocatore.pos > 21)
+    // Reset panchina e non convocati
+    widget.squadra.formazione.panchina.clear();
+    widget.squadra.formazione.nonConvocati.clear();
+
+    // Ottieni gli ID dei giocatori titolari
+    final idTitolari = _titolari.map((g) => g.idGiocatore).toSet();
+
+    // Filtra i giocatori non allenatori e non titolari
+    final giocatoriDaAssegnare = widget.giocatori
+        .where((g) => g.ruolo != 'Allenatore' && !idTitolari.contains(g.id))
         .toList();
 
-    for (var giocatore in giocatoriDaSpostare) {
-      widget.squadra.formazione.nonConvocati.add(giocatore);
+    // Ordina per numero di maglia
+    giocatoriDaAssegnare.sort(
+      (a, b) => _getNumeroGiocatore(a).compareTo(_getNumeroGiocatore(b)),
+    );
+
+    // Assegna a panchina (numero <= 21) o non convocati (numero >= 22)
+    for (var giocatore in giocatoriDaAssegnare) {
+      final numero = _getNumeroGiocatore(giocatore);
+
+      if (numero <= 21) {
+        // Aggiungi alla panchina
+        widget.squadra.formazione.panchina.add(
+          GiocatoreFormazione(
+            idGiocatore: giocatore.id,
+            pos: numero,
+            nome: giocatore.nome,
+            inCampo: false,
+          ),
+        );
+      } else {
+        // Aggiungi ai non convocati
+        widget.squadra.formazione.nonConvocati.add(
+          GiocatoreFormazione(
+            idGiocatore: giocatore.id,
+            pos: numero,
+            nome: giocatore.nome,
+            inCampo: false,
+          ),
+        );
+      }
     }
-
-    widget.squadra.formazione.panchina.removeWhere(
-      (giocatore) => giocatore.pos > 21,
-    );
-
-    // Ordina i non convocati per numero di maglia
-    widget.squadra.formazione.nonConvocati.sort(
-      (a, b) => a.pos.compareTo(b.pos),
-    );
 
     final provider = SquadreProvider();
     provider.caricaFormazione(

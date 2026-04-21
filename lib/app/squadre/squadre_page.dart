@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:glassmorphism/glassmorphism.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
 import 'package:ligaduck/app/models/partita/partita_formazione_model.dart';
@@ -260,144 +261,135 @@ class _SquadrePageState extends State<SquadrePage> {
   }
 
   void _showEditModal(BuildContext context) {
-    showDialog(
+    showModalBottomSheet(
+      backgroundColor: getColor('primary').withOpacity(0.8),
       context: context,
+      isScrollControlled: true,
       builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.0),
-          ),
-          child: Container(
-            width: MediaQuery.of(context).size.width * 0.2,
-            height: MediaQuery.of(context).size.height * 0.5,
-            padding: EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Modifica Squadra',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.close),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                  ],
-                ),
-                SizedBox(height: 20),
-                Expanded(
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ListView(
-                      children: [
-                        ElevatedButton(
-                          onPressed: () async {
-                            Navigator.of(context).pop();
-                            final result = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => AddGiocatoriPage(
-                                  squadra: widget.squadra,
-                                  campionato: widget.campionato,
-                                ),
-                              ),
-                            );
-
-                            // Se i dati sono stati modificati, ricarica i giocatori
-                            if (result == true) {
-                              await _loadGiocatori();
-                            }
-                          },
-                          child: Text(
-                            'Aggiungi Giocatori',
-                            style: TextStyle(
-                              color: getColor('primary', forText: true),
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        ElevatedButton(
-                          onPressed: () async {
-                            Navigator.of(context).pop();
-                            final result = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => AddFormazionePage(
-                                  squadra: widget.squadra,
-                                  campionato: widget.campionato,
-                                  giocatori: giocatori,
-                                ),
-                              ),
-                            );
-
-                            // Se i dati sono stati modificati, ricarica i giocatori
-                            if (result == true) {
-                              await _loadGiocatori();
-                            }
-                          },
-                          child: Text(
-                            'Inserisci Formazione',
-                            style: TextStyle(
-                              color: getColor('primary', forText: true),
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        ElevatedButton(
-                          onPressed: () async {
-                            Navigator.of(context).pop();
-                            await _mostraDialogCompetizioniAbilitate();
-                          },
-                          child: Text(
-                            'Modifica Competizioni Abilitate',
-                            style: TextStyle(
-                              color: getColor('primary', forText: true),
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        ElevatedButton(
-                          onPressed: () async {
-                            Navigator.of(context).pop();
-                            await _mostraDialogSelezionaCapitano();
-                          },
-                          child: Text(
-                            'Seleziona Capitano',
-                            style: TextStyle(
-                              color: getColor('primary', forText: true),
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        ElevatedButton(
-                          onPressed: () async {
-                            Navigator.of(context).pop();
-                            await _mostraDialogAssegnaNumeri();
-                          },
-                          child: Text(
-                            'Assegna numeri',
-                            style: TextStyle(
-                              color: getColor('primary', forText: true),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+        return Container(
+          padding: EdgeInsets.all(16),
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.only(top: 20, bottom: 16),
+                child: Text(
+                  'Modifica Squadra',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: getIconColor('primary'),
                   ),
                 ),
-              ],
-            ),
+              ),
+              Expanded(
+                child: ListView(
+                  children: [
+                    _buildGlassButton('Aggiungi Giocatori', () async {
+                      Navigator.of(context).pop();
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AddGiocatoriPage(
+                            squadra: widget.squadra,
+                            campionato: widget.campionato,
+                          ),
+                        ),
+                      );
+                      if (result == true) {
+                        await _loadGiocatori();
+                      }
+                    }),
+                    SizedBox(height: 10),
+                    _buildGlassButton('Inserisci Formazione', () async {
+                      Navigator.of(context).pop();
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AddFormazionePage(
+                            squadra: widget.squadra,
+                            campionato: widget.campionato,
+                            giocatori: giocatori,
+                          ),
+                        ),
+                      );
+                      if (result == true) {
+                        await _loadGiocatori();
+                      }
+                    }),
+                    SizedBox(height: 10),
+                    _buildGlassButton(
+                      'Modifica Competizioni Abilitate',
+                      () async {
+                        Navigator.of(context).pop();
+                        await _mostraDialogCompetizioniAbilitate();
+                      },
+                    ),
+                    SizedBox(height: 10),
+                    _buildGlassButton('Seleziona Capitano', () async {
+                      Navigator.of(context).pop();
+                      await _mostraDialogSelezionaCapitano();
+                    }),
+                    SizedBox(height: 10),
+                    _buildGlassButton('Assegna numeri', () async {
+                      Navigator.of(context).pop();
+                      await _mostraDialogAssegnaNumeri();
+                    }),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.only(top: 20.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Icon(Icons.close, color: getColor('primary')),
+                ),
+              ),
+            ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildGlassButton(String text, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: GlassmorphicContainer(
+        width: double.infinity,
+        height: 50,
+        borderRadius: 12,
+        blur: 15,
+        alignment: Alignment.center,
+        border: 2,
+        linearGradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withOpacity(0.3),
+            Colors.white.withOpacity(0.1),
+          ],
+        ),
+        borderGradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withOpacity(0.1),
+            Colors.white.withOpacity(0.1),
+          ],
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: getIconColor('primary'),
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+      ),
     );
   }
 
@@ -1237,7 +1229,7 @@ class _SquadrePageState extends State<SquadrePage> {
     double screenWidth,
     double screenHeight,
   ) {
-    return _buildMercatoTab(context, 'estivo');
+    return _buildMercatoTab(context, 'estivo', isWide);
   }
 
   Widget buildMercatoInvernale(
@@ -1246,10 +1238,10 @@ class _SquadrePageState extends State<SquadrePage> {
     double screenWidth,
     double screenHeight,
   ) {
-    return _buildMercatoTab(context, 'invernale');
+    return _buildMercatoTab(context, 'invernale', isWide);
   }
 
-  Widget _buildMercatoTab(BuildContext context, String sessione) {
+  Widget _buildMercatoTab(BuildContext context, String sessione, bool isWide) {
     final mercatoProvider = Provider.of<MercatoProvider>(
       context,
       listen: false,
@@ -1306,6 +1298,123 @@ class _SquadrePageState extends State<SquadrePage> {
           );
         }
 
+        if (isWide) {
+          // Separa acquisti e cessioni per la visualizzazione a colonne
+          final acquisti = trasferimenti
+              .where((t) => t.idSquadraAcquisto == widget.squadra.id)
+              .toList();
+          final cessioni = trasferimenti
+              .where((t) => t.idSquadraCessione == widget.squadra.id)
+              .toList();
+
+          return Stack(
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Colonna Acquisti (sinistra)
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Text(
+                            'ACQUISTI',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green[700],
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: acquisti.isEmpty
+                              ? Center(
+                                  child: Text(
+                                    'Nessun acquisto',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                )
+                              : ListView.builder(
+                                  padding: EdgeInsets.fromLTRB(16, 0, 8, 16),
+                                  itemCount: acquisti.length,
+                                  itemBuilder: (context, index) {
+                                    return _buildTrasferimentoCard(
+                                      context,
+                                      acquisti[index],
+                                      squadreProvider.squadre,
+                                    );
+                                  },
+                                ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Divisore verticale
+                  Container(width: 1, color: Colors.grey[300]),
+                  // Colonna Cessioni (destra)
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Text(
+                            'CESSIONI',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red[700],
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: cessioni.isEmpty
+                              ? Center(
+                                  child: Text(
+                                    'Nessuna cessione',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                )
+                              : ListView.builder(
+                                  padding: EdgeInsets.fromLTRB(8, 0, 16, 16),
+                                  itemCount: cessioni.length,
+                                  itemBuilder: (context, index) {
+                                    return _buildTrasferimentoCard(
+                                      context,
+                                      cessioni[index],
+                                      squadreProvider.squadre,
+                                    );
+                                  },
+                                ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              if (globals.admin)
+                Positioned(
+                  bottom: 16,
+                  right: 16,
+                  child: FloatingActionButton(
+                    onPressed: () {
+                      _mostraDialogSceltaMercato(sessione);
+                    },
+                    backgroundColor: getColor('primary'),
+                    child: Icon(Icons.add, color: getIconColor('primary')),
+                  ),
+                ),
+            ],
+          );
+        }
+
+        // Visualizzazione singola colonna per mobile
         return Stack(
           children: [
             ListView.builder(
@@ -3533,53 +3642,113 @@ class _SquadrePageState extends State<SquadrePage> {
 
   Widget showFormazione() {
     final isWide = MediaQuery.of(context).size.width > 600;
-    // Seleziona la formazione corretta in base al dropdown
-    final formazioneSelezionata = _selectedFormazioneType == 'Attuale'
-        ? widget.squadra.formazione
-        : widget.squadra.formazioneOld;
 
+    if (isWide) {
+      // Visualizzazione affiancata per schermi larghi
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Formazione Pre-mercato (sinistra)
+            Expanded(
+              child: _buildSingleFormazione(
+                formazione: widget.squadra.formazioneOld,
+                titolo: 'Formazione Pre-mercato',
+                isWide: isWide,
+                showAdminButtons: false,
+              ),
+            ),
+            SizedBox(width: 16),
+            // Formazione Attuale (destra)
+            Expanded(
+              child: _buildSingleFormazione(
+                formazione: widget.squadra.formazione,
+                titolo: 'Formazione Attuale',
+                isWide: isWide,
+                showAdminButtons: globals.admin,
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      // Visualizzazione con dropdown per schermi stretti
+      final formazioneSelezionata = _selectedFormazioneType == 'Attuale'
+          ? widget.squadra.formazione
+          : widget.squadra.formazioneOld;
+
+      return Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            child: DropdownButton<String>(
+              value: _selectedFormazioneType,
+              isExpanded: true,
+              items: ['Attuale', 'Pre-mercato'].map((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(
+                    value,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: getColor('primary', forText: true),
+                    ),
+                  ),
+                );
+              }).toList(),
+              onChanged: (String? newValue) {
+                if (newValue != null) {
+                  setState(() {
+                    _selectedFormazioneType = newValue;
+                  });
+                }
+              },
+            ),
+          ),
+          _buildSingleFormazione(
+            formazione: formazioneSelezionata,
+            titolo: null,
+            isWide: isWide,
+            showAdminButtons:
+                _selectedFormazioneType == 'Attuale' && globals.admin,
+          ),
+        ],
+      );
+    }
+  }
+
+  Widget _buildSingleFormazione({
+    required Formazione formazione,
+    required String? titolo,
+    required bool isWide,
+    required bool showAdminButtons,
+  }) {
     return Column(
       children: [
-        Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: isWide ? 490 : 8,
-            vertical: 8,
+        // Titolo (solo se fornito)
+        if (titolo != null)
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            child: Text(
+              titolo,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: getColor('primary', forText: true),
+              ),
+            ),
           ),
-          child: DropdownButton<String>(
-            value: _selectedFormazioneType,
-            isExpanded: true,
-            items: ['Attuale', 'Pre-mercato'].map((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(
-                  value,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: getColor('primary', forText: true),
-                  ),
-                ),
-              );
-            }).toList(),
-            onChanged: (String? newValue) {
-              if (newValue != null) {
-                setState(() {
-                  _selectedFormazioneType = newValue;
-                });
-              }
-            },
-          ),
-        ),
+        // Informazioni modulo e allenatore
         SizedBox(
-          height: isWide ? 80 : 40,
+          height: isWide ? 60 : 40,
           child: Padding(
-            padding: isWide
-                ? EdgeInsets.symmetric(horizontal: 490)
-                : EdgeInsets.symmetric(horizontal: 8),
+            padding: EdgeInsets.symmetric(horizontal: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Modulo: ${formazioneSelezionata.modulo}',
+                  'Modulo: ${formazione.modulo}',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: getColor('primary', forText: true),
@@ -3603,8 +3772,9 @@ class _SquadrePageState extends State<SquadrePage> {
             ),
           ),
         ),
+        // Campo da gioco con formazione
         Container(
-          width: isWide ? 400 : double.infinity,
+          width: isWide ? null : double.infinity,
           height: isWide ? 400 : MediaQuery.of(context).size.height * 0.46,
           padding: EdgeInsets.all(24),
           decoration: BoxDecoration(
@@ -3617,29 +3787,32 @@ class _SquadrePageState extends State<SquadrePage> {
             border: Border.all(color: Colors.grey[200]!, width: 1),
           ),
           child: Center(
-            child: formazioneSelezionata.titolari.isEmpty
+            child: formazione.titolari.isEmpty
                 ? Center()
                 : buildPartitaFormazione(
                     PartitaFormazioneModel(
                       codSquadra: widget.squadra.cod,
-                      formazione: formazioneSelezionata.titolari,
+                      formazione: formazione.titolari,
                       campionato: widget.campionato,
-                      modulo: formazioneSelezionata.modulo,
+                      modulo: formazione.modulo,
                       coloriSquadra: widget.squadra.colori,
-                      giocatoriDisponibili: formazioneSelezionata.panchina,
+                      giocatoriDisponibili: formazione.panchina,
                       competizioneId: null,
                     ),
                   ),
           ),
         ),
-        if (_selectedFormazioneType == 'Attuale' && globals.admin) ...[
+        // Pulsanti admin (solo se richiesto)
+        if (showAdminButtons) ...[
           Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: isWide ? 490 : 8,
-              vertical: 8,
+            padding: EdgeInsets.only(
+              left: isWide ? 0 : 8,
+              right: isWide ? 0 : 8,
+              top: 8,
+              bottom: 8,
             ),
             child: SizedBox(
-              width: isWide ? 400 : double.infinity,
+              width: double.infinity,
               child: ElevatedButton(
                 onPressed: () async {
                   await _aggiornaFormazionePreMercato();
@@ -3652,12 +3825,14 @@ class _SquadrePageState extends State<SquadrePage> {
             ),
           ),
           Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: isWide ? 490 : 8,
-              vertical: 4,
+            padding: EdgeInsets.only(
+              left: isWide ? 0 : 8,
+              right: isWide ? 0 : 8,
+              top: 4,
+              bottom: 4,
             ),
             child: SizedBox(
-              width: isWide ? 400 : double.infinity,
+              width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red[700],

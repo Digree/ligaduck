@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:glassmorphism/glassmorphism.dart';
 import 'package:ligaduck/app/service/giocatori_provider.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/squadre_provider.dart';
@@ -194,254 +195,295 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   void _showFilterDialog() {
-    showDialog(
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.blueAccent.withOpacity(0.8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            return Dialog(
-              insetPadding: EdgeInsets.symmetric(horizontal: 30, vertical: 30),
-              child: Container(
-                constraints: BoxConstraints(maxWidth: 450, maxHeight: 450),
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Title with close button
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Filtri di ricerca',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          ),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.close, color: Colors.blue[600]),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                          padding: EdgeInsets.zero,
-                          constraints: BoxConstraints(),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 16),
-                    // Content
-                    Flexible(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (_searchType == 'Giocatori') ...[
-                              // Dropdown Nazionalità
-                              Text(
-                                'Nazionalità',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.grey[700],
-                                ),
-                              ),
-                              SizedBox(height: 12),
-                              Container(
-                                width: double.infinity,
-                                padding: EdgeInsets.symmetric(horizontal: 12),
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: Colors.blueAccent.withOpacity(0.3),
-                                  ),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<String>(
-                                    value: _selectedNazione,
-                                    hint: Text('Seleziona nazionalità'),
-                                    isExpanded: true,
-                                    icon: Icon(
-                                      Icons.arrow_drop_down,
-                                      color: Colors.blueAccent,
-                                    ),
-                                    items: _nazionalita.map((String value) {
-                                      return DropdownMenuItem<String>(
-                                        value: value,
-                                        child: Text(value),
-                                      );
-                                    }).toList(),
-                                    onChanged: (String? newValue) {
-                                      setDialogState(() {
-                                        _selectedNazione = newValue;
-                                      });
-                                    },
-                                  ),
-                                ),
-                              ),
-                              SizedBox(height: 24),
-                              // Radio button Ruoli
-                              Text(
-                                'Ruolo',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.grey[700],
-                                ),
-                              ),
-                              SizedBox(height: 8),
-                              Wrap(
-                                alignment: WrapAlignment.center,
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  buildRuoloChip(
-                                    'P',
-                                    'Portiere',
-                                    _selectedRuolo,
-                                    (ruolo) {
-                                      setDialogState(() {
-                                        _selectedRuolo = ruolo;
-                                      });
-                                    },
-                                  ),
-                                  buildRuoloChip(
-                                    'D',
-                                    'Difensore',
-                                    _selectedRuolo,
-                                    (ruolo) {
-                                      setDialogState(() {
-                                        _selectedRuolo = ruolo;
-                                      });
-                                    },
-                                  ),
-                                  buildRuoloChip(
-                                    'C',
-                                    'Centrocampista',
-                                    _selectedRuolo,
-                                    (ruolo) {
-                                      setDialogState(() {
-                                        _selectedRuolo = ruolo;
-                                      });
-                                    },
-                                  ),
-                                  buildRuoloChip(
-                                    'A',
-                                    'Attaccante',
-                                    _selectedRuolo,
-                                    (ruolo) {
-                                      setDialogState(() {
-                                        _selectedRuolo = ruolo;
-                                      });
-                                    },
-                                  ),
-                                  buildRuoloChip(
-                                    'All',
-                                    'Allenatore',
-                                    _selectedRuolo,
-                                    (ruolo) {
-                                      setDialogState(() {
-                                        _selectedRuolo = ruolo;
-                                      });
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ] else ...[
-                              // Filtri per Squadre
-                              Text(
-                                'Nazionalità',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.grey[700],
-                                ),
-                              ),
-                              SizedBox(height: 12),
-                              Container(
-                                width: double.infinity,
-                                padding: EdgeInsets.symmetric(horizontal: 12),
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: Colors.blueAccent.withOpacity(0.3),
-                                  ),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<String>(
-                                    value: _selectedNazioneSquadre,
-                                    hint: Text('Seleziona nazionalità'),
-                                    isExpanded: true,
-                                    icon: Icon(
-                                      Icons.arrow_drop_down,
-                                      color: Colors.blueAccent,
-                                    ),
-                                    items: _nazionalitaSquadre.map((
-                                      String value,
-                                    ) {
-                                      return DropdownMenuItem<String>(
-                                        value: value,
-                                        child: Text(value),
-                                      );
-                                    }).toList(),
-                                    onChanged: (String? newValue) {
-                                      setDialogState(() {
-                                        _selectedNazioneSquadre = newValue;
-                                      });
-                                    },
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
+            return Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.8,
+              ),
+              padding: EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Title with close button
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Filtri di ricerca',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: Colors.white,
                         ),
                       ),
-                    ),
-                    SizedBox(height: 16),
-                    // Actions
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () {
-                            setDialogState(() {
-                              _selectedNazione = null;
-                              _selectedNazioneSquadre = null;
-                              _selectedRuolo = null;
-                            });
-                          },
-                          child: Text(
-                            'Azzera',
-                            style: TextStyle(color: Colors.red),
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Filtri applicati'),
-                                backgroundColor: Colors.blueAccent,
-                                duration: Duration(seconds: 2),
+                      IconButton(
+                        icon: Icon(Icons.close, color: Colors.white),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        padding: EdgeInsets.zero,
+                        constraints: BoxConstraints(),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16),
+                  // Content
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (_searchType == 'Giocatori') ...[
+                            // Dropdown Nazionalità
+                            Text(
+                              'Nazionalità',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
                               ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueAccent,
-                            foregroundColor: Colors.white,
-                          ),
-                          child: Text('Applica'),
-                        ),
-                      ],
+                            ),
+                            SizedBox(height: 12),
+                            Container(
+                              width: double.infinity,
+                              padding: EdgeInsets.symmetric(horizontal: 12),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.3),
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: _selectedNazione,
+                                  hint: Text(
+                                    'Seleziona nazionalità',
+                                    style: TextStyle(color: Colors.white70),
+                                  ),
+                                  isExpanded: true,
+                                  icon: Icon(
+                                    Icons.arrow_drop_down,
+                                    color: Colors.white,
+                                  ),
+                                  items: _nazionalita.map((String value) {
+                                    return DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value),
+                                    );
+                                  }).toList(),
+                                  onChanged: (String? newValue) {
+                                    setDialogState(() {
+                                      _selectedNazione = newValue;
+                                    });
+                                  },
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 24),
+                            // Radio button Ruoli
+                            Text(
+                              'Ruolo',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Wrap(
+                              alignment: WrapAlignment.center,
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                buildRuoloChip(
+                                  'P',
+                                  'Portiere',
+                                  _selectedRuolo,
+                                  (ruolo) {
+                                    setDialogState(() {
+                                      _selectedRuolo = ruolo;
+                                    });
+                                  },
+                                ),
+                                buildRuoloChip(
+                                  'D',
+                                  'Difensore',
+                                  _selectedRuolo,
+                                  (ruolo) {
+                                    setDialogState(() {
+                                      _selectedRuolo = ruolo;
+                                    });
+                                  },
+                                ),
+                                buildRuoloChip(
+                                  'C',
+                                  'Centrocampista',
+                                  _selectedRuolo,
+                                  (ruolo) {
+                                    setDialogState(() {
+                                      _selectedRuolo = ruolo;
+                                    });
+                                  },
+                                ),
+                                buildRuoloChip(
+                                  'A',
+                                  'Attaccante',
+                                  _selectedRuolo,
+                                  (ruolo) {
+                                    setDialogState(() {
+                                      _selectedRuolo = ruolo;
+                                    });
+                                  },
+                                ),
+                                buildRuoloChip(
+                                  'All',
+                                  'Allenatore',
+                                  _selectedRuolo,
+                                  (ruolo) {
+                                    setDialogState(() {
+                                      _selectedRuolo = ruolo;
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          ] else ...[
+                            // Filtri per Squadre
+                            Text(
+                              'Nazionalità',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(height: 12),
+                            Container(
+                              width: double.infinity,
+                              padding: EdgeInsets.symmetric(horizontal: 12),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.3),
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: _selectedNazioneSquadre,
+                                  hint: Text(
+                                    'Seleziona nazionalità',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                  isExpanded: true,
+                                  icon: Icon(
+                                    Icons.arrow_drop_down,
+                                    color: Colors.white,
+                                  ),
+                                  items: _nazionalitaSquadre.map((
+                                    String value,
+                                  ) {
+                                    return DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value),
+                                    );
+                                  }).toList(),
+                                  onChanged: (String? newValue) {
+                                    setDialogState(() {
+                                      _selectedNazioneSquadre = newValue;
+                                    });
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
-                  ],
-                ),
+                  ),
+                  SizedBox(height: 16),
+                  // Actions
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      _buildGlassButton(
+                        text: 'Azzera',
+                        onPressed: () {
+                          setDialogState(() {
+                            _selectedNazione = null;
+                            _selectedNazioneSquadre = null;
+                            _selectedRuolo = null;
+                          });
+                        },
+                        color: Colors.red,
+                      ),
+                      SizedBox(width: 8),
+                      _buildGlassButton(
+                        text: 'Applica',
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Filtri applicati'),
+                              backgroundColor: Colors.blueAccent,
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                        color: Colors.blue,
+                      ),
+                    ],
+                  ),
+                ],
               ),
             );
           },
         );
       },
+    );
+  }
+
+  Widget _buildGlassButton({
+    required String text,
+    required VoidCallback onPressed,
+    required Color color,
+  }) {
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(12),
+      child: GlassmorphicContainer(
+        width: 100,
+        height: 30,
+        borderRadius: 12,
+        blur: 15,
+        border: 2,
+        alignment: Alignment.center,
+        linearGradient: LinearGradient(
+          colors: [color.withOpacity(0.6), color.withOpacity(0.3)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderGradient: LinearGradient(
+          colors: [color.withOpacity(0.5), color.withOpacity(0.2)],
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
     );
   }
 

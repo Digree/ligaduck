@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:glassmorphism/glassmorphism.dart';
 
 class CompetizioneButtonModel {
   final String text;
@@ -26,14 +27,32 @@ Widget buildCompetizioneButton(
       right: 8.0,
       bottom: isWide ? 32.0 : 16.0,
     ),
-    child: SizedBox(
-      width: isWide ? 190 : screenWidth * 0.3,
-      height: isWide ? 160 : screenHeight * 0.1,
-      child: FloatingActionButton(
-        heroTag: model.text,
-        onPressed: model.onPressed,
-        backgroundColor: Colors.blueAccent.withOpacity(0.5),
-        elevation: 0,
+    child: InkWell(
+      onTap: model.onPressed,
+      borderRadius: BorderRadius.circular(20),
+      child: GlassmorphicContainer(
+        width: isWide ? 190 : screenWidth * 0.3,
+        height: isWide ? 160 : screenHeight * 0.1,
+        borderRadius: 20,
+        blur: 20,
+        alignment: Alignment.center,
+        border: 2,
+        linearGradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.blueAccent.withOpacity(0.4),
+            Colors.blueAccent.withOpacity(0.7),
+          ],
+        ),
+        borderGradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withOpacity(0.5),
+            Colors.white.withOpacity(0.2),
+          ],
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -46,20 +65,28 @@ Widget buildCompetizioneButton(
                 ),
               ),
             if (isWide)
-              Text(
-                model.text,
-                style: TextStyle(color: Colors.white),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              Padding(
+                padding: EdgeInsets.only(top: 4),
+                child: Text(
+                  model.text,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(
+                        offset: Offset(1, 1),
+                        blurRadius: 2,
+                        color: Colors.black.withOpacity(0.3),
+                      ),
+                    ],
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-
-            //SizedBox(height: 8),
           ],
         ),
-        /* model.imagePath != null
-            ? Image.asset(model.imagePath!, fit: BoxFit.cover)
-            : Text(model.text, style: TextStyle(color: Colors.white)), */
       ),
     ),
   );

@@ -1054,6 +1054,44 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                       ),
                                       textAlign: TextAlign.center,
                                     ),
+                                  // Mostra risultato aggregato per partite di ritorno
+                                  if (partita!.id.contains('_rit'))
+                                    FutureBuilder<Partita?>(
+                                      key: ValueKey(
+                                        'agg_${risultatoHomeSenzaRigori}_$risultatoAwaySenzaRigori',
+                                      ),
+                                      future: _getPartitaAndata(),
+                                      builder: (context, snapshot) {
+                                        if (snapshot.hasData &&
+                                            snapshot.data != null) {
+                                          final partitaAndata = snapshot.data!;
+                                          final aggHome =
+                                              risultatoHomeSenzaRigori +
+                                              partitaAndata.risultatoAway;
+                                          final aggAway =
+                                              risultatoAwaySenzaRigori +
+                                              partitaAndata.risultatoHome;
+                                          return Text(
+                                            'agg. $aggHome - $aggAway',
+                                            style: TextStyle(
+                                              fontSize: 12.0,
+                                              color: Colors.white70,
+                                              fontWeight: FontWeight.w600,
+                                              fontFamily: competizione?.id == 5
+                                                  ? 'champions'
+                                                  : competizione?.id == 6 ||
+                                                        competizione?.id == 7
+                                                  ? 'europa'
+                                                  : competizione?.id == 8
+                                                  ? 'supercup'
+                                                  : null,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          );
+                                        }
+                                        return SizedBox.shrink();
+                                      },
+                                    ),
                                 ],
                               ),
                             ),
@@ -5967,6 +6005,24 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     }
 
     return partita;
+  }
+
+  Future<Partita?> _getPartitaAndata() async {
+    if (!partita!.id.contains('_rit')) {
+      return null;
+    }
+
+    try {
+      final idAndata = partita!.id.replaceAll('_rit', '_and');
+      final partitaAndata = await Provider.of<PartiteProvider>(
+        context,
+        listen: false,
+      ).fetchPartitaById(widget.campionato, idAndata);
+      return partitaAndata;
+    } catch (e) {
+      print('Errore nel recupero della partita di andata: $e');
+      return null;
+    }
   }
 
   Future<bool> saveFormazione(
