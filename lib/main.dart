@@ -10,24 +10,35 @@ import 'package:ligaduck/app/service/squadre_provider.dart';
 import 'package:ligaduck/app/service/giocatori_provider.dart';
 import 'package:ligaduck/app/service/mercato_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ligaduck/app/config/models/global.dart' as globals;
 
 // RouteObserver globale per rilevare quando si torna a una route
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
-void main() => runApp(
-  MultiProvider(
-    providers: [
-      ChangeNotifierProvider(create: (_) => SquadreProvider()),
-      ChangeNotifierProvider(create: (_) => CompetizioniProvider()),
-      ChangeNotifierProvider(create: (_) => ConfigProvider()),
-      ChangeNotifierProvider(create: (_) => GiornateProvider()),
-      ChangeNotifierProvider(create: (_) => PartiteProvider()),
-      ChangeNotifierProvider(create: (_) => GiocatoriProvider()),
-      ChangeNotifierProvider(create: (_) => MercatoProvider()),
-    ],
-    child: MyApp(),
-  ),
-);
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Carica le preferenze salvate all'avvio
+  final prefs = await SharedPreferences.getInstance();
+  globals.admin = prefs.getBool('admin') ?? false;
+  globals.mostraColori = prefs.getBool('mostraColori') ?? false;
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => SquadreProvider()),
+        ChangeNotifierProvider(create: (_) => CompetizioniProvider()),
+        ChangeNotifierProvider(create: (_) => ConfigProvider()),
+        ChangeNotifierProvider(create: (_) => GiornateProvider()),
+        ChangeNotifierProvider(create: (_) => PartiteProvider()),
+        ChangeNotifierProvider(create: (_) => GiocatoriProvider()),
+        ChangeNotifierProvider(create: (_) => MercatoProvider()),
+      ],
+      child: MyApp(),
+    ),
+  );
+}
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
