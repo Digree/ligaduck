@@ -12,6 +12,8 @@ import 'package:ligaduck/app/service/mercato_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
+import 'package:ligaduck/app/service/cache_service.dart';
+import 'dart:async';
 
 // RouteObserver globale per rilevare quando si torna a una route
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
@@ -48,6 +50,24 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  Timer? _cacheCleanupTimer;
+  final _cache = CacheService();
+
+  @override
+  void initState() {
+    super.initState();
+    // Pulisce la cache vecchia ogni 30 minuti
+    _cacheCleanupTimer = Timer.periodic(Duration(minutes: 30), (timer) {
+      _cache.cleanOldCache();
+    });
+  }
+
+  @override
+  void dispose() {
+    _cacheCleanupTimer?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

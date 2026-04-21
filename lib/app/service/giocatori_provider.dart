@@ -5,9 +5,11 @@ import 'package:http/http.dart' as http;
 import 'package:ligaduck/app/config/env.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/services/commonService.dart';
+import 'package:ligaduck/app/service/cache_service.dart';
 
 class GiocatoriProvider with ChangeNotifier {
   List<Giocatore> _giocatori = [];
+  final _cache = CacheService();
 
   Future<bool> aggiungiGiocatore(Giocatore giocatore) async {
     try {
@@ -105,8 +107,22 @@ class GiocatoriProvider with ChangeNotifier {
 
   Future<Giocatore?> getGiocatoreById(
     String campionato,
-    String idGiocatore,
-  ) async {
+    String idGiocatore, {
+    bool forceRefresh = false,
+  }) async {
+    final cacheKey = 'giocatore_${campionato}_$idGiocatore';
+
+    // Controlla cache (valida per 10 minuti)
+    if (!forceRefresh) {
+      final cached = _cache.get<Giocatore>(
+        cacheKey,
+        maxAge: Duration(minutes: 10),
+      );
+      if (cached != null) {
+        return cached;
+      }
+    }
+
     try {
       final response = await http.get(
         Uri.parse('${Env.apiUrl}/$campionato/giocatore/$idGiocatore'),
@@ -116,6 +132,10 @@ class GiocatoriProvider with ChangeNotifier {
         final Map<String, dynamic> data = json.decode(response.body);
         Giocatore giocatore = Giocatore.fromJson(data);
         giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
+
+        // Salva in cache
+        _cache.set(cacheKey, giocatore);
+
         return giocatore;
       } else {
         throw Exception('Errore nel caricamento: ${response.statusCode}');

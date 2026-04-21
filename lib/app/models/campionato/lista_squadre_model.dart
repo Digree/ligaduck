@@ -369,13 +369,13 @@ Widget showSquadre(ListaSquadreModel model, String categoria) {
                                   ? CommonService.getColor(
                                       'primary',
                                       squadra,
-                                    ).withOpacity(0.5)
+                                    ).withOpacity(0.7)
                                   : Colors.blueAccent.withOpacity(0.5),
                               mostraColori
                                   ? CommonService.getColor(
                                       'secondary',
                                       squadra,
-                                    ).withOpacity(0.1)
+                                    ).withOpacity(0.5)
                                   : Colors.blueAccent.withOpacity(0.1),
                             ],
                           ),

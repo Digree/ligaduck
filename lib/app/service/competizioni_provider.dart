@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:ligaduck/app/config/env.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
+import 'package:ligaduck/app/service/cache_service.dart';
 
 class CompetizioniProvider with ChangeNotifier {
   List<Competizione> _competizioni = [];
+  final _cache = CacheService();
 
   List<Competizione> get competizioni => _competizioni;
   Competizione _competizione = Competizione(
@@ -42,8 +44,23 @@ class CompetizioniProvider with ChangeNotifier {
 
   Future<Competizione> getCompetizione(
     String campionato,
-    String idGiornata,
-  ) async {
+    String idGiornata, {
+    bool forceRefresh = false,
+  }) async {
+    final cacheKey = 'competizione_${campionato}_$idGiornata';
+
+    // Controlla cache (valida per 10 minuti)
+    if (!forceRefresh) {
+      final cached = _cache.get<Competizione>(
+        cacheKey,
+        maxAge: Duration(minutes: 10),
+      );
+      if (cached != null) {
+        _competizione = cached;
+        return _competizione;
+      }
+    }
+
     try {
       final response = await http.get(
         Uri.parse('${Env.apiUrl}/$campionato/competizioni/$idGiornata'),
@@ -52,6 +69,10 @@ class CompetizioniProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         _competizione = Competizione.fromJson(data);
+
+        // Salva in cache
+        _cache.set(cacheKey, _competizione);
+
         notifyListeners();
         return _competizione;
       } else {
@@ -63,7 +84,23 @@ class CompetizioniProvider with ChangeNotifier {
     }
   }
 
-  Future<List<CompetizioneVincitore>> fetchVincitori(String campionato) async {
+  Future<List<CompetizioneVincitore>> fetchVincitori(
+    String campionato, {
+    bool forceRefresh = false,
+  }) async {
+    final cacheKey = 'vincitori_$campionato';
+
+    // Controlla cache (valida per 30 minuti dato che i vincitori cambiano raramente)
+    if (!forceRefresh) {
+      final cached = _cache.get<List<CompetizioneVincitore>>(
+        cacheKey,
+        maxAge: Duration(minutes: 30),
+      );
+      if (cached != null) {
+        return cached;
+      }
+    }
+
     try {
       final response = await http.get(
         Uri.parse('${Env.apiUrl}/$campionato/competizioni/vincitori'),
@@ -71,16 +108,26 @@ class CompetizioniProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        List<CompetizioneVincitore> vincitori;
+
         // L'endpoint può ritornare una lista o un singolo oggetto
         if (data is List) {
-          return data
+          vincitori = data
               .map((item) => CompetizioneVincitore.fromJson(item))
               .toList();
         } else if (data is Map) {
           // Se ritorna una mappa singola
-          return [CompetizioneVincitore.fromJson(data as Map<String, dynamic>)];
+          vincitori = [
+            CompetizioneVincitore.fromJson(data as Map<String, dynamic>),
+          ];
+        } else {
+          vincitori = [];
         }
-        return [];
+
+        // Salva in cache
+        _cache.set(cacheKey, vincitori);
+
+        return vincitori;
       } else {
         throw Exception('Errore nel caricamento: ${response.statusCode}');
       }

@@ -3,17 +3,35 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:ligaduck/app/config/env.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
+import 'package:ligaduck/app/service/cache_service.dart';
 
 class PartiteProvider with ChangeNotifier {
   List<Partita> _partite = [];
   List<TipoEvento> _eventi = [];
+  final _cache = CacheService();
+
   List<Partita> get partite => _partite;
   List<TipoEvento> get eventi => _eventi;
 
   Future<List<Partita>> fetchPartite(
     String campionato,
-    String idGiornata,
-  ) async {
+    String idGiornata, {
+    bool forceRefresh = false,
+  }) async {
+    final cacheKey = 'partite_${campionato}_$idGiornata';
+
+    // Controlla cache (valida per 3 minuti per partite recenti)
+    if (!forceRefresh) {
+      final cached = _cache.get<List<Partita>>(
+        cacheKey,
+        maxAge: Duration(minutes: 3),
+      );
+      if (cached != null) {
+        _partite = cached;
+        return _partite;
+      }
+    }
+
     try {
       final response = await http.get(
         Uri.parse('${Env.apiUrl}/$campionato/$idGiornata/partite'),
@@ -22,6 +40,10 @@ class PartiteProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         _partite = data.map((item) => Partita.fromJson(item)).toList();
+
+        // Salva in cache
+        _cache.set(cacheKey, _partite);
+
         notifyListeners();
         return _partite;
       } else {
@@ -115,6 +137,9 @@ class PartiteProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
+        // Invalida la cache della partita modificata e di tutte le partite del campionato
+        _cache.invalidate('partita_${campionato}_$idPartita');
+        _cache.invalidatePrefix('partite_$campionato');
         return true;
       } else {
         print('Errore POST: ${response.statusCode} - ${response.body}');
@@ -141,6 +166,9 @@ class PartiteProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
+        // Invalida la cache della partita modificata e di tutte le partite del campionato
+        _cache.invalidate('partita_${campionato}_$idPartita');
+        _cache.invalidatePrefix('partite_$campionato');
         return true;
       } else {
         print('Errore DELETE: ${response.statusCode} - ${response.body}');
@@ -152,7 +180,24 @@ class PartiteProvider with ChangeNotifier {
     }
   }
 
-  Future<Partita> fetchPartitaById(String campionato, String idPartita) async {
+  Future<Partita> fetchPartitaById(
+    String campionato,
+    String idPartita, {
+    bool forceRefresh = false,
+  }) async {
+    final cacheKey = 'partita_${campionato}_$idPartita';
+
+    // Controlla cache (valida per 2 minuti)
+    if (!forceRefresh) {
+      final cached = _cache.get<Partita>(
+        cacheKey,
+        maxAge: Duration(minutes: 2),
+      );
+      if (cached != null) {
+        return cached;
+      }
+    }
+
     try {
       final url = '${Env.apiUrl}/$campionato/partita/$idPartita';
       print('Tentativo di fetch partita da URL: $url');
@@ -167,7 +212,12 @@ class PartiteProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
-        return Partita.fromJson(data);
+        final partita = Partita.fromJson(data);
+
+        // Salva in cache
+        _cache.set(cacheKey, partita);
+
+        return partita;
       } else {
         throw Exception('Errore nel caricamento: ${response.statusCode}');
       }
@@ -194,6 +244,9 @@ class PartiteProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
+        // Invalida la cache della partita e di tutte le partite
+        _cache.invalidate('partita_${campionato}_$idPartita');
+        _cache.invalidatePrefix('partite_$campionato');
         return true;
       } else {
         print('Errore POST: ${response.statusCode} - ${response.body}');
@@ -228,6 +281,9 @@ class PartiteProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
+        // Invalida la cache della partita e di tutte le partite
+        _cache.invalidate('partita_${campionato}_$idPartita');
+        _cache.invalidatePrefix('partite_$campionato');
         return true;
       } else {
         print('Errore POST: ${response.statusCode} - ${response.body}');
@@ -277,6 +333,9 @@ class PartiteProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
+        // Invalida la cache delle partite e competizioni (per aggiornare statistiche)
+        _cache.invalidatePrefix('partite_$campionato');
+        _cache.invalidatePrefix('competizione_$campionato');
         return true;
       } else {
         print('Errore POST: ${response.statusCode} - ${response.body}');

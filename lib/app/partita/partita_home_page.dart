@@ -1138,7 +1138,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                               risultatoAwaySenzaRigori +
                                               partitaAndata.risultatoHome;
                                           return Text(
-                                            'agg. $aggHome - $aggAway',
+                                            'Agg. ($aggHome - $aggAway)',
                                             style: TextStyle(
                                               fontSize: 12.0,
                                               color: Colors.white70,
