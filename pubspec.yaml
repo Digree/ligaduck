@@ -22,6 +22,7 @@ dependencies:
   font_awesome_flutter: ^10.7.0
   glassmorphism: ^3.0.0
   shared_preferences: ^2.2.2
+  keyboard_actions: ^4.2.0
 
 dev_dependencies:
   flutter_test:

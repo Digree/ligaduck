@@ -18,6 +18,8 @@ class CampionatoMatchModel {
   final Squadra? squadraAway;
   final Competizione? competizione;
   final VoidCallback? onRefreshRequired;
+  final Partita?
+  andataPartita; // Partita di andata (usata per calcolare l'aggregato nel ritorno)
 
   CampionatoMatchModel({
     required this.match,
@@ -27,6 +29,7 @@ class CampionatoMatchModel {
     this.squadraAway,
     this.competizione,
     this.onRefreshRequired,
+    this.andataPartita,
   });
 }
 
@@ -58,7 +61,7 @@ Widget buildCampionatoMatch(
   bool underlineHome = false;
   bool underlineAway = false;
 
-  if (isPhaseE && !isAndata) {
+  if (isPhaseE && !isAndata && model.partita.salvata) {
     // Conta rigori a tempo regolamentare (minuto 121)
     int rigoriHome121 = model.partita.tabellino
         .where(
@@ -95,23 +98,38 @@ Widget buildCampionatoMatch(
         }
       }
     } else {
-      // Partita di ritorno: calcola aggregato
-      // Per ora assumiamo di avere i dati dell'andata dal tabellino o da altre fonti
-      // In assenza di dati certi, controlliamo solo questa partita
-      // TODO: Se serve l'aggregato completo, bisogna fare una query per l'andata
+      // Partita di ritorno: calcola aggregato usando i risultati salvati
+      // Caso normale: andata aveva TeamA come home e TeamB come away
+      //               ritorno ha TeamB come home e TeamA come away
+      // => andataPartita.idTeamHome == model.partita.idTeamAway
 
-      // Calcola risultato senza rigori (esclude minuto 121)
-      int homeNoRigori = model.partita.risultatoHome;
-      int awayNoRigori = model.partita.risultatoAway;
+      int aggHome = model.partita.risultatoHome;
+      int aggAway = model.partita.risultatoAway;
 
-      // Per le partite di ritorno, verifica se c'è pareggio in aggregato
-      // Nota: questa è una semplificazione. Idealmente dovresti avere l'andata
-      if (homeNoRigori > awayNoRigori) {
+      if (model.andataPartita != null) {
+        if (model.andataPartita!.idTeamHome == model.partita.idTeamAway) {
+          // Caso normale: squadre invertite tra andata e ritorno
+          // aggHome (home del ritorno) = ritorno.home + andata.away
+          // aggAway (away del ritorno) = ritorno.away + andata.home
+          aggHome =
+              model.partita.risultatoHome + model.andataPartita!.risultatoAway;
+          aggAway =
+              model.partita.risultatoAway + model.andataPartita!.risultatoHome;
+        } else {
+          // Squadre nello stesso ordine in andata e ritorno
+          aggHome =
+              model.partita.risultatoHome + model.andataPartita!.risultatoHome;
+          aggAway =
+              model.partita.risultatoAway + model.andataPartita!.risultatoAway;
+        }
+      }
+
+      if (aggHome > aggAway) {
         underlineHome = true;
-      } else if (awayNoRigori > homeNoRigori) {
+      } else if (aggAway > aggHome) {
         underlineAway = true;
       } else {
-        // Risultato pari: verifica rigori
+        // Aggregato pari: verifica rigori del ritorno
         if (rigoriHome121 > rigoriAway121) {
           underlineHome = true;
         } else if (rigoriAway121 > rigoriHome121) {

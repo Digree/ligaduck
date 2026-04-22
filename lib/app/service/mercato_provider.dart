@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:ligaduck/app/config/env.dart';
 import 'package:ligaduck/app/service/models/trasferimento.dart';
+import 'package:ligaduck/app/service/cache_service.dart';
 
 class MercatoProvider with ChangeNotifier {
+  final _cache = CacheService();
+
   Future<bool> addTrasferimento(
     String campionato,
     Trasferimento trasferimento,
@@ -18,6 +21,8 @@ class MercatoProvider with ChangeNotifier {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         print('Trasferimento salvato con successo');
+        // Invalida la cache dei trasferimenti del campionato
+        _cache.invalidatePrefix('trasferimenti_$campionato');
         notifyListeners();
         return true;
       } else {
@@ -35,8 +40,19 @@ class MercatoProvider with ChangeNotifier {
   Future<List<Trasferimento>> fetchTrasferimentiBySquadra(
     String campionato,
     int idSquadra,
-    String sessione,
-  ) async {
+    String sessione, {
+    bool forceRefresh = false,
+  }) async {
+    final cacheKey = 'trasferimenti_${campionato}_${idSquadra}_$sessione';
+
+    if (!forceRefresh) {
+      final cached = _cache.get<List<Trasferimento>>(
+        cacheKey,
+        maxAge: Duration(minutes: 5),
+      );
+      if (cached != null) return cached;
+    }
+
     try {
       final response = await http.get(
         Uri.parse(
@@ -46,7 +62,11 @@ class MercatoProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        return data.map((item) => Trasferimento.fromJson(item)).toList();
+        final result = data
+            .map((item) => Trasferimento.fromJson(item))
+            .toList();
+        _cache.set(cacheKey, result);
+        return result;
       } else {
         print(
           'Errore GET trasferimenti: ${response.statusCode} - ${response.body}',
@@ -61,8 +81,19 @@ class MercatoProvider with ChangeNotifier {
 
   Future<List<Trasferimento>> fetchTrasferimenti(
     String campionato,
-    String sessione,
-  ) async {
+    String sessione, {
+    bool forceRefresh = false,
+  }) async {
+    final cacheKey = 'trasferimenti_${campionato}_all_$sessione';
+
+    if (!forceRefresh) {
+      final cached = _cache.get<List<Trasferimento>>(
+        cacheKey,
+        maxAge: Duration(minutes: 5),
+      );
+      if (cached != null) return cached;
+    }
+
     final queryParams = {'sessione': sessione};
     try {
       final response = await http.get(
@@ -73,7 +104,11 @@ class MercatoProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        return data.map((item) => Trasferimento.fromJson(item)).toList();
+        final result = data
+            .map((item) => Trasferimento.fromJson(item))
+            .toList();
+        _cache.set(cacheKey, result);
+        return result;
       } else {
         print(
           'Errore GET trasferimenti: ${response.statusCode} - ${response.body}',

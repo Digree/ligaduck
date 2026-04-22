@@ -333,9 +333,8 @@ class PartiteProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        // Invalida la cache delle partite e competizioni (per aggiornare statistiche)
+        _cache.invalidate('partita_${campionato}_${partita.id}');
         _cache.invalidatePrefix('partite_$campionato');
-        _cache.invalidatePrefix('competizione_$campionato');
         return true;
       } else {
         print('Errore POST: ${response.statusCode} - ${response.body}');

@@ -95,178 +95,212 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
 
   @override
   Widget build(BuildContext context) {
-    bool isWide = MediaQuery.of(context).size.width > 600;
-    return Container(
-      width: isWide
-          ? MediaQuery.of(context).size.width * 0.6
-          : MediaQuery.of(context).size.width * 0.9,
-      height: MediaQuery.of(context).size.height * 0.7,
-      padding: EdgeInsets.all(20.0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    final media = MediaQuery.of(context);
+    final isWide = media.size.width > 600;
+    final keyboardInset = media.viewInsets.bottom;
+
+    return AnimatedPadding(
+      duration: Duration(milliseconds: 180),
+      curve: Curves.easeOut,
+      padding: EdgeInsets.only(bottom: keyboardInset),
+      child: SafeArea(
+        child: Container(
+          width: isWide ? media.size.width * 0.6 : media.size.width * 0.9,
+          height: media.size.height * 0.7,
+          padding: EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Aggiungi Evento',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: widget.competizione?.id == 5
-                      ? 'champions'
-                      : widget.competizione?.id == 6 ||
-                            widget.competizione?.id == 7
-                      ? 'europa'
-                      : widget.competizione?.id == 8
-                      ? 'supercup'
-                      : null,
-                ),
-              ),
-              IconButton(
-                icon: Icon(Icons.close),
-                onPressed: () {
-                  _clearForm();
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          ),
-          SizedBox(height: 10),
-          Column(
-            children: [
-              TabBar(
-                controller: _tabController,
-                labelColor: Color(
-                  widget.competizione!.colori.isNotEmpty
-                      ? int.parse(
-                          widget.competizione!.colori[0].replaceFirst(
-                            '#',
-                            'FF',
-                          ),
-                          radix: 16,
-                        )
-                      : 0xFF000000,
-                ),
-                unselectedLabelColor: Colors.grey,
-                indicatorColor: Color(
-                  widget.competizione!.colori.isNotEmpty
-                      ? int.parse(
-                          widget.competizione!.colori[0].replaceFirst(
-                            '#',
-                            'FF',
-                          ),
-                          radix: 16,
-                        )
-                      : 0xFF000000,
-                ),
-                tabs: [
-                  Tab(
-                    text: CommonService.decodePlayerName(
-                      widget.partita.teamHome,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Aggiungi Evento',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: widget.competizione?.id == 5
+                          ? 'champions'
+                          : widget.competizione?.id == 6 ||
+                                widget.competizione?.id == 7
+                          ? 'europa'
+                          : widget.competizione?.id == 8
+                          ? 'supercup'
+                          : null,
                     ),
                   ),
-                  Tab(
-                    text: CommonService.decodePlayerName(
-                      widget.partita.teamAway,
-                    ),
+                  IconButton(
+                    icon: Icon(Icons.close),
+                    onPressed: () {
+                      _clearForm();
+                      Navigator.of(context).pop();
+                    },
                   ),
                 ],
               ),
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.5,
-                child: TabBarView(
-                  controller: _tabController,
+              SizedBox(height: 10),
+              Expanded(
+                child: Column(
                   children: [
-                    Padding(
-                      padding: EdgeInsets.only(top: 16.0),
-                      child: eventi.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  CircularProgressIndicator(
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Color(
-                                        widget.competizione!.colori.isNotEmpty
-                                            ? int.parse(
-                                                widget.competizione!.colori[0]
-                                                    .replaceFirst('#', 'FF'),
-                                                radix: 16,
-                                              )
-                                            : 0xFF000000,
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(height: 16),
-                                  Text(
-                                    'Caricamento eventi...',
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 14,
-                                      fontFamily: widget.competizione?.id == 5
-                                          ? 'champions'
-                                          : widget.competizione?.id == 6 ||
-                                                widget.competizione?.id == 7
-                                          ? 'europa'
-                                          : widget.competizione?.id == 8
-                                          ? 'supercup'
-                                          : null,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )
-                          : buildAddEvento(0, widget.dialogState),
+                    TabBar(
+                      controller: _tabController,
+                      labelColor: Color(
+                        widget.competizione!.colori.isNotEmpty
+                            ? int.parse(
+                                widget.competizione!.colori[0].replaceFirst(
+                                  '#',
+                                  'FF',
+                                ),
+                                radix: 16,
+                              )
+                            : 0xFF000000,
+                      ),
+                      unselectedLabelColor: Colors.grey,
+                      indicatorColor: Color(
+                        widget.competizione!.colori.isNotEmpty
+                            ? int.parse(
+                                widget.competizione!.colori[0].replaceFirst(
+                                  '#',
+                                  'FF',
+                                ),
+                                radix: 16,
+                              )
+                            : 0xFF000000,
+                      ),
+                      tabs: [
+                        Tab(
+                          text: CommonService.decodePlayerName(
+                            widget.partita.teamHome,
+                          ),
+                        ),
+                        Tab(
+                          text: CommonService.decodePlayerName(
+                            widget.partita.teamAway,
+                          ),
+                        ),
+                      ],
                     ),
-                    Padding(
-                      padding: EdgeInsets.only(top: 16.0),
-                      child: eventi.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  CircularProgressIndicator(
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Color(
-                                        widget.competizione!.colori.isNotEmpty
-                                            ? int.parse(
-                                                widget.competizione!.colori[0]
-                                                    .replaceFirst('#', 'FF'),
-                                                radix: 16,
-                                              )
-                                            : 0xFF000000,
-                                      ),
+                    Expanded(
+                      child: TabBarView(
+                        controller: _tabController,
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.only(top: 16.0),
+                            child: eventi.isEmpty
+                                ? Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        CircularProgressIndicator(
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                Color(
+                                                  widget
+                                                          .competizione!
+                                                          .colori
+                                                          .isNotEmpty
+                                                      ? int.parse(
+                                                          widget
+                                                              .competizione!
+                                                              .colori[0]
+                                                              .replaceFirst(
+                                                                '#',
+                                                                'FF',
+                                                              ),
+                                                          radix: 16,
+                                                        )
+                                                      : 0xFF000000,
+                                                ),
+                                              ),
+                                        ),
+                                        SizedBox(height: 16),
+                                        Text(
+                                          'Caricamento eventi...',
+                                          style: TextStyle(
+                                            color: Colors.grey[600],
+                                            fontSize: 14,
+                                            fontFamily:
+                                                widget.competizione?.id == 5
+                                                ? 'champions'
+                                                : widget.competizione?.id ==
+                                                          6 ||
+                                                      widget.competizione?.id ==
+                                                          7
+                                                ? 'europa'
+                                                : widget.competizione?.id == 8
+                                                ? 'supercup'
+                                                : null,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                  SizedBox(height: 16),
-                                  Text(
-                                    'Caricamento eventi...',
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 14,
-                                      fontFamily: widget.competizione?.id == 5
-                                          ? 'champions'
-                                          : widget.competizione?.id == 6 ||
-                                                widget.competizione?.id == 7
-                                          ? 'europa'
-                                          : widget.competizione?.id == 8
-                                          ? 'supercup'
-                                          : null,
+                                  )
+                                : buildAddEvento(0, widget.dialogState),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.only(top: 16.0),
+                            child: eventi.isEmpty
+                                ? Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        CircularProgressIndicator(
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                Color(
+                                                  widget
+                                                          .competizione!
+                                                          .colori
+                                                          .isNotEmpty
+                                                      ? int.parse(
+                                                          widget
+                                                              .competizione!
+                                                              .colori[0]
+                                                              .replaceFirst(
+                                                                '#',
+                                                                'FF',
+                                                              ),
+                                                          radix: 16,
+                                                        )
+                                                      : 0xFF000000,
+                                                ),
+                                              ),
+                                        ),
+                                        SizedBox(height: 16),
+                                        Text(
+                                          'Caricamento eventi...',
+                                          style: TextStyle(
+                                            color: Colors.grey[600],
+                                            fontSize: 14,
+                                            fontFamily:
+                                                widget.competizione?.id == 5
+                                                ? 'champions'
+                                                : widget.competizione?.id ==
+                                                          6 ||
+                                                      widget.competizione?.id ==
+                                                          7
+                                                ? 'europa'
+                                                : widget.competizione?.id == 8
+                                                ? 'supercup'
+                                                : null,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ],
-                              ),
-                            )
-                          : buildAddEvento(1, widget.dialogState),
+                                  )
+                                : buildAddEvento(1, widget.dialogState),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }

@@ -2373,9 +2373,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     // Se admin è true, avvolgi con Dismissible per permettere la cancellazione
     if (admin && !partita!.salvata) {
       return Dismissible(
-        key: Key(
-          'evento_${evento.minuto}_${evento.idGiocatore}_${evento.codAzione}',
-        ),
+        key: Key('evento_${evento.id}'),
         direction: DismissDirection.endToStart,
         background: Container(
           color: Colors.red,

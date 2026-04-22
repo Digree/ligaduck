@@ -2777,6 +2777,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
           final data = snapshot.data!;
           final partite = data['partite'] as List<Partita>;
           final squadre = data['squadre'] as List<Squadra>;
+          final andateMap = (data['andateMap'] as Map<String, Partita>?) ?? {};
 
           if (partite.isEmpty) {
             return Center(child: Text('Nessuna partita disponibile'));
@@ -2863,6 +2864,17 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                     ),
                   );
 
+                  // Recupera la partita di andata dalla map precaricata
+                  final Partita? andataPartita = partita.id.endsWith('_rit')
+                      ? andateMap[partita.id]
+                      : null;
+
+                  if (partita.id.endsWith('_rit')) {
+                    debugPrint(
+                      '🔍 RITORNO ${partita.id}: andataPartita=${andataPartita?.id}, andateMap keys=${andateMap.keys.toList()}, risultato=${andataPartita?.risultatoHome}-${andataPartita?.risultatoAway}',
+                    );
+                  }
+
                   return buildCampionatoMatch(
                     CampionatoMatchModel(
                       match: partita.id,
@@ -2871,6 +2883,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                       squadraHome: squadraHome,
                       squadraAway: squadraAway,
                       competizione: widget.competizione,
+                      andataPartita: andataPartita,
                       onRefreshRequired: () {
                         setState(() {
                           _partiteCache.clear();
@@ -3426,7 +3439,27 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     // Mantieni l'ordine di inserimento (ObjectId è cronologico)
     partite.sort((a, b) => a.id.compareTo(b.id));
 
-    return {'partite': partite, 'squadre': squadre};
+    // Per le partite di ritorno, carica le rispettive andate (potrebbero essere in altra giornata)
+    final Map<String, Partita> andateMap = {};
+    final ritorni = partite.where((p) => p.id.endsWith('_rit')).toList();
+    if (ritorni.isNotEmpty) {
+      await Future.wait(
+        ritorni.map((p) async {
+          final idAndata = p.id.replaceAll('_rit', '_and');
+          try {
+            final andata = await partiteProvider.fetchPartitaById(
+              widget.campionato,
+              idAndata,
+            );
+            andateMap[p.id] = andata;
+          } catch (_) {
+            // Andata non trovata, ignora
+          }
+        }),
+      );
+    }
+
+    return {'partite': partite, 'squadre': squadre, 'andateMap': andateMap};
   }
 
   Future<void> _verificaPartiteSalvate() async {
