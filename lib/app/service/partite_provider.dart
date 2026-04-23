@@ -312,6 +312,9 @@ class PartiteProvider with ChangeNotifier {
       }
 
       if (response.statusCode == 200) {
+        // Invalida cache della partita e lista partite del campionato
+        _cache.invalidate('partita_${campionato}_$idPartita');
+        _cache.invalidatePrefix('partite_$campionato');
         return true;
       } else {
         throw Exception('Errore nel caricamento: ${response.statusCode}');

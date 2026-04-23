@@ -577,22 +577,37 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                       ],
                                     )
                                   : Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          'Partite:',
-                                          style: TextStyle(
-                                            fontSize: 22,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          textAlign: TextAlign.left,
-                                        ),
-                                        Padding(
-                                          padding: EdgeInsets.only(top: 16),
-                                          child: buildPartiteList(
-                                            selectedGiornata!,
-                                            shrinkWrap: true,
+                                        Center(
+                                          child: SizedBox(
+                                            width:
+                                                MediaQuery.of(
+                                                  context,
+                                                ).size.width *
+                                                0.4,
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Partite:',
+                                                  style: TextStyle(
+                                                    fontSize: 22,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                  textAlign: TextAlign.left,
+                                                ),
+                                                Padding(
+                                                  padding: EdgeInsets.only(
+                                                    top: 16,
+                                                  ),
+                                                  child: buildPartiteList(
+                                                    selectedGiornata!,
+                                                    shrinkWrap: true,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -3998,7 +4013,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                             Expanded(
                               flex: 1,
                               child: DropdownButtonFormField<String>(
-                                initialValue: selectedFase,
+                                value: selectedFase,
                                 isExpanded: true,
                                 decoration: InputDecoration(
                                   labelText: 'Fase',
@@ -4056,7 +4071,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                         ),
                         SizedBox(height: 16),
                         DropdownButtonFormField<String>(
-                          initialValue: selectedFase,
+                          value: selectedFase,
                           decoration: InputDecoration(
                             labelText: 'Fase',
                             labelStyle: TextStyle(color: getColor("primary")),
@@ -4475,7 +4490,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                     children: [
                                       Expanded(
                                         child: DropdownButtonFormField<int>(
-                                          initialValue: partita['idHome'],
+                                          value: partita['idHome'],
                                           decoration: InputDecoration(
                                             labelText: 'Casa',
                                             labelStyle: TextStyle(
@@ -4520,7 +4535,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                       SizedBox(width: 8),
                                       Expanded(
                                         child: DropdownButtonFormField<int>(
-                                          initialValue: partita['idAway'],
+                                          value: partita['idAway'],
                                           decoration: InputDecoration(
                                             labelText: 'Trasferta',
                                             labelStyle: TextStyle(
@@ -4572,7 +4587,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                     children: [
                                       Expanded(
                                         child: DropdownButtonFormField<int>(
-                                          initialValue: partita['idHome'],
+                                          value: partita['idHome'],
                                           isExpanded: true,
                                           decoration: InputDecoration(
                                             labelText: 'Casa',
@@ -4623,7 +4638,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                       ),
                                       Expanded(
                                         child: DropdownButtonFormField<int>(
-                                          initialValue: partita['idAway'],
+                                          value: partita['idAway'],
                                           isExpanded: true,
                                           decoration: InputDecoration(
                                             labelText: 'Trasferta',

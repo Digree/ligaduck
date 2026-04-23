@@ -274,7 +274,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
               child: SizedBox(
                 width: double.infinity,
                 child: DropdownButtonFormField<String>(
-                  initialValue: _ruoloSelezionato,
+                  value: _ruoloSelezionato,
                   isExpanded: true,
                   decoration: InputDecoration(
                     labelText: 'Ruolo',
@@ -366,7 +366,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
                         ),
                       )
                     : DropdownButtonFormField<String>(
-                        initialValue: _nazioneSelezionata,
+                        value: _nazioneSelezionata,
                         isExpanded: true,
                         menuMaxHeight: 300,
                         decoration: InputDecoration(

@@ -1911,7 +1911,6 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
       }
 
       if (eventoSelezionato!.cod == 'sos') {
-        GiocatoreFormazione? giocatoreIn;
         GiocatoreFormazione? giocatoreOut;
 
         final formazione = team == 0
@@ -1919,7 +1918,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
             : widget.partita.formazioneAway;
 
         try {
-          giocatoreIn = formazione.panchina.firstWhere(
+          formazione.panchina.firstWhere(
             (g) => g.idGiocatore == giocatoreSelezionatoIn,
           );
           giocatoreOut = formazione.titolari.firstWhere(

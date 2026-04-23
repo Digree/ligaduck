@@ -30,7 +30,6 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
   int _formazioneUpdateKey = 0;
   List<GiocatoreFormazione> _titolari = [];
   List<GiocatoreFormazione> _panchina = [];
-  List<GiocatoreFormazione> _nonConvocati = [];
 
   @override
   void initState() {
@@ -274,11 +273,6 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
   Widget buildFormazione() {
     bool isWide = MediaQuery.of(context).size.width > 600;
 
-    var giocatoriFormazione =
-        widget.squadra.formazione.titolari.length +
-        widget.squadra.formazione.panchina.length +
-        widget.squadra.formazione.nonConvocati.length;
-
     // Genera automaticamente la formazione solo se è completamente vuota
     if (widget.squadra.formazione.titolari.isEmpty &&
         widget.squadra.formazione.panchina.isEmpty &&
@@ -346,7 +340,6 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
     if (_titolari.isEmpty) {
       _titolari = List.from(widget.squadra.formazione.titolari);
       _panchina = List.from(widget.squadra.formazione.panchina);
-      _nonConvocati = List.from(widget.squadra.formazione.nonConvocati);
     }
 
     Giocatore? allenatore;

@@ -4518,7 +4518,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     SizedBox(height: 16),
                     Center(
                       child: FloatingActionButton(
-                        heroTag: "formazione_fab",
+                        heroTag: "formazione_fab_$selectedFormazione",
                         onPressed: () {
                           caricaFormazioniDaSquadre(selectedFormazione);
                         },
