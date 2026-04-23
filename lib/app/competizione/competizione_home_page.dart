@@ -3946,6 +3946,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     TimeOfDay selectedTimeRitorno = TimeOfDay(hour: 15, minute: 0);
     List<Map<String, int?>> partite =
         []; // Lista di partite con idHome e idAway
+    bool isCreating = false;
 
     // Carica le squadre abilitate
     final squadre = await _squadreCompetizioneFuture;
@@ -3970,7 +3971,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                   SizedBox(width: isWide ? 16 : 4),
                   IconButton(
                     icon: Icon(Icons.close, color: getColor("primary")),
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: isCreating
+                        ? null
+                        : () => Navigator.of(context).pop(),
                     padding: EdgeInsets.zero,
                     constraints: BoxConstraints(),
                   ),
@@ -4719,7 +4722,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: isCreating
+                      ? null
+                      : () => Navigator.of(context).pop(),
                   style: TextButton.styleFrom(
                     foregroundColor: getColor("primary"),
                   ),
@@ -4730,76 +4735,95 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                     backgroundColor: getColor("primary"),
                     foregroundColor: Colors.white,
                   ),
-                  onPressed: () async {
-                    if (nomeGiornataController.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Inserisci un nome per la giornata'),
-                          backgroundColor: Colors.red,
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                      return;
-                    }
+                  onPressed: isCreating
+                      ? null
+                      : () async {
+                          if (nomeGiornataController.text.trim().isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Inserisci un nome per la giornata',
+                                ),
+                                backgroundColor: Colors.red,
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                            return;
+                          }
 
-                    // Valida che tutte le partite abbiano entrambe le squadre
-                    for (int i = 0; i < partite.length; i++) {
-                      if (partite[i]['idHome'] == null ||
-                          partite[i]['idAway'] == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Partita ${i + 1}: seleziona entrambe le squadre',
-                            ),
-                            backgroundColor: Colors.red,
-                            duration: Duration(seconds: 2),
+                          // Valida che tutte le partite abbiano entrambe le squadre
+                          for (int i = 0; i < partite.length; i++) {
+                            if (partite[i]['idHome'] == null ||
+                                partite[i]['idAway'] == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Partita ${i + 1}: seleziona entrambe le squadre',
+                                  ),
+                                  backgroundColor: Colors.red,
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                              return;
+                            }
+                            if (partite[i]['idHome'] == partite[i]['idAway']) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Partita ${i + 1}: le squadre devono essere diverse',
+                                  ),
+                                  backgroundColor: Colors.red,
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                              return;
+                            }
+                          }
+
+                          setState(() {
+                            isCreating = true;
+                          });
+
+                          // Combina data e ora
+                          final DateTime dataPartiteAndata = DateTime(
+                            selectedDate.year,
+                            selectedDate.month,
+                            selectedDate.day,
+                            selectedTime.hour,
+                            selectedTime.minute,
+                          );
+
+                          final DateTime dataPartiteRitorno = DateTime(
+                            selectedDateRitorno.year,
+                            selectedDateRitorno.month,
+                            selectedDateRitorno.day,
+                            selectedTimeRitorno.hour,
+                            selectedTimeRitorno.minute,
+                          );
+
+                          await _creaGiornata(
+                            nomeGiornataController.text.trim(),
+                            selectedFase,
+                            tipoTurno,
+                            dataPartiteAndata,
+                            dataPartiteRitorno,
+                            squadre,
+                            partite,
+                          );
+                          if (context.mounted) {
+                            Navigator.of(context).pop();
+                          }
+                        },
+                  child: isCreating
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
                           ),
-                        );
-                        return;
-                      }
-                      if (partite[i]['idHome'] == partite[i]['idAway']) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Partita ${i + 1}: le squadre devono essere diverse',
-                            ),
-                            backgroundColor: Colors.red,
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                        return;
-                      }
-                    }
-
-                    // Combina data e ora
-                    final DateTime dataPartiteAndata = DateTime(
-                      selectedDate.year,
-                      selectedDate.month,
-                      selectedDate.day,
-                      selectedTime.hour,
-                      selectedTime.minute,
-                    );
-
-                    final DateTime dataPartiteRitorno = DateTime(
-                      selectedDateRitorno.year,
-                      selectedDateRitorno.month,
-                      selectedDateRitorno.day,
-                      selectedTimeRitorno.hour,
-                      selectedTimeRitorno.minute,
-                    );
-
-                    await _creaGiornata(
-                      nomeGiornataController.text.trim(),
-                      selectedFase,
-                      tipoTurno,
-                      dataPartiteAndata,
-                      dataPartiteRitorno,
-                      squadre,
-                      partite,
-                    );
-                    Navigator.of(context).pop();
-                  },
-                  child: Text('Crea'),
+                        )
+                      : Text('Crea'),
                 ),
               ],
             );
