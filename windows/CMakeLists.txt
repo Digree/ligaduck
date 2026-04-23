@@ -4,7 +4,9 @@ project(ligaduck LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
-set(BINARY_NAME "ligaduck")
+# Target name (no spaces) used internally by CMake. The on-disk filename is
+# controlled with `RUNTIME_OUTPUT_NAME` in the runner CMakeLists.txt.
+set(BINARY_NAME "LigaDuckManager")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.

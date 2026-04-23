@@ -38,3 +38,7 @@ target_include_directories(${BINARY_NAME} PRIVATE "${CMAKE_SOURCE_DIR}")
 
 # Run the Flutter tool portions of the build. This must not be removed.
 add_dependencies(${BINARY_NAME} flutter_assemble)
+
+# Set the on-disk executable name (adds spaces if desired). The runtime
+# output name is the filename without extension; Windows will append .exe.
+set_target_properties(${BINARY_NAME} PROPERTIES RUNTIME_OUTPUT_NAME "Liga Duck Manager")
