@@ -23,6 +23,7 @@ dependencies:
   glassmorphism: ^3.0.0
   shared_preferences: ^2.2.2
   keyboard_actions: ^4.2.0
+  package_info_plus: ^7.0.0
 
 dev_dependencies:
   flutter_test:

@@ -6,6 +6,7 @@ import 'package:ligaduck/app/models/campionato/campionato_button_model.dart';
 import 'package:provider/provider.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ligaduck/app/utils/version_helper.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -61,7 +62,7 @@ class _HomePage extends State<HomePage> {
                     builder: (context, setModalState) {
                       return Container(
                         padding: EdgeInsets.all(16),
-                        height: 350,
+                        height: 450,
                         width: 500,
                         child: Column(
                           children: [
@@ -124,7 +125,42 @@ class _HomePage extends State<HomePage> {
                               ),
                             ),
                             Padding(
-                              padding: EdgeInsets.only(top: 100.0),
+                              padding: EdgeInsets.only(top: 32),
+                              child: FutureBuilder<String>(
+                                future: VersionHelper.getFullVersion(),
+                                builder: (context, snapshot) {
+                                  final version = snapshot.data ?? 'loading...';
+                                  return Row(
+                                    children: [
+                                      Padding(
+                                        padding: EdgeInsets.only(left: 16.0),
+                                        child: Text(
+                                          'App Version',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                      Spacer(),
+                                      Padding(
+                                        padding: EdgeInsets.only(right: 16.0),
+                                        child: Text(
+                                          version,
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.white70,
+                                            fontFamily: 'monospace',
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.only(top: 80.0),
                               child: ElevatedButton(
                                 onPressed: () {
                                   Navigator.pop(context);
