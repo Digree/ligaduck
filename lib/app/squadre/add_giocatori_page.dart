@@ -3,7 +3,8 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:csv/csv.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:file_selector/file_selector.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ligaduck/app/models/country.dart';
@@ -847,34 +848,32 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
     );
 
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['csv'],
+      final List<XFile> files = await openFiles(
+        acceptedTypeGroups: [
+          XTypeGroup(label: 'CSV', extensions: ['csv']),
+        ],
       );
 
-      if (result != null) {
-        // Se siamo su web, path è null, usiamo bytes
-        if (result.files.single.bytes != null) {
+      if (files.isNotEmpty) {
+        final xfile = files.first;
+        // Web or no path -> read bytes
+        if (kIsWeb) {
+          final bytes = await xfile.readAsBytes();
           // Prova prima con UTF-8, poi con latin1 se fallisce
           String input;
           try {
-            input = utf8.decode(result.files.single.bytes!);
+            input = utf8.decode(bytes);
           } catch (e) {
             try {
-              input = latin1.decode(result.files.single.bytes!);
+              input = latin1.decode(bytes);
             } catch (e2) {
-              input = String.fromCharCodes(result.files.single.bytes!);
+              input = String.fromCharCodes(bytes);
             }
           }
           await _processCsvString(input);
-        }
-        // Se siamo su mobile/desktop, usiamo il path
-        else if (result.files.single.path != null) {
-          final file = File(result.files.single.path!);
-          await _processCsvFile(file);
         } else {
-          Navigator.pop(context); // Chiudi loader
-          _showMessage('Nessun file selezionato');
+          final file = File(xfile.path);
+          await _processCsvFile(file);
         }
       } else {
         Navigator.pop(context); // Chiudi loader
@@ -1219,17 +1218,16 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
 
   Future<void> _saveTemplateToFile(String csvContent) async {
     try {
-      // Usa FilePicker per salvare il file
-      String? outputFile = await FilePicker.platform.saveFile(
-        dialogTitle: 'Salva template CSV',
-        fileName: 'template_giocatori.csv',
-        type: FileType.custom,
-        allowedExtensions: ['csv'],
+      // Usa file_selector per ottenere un percorso di salvataggio
+      final FileSaveLocation? outputLocation = await getSaveLocation(
+        suggestedName: 'template_giocatori.csv',
+        acceptedTypeGroups: [
+          XTypeGroup(label: 'CSV', extensions: ['csv']),
+        ],
       );
 
-      if (outputFile != null) {
-        // Scrivi il contenuto nel file
-        final file = File(outputFile);
+      if (outputLocation != null) {
+        final file = File(outputLocation.path);
         await file.writeAsString(csvContent, encoding: utf8);
         _showMessage('Template salvato con successo in: ${file.path}');
       }
