@@ -40,9 +40,8 @@ if [ "$IOS" = false ] && [ "$ANDROID" = false ]; then
     IOS=true
 fi
 
-# Esegui lo script di aggiornamento versione
-echo "📦 Aggiornamento build number..."
-./scripts/update_build_number.sh
+# Versionamento manuale - modifica version in pubspec.yaml
+# Per aggiornamenti: cambia manualmente la versione in pubspec.yaml
 
 # Determina le flag di build
 BUILD_FLAGS=""

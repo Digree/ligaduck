@@ -18,9 +18,8 @@ if (-not $apk -and -not $aab) {
     $apk = $true
 }
 
-# Esegui lo script di aggiornamento versione
-Write-Host "📦 Aggiornamento build number..."
-& ".\scripts\update_build_number.ps1"
+# Versionamento manuale - modifica version in pubspec.yaml
+# Per aggiornamenti: cambia manualmente la versione in pubspec.yaml
 
 # Determina le flag di build
 $buildFlags = @()

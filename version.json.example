@@ -1,0 +1,29 @@
+{
+  "comment": "File di configurazione per gli aggiornamenti dell'app",
+  "lastUpdate": "2026-04-27",
+  "android": {
+    "version": "43.01.00",
+    "downloadUrl": "https://github.com/YOUR_USERNAME/YOUR_REPO/releases/download/v43.01.00/ligaduck-v43.01.00.apk",
+    "releaseNotes": "- Miglioramenti generali\n- Correzione bug\n- Nuove funzionalità"
+  },
+  "ios": {
+    "version": "43.01.00",
+    "downloadUrl": "https://apps.apple.com/app/YOUR_APP_ID",
+    "releaseNotes": "- Miglioramenti generali\n- Correzione bug\n- Nuove funzionalità"
+  },
+  "macos": {
+    "version": "43.01.00",
+    "downloadUrl": "https://github.com/YOUR_USERNAME/YOUR_REPO/releases/download/v43.01.00/ligaduck-v43.01.00.dmg",
+    "releaseNotes": "- Miglioramenti generali\n- Correzione bug\n- Nuove funzionalità"
+  },
+  "windows": {
+    "version": "43.01.00",
+    "downloadUrl": "https://github.com/YOUR_USERNAME/YOUR_REPO/releases/download/v43.01.00/ligaduck-v43.01.00.exe",
+    "releaseNotes": "- Miglioramenti generali\n- Correzione bug\n- Nuove funzionalità"
+  },
+  "web": {
+    "version": "43.01.00",
+    "downloadUrl": "https://yourapp.com",
+    "releaseNotes": "Aggiorna la pagina per ottenere l'ultima versione"
+  }
+}
