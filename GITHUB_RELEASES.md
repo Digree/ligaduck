@@ -34,7 +34,7 @@ brew install create-dmg
 
 Lo script farà automaticamente:
 1. ✅ Aggiorna la versione in `pubspec.yaml`
-2. ✅ Builda l'app (APK Android + DMG macOS)
+2. ✅ Builda l'app (APK Android + DMG macOS + ZIP Windows)
 3. ✅ Ti chiede le note di rilascio
 4. ✅ Aggiorna `version.json`
 5. ✅ Commit e push su GitHub
@@ -63,11 +63,15 @@ flutter build apk --release
 
 # macOS (da Mac)
 flutter build macos --release
+
+# Windows (da Windows o con cross-compilation)
+flutter build windows --release
 ```
 
 I file saranno in:
 - Android: `build/app/outputs/flutter-apk/app-release.apk`
 - macOS: `build/macos/Build/Products/Release/ligaduck.app`
+- Windows: `build/windows/x64/runner/Release/`
 
 #### 3. Rinomina i file
 
@@ -138,10 +142,12 @@ Oppure vai su GitHub web:
 
 ## 📱 Come gli utenti ricevono l'aggiornamento
 
-1. L'utente apre l'app
-2. Va su **Impostazioni** ⚙️
-3. Clicca su **"Controlla aggiornamenti"**
-4. Se disponibile, appare un dialog con:
+1. **Badge di notifica automatico**: Quando l'app si avvia, controlla automaticamente se ci sono aggiornamenti. Se disponibili, compare un **pallino rosso** sull'icona ⚙️ delle impostazioni
+2. L'utente clicca sull'icona Impostazioni (con il badge rosso)
+3. Si apre il modal che mostra:
+   - Versione attuale
+   - Pulsante "Controlla aggiornamenti"
+4. Se c'è un aggiornamento, appare un dialog con:
    - Numero nuova versione
    - Note di rilascio
    - Pulsante "Scarica ora"
@@ -149,6 +155,7 @@ Oppure vai su GitHub web:
    - **Android**: Si apre il browser al link del APK (l'utente deve installare manualmente)
    - **iOS**: Si apre l'App Store
    - **macOS**: Si apre il browser al link del DMG
+   - **Windows**: Si apre il browser al link dello ZIP
 
 ## 🔧 Troubleshooting
 

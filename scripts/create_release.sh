@@ -85,6 +85,27 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     fi
 fi
 
+# Windows (build sempre, zip solo su macOS/Linux con zip)
+echo "  Building Windows app..."
+flutter build windows --release
+
+if [ -d "build/windows/x64/runner/Release" ]; then
+    WIN_DEST="build/ligaduck-v${NEW_VERSION}-windows.zip"
+    
+    # Crea lo zip con il contenuto della cartella Release
+    if command -v zip &> /dev/null; then
+        cd build/windows/x64/runner/Release
+        zip -r "../../../../../ligaduck-v${NEW_VERSION}-windows.zip" ./* > /dev/null
+        cd ../../../../../
+        
+        if [ -f "$WIN_DEST" ]; then
+            echo -e "${GREEN}  ✓ Windows ZIP creato: $WIN_DEST${NC}"
+        fi
+    else
+        echo -e "${YELLOW}  ⚠️  zip non trovato, crea manualmente da: build/windows/x64/runner/Release${NC}"
+    fi
+fi
+
 echo ""
 
 # 3. Aggiorna version.json
@@ -142,6 +163,9 @@ if [ -f "build/ligaduck-v${NEW_VERSION}.apk" ]; then
 fi
 if [ -f "build/ligaduck-v${NEW_VERSION}.dmg" ]; then
     FILES_TO_UPLOAD="$FILES_TO_UPLOAD build/ligaduck-v${NEW_VERSION}.dmg"
+fi
+if [ -f "build/ligaduck-v${NEW_VERSION}-windows.zip" ]; then
+    FILES_TO_UPLOAD="$FILES_TO_UPLOAD build/ligaduck-v${NEW_VERSION}-windows.zip"
 fi
 
 # Crea la release

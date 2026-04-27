@@ -1,23 +1,23 @@
 {
-  "lastUpdate": "2026-04-27",
-  "android": {
-    "version": "43.00.00",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.00.00/ligaduck-v43.00.00.apk",
-    "releaseNotes": "Versione iniziale con sistema aggiornamenti in-app\n- Gestione CSV migliorata\n- Sistema di aggiornamenti automatici\n- Correzioni varie"
-  },
-  "ios": {
-    "version": "43.00.00",
-    "downloadUrl": "https://apps.apple.com/app/ligaduck/YOUR_APP_ID",
-    "releaseNotes": "Versione iniziale con sistema aggiornamenti in-app\n- Gestione CSV migliorata\n- Sistema di aggiornamenti automatici\n- Correzioni varie"
-  },
-  "macos": {
-    "version": "43.00.00",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.00.00/ligaduck-v43.00.00.dmg",
-    "releaseNotes": "Versione iniziale con sistema aggiornamenti in-app\n- Gestione CSV migliorata\n- Sistema di aggiornamenti automatici\n- Correzioni varie"
-  },
-  "windows": {
-    "version": "43.00.00",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.00.00/ligaduck-v43.00.00-windows.zip",
-    "releaseNotes": "Versione iniziale con sistema aggiornamenti in-app\n- Gestione CSV migliorata\n- Sistema di aggiornamenti automatici\n- Correzioni varie"
-  }
+    "lastUpdate": "2026-04-27",
+    "android": {
+        "version": "43.00.00",
+        "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.00.00/ligaduck-v43.00.00.apk",
+        "releaseNotes": "Versione iniziale con sistema aggiornamenti in-app\n- Gestione CSV migliorata\n- Sistema di aggiornamenti automatici\n- Correzioni varie"
+    },
+    "ios": {
+        "version": "43.00.00",
+        "downloadUrl": "https://apps.apple.com/app/ligaduck/YOUR_APP_ID",
+        "releaseNotes": "Versione iniziale con sistema aggiornamenti in-app\n- Gestione CSV migliorata\n- Sistema di aggiornamenti automatici\n- Correzioni varie"
+    },
+    "macos": {
+        "version": "43.00.00",
+        "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.00.00/ligaduck-v43.00.00.dmg",
+        "releaseNotes": "Versione iniziale con sistema aggiornamenti in-app\n- Gestione CSV migliorata\n- Sistema di aggiornamenti automatici\n- Correzioni varie"
+    },
+    "windows": {
+        "version": "43.00.00",
+        "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.00.00/ligaduck-v43.00.00-windows.zip",
+        "releaseNotes": "Versione iniziale con sistema aggiornamenti in-app\n- Gestione CSV migliorata\n- Sistema di aggiornamenti automatici\n- Correzioni varie"
+    }
 }

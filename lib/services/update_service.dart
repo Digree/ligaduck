@@ -29,7 +29,7 @@ class UpdateInfo {
 
 class UpdateService {
   // URL del file JSON su GitHub (branch master)
-  static const String updateInfoUrl = 
+  static const String updateInfoUrl =
       'https://raw.githubusercontent.com/Digree/ligaduck/master/version.json';
 
   /// Ottiene la versione corrente dell'app
@@ -48,15 +48,15 @@ class UpdateService {
     try {
       // Ottieni la versione corrente
       final currentVersion = await getCurrentVersion();
-      
+
       // Scarica le informazioni sull'ultima versione
-      final response = await http.get(Uri.parse(updateInfoUrl)).timeout(
-        Duration(seconds: 10),
-      );
+      final response = await http
+          .get(Uri.parse(updateInfoUrl))
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
-        
+
         // Determina la piattaforma corrente
         String platform = 'unknown';
         if (!kIsWeb) {
@@ -76,16 +76,21 @@ class UpdateService {
         // Ottieni i dati specifici della piattaforma
         final platformData = jsonData[platform];
         if (platformData == null) {
-          print('Nessuna informazione disponibile per la piattaforma: $platform');
+          print(
+            'Nessuna informazione disponibile per la piattaforma: $platform',
+          );
           return null;
         }
 
         final latestVersion = platformData['version'] ?? '';
         final downloadUrl = platformData['downloadUrl'] ?? '';
-        final releaseNotes = platformData['releaseNotes'] ?? 'Nessuna nota di rilascio disponibile.';
+        final releaseNotes =
+            platformData['releaseNotes'] ??
+            'Nessuna nota di rilascio disponibile.';
 
         // Confronta le versioni
-        final isUpdateAvailable = _compareVersions(latestVersion, currentVersion) > 0;
+        final isUpdateAvailable =
+            _compareVersions(latestVersion, currentVersion) > 0;
 
         return UpdateInfo(
           version: latestVersion,

@@ -9,6 +9,7 @@ import 'package:ligaduck/app/service/partite_provider.dart';
 import 'package:ligaduck/app/service/squadre_provider.dart';
 import 'package:ligaduck/app/service/giocatori_provider.dart';
 import 'package:ligaduck/app/service/mercato_provider.dart';
+import 'package:ligaduck/services/update_notifier.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
@@ -36,6 +37,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => PartiteProvider()),
         ChangeNotifierProvider(create: (_) => GiocatoriProvider()),
         ChangeNotifierProvider(create: (_) => MercatoProvider()),
+        ChangeNotifierProvider(create: (_) => UpdateNotifier()),
       ],
       child: MyApp(),
     ),
@@ -60,6 +62,23 @@ class _MyAppState extends State<MyApp> {
     _cacheCleanupTimer = Timer.periodic(Duration(minutes: 30), (timer) {
       _cache.cleanOldCache();
     });
+    
+    // Controlla aggiornamenti all'avvio (silenzioso)
+    _checkForUpdatesOnStart();
+  }
+
+  Future<void> _checkForUpdatesOnStart() async {
+    // Attendi che l'app si carichi
+    await Future.delayed(Duration(seconds: 3));
+    
+    // Controlla aggiornamenti in modo silenzioso
+    try {
+      final updateNotifier = Provider.of<UpdateNotifier>(context, listen: false);
+      await updateNotifier.checkForUpdates(silent: true);
+    } catch (e) {
+      // Ignora errori nel check silenzioso
+      print('Errore nel check aggiornamenti all\'avvio: $e');
+    }
   }
 
   @override

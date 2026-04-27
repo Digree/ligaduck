@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ligaduck/services/update_service.dart';
+import 'package:ligaduck/services/update_notifier.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:provider/provider.dart';
 
 class SettingsIcon extends StatelessWidget {
   final Color iconColor;
@@ -16,13 +18,41 @@ class SettingsIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      icon: Icon(Icons.settings, color: iconColor),
-      onPressed: () async {
-        await showSettingsModal(context);
-        if (onDismiss != null) {
-          onDismiss!();
-        }
+    return Consumer<UpdateNotifier>(
+      builder: (context, updateNotifier, child) {
+        return Stack(
+          children: [
+            IconButton(
+              icon: Icon(Icons.settings, color: iconColor),
+              onPressed: () async {
+                // Segna l'aggiornamento come visto quando si apre il modal
+                if (updateNotifier.isUpdateAvailable) {
+                  updateNotifier.markUpdateAsSeen();
+                }
+
+                await showSettingsModal(context);
+                if (onDismiss != null) {
+                  onDismiss!();
+                }
+              },
+            ),
+            // Badge di notifica se ci sono aggiornamenti
+            if (updateNotifier.isUpdateAvailable)
+              Positioned(
+                right: 8,
+                top: 8,
+                child: Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                ),
+              ),
+          ],
+        );
       },
     );
   }
@@ -30,9 +60,12 @@ class SettingsIcon extends StatelessWidget {
   static Future<void> showSettingsModal(BuildContext context) async {
     // Carica le preferenze prima di mostrare il modal
     final prefs = await SharedPreferences.getInstance();
-    
+
     // Ottieni la versione corrente
     final currentVersion = await UpdateService.getCurrentVersion();
+
+    // Ottieni il provider
+    final updateNotifier = Provider.of<UpdateNotifier>(context, listen: false);
 
     await showModalBottomSheet(
       backgroundColor: Colors.blueAccent.withOpacity(0.8),
@@ -40,181 +73,176 @@ class SettingsIcon extends StatelessWidget {
       builder: (BuildContext context) {
         bool isAdmin = globals.admin;
         bool isMostraColori = globals.mostraColori;
-        bool isCheckingUpdate = false;
 
         Future<void> savePreference(String key, bool value) async {
           await prefs.setBool(key, value);
         }
 
         Future<void> checkForUpdates(StateSetter setModalState) async {
-          setModalState(() {
-            isCheckingUpdate = true;
-          });
+          // Usa il provider per controllare gli aggiornamenti
+          await updateNotifier.checkForUpdates(silent: false);
 
-          try {
-            final updateInfo = await UpdateService.checkForUpdates();
-            
-            setModalState(() {
-              isCheckingUpdate = false;
-            });
-
-            if (updateInfo != null && updateInfo.isUpdateAvailable) {
-              // Mostra dialog con aggiornamento disponibile
-              _showUpdateDialog(context, updateInfo, currentVersion);
-            } else if (updateInfo != null) {
-              // Nessun aggiornamento disponibile
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Hai già l\'ultima versione!'),
-                  backgroundColor: Colors.green,
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            } else {
-              // Errore nel check
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Impossibile controllare gli aggiornamenti'),
-                  backgroundColor: Colors.orange,
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            }
-          } catch (e) {
-            setModalState(() {
-              isCheckingUpdate = false;
-            });
+          if (updateNotifier.updateInfo != null &&
+              updateNotifier.isUpdateAvailable) {
+            // Mostra dialog con aggiornamento disponibile
+            _showUpdateDialog(
+              context,
+              updateNotifier.updateInfo!,
+              currentVersion,
+            );
+          } else if (updateNotifier.updateInfo != null &&
+              !updateNotifier.isUpdateAvailable) {
+            // Nessun aggiornamento disponibile
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Errore: $e'),
-                backgroundColor: Colors.red,
+                content: Text('Hai già l\'ultima versione!'),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 2),
+              ),
+            );
+          } else if (updateNotifier.error != null) {
+            // Errore nel check
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Impossibile controllare gli aggiornamenti'),
+                backgroundColor: Colors.orange,
                 duration: Duration(seconds: 2),
               ),
             );
           }
         }
 
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return Container(
-              padding: EdgeInsets.all(16),
-              height: 420,
-              width: 500,
-              child: Column(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.only(top: 20),
-                    child: Text(
-                      'Impostazioni',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(top: 24),
-                    child: Row(
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.only(left: 16.0),
-                          child: Text(
-                            'Modalità Admin',
-                            style: TextStyle(fontSize: 16, color: Colors.white),
+        return Consumer<UpdateNotifier>(
+          builder: (context, updateNotifier, child) {
+            return StatefulBuilder(
+              builder: (context, setModalState) {
+                return Container(
+                  padding: EdgeInsets.all(16),
+                  height: 420,
+                  width: 500,
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.only(top: 20),
+                        child: Text(
+                          'Impostazioni',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
                         ),
-                        Spacer(),
-                        Switch(
-                          value: isAdmin,
-                          activeTrackColor: Colors.blueAccent,
-                          onChanged: (value) {
-                            setModalState(() {
-                              isAdmin = value;
-                              globals.admin = value;
-                            });
-                            savePreference('admin', value);
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(top: 16),
-                    child: Row(
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.only(left: 16.0),
-                          child: Text(
-                            'Mostra colori',
-                            style: TextStyle(fontSize: 16, color: Colors.white),
-                          ),
-                        ),
-                        Spacer(),
-                        Switch(
-                          value: isMostraColori,
-                          activeTrackColor: Colors.blueAccent,
-                          onChanged: (value) {
-                            setModalState(() {
-                              isMostraColori = value;
-                              globals.mostraColori = value;
-                            });
-                            savePreference('mostraColori', value);
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(top: 24),
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white.withOpacity(0.2),
-                        foregroundColor: Colors.white,
-                        minimumSize: Size(200, 45),
                       ),
-                      onPressed: isCheckingUpdate 
-                        ? null 
-                        : () => checkForUpdates(setModalState),
-                      icon: isCheckingUpdate
-                        ? SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
+                      Padding(
+                        padding: EdgeInsets.only(top: 24),
+                        child: Row(
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.only(left: 16.0),
+                              child: Text(
+                                'Modalità Admin',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                ),
+                              ),
                             ),
-                          )
-                        : Icon(Icons.system_update),
-                      label: Text(
-                        isCheckingUpdate 
-                          ? 'Controllo...' 
-                          : 'Controlla aggiornamenti',
+                            Spacer(),
+                            Switch(
+                              value: isAdmin,
+                              activeTrackColor: Colors.blueAccent,
+                              onChanged: (value) {
+                                setModalState(() {
+                                  isAdmin = value;
+                                  globals.admin = value;
+                                });
+                                savePreference('admin', value);
+                              },
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ),
-                  Spacer(),
-                  Padding(
-                    padding: EdgeInsets.only(bottom: 8),
-                    child: Text(
-                      'Versione $currentVersion',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white.withOpacity(0.7),
+                      Padding(
+                        padding: EdgeInsets.only(top: 16),
+                        child: Row(
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.only(left: 16.0),
+                              child: Text(
+                                'Mostra colori',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            Spacer(),
+                            Switch(
+                              value: isMostraColori,
+                              activeTrackColor: Colors.blueAccent,
+                              onChanged: (value) {
+                                setModalState(() {
+                                  isMostraColori = value;
+                                  globals.mostraColori = value;
+                                });
+                                savePreference('mostraColori', value);
+                              },
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
+                      Padding(
+                        padding: EdgeInsets.only(top: 24),
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white.withOpacity(0.2),
+                            foregroundColor: Colors.white,
+                            minimumSize: Size(200, 45),
+                          ),
+                          onPressed: updateNotifier.isChecking
+                              ? null
+                              : () => checkForUpdates(setModalState),
+                          icon: updateNotifier.isChecking
+                              ? SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Icon(Icons.system_update),
+                          label: Text(
+                            updateNotifier.isChecking
+                                ? 'Controllo...'
+                                : 'Controlla aggiornamenti',
+                          ),
+                        ),
+                      ),
+                      Spacer(),
+                      Padding(
+                        padding: EdgeInsets.only(bottom: 8),
+                        child: Text(
+                          'Versione $currentVersion',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.white.withOpacity(0.7),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(bottom: 16),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          child: Icon(Icons.close, color: Colors.blueAccent),
+                        ),
+                      ),
+                    ],
                   ),
-                  Padding(
-                    padding: EdgeInsets.only(bottom: 16),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: Icon(Icons.close, color: Colors.blueAccent),
-                    ),
-                  ),
-                ],
-              ),
+                );
+              },
             );
           },
         );
@@ -255,17 +283,12 @@ class SettingsIcon extends StatelessWidget {
                 SizedBox(height: 4),
                 Text(
                   'Versione attuale: $currentVersion',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 ),
                 SizedBox(height: 16),
                 Text(
                   'Note di rilascio:',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 8),
                 Container(
@@ -309,10 +332,7 @@ class SettingsIcon extends StatelessWidget {
     try {
       final uri = Uri.parse(url);
       if (await canLaunchUrl(uri)) {
-        await launchUrl(
-          uri,
-          mode: LaunchMode.externalApplication,
-        );
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
