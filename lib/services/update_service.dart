@@ -28,9 +28,9 @@ class UpdateInfo {
 }
 
 class UpdateService {
-  // URL del file JSON su GitHub (branch main)
+  // URL del file JSON su GitHub (branch master)
   static const String updateInfoUrl = 
-      'https://raw.githubusercontent.com/Digree/ligaduck/main/version.json';
+      'https://raw.githubusercontent.com/Digree/ligaduck/master/version.json';
 
   /// Ottiene la versione corrente dell'app
   static Future<String> getCurrentVersion() async {
