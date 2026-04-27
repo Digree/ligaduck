@@ -186,11 +186,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       final giocatoriHomeData = await giocatoriProvider.fetchGiocatori(
         widget.campionato,
         partita!.idTeamHome,
+        'partita_home_page',
       );
 
       final giocatoriAwayData = await giocatoriProvider.fetchGiocatori(
         widget.campionato,
         partita!.idTeamAway,
+        'partita_home_page',
       );
 
       setState(() {

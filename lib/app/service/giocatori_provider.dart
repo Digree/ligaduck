@@ -79,10 +79,17 @@ class GiocatoriProvider with ChangeNotifier {
   Future<List<Giocatore>> fetchGiocatori(
     String campionato,
     int idSquadra,
+    String pagina,
   ) async {
     try {
+      Map<String, String> queryParams = {};
+      if (pagina.isNotEmpty) {
+        queryParams['pagina'] = pagina;
+      }
       final response = await http.get(
-        Uri.parse('${Env.apiUrl}/$campionato/giocatori/$idSquadra'),
+        Uri.parse(
+          '${Env.apiUrl}/$campionato/giocatori/$idSquadra',
+        ).replace(queryParameters: queryParams),
       );
 
       if (response.statusCode == 200) {

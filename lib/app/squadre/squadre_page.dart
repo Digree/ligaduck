@@ -2499,6 +2499,7 @@ class _SquadrePageState extends State<SquadrePage> {
       final fetchedGiocatori = await provider.fetchGiocatori(
         widget.campionato,
         widget.squadra.id,
+        'squadre_page',
       );
       if (mounted) {
         setState(() {
