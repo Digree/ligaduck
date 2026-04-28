@@ -26,45 +26,49 @@ if ! command -v xcodebuild &> /dev/null; then
   exit 1
 fi
 
-# Build iOS archive
-echo "Building iOS archive..."
-echo "⚠️  Questo richiede certificati Apple Developer configurati"
-echo ""
+# Build iOS app
+echo "Building iOS app..."
+flutter build ios --release
 
-flutter build ipa --release
+APP_PATH="build/ios/iphoneos/Runner.app"
 
-IPA_PATH="build/ios/ipa/Liga Duck Manager.ipa"
+if [ ! -d "$APP_PATH" ]; then
+  echo "❌ App iOS non trovata in $APP_PATH"
+  exit 1
+fi
 
-if [ -f "$IPA_PATH" ]; then
-  # Rinomina IPA
-  IPA_DEST="build/ligaduck-v$VERSION.ipa"
-  cp "$IPA_PATH" "$IPA_DEST"
+echo "✓ App iOS creata"
+
+# Crea struttura Payload
+echo "Creazione struttura IPA..."
+PAYLOAD_DIR="build/Payload"
+rm -rf "$PAYLOAD_DIR"
+mkdir -p "$PAYLOAD_DIR"
+
+# Copia l'app nella cartella Payload
+cp -r "$APP_PATH" "$PAYLOAD_DIR/"
+echo "✓ App copiata in Payload/"
+
+# Crea IPA
+IPA_NAME="Liga Duck Manager.ipa"
+IPA_DEST="build/ligaduck-v$VERSION.ipa"
+
+echo "Creazione IPA..."
+cd build
+zip -r "$IPA_NAME" Payload > /dev/null
+cd ..
+
+# Rinomina con versione
+if [ -f "build/$IPA_NAME" ]; then
+  mv "build/$IPA_NAME" "$IPA_DEST"
   echo "✓ IPA creato: $IPA_DEST"
   ls -lh "$IPA_DEST"
+  
+  # Pulisci cartella Payload temporanea
+  rm -rf "$PAYLOAD_DIR"
+  echo "✓ Payload temporaneo rimosso"
 else
-  echo "⚠️  IPA non trovato in $IPA_PATH"
-  echo ""
-  echo "Possibili cause:"
-  echo "  - Certificati Apple Developer non configurati"
-  echo "  - Provisioning profile mancante"
-  echo "  - Xcode non configurato correttamente"
-  echo ""
-  echo "Per configurare i certificati:"
-  echo "  1. Apri Xcode"
-  echo "  2. Preferences > Accounts > Aggiungi Apple ID"
-  echo "  3. Seleziona il team di sviluppo"
-  echo "  4. Apri ios/Runner.xcworkspace"
-  echo "  5. Signing & Capabilities > Seleziona team"
-  echo ""
-  
-  # Controlla se l'archive esiste almeno
-  ARCHIVE_PATH="build/ios/archive/Runner.xcarchive"
-  if [ -d "$ARCHIVE_PATH" ]; then
-    echo "✓ Archive creato in: $ARCHIVE_PATH"
-    echo "  Puoi esportare manualmente l'IPA da Xcode:"
-    echo "  Window > Organizer > Archives > Distribute App"
-  fi
-  
+  echo "❌ Errore nella creazione dell'IPA"
   exit 1
 fi
 
@@ -73,6 +77,7 @@ echo "✅ Build iOS completato!"
 echo "File: $IPA_DEST"
 echo ""
 echo "📝 Note:"
-echo "  - Per pubblicare su App Store: usa Xcode Organizer"
-echo "  - Per TestFlight: carica l'IPA su App Store Connect"
-echo "  - Per distribuzione diretta: serve certificato Enterprise"
+echo "  - Questo è un IPA ad-hoc per test/distribuzione interna"
+echo "  - Per App Store: usa flutter build ipa --release con certificati"
+echo "  - Per TestFlight: carica su App Store Connect"
+echo "  - Per installazione diretta: serve dispositivo con UDID registrato"
