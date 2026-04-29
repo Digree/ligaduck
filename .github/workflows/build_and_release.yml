@@ -60,10 +60,17 @@ jobs:
         with:
           flutter-version: '3.38.1'
 
+      - name: iOS diagnostics
+        run: |
+          echo "== flutter --version =="
+          flutter --version || true
+          echo "\n== xcodebuild -version =="
+          xcodebuild -version || true
+
       - name: Make ios script executable
         run: chmod +x scripts/build_ios.sh
 
-      - name: Build iOS IPA
+      - name: Build iOS IPA (unsigned, for testing)
         run: bash scripts/build_ios.sh ${{ github.event.inputs.version }}
 
       - name: Upload IPA

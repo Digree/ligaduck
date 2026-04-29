@@ -28,7 +28,7 @@ fi
 
 # Build iOS app
 echo "Building iOS app..."
-flutter build ios --release
+flutter build ios --release --no-codesign
 
 APP_PATH="build/ios/iphoneos/Runner.app"
 
