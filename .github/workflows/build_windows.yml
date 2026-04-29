@@ -1,0 +1,84 @@
+name: Build Windows ZIP
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Versione (es: 43.01.00)'
+        required: true
+        default: '0.0.0'
+      release_notes:
+        description: 'Note di rilascio (opzionale)'
+        required: false
+        default: 'Release'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build Windows release
+        run: flutter build windows --release -v
+
+      - name: Create ZIP (exclude .pdb)
+        run: |
+          $version = '${{ github.event.inputs.version }}'
+          $out = Join-Path $PWD "build\ligaduck-v$version-windows.zip"
+          if (Test-Path $out) { Remove-Item $out -Force }
+          $src = Join-Path $PWD 'build\windows\x64\runner\Release'
+          Write-Host "Zipping $src -> $out"
+          Get-ChildItem -Path $src -Recurse -File | Where-Object { $_.Extension -ne '.pdb' } | ForEach-Object { $_.FullName } | Compress-Archive -DestinationPath $out -Update
+          Write-Host "Created: $out"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ligaduck-windows-${{ github.event.inputs.version }}
+          path: build/ligaduck-v${{ github.event.inputs.version }}-windows.zip
+
+  create-release:
+    needs: build-windows
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Windows ZIP artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ligaduck-windows-${{ github.event.inputs.version }}
+          path: build
+
+      - name: Ensure release script is executable
+        run: chmod +x scripts/create_github_release.sh
+
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gh
+
+      - name: Configure git for actions
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Run release script
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_BRANCH: master
+        run: |
+          # Pass release notes via stdin to the existing script
+          echo "${{ github.event.inputs.release_notes }}" | bash scripts/create_github_release.sh ${{ github.event.inputs.version }}

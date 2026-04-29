@@ -120,7 +120,10 @@ echo "Git commit e tag..."
 git add version.json pubspec.yaml
 git commit -m "Release v$VERSION"
 git tag -a "v$VERSION" -m "Release $VERSION"
-git push origin master
+# Allow overriding the branch to push to via TARGET_BRANCH env var (defaults to master)
+TARGET_BRANCH=${TARGET_BRANCH:-master}
+echo "Pushing branch and tag to: $TARGET_BRANCH"
+git push origin "$TARGET_BRANCH"
 git push origin "v$VERSION"
 echo "✓ Commit e tag pushati"
 
