@@ -22,7 +22,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'stable'
+          flutter-version: '3.10.6'
 
       - name: Make android script executable
         run: chmod +x scripts/build_android.sh
