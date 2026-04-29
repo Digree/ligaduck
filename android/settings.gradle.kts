@@ -14,12 +14,25 @@ pluginManagement {
         mavenCentral()
         gradlePluginPortal()
     }
+    
+    resolutionStrategy {
+        eachPlugin {
+            when (requested.id.id) {
+                    "com.android.application" -> useModule("com.android.tools.build:gradle:8.9.1")
+                    "kotlin-android" -> useModule("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.20")
+            }
+        }
+    }
 }
+
+// Note: plugin versions removed from settings to avoid Kotlin DSL resolution
+// problems in environments where the Gradle Kotlin DSL plugin is not available.
+// Module build scripts apply plugins without explicit versions (see app/build.gradle.kts).
 
 plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
     id("com.android.application") version "8.9.1" apply false
-    id("org.jetbrains.kotlin.android") version "2.1.0" apply false
+    id("org.jetbrains.kotlin.android") version "1.9.20" apply false
 }
 
 include(":app")
