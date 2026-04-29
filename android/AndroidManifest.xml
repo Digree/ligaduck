@@ -3,5 +3,9 @@
         Shim manifest to satisfy Flutter embedding v2 detection.
         The actual manifest is at android/app/src/main/AndroidManifest.xml
     -->
-    <application />
+    <application>
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+    </application>
 </manifest>
