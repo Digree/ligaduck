@@ -24,6 +24,19 @@ jobs:
         with:
           flutter-version: '3.10.6'
 
+      - name: Android diagnostics
+        run: |
+          echo "== flutter --version =="
+          flutter --version || true
+          echo "\n== flutter doctor -v =="
+          flutter doctor -v || true
+          echo "\n== android tree =="
+          ls -la android || true
+          echo "\n== android app src main =="
+          ls -la android/app/src/main || true
+          echo "\n== AndroidManifest.xml content =="
+          sed -n '1,200p' android/app/src/main/AndroidManifest.xml || true
+
       - name: Make android script executable
         run: chmod +x scripts/build_android.sh
 
