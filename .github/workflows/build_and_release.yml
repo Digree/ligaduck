@@ -93,6 +93,9 @@ jobs:
         with:
           flutter-version: '3.38.1'
 
+      - name: Install create-dmg
+        run: brew install create-dmg
+
       - name: Make macos script executable
         run: chmod +x scripts/build_macos.sh
 
@@ -103,7 +106,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ligaduck-macos-${{ github.event.inputs.version }}
-          path: build/ligaduck-v${{ github.event.inputs.version }}.dmg
+          path: |
+            build/ligaduck-v${{ github.event.inputs.version }}.dmg
+            build/ligaduck-v${{ github.event.inputs.version }}-macos.zip
 
   build-windows:
     runs-on: windows-latest

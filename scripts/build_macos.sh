@@ -55,20 +55,20 @@ if command -v create-dmg &> /dev/null; then
     ls -lh "$DMG_DEST"
   else
     echo "⚠️  DMG creation failed, creating ZIP instead..."
-    ZIP_DEST="build/ligaduck-v$VERSION.dmg"
+    ZIP_DEST="build/ligaduck-v$VERSION-macos.zip"
     cd build/macos/Build/Products/Release
     zip -r "../../../../../$ZIP_DEST" "Liga Duck Manager.app" > /dev/null
     cd - > /dev/null
-    echo "✓ ZIP creato (rinominato come .dmg): $ZIP_DEST"
+    echo "✓ ZIP creato: $ZIP_DEST"
     ls -lh "$ZIP_DEST"
   fi
 else
   echo "⚠️  create-dmg non installato, creating ZIP instead..."
-  ZIP_DEST="build/ligaduck-v$VERSION.dmg"
+  ZIP_DEST="build/ligaduck-v$VERSION-macos.zip"
   cd build/macos/Build/Products/Release
   zip -r "../../../../../$ZIP_DEST" "Liga Duck Manager.app" > /dev/null
   cd - > /dev/null
-  echo "✓ ZIP creato (rinominato come .dmg): $ZIP_DEST"
+  echo "✓ ZIP creato: $ZIP_DEST"
   ls -lh "$ZIP_DEST"
 fi
 
