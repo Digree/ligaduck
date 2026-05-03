@@ -112,10 +112,9 @@ jobs:
           Write-Host "Creating ZIP: $out"
           Write-Host "From directory: $src"
           
-          # Compress all content preserving directory structure, exclude .pdb files
+          # Create ZIP preserving directory structure
           Push-Location $src
-          Get-ChildItem -Recurse | Where-Object { $_.Extension -ne '.pdb' -and -not $_.PSIsContainer } | 
-            Compress-Archive -DestinationPath $out -Update
+          Compress-Archive -Path * -DestinationPath $out -Force
           Pop-Location
           
           if (Test-Path $out) {

@@ -127,13 +127,63 @@ jobs:
       - name: Build Windows release
         run: flutter build windows --release -v
 
-      - name: Create ZIP (exclude .pdb)
+      - name: Verify build structure
+        run: |
+          $src = Join-Path $PWD 'build\windows\x64\runner\Release'
+          Write-Host "Verifying build structure..."
+          
+          $requiredFiles = @(
+            'LigaDuckManager.exe',
+            'flutter_windows.dll',
+            'data\icudtl.dat',
+            'data\app.so'
+          )
+          
+          foreach ($file in $requiredFiles) {
+            $fullPath = Join-Path $src $file
+            if (-not (Test-Path $fullPath)) {
+              Write-Host "❌ Missing: $file"
+              exit 1
+            } else {
+              Write-Host "✓ Found: $file"
+            }
+          }
+          
+          if (-not (Test-Path (Join-Path $src 'data\flutter_assets'))) {
+            Write-Host "❌ Missing: data\flutter_assets"
+            exit 1
+          }
+          Write-Host "✓ Build structure verified"
+
+      - name: Create ZIP with correct structure
         run: |
           $version='${{ github.event.inputs.version }}'
           $out = Join-Path $PWD "build\ligaduck-v$version-windows.zip"
           if (Test-Path $out) { Remove-Item $out -Force }
           $src = Join-Path $PWD 'build\windows\x64\runner\Release'
-          Get-ChildItem -Path $src -Recurse -File | Where-Object { $_.Extension -ne '.pdb' } | ForEach-Object { $_.FullName } | Compress-Archive -DestinationPath $out -Update
+          
+          Write-Host "Creating ZIP: $out"
+          Write-Host "From directory: $src"
+          
+          # Create ZIP preserving directory structure
+          Push-Location $src
+          Compress-Archive -Path * -DestinationPath $out -Force
+          Pop-Location
+          
+          if (Test-Path $out) {
+            $size = (Get-Item $out).Length / 1MB
+            Write-Host "✓ ZIP created: $out ($([math]::Round($size, 2)) MB)"
+            
+            # Verify ZIP contents
+            Write-Host "`nZIP contents (first 20 entries):"
+            Add-Type -Assembly System.IO.Compression.FileSystem
+            $zip = [System.IO.Compression.ZipFile]::OpenRead($out)
+            $zip.Entries | Select-Object -First 20 | ForEach-Object { Write-Host "  $($_.FullName)" }
+            $zip.Dispose()
+          } else {
+            Write-Host "❌ Failed to create ZIP"
+            exit 1
+          }
 
       - name: Upload ZIP
         uses: actions/upload-artifact@v4
