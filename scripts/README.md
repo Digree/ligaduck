@@ -128,6 +128,34 @@ rm -rf build/             # Build artifacts
 gh auth login
 ```
 
+### Windows: L'eseguibile non si avvia
+Se l'eseguibile Windows non fa nulla quando viene cliccato:
+
+**Per gli utenti**:
+1. Estrarre **TUTTO** il contenuto dello ZIP
+2. NON spostare solo il file `.exe`
+3. La cartella `data` deve essere accanto all'eseguibile
+4. Leggere il file `README.txt` incluso nello ZIP
+
+**Per sviluppatori**:
+- Lo script `build_windows.bat/sh` ora:
+  - ✅ Verifica che tutti i file necessari siano presenti
+  - ✅ Crea automaticamente un `README.txt` con istruzioni
+  - ✅ Mantiene la struttura corretta delle cartelle nello ZIP
+  
+- Il file `windows/runner/main.cpp` ora:
+  - ✅ Controlla che la cartella `data` esista all'avvio
+  - ✅ Mostra un dialog di errore chiaro se manca
+
+```bash
+# Test della build Windows (su Windows)
+./scripts/build_windows.bat 43.01.00
+
+# Verifica contenuto ZIP
+powershell -Command "Expand-Archive -Path build\ligaduck-v43.01.00-windows.zip -DestinationPath test_extract"
+dir test_extract
+```
+
 ---
 
 ## iOS**: Richiede macOS + Xcode + certificati Apple Developer

@@ -1,9 +1,12 @@
 #include <flutter/dart_project.h>
 #include <flutter/flutter_view_controller.h>
 #include <windows.h>
+#include <shlwapi.h>
 
 #include "flutter_window.h"
 #include "utils.h"
+
+#pragma comment(lib, "Shlwapi.lib")
 
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
@@ -16,6 +19,37 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   // Initialize COM, so that it is available for use in the library and/or
   // plugins.
   ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+
+  // Verifica che la cartella "data" esista
+  wchar_t exe_path[MAX_PATH];
+  GetModuleFileNameW(nullptr, exe_path, MAX_PATH);
+  wchar_t* last_slash = wcsrchr(exe_path, L'\\');
+  if (last_slash) {
+    *(last_slash + 1) = L'\0';
+  }
+  
+  wchar_t data_path[MAX_PATH];
+  wcscpy_s(data_path, exe_path);
+  wcscat_s(data_path, L"data");
+  
+  if (!PathFileExistsW(data_path)) {
+    MessageBoxW(
+      nullptr,
+      L"Errore: Cartella \"data\" non trovata!\n\n"
+      L"Assicurati di:\n"
+      L"1. Estrarre TUTTI i file dallo ZIP\n"
+      L"2. NON spostare solo il file .exe\n"
+      L"3. Mantenere questa struttura:\n"
+      L"   LigaDuckManager.exe\n"
+      L"   flutter_windows.dll\n"
+      L"   data\\ (cartella con tutti i file)\n\n"
+      L"Leggi il file README.txt per maggiori informazioni.",
+      L"Liga Duck Manager - Errore",
+      MB_OK | MB_ICONERROR
+    );
+    ::CoUninitialize();
+    return EXIT_FAILURE;
+  }
 
   flutter::DartProject project(L"data");
 

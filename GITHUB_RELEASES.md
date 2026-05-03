@@ -186,6 +186,35 @@ chmod +x scripts/create_release.sh
 2. Controlla che gli URL in `version.json` siano corretti
 3. Test dell'URL direttamente: https://github.com/Digree/ligaduck/releases
 
+### L'eseguibile Windows non si avvia
+
+**Problema**: Su Windows, l'eseguibile scaricato non fa nulla quando viene cliccato.
+
+**Cause comuni**:
+1. ❌ L'utente ha spostato solo il file `.exe` senza gli altri file
+2. ❌ La cartella `data` non è presente accanto all'eseguibile
+3. ❌ L'estrazione dello ZIP è incompleta
+
+**Soluzioni per utenti**:
+1. Estrarre **TUTTO** il contenuto dello ZIP in una cartella
+2. NON spostare solo il file `LigaDuckManager.exe`
+3. La struttura deve essere:
+   ```
+   LigaDuckManager.exe
+   flutter_windows.dll
+   README.txt
+   data/
+     icudtl.dat
+     app.so
+     flutter_assets/
+   ```
+4. Se manca la cartella `data`, ora l'app mostrerà un messaggio di errore chiaro
+
+**Per sviluppatori**:
+- Lo script `build_windows.bat` ora verifica la struttura prima di creare lo ZIP
+- Il file `main.cpp` ora controlla che la cartella `data` esista e mostra un dialog se mancante
+- Un file `README.txt` viene automaticamente incluso nello ZIP con le istruzioni
+
 ## 📝 Convenzioni di Versioning
 
 Formato: `MAJOR.MINOR.PATCH` (es. 43.01.00)

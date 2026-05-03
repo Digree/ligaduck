@@ -33,15 +33,101 @@ jobs:
       - name: Build Windows release
         run: flutter build windows --release -v
 
-      - name: Create ZIP (exclude .pdb)
+      - name: Verify build structure
+        run: |
+          $src = Join-Path $PWD 'build\windows\x64\runner\Release'
+          Write-Host "Verifying build structure..."
+          
+          $requiredFiles = @(
+            'LigaDuckManager.exe',
+            'flutter_windows.dll',
+            'data\icudtl.dat',
+            'data\app.so'
+          )
+          
+          $missingFiles = @()
+          foreach ($file in $requiredFiles) {
+            $fullPath = Join-Path $src $file
+            if (-not (Test-Path $fullPath)) {
+              $missingFiles += $file
+              Write-Host "❌ Missing: $file"
+            } else {
+              Write-Host "✓ Found: $file"
+            }
+          }
+          
+          if ($missingFiles.Count -gt 0) {
+            Write-Host "❌ Build verification failed!"
+            exit 1
+          }
+          
+          if (-not (Test-Path (Join-Path $src 'data\flutter_assets'))) {
+            Write-Host "❌ Missing: data\flutter_assets"
+            exit 1
+          }
+          Write-Host "✓ Build structure verified"
+
+      - name: Create README.txt
+        run: |
+          $src = Join-Path $PWD 'build\windows\x64\runner\Release'
+          $readme = Join-Path $src 'README.txt'
+          
+          "=================================================" | Out-File -FilePath $readme -Encoding UTF8
+          "  Liga Duck Manager - Windows" | Out-File -FilePath $readme -Append -Encoding UTF8
+          "=================================================" | Out-File -FilePath $readme -Append -Encoding UTF8
+          "" | Out-File -FilePath $readme -Append -Encoding UTF8
+          "IMPORTANTE - Come estrarre ed eseguire:" | Out-File -FilePath $readme -Append -Encoding UTF8
+          "" | Out-File -FilePath $readme -Append -Encoding UTF8
+          "1. Estrai TUTTO il contenuto di questo ZIP in una cartella" | Out-File -FilePath $readme -Append -Encoding UTF8
+          "2. NON spostare solo il file .exe - deve rimanere insieme agli altri file!" | Out-File -FilePath $readme -Append -Encoding UTF8
+          "3. Esegui ""LigaDuckManager.exe""" | Out-File -FilePath $readme -Append -Encoding UTF8
+          "" | Out-File -FilePath $readme -Append -Encoding UTF8
+          "La struttura delle cartelle DEVE essere:" | Out-File -FilePath $readme -Append -Encoding UTF8
+          "  LigaDuckManager.exe" | Out-File -FilePath $readme -Append -Encoding UTF8
+          "  flutter_windows.dll" | Out-File -FilePath $readme -Append -Encoding UTF8
+          "  data/" | Out-File -FilePath $readme -Append -Encoding UTF8
+          "    icudtl.dat" | Out-File -FilePath $readme -Append -Encoding UTF8
+          "    app.so" | Out-File -FilePath $readme -Append -Encoding UTF8
+          "    flutter_assets/" | Out-File -FilePath $readme -Append -Encoding UTF8
+          "" | Out-File -FilePath $readme -Append -Encoding UTF8
+          "Se l'app non si avvia, verifica che:" | Out-File -FilePath $readme -Append -Encoding UTF8
+          "- Hai estratto TUTTI i file" | Out-File -FilePath $readme -Append -Encoding UTF8
+          "- La cartella ""data"" e' accanto al file .exe" | Out-File -FilePath $readme -Append -Encoding UTF8
+          "- Hai Windows 10 o superiore" | Out-File -FilePath $readme -Append -Encoding UTF8
+          "" | Out-File -FilePath $readme -Append -Encoding UTF8
+          "Per supporto: https://github.com/ripudima/ligaduck" | Out-File -FilePath $readme -Append -Encoding UTF8
+          
+          Write-Host "✓ README.txt created"
+
+      - name: Create ZIP with correct structure
         run: |
           $version = '${{ github.event.inputs.version }}'
           $out = Join-Path $PWD "build\ligaduck-v$version-windows.zip"
           if (Test-Path $out) { Remove-Item $out -Force }
           $src = Join-Path $PWD 'build\windows\x64\runner\Release'
-          Write-Host "Zipping $src -> $out"
-          Get-ChildItem -Path $src -Recurse -File | Where-Object { $_.Extension -ne '.pdb' } | ForEach-Object { $_.FullName } | Compress-Archive -DestinationPath $out -Update
-          Write-Host "Created: $out"
+          
+          Write-Host "Creating ZIP: $out"
+          Write-Host "From directory: $src"
+          
+          # Compress all content preserving directory structure, exclude .pdb files
+          Push-Location $src
+          Get-ChildItem -Recurse | Where-Object { $_.Extension -ne '.pdb' -and -not $_.PSIsContainer } | 
+            Compress-Archive -DestinationPath $out -Update
+          Pop-Location
+          
+          if (Test-Path $out) {
+            $size = (Get-Item $out).Length / 1MB
+            Write-Host "✓ ZIP created: $out ($([math]::Round($size, 2)) MB)"
+            
+            Write-Host "`nZIP contents (first 20 entries):"
+            Add-Type -Assembly System.IO.Compression.FileSystem
+            $zip = [System.IO.Compression.ZipFile]::OpenRead($out)
+            $zip.Entries | Select-Object -First 20 | ForEach-Object { Write-Host "  $($_.FullName)" }
+            $zip.Dispose()
+          } else {
+            Write-Host "❌ Failed to create ZIP"
+            exit 1
+          }
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
