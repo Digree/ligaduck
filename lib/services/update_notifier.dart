@@ -24,9 +24,16 @@ class UpdateNotifier extends ChangeNotifier {
     try {
       final updateInfo = await UpdateService.checkForUpdates();
       
-      _updateInfo = updateInfo;
-      _isUpdateAvailable = updateInfo?.isUpdateAvailable ?? false;
-      _error = null;
+      if (updateInfo == null) {
+        // Servizio ha ritornato null - errore di rete o piattaforma non supportata
+        _error = 'Impossibile controllare gli aggiornamenti';
+        _isUpdateAvailable = false;
+        _updateInfo = null;
+      } else {
+        _updateInfo = updateInfo;
+        _isUpdateAvailable = updateInfo.isUpdateAvailable;
+        _error = null;
+      }
       
       notifyListeners();
     } catch (e) {

@@ -5,6 +5,9 @@ import 'package:ligaduck/services/update_service.dart';
 import 'package:ligaduck/services/update_notifier.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
+import 'dart:io';
 
 class SettingsIcon extends StatelessWidget {
   final Color iconColor;
@@ -93,6 +96,7 @@ class SettingsIcon extends StatelessWidget {
           } else if (updateNotifier.updateInfo != null &&
               !updateNotifier.isUpdateAvailable) {
             // Nessun aggiornamento disponibile
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Hai già l\'ultima versione!'),
@@ -100,11 +104,14 @@ class SettingsIcon extends StatelessWidget {
                 duration: Duration(seconds: 2),
               ),
             );
-          } else if (updateNotifier.error != null) {
-            // Errore nel check
+          } else {
+            // Errore nel check (updateInfo è null)
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Impossibile controllare gli aggiornamenti'),
+                content: Text(
+                  updateNotifier.error ?? 'Impossibile controllare gli aggiornamenti',
+                ),
                 backgroundColor: Colors.orange,
                 duration: Duration(seconds: 2),
               ),
@@ -329,11 +336,53 @@ class SettingsIcon extends StatelessWidget {
   }
 
   static Future<void> _downloadUpdate(BuildContext context, String url) async {
+    // Determina se siamo su desktop (macOS/Windows) o mobile (Android/iOS)
+    final isDesktop = Platform.isMacOS || Platform.isWindows;
+    
+    if (isDesktop) {
+      // Download in-app per desktop
+      await _downloadAndInstallDesktop(context, url);
+    } else {
+      // Download esterno per mobile
+      await _downloadExternal(context, url);
+    }
+  }
+
+  /// Download in-app per macOS e Windows
+  static Future<void> _downloadAndInstallDesktop(
+    BuildContext context,
+    String url,
+  ) async {
+    try {
+      // Mostra dialog con progress
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return _DownloadProgressDialog(downloadUrl: url);
+        },
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      Navigator.of(context).pop(); // Chiudi progress dialog
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Errore durante il download: $e'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  /// Download esterno per Android e iOS
+  static Future<void> _downloadExternal(BuildContext context, String url) async {
     try {
       final uri = Uri.parse(url);
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Impossibile aprire il link di download'),
@@ -343,6 +392,7 @@ class SettingsIcon extends StatelessWidget {
         );
       }
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Errore nell\'apertura del download: $e'),
@@ -351,5 +401,221 @@ class SettingsIcon extends StatelessWidget {
         ),
       );
     }
+  }
+}
+
+/// Widget per mostrare il progresso del download
+class _DownloadProgressDialog extends StatefulWidget {
+  final String downloadUrl;
+
+  const _DownloadProgressDialog({required this.downloadUrl});
+
+  @override
+  State<_DownloadProgressDialog> createState() =>
+      _DownloadProgressDialogState();
+}
+
+class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
+  double _progress = 0.0;
+  String _status = 'Avvio download...';
+  bool _isDownloading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _startDownload();
+  }
+
+  Future<void> _startDownload() async {
+    try {
+      setState(() {
+        _status = 'Connessione al server...';
+      });
+
+      // Crea la richiesta HTTP
+      final client = http.Client();
+      final request = http.Request('GET', Uri.parse(widget.downloadUrl));
+      final response = await client.send(request);
+
+      if (response.statusCode == 200) {
+        // Ottieni la dimensione totale del file
+        final contentLength = response.contentLength ?? 0;
+        final bytes = <int>[];
+
+        setState(() {
+          _status = 'Download in corso...';
+        });
+
+        // Scarica il file con progresso
+        await for (var chunk in response.stream) {
+          bytes.addAll(chunk);
+          if (contentLength > 0) {
+            setState(() {
+              _progress = bytes.length / contentLength;
+            });
+          }
+        }
+
+        setState(() {
+          _status = 'Salvataggio file...';
+        });
+
+        // Determina il nome del file e la directory
+        final fileName = widget.downloadUrl.split('/').last;
+        Directory directory;
+
+        if (Platform.isMacOS) {
+          directory = await getDownloadsDirectory() ??
+              await getApplicationDocumentsDirectory();
+        } else if (Platform.isWindows) {
+          directory = await getDownloadsDirectory() ??
+              await getApplicationDocumentsDirectory();
+        } else {
+          directory = await getApplicationDocumentsDirectory();
+        }
+
+        final filePath = '${directory.path}/$fileName';
+        final file = File(filePath);
+
+        // Salva il file
+        await file.writeAsBytes(bytes);
+
+        setState(() {
+          _progress = 1.0;
+          _status = 'Download completato!';
+          _isDownloading = false;
+        });
+
+        // Aspetta un attimo e poi mostra dialog di successo
+        await Future.delayed(Duration(milliseconds: 500));
+
+        if (!mounted) return;
+        Navigator.of(context).pop(); // Chiudi progress dialog
+
+        // Mostra dialog di successo
+        _showSuccessDialog(filePath);
+      } else {
+        throw Exception('Errore HTTP: ${response.statusCode}');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _status = 'Errore: $e';
+        _isDownloading = false;
+      });
+
+      await Future.delayed(Duration(seconds: 2));
+      if (!mounted) return;
+      Navigator.of(context).pop();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Errore durante il download: $e'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  void _showSuccessDialog(String filePath) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.green, size: 32),
+              SizedBox(width: 12),
+              Text('Download completato'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Il file è stato scaricato con successo in:'),
+              SizedBox(height: 8),
+              Container(
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: SelectableText(
+                  filePath,
+                  style: TextStyle(fontSize: 12, fontFamily: 'monospace'),
+                ),
+              ),
+              SizedBox(height: 16),
+              Text(
+                Platform.isMacOS
+                    ? 'Apri il file .dmg scaricato per installare l\'aggiornamento.'
+                    : 'Estrai il file .zip e avvia l\'applicazione.',
+                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Chiudi'),
+            ),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                // Apri la cartella contenente il file
+                final directory = File(filePath).parent.path;
+                final uri = Uri.file(directory);
+                if (await canLaunchUrl(uri)) {
+                  await launchUrl(uri);
+                }
+              },
+              icon: Icon(Icons.folder_open),
+              label: Text('Apri cartella'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Row(
+        children: [
+          Icon(Icons.download, color: Colors.blueAccent),
+          SizedBox(width: 12),
+          Text('Download aggiornamento'),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          LinearProgressIndicator(
+            value: _isDownloading ? _progress : 1.0,
+            backgroundColor: Colors.grey[300],
+            color: Colors.blueAccent,
+          ),
+          SizedBox(height: 16),
+          Text(_status),
+          if (_isDownloading) ...[
+            SizedBox(height: 16),
+            Text(
+              '${(_progress * 100).toStringAsFixed(0)}%',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.blueAccent,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 }
