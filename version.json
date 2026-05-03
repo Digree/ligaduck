@@ -1,23 +1,23 @@
 {
   "lastUpdate": "2026-05-03",
   "android": {
-    "version": "43.01.01",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.01/ligaduck-v43.01.01.apk",
-    "releaseNotes": "Fix Windows: struttura cartelle corretta, messaggi errore e README"
+    "version": "43.01.00",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.00/ligaduck-v43.01.00.apk",
+    "releaseNotes": "Test build Windows - correzione struttura directory"
   },
   "ios": {
-    "version": "43.01.01",
+    "version": "43.01.00",
     "downloadUrl": "https://apps.apple.com/app/ligaduck",
-    "releaseNotes": "Fix Windows: struttura cartelle corretta, messaggi errore e README"
+    "releaseNotes": "Test build Windows - correzione struttura directory"
   },
   "macos": {
-    "version": "43.01.01",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.01/ligaduck-v43.01.01.dmg",
-    "releaseNotes": "Fix Windows: struttura cartelle corretta, messaggi errore e README"
+    "version": "43.01.00",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.00/ligaduck-v43.01.00.dmg",
+    "releaseNotes": "Test build Windows - correzione struttura directory"
   },
   "windows": {
-    "version": "43.01.01",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.01/ligaduck-v43.01.01-windows.zip",
-    "releaseNotes": "Fix Windows: struttura cartelle corretta, messaggi errore e README"
+    "version": "43.01.00",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.00/ligaduck-v43.01.00-windows.zip",
+    "releaseNotes": "Test build Windows - correzione struttura directory"
   }
 }
