@@ -28,9 +28,9 @@ class UpdateInfo {
 }
 
 class UpdateService {
-  // URL del file JSON su GitHub (branch master)
-  static const String updateInfoUrl =
-      'https://raw.githubusercontent.com/Digree/ligaduck/master/version.json';
+  // URL dell'API GitHub per ottenere l'ultima release
+  static const String githubApiUrl =
+      'https://api.github.com/repos/Digree/ligaduck/releases/latest';
 
   /// Ottiene la versione corrente dell'app
   static Future<String> getCurrentVersion() async {
@@ -49,44 +49,71 @@ class UpdateService {
       // Ottieni la versione corrente
       final currentVersion = await getCurrentVersion();
 
-      // Scarica le informazioni sull'ultima versione
+      // Determina la piattaforma corrente
+      String platform = 'unknown';
+      if (!kIsWeb) {
+        if (Platform.isAndroid) {
+          platform = 'android';
+        } else if (Platform.isIOS) {
+          platform = 'ios';
+        } else if (Platform.isMacOS) {
+          platform = 'macos';
+        } else if (Platform.isWindows) {
+          platform = 'windows';
+        }
+      } else {
+        platform = 'web';
+      }
+
+      // Scarica le informazioni sull'ultima release da GitHub API
       final response = await http
-          .get(Uri.parse(updateInfoUrl))
+          .get(Uri.parse(githubApiUrl))
           .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
-        final jsonData = json.decode(response.body);
+        final releaseData = json.decode(response.body);
 
-        // Determina la piattaforma corrente
-        String platform = 'unknown';
-        if (!kIsWeb) {
-          if (Platform.isAndroid) {
-            platform = 'android';
-          } else if (Platform.isIOS) {
-            platform = 'ios';
-          } else if (Platform.isMacOS) {
-            platform = 'macos';
-          } else if (Platform.isWindows) {
-            platform = 'windows';
-          }
-        } else {
-          platform = 'web';
-        }
+        // Ottieni il tag della release (es: v43.01.00)
+        final tagName = releaseData['tag_name'] ?? '';
+        // Rimuovi la 'v' iniziale per ottenere la versione (es: 43.01.00)
+        final latestVersion = tagName.startsWith('v')
+            ? tagName.substring(1)
+            : tagName;
 
-        // Ottieni i dati specifici della piattaforma
-        final platformData = jsonData[platform];
-        if (platformData == null) {
-          print(
-            'Nessuna informazione disponibile per la piattaforma: $platform',
-          );
-          return null;
-        }
-
-        final latestVersion = platformData['version'] ?? '';
-        final downloadUrl = platformData['downloadUrl'] ?? '';
+        // Ottieni le note di rilascio
         final releaseNotes =
-            platformData['releaseNotes'] ??
-            'Nessuna nota di rilascio disponibile.';
+            releaseData['body'] ?? 'Nessuna nota di rilascio disponibile.';
+
+        // Determina l'URL di download in base alla piattaforma
+        String downloadUrl = '';
+        final assets = releaseData['assets'] as List<dynamic>? ?? [];
+
+        for (var asset in assets) {
+          final assetName = asset['name'] as String;
+          final browserDownloadUrl = asset['browser_download_url'] as String;
+
+          // Trova l'asset corretto per la piattaforma
+          if (platform == 'android' && assetName.endsWith('.apk')) {
+            downloadUrl = browserDownloadUrl;
+            break;
+          } else if (platform == 'macos' && assetName.endsWith('.dmg')) {
+            downloadUrl = browserDownloadUrl;
+            break;
+          } else if (platform == 'windows' &&
+              assetName.contains('windows') &&
+              assetName.endsWith('.zip')) {
+            downloadUrl = browserDownloadUrl;
+            break;
+          } else if (platform == 'ios' && assetName.endsWith('.ipa')) {
+            downloadUrl = browserDownloadUrl;
+            break;
+          }
+        }
+
+        // Se non troviamo un download URL specifico, usiamo la pagina della release
+        if (downloadUrl.isEmpty) {
+          downloadUrl = releaseData['html_url'] ?? '';
+        }
 
         // Confronta le versioni
         final isUpdateAvailable =

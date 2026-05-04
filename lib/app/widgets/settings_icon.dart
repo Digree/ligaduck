@@ -7,7 +7,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:file_selector/file_selector.dart';
 import 'dart:io';
+import 'dart:typed_data';
 
 class SettingsIcon extends StatelessWidget {
   final Color iconColor;
@@ -110,7 +112,8 @@ class SettingsIcon extends StatelessWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  updateNotifier.error ?? 'Impossibile controllare gli aggiornamenti',
+                  updateNotifier.error ??
+                      'Impossibile controllare gli aggiornamenti',
                 ),
                 backgroundColor: Colors.orange,
                 duration: Duration(seconds: 2),
@@ -336,23 +339,7 @@ class SettingsIcon extends StatelessWidget {
   }
 
   static Future<void> _downloadUpdate(BuildContext context, String url) async {
-    // Determina se siamo su desktop (macOS/Windows) o mobile (Android/iOS)
-    final isDesktop = Platform.isMacOS || Platform.isWindows;
-    
-    if (isDesktop) {
-      // Download in-app per desktop
-      await _downloadAndInstallDesktop(context, url);
-    } else {
-      // Download esterno per mobile
-      await _downloadExternal(context, url);
-    }
-  }
-
-  /// Download in-app per macOS e Windows
-  static Future<void> _downloadAndInstallDesktop(
-    BuildContext context,
-    String url,
-  ) async {
+    // Usa il download in-app per tutte le piattaforme
     try {
       // Mostra dialog con progress
       showDialog(
@@ -364,38 +351,9 @@ class SettingsIcon extends StatelessWidget {
       );
     } catch (e) {
       if (!context.mounted) return;
-      Navigator.of(context).pop(); // Chiudi progress dialog
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Errore durante il download: $e'),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 3),
-        ),
-      );
-    }
-  }
-
-  /// Download esterno per Android e iOS
-  static Future<void> _downloadExternal(BuildContext context, String url) async {
-    try {
-      final uri = Uri.parse(url);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Impossibile aprire il link di download'),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Errore nell\'apertura del download: $e'),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 3),
         ),
@@ -428,6 +386,63 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
 
   Future<void> _startDownload() async {
     try {
+      // Determina il nome del file
+      final fileName = widget.downloadUrl.split('/').last;
+      print('=== DEBUG: Inizio download ===');
+      print('URL download: ${widget.downloadUrl}');
+      print('Nome file: $fileName');
+
+      final isDesktop = Platform.isMacOS || Platform.isWindows;
+      late String filePath;
+
+      if (isDesktop) {
+        // Su desktop chiedi all'utente dove salvare il file
+        setState(() {
+          _status = 'Scegli dove salvare il file...';
+        });
+
+        final FileSaveLocation? saveLocation = await getSaveLocation(
+          suggestedName: fileName,
+        );
+
+        if (saveLocation == null) {
+          // L'utente ha annullato
+          if (!mounted) return;
+          Navigator.of(context).pop();
+          return;
+        }
+
+        filePath = saveLocation.path;
+      } else {
+        // Su mobile (Android/iOS) salva automaticamente nella directory Downloads/Documents
+        setState(() {
+          _status = 'Preparazione download...';
+        });
+
+        Directory directory;
+        if (Platform.isAndroid || Platform.isIOS) {
+          // Prova prima Downloads, altrimenti Documents
+          directory = await getApplicationDocumentsDirectory();
+
+          // Su Android prova a usare la directory Download pubblica
+          if (Platform.isAndroid) {
+            try {
+              final downloadDir = Directory('/storage/emulated/0/Download');
+              if (await downloadDir.exists()) {
+                directory = downloadDir;
+              }
+            } catch (e) {
+              print('Impossibile accedere a /storage/emulated/0/Download: $e');
+            }
+          }
+        } else {
+          directory = await getApplicationDocumentsDirectory();
+        }
+
+        filePath = '${directory.path}/$fileName';
+        print('Path mobile: $filePath');
+      }
+
       setState(() {
         _status = 'Connessione al server...';
       });
@@ -460,25 +475,27 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
           _status = 'Salvataggio file...';
         });
 
-        // Determina il nome del file e la directory
-        final fileName = widget.downloadUrl.split('/').last;
-        Directory directory;
+        print('Path salvataggio: $filePath');
 
-        if (Platform.isMacOS) {
-          directory = await getDownloadsDirectory() ??
-              await getApplicationDocumentsDirectory();
-        } else if (Platform.isWindows) {
-          directory = await getDownloadsDirectory() ??
-              await getApplicationDocumentsDirectory();
+        if (isDesktop) {
+          // Su desktop usa XFile per salvare
+          final file = XFile.fromData(
+            Uint8List.fromList(bytes),
+            name: fileName,
+            mimeType: Platform.isMacOS
+                ? 'application/x-apple-diskimage'
+                : 'application/zip',
+          );
+
+          await file.saveTo(filePath);
         } else {
-          directory = await getApplicationDocumentsDirectory();
+          // Su mobile usa File per salvare direttamente
+          final file = File(filePath);
+          await file.writeAsBytes(bytes);
         }
 
-        final filePath = '${directory.path}/$fileName';
-        final file = File(filePath);
-
-        // Salva il file
-        await file.writeAsBytes(bytes);
+        print('File salvato con successo');
+        print('Dimensione file: ${bytes.length} bytes');
 
         setState(() {
           _progress = 1.0;
@@ -518,6 +535,20 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
     }
   }
 
+  String _getInstructionText() {
+    if (Platform.isMacOS) {
+      return 'Clicca "Apri file" per montare e installare il DMG.';
+    } else if (Platform.isWindows) {
+      return 'Clicca "Apri file" per estrarre il contenuto del ZIP.';
+    } else if (Platform.isAndroid) {
+      return 'Clicca "Installa" per installare l\'APK. Potrebbero essere necessari permessi per installare app da origini sconosciute.';
+    } else if (Platform.isIOS) {
+      return 'Il file IPA è stato salvato. Per installarlo su iOS è necessario un Mac con Xcode o un servizio di firma di app.';
+    } else {
+      return 'File scaricato con successo.';
+    }
+  }
+
   void _showSuccessDialog(String filePath) {
     showDialog(
       context: context,
@@ -534,7 +565,7 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Il file è stato scaricato con successo in:'),
+              Text('Il file è stato scaricato con successo!'),
               SizedBox(height: 8),
               Container(
                 padding: EdgeInsets.all(12),
@@ -549,9 +580,7 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
               ),
               SizedBox(height: 16),
               Text(
-                Platform.isMacOS
-                    ? 'Apri il file .dmg scaricato per installare l\'aggiornamento.'
-                    : 'Estrai il file .zip e avvia l\'applicazione.',
+                _getInstructionText(),
                 style: TextStyle(fontSize: 14, color: Colors.grey[700]),
               ),
             ],
@@ -561,22 +590,221 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
               onPressed: () => Navigator.of(context).pop(),
               child: Text('Chiudi'),
             ),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent,
-                foregroundColor: Colors.white,
+            if (Platform.isMacOS)
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () async {
+                  try {
+                    print('=== DEBUG: Apertura DMG ===');
+                    print('File path: $filePath');
+                    print('File exists: ${File(filePath).existsSync()}');
+
+                    // Su macOS usa il comando 'open' tramite shell
+                    final result = await Process.start('open', [
+                      filePath,
+                    ], runInShell: true);
+
+                    // Aspetta un momento per vedere se ci sono errori
+                    await Future.delayed(Duration(milliseconds: 500));
+
+                    print('Processo avviato con PID: ${result.pid}');
+                    Navigator.of(context).pop();
+                  } catch (e, stackTrace) {
+                    print('=== ERRORE nell\'apertura DMG ===');
+                    print('Errore: $e');
+                    print('Tipo errore: ${e.runtimeType}');
+                    print('Stack trace: $stackTrace');
+
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Errore nell\'apertura del file: $e'),
+                        backgroundColor: Colors.red,
+                        duration: Duration(seconds: 5),
+                      ),
+                    );
+                  }
+                },
+                icon: Icon(Icons.launch),
+                label: Text('Apri file'),
               ),
-              onPressed: () async {
-                // Apri la cartella contenente il file
-                final directory = File(filePath).parent.path;
-                final uri = Uri.file(directory);
-                if (await canLaunchUrl(uri)) {
-                  await launchUrl(uri);
-                }
-              },
-              icon: Icon(Icons.folder_open),
-              label: Text('Apri cartella'),
-            ),
+            if (Platform.isWindows)
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () async {
+                  try {
+                    print('=== DEBUG: Apertura ZIP ===');
+                    print('File path: $filePath');
+                    print('File exists: ${File(filePath).existsSync()}');
+
+                    // Su Windows usa 'explorer' per aprire il file
+                    final result = await Process.start('cmd', [
+                      '/c',
+                      'start',
+                      '',
+                      filePath,
+                    ], runInShell: true);
+
+                    // Aspetta un momento per vedere se ci sono errori
+                    await Future.delayed(Duration(milliseconds: 500));
+
+                    print('Processo avviato con PID: ${result.pid}');
+                    Navigator.of(context).pop();
+                  } catch (e, stackTrace) {
+                    print('=== ERRORE nell\'apertura ZIP ===');
+                    print('Errore: $e');
+                    print('Tipo errore: ${e.runtimeType}');
+                    print('Stack trace: $stackTrace');
+
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Errore nell\'apertura del file: $e'),
+                        backgroundColor: Colors.red,
+                        duration: Duration(seconds: 5),
+                      ),
+                    );
+                  }
+                },
+                icon: Icon(Icons.launch),
+                label: Text('Apri file'),
+              ),
+            if (Platform.isAndroid)
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () async {
+                  try {
+                    print('=== DEBUG: Apertura APK ===');
+                    print('File path: $filePath');
+                    print('File exists: ${File(filePath).existsSync()}');
+
+                    // Su Android prova ad aprire il file APK usando url_launcher
+                    final uri = Uri.file(filePath);
+                    final launched = await launchUrl(
+                      uri,
+                      mode: LaunchMode.externalApplication,
+                    );
+
+                    if (launched) {
+                      Navigator.of(context).pop();
+                    } else {
+                      throw Exception(
+                        'Impossibile aprire l\'APK. Vai manualmente nella cartella Download.',
+                      );
+                    }
+                  } catch (e, stackTrace) {
+                    print('=== ERRORE nell\'apertura APK ===');
+                    print('Errore: $e');
+                    print('Tipo errore: ${e.runtimeType}');
+                    print('Stack trace: $stackTrace');
+
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Vai nella cartella Download per installare l\'APK manualmente.',
+                        ),
+                        backgroundColor: Colors.orange,
+                        duration: Duration(seconds: 5),
+                      ),
+                    );
+                  }
+                },
+                icon: Icon(Icons.android),
+                label: Text('Installa APK'),
+              ),
+            if (Platform.isIOS)
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () async {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'L\'installazione di IPA su iOS richiede strumenti esterni come Xcode.',
+                      ),
+                      backgroundColor: Colors.blue,
+                      duration: Duration(seconds: 5),
+                    ),
+                  );
+                  Navigator.of(context).pop();
+                },
+                icon: Icon(Icons.info_outline),
+                label: Text('Info installazione'),
+              ),
+            if (!Platform.isIOS)
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () async {
+                  try {
+                    print('=== DEBUG: Apertura cartella ===');
+                    print('File path: $filePath');
+
+                    // Apri la cartella contenente il file
+                    final directory = File(filePath).parent.path;
+                    print('Directory path: $directory');
+                    print(
+                      'Directory exists: ${Directory(directory).existsSync()}',
+                    );
+
+                    if (Platform.isMacOS) {
+                      // Su macOS usa 'open' per aprire il Finder con il file selezionato
+                      final result = await Process.start('open', [
+                        '-R',
+                        filePath,
+                      ], runInShell: true);
+                      print('Processo avviato con PID: ${result.pid}');
+                    } else if (Platform.isWindows) {
+                      // Su Windows usa 'explorer' con /select
+                      final result = await Process.start('explorer', [
+                        '/select,',
+                        filePath,
+                      ], runInShell: true);
+                      print('Processo avviato con PID: ${result.pid}');
+                    } else {
+                      // Fallback per altre piattaforme
+                      final uri = Uri.file(directory);
+                      final launched = await launchUrl(
+                        uri,
+                        mode: LaunchMode.externalApplication,
+                      );
+                      if (!launched) {
+                        throw Exception('launchUrl ha restituito false');
+                      }
+                    }
+                  } catch (e, stackTrace) {
+                    print('=== ERRORE nell\'apertura cartella ===');
+                    print('Errore: $e');
+                    print('Tipo errore: ${e.runtimeType}');
+                    print('Stack trace: $stackTrace');
+
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Errore nell\'apertura: $e'),
+                        backgroundColor: Colors.red,
+                        duration: Duration(seconds: 5),
+                      ),
+                    );
+                  }
+                },
+                icon: Icon(Icons.folder_open),
+                label: Text('Mostra in cartella'),
+              ),
           ],
         );
       },
