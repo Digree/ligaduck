@@ -117,7 +117,7 @@ echo "✓ version.json aggiornato"
 # Git commit e tag
 echo ""
 echo "Git commit e tag..."
-git add version.json pubspec.yaml
+git add version.json
 git commit -m "Release v$VERSION"
 git tag -a "v$VERSION" -m "Release $VERSION"
 # Allow overriding the branch to push to via TARGET_BRANCH env var (defaults to master)
@@ -133,7 +133,8 @@ echo "Creazione release su GitHub..."
 gh release create "v$VERSION" \
   --title "Release $VERSION" \
   --notes "$RELEASE_NOTES" \
-  "${ARTIFACTS[@]}"
+  "${ARTIFACTS[@]}" \
+  version.json
 
 echo ""
 echo "✅ Release v$VERSION creata con successo!"

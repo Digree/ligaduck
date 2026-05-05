@@ -16,7 +16,34 @@ permissions:
   contents: write
 
 jobs:
+  update-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Make update script executable
+        run: chmod +x scripts/update_version.sh
+
+      - name: Update version in pubspec.yaml
+        run: bash scripts/update_version.sh ${{ github.event.inputs.version }}
+
+      - name: Configure git for actions
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit version changes
+        run: |
+          git add pubspec.yaml
+          git commit -m "chore: bump version to ${{ github.event.inputs.version }}"
+          git push origin master
+
   build-android:
+    needs: [update-version]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -53,6 +80,7 @@ jobs:
           path: build/ligaduck-v${{ github.event.inputs.version }}.apk
 
   build-ios:
+    needs: [update-version]
     runs-on: macos-latest
     steps:
       - name: Checkout
@@ -83,6 +111,7 @@ jobs:
           path: build/ligaduck-v${{ github.event.inputs.version }}.ipa
 
   build-macos:
+    needs: [update-version]
     runs-on: macos-latest
     steps:
       - name: Checkout
@@ -111,6 +140,7 @@ jobs:
             build/ligaduck-v${{ github.event.inputs.version }}-macos.zip
 
   build-windows:
+    needs: [update-version]
     runs-on: windows-latest
     steps:
       - name: Checkout
