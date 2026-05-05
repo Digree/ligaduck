@@ -118,17 +118,15 @@ echo "✓ version.json aggiornato"
 echo ""
 echo "Git commit e tag..."
 
-# Add version.json prima del pull
-git add version.json
-
 # Pull latest changes first to avoid conflicts
 TARGET_BRANCH=${TARGET_BRANCH:-master}
 echo "Sincronizzazione con $TARGET_BRANCH..."
-git pull --rebase origin "$TARGET_BRANCH" || {
+git pull --rebase --autostash origin "$TARGET_BRANCH" || {
   echo "⚠️  Conflitto durante il pull, risolvi manualmente"
   exit 1
 }
 
+git add version.json
 git commit -m "Release v$VERSION" || {
   echo "⚠️  Nessuna modifica da committare o errore nel commit"
 }
