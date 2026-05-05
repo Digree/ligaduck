@@ -11,6 +11,15 @@
 class FontFamily {
   FontFamily._();
 
-  /// Font family: Franklin Gothic
-  static const String franklinGothic = 'Franklin Gothic';
+  /// Font family: Elms Sans
+  static const String elmsSans = 'Elms Sans';
+
+  /// Font family: champions
+  static const String champions = 'champions';
+
+  /// Font family: europa
+  static const String europa = 'europa';
+
+  /// Font family: supercup
+  static const String supercup = 'supercup';
 }
