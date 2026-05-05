@@ -54,10 +54,12 @@ if command -v create-dmg &> /dev/null; then
     echo "✓ DMG creato: $DMG_DEST"
     ls -lh "$DMG_DEST"
     
-    # Copia in Downloads
-    DOWNLOADS_DMG="$HOME/Downloads/ligaduck-v$VERSION.dmg"
-    cp "$DMG_DEST" "$DOWNLOADS_DMG"
-    echo "✓ DMG copiato in Downloads: $DOWNLOADS_DMG"
+    # Copia in Downloads se la directory esiste (locale, non CI)
+    if [ -d "$HOME/Downloads" ]; then
+      DOWNLOADS_DMG="$HOME/Downloads/ligaduck-v$VERSION.dmg"
+      cp "$DMG_DEST" "$DOWNLOADS_DMG"
+      echo "✓ DMG copiato in Downloads: $DOWNLOADS_DMG"
+    fi
   else
     echo "⚠️  DMG creation failed, creating ZIP instead..."
     ZIP_DEST="build/ligaduck-v$VERSION-macos.zip"
@@ -67,10 +69,12 @@ if command -v create-dmg &> /dev/null; then
     echo "✓ ZIP creato: $ZIP_DEST"
     ls -lh "$ZIP_DEST"
     
-    # Copia in Downloads
-    DOWNLOADS_ZIP="$HOME/Downloads/ligaduck-v$VERSION-macos.zip"
-    cp "$ZIP_DEST" "$DOWNLOADS_ZIP"
-    echo "✓ ZIP copiato in Downloads: $DOWNLOADS_ZIP"
+    # Copia in Downloads se la directory esiste (locale, non CI)
+    if [ -d "$HOME/Downloads" ]; then
+      DOWNLOADS_ZIP="$HOME/Downloads/ligaduck-v$VERSION-macos.zip"
+      cp "$ZIP_DEST" "$DOWNLOADS_ZIP"
+      echo "✓ ZIP copiato in Downloads: $DOWNLOADS_ZIP"
+    fi
   fi
 else
   echo "⚠️  create-dmg non installato, creating ZIP instead..."
@@ -81,12 +85,13 @@ else
   echo "✓ ZIP creato: $ZIP_DEST"
   ls -lh "$ZIP_DEST"
   
-  # Copia in Downloads
-  DOWNLOADS_ZIP="$HOME/Downloads/ligaduck-v$VERSION-macos.zip"
-  cp "$ZIP_DEST" "$DOWNLOADS_ZIP"
-  echo "✓ ZIP copiato in Downloads: $DOWNLOADS_ZIP"
+  # Copia in Downloads se la directory esiste (locale, non CI)
+  if [ -d "$HOME/Downloads" ]; then
+    DOWNLOADS_ZIP="$HOME/Downloads/ligaduck-v$VERSION-macos.zip"
+    cp "$ZIP_DEST" "$DOWNLOADS_ZIP"
+    echo "✓ ZIP copiato in Downloads: $DOWNLOADS_ZIP"
+  fi
 fi
 
 echo ""
 echo "✅ Build macOS completato!"
-echo "File Downloads: $HOME/Downloads/ligaduck-v$VERSION.*"
