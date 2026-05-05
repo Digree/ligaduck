@@ -269,12 +269,21 @@ class SettingsIcon extends StatelessWidget {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
+        bool isWide = MediaQuery.of(context).size.width > 600;
         return AlertDialog(
           title: Row(
             children: [
               Icon(Icons.system_update, color: Colors.blueAccent),
               SizedBox(width: 12),
-              Text('Aggiornamento disponibile'),
+              Flexible(
+                child: Text(
+                  'Aggiornamento disponibile',
+                  style: TextStyle(
+                    fontSize: isWide ? 20 : 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ],
           ),
           content: SingleChildScrollView(
@@ -318,6 +327,7 @@ class SettingsIcon extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
+              style: TextButton.styleFrom(foregroundColor: Colors.blueAccent),
               child: Text('Più tardi'),
             ),
             ElevatedButton.icon(
@@ -553,12 +563,21 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        bool isWide = MediaQuery.of(context).size.width > 600;
         return AlertDialog(
           title: Row(
             children: [
               Icon(Icons.check_circle, color: Colors.green, size: 32),
               SizedBox(width: 12),
-              Text('Download completato'),
+              Flexible(
+                child: Text(
+                  'Download completato',
+                  style: TextStyle(
+                    fontSize: isWide ? 20 : 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ],
           ),
           content: Column(
@@ -819,9 +838,14 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
         children: [
           Icon(Icons.download, color: Colors.blueAccent),
           SizedBox(width: 12),
-          Text(
-            'Download aggiornamento',
-            style: TextStyle(fontSize: !isWide ? 24 : 16),
+          Flexible(
+            child: Text(
+              'Download aggiornamento',
+              style: TextStyle(
+                fontSize: isWide ? 20 : 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
