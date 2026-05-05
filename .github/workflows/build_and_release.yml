@@ -39,8 +39,13 @@ jobs:
       - name: Commit version changes
         run: |
           git add pubspec.yaml
-          git commit -m "chore: bump version to ${{ github.event.inputs.version }}"
-          git push origin master
+          if git diff --staged --quiet; then
+            echo "⚠️  Nessuna modifica da committare (versione già aggiornata)"
+          else
+            git commit -m "chore: bump version to ${{ github.event.inputs.version }}"
+            git push origin master
+            echo "✓ Versione aggiornata a ${{ github.event.inputs.version }}"
+          fi
 
   build-android:
     needs: [update-version]
