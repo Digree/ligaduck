@@ -117,14 +117,29 @@ echo "✓ version.json aggiornato"
 # Git commit e tag
 echo ""
 echo "Git commit e tag..."
-git add version.json
-git commit -m "Release v$VERSION"
-git tag -a "v$VERSION" -m "Release $VERSION"
-# Allow overriding the branch to push to via TARGET_BRANCH env var (defaults to master)
+
+# Pull latest changes first to avoid conflicts
 TARGET_BRANCH=${TARGET_BRANCH:-master}
+echo "Sincronizzazione con $TARGET_BRANCH..."
+git pull --rebase origin "$TARGET_BRANCH" || {
+  echo "⚠️  Conflitto durante il pull, risolvi manualmente"
+  exit 1
+}
+
+git add version.json
+git commit -m "Release v$VERSION" || {
+  echo "⚠️  Nessuna modifica da committare o errore nel commit"
+}
+
+git tag -a "v$VERSION" -m "Release $VERSION" || {
+  echo "⚠️  Tag già esistente, lo sovrascrivo..."
+  git tag -d "v$VERSION"
+  git tag -a "v$VERSION" -m "Release $VERSION"
+}
+
 echo "Pushing branch and tag to: $TARGET_BRANCH"
 git push origin "$TARGET_BRANCH"
-git push origin "v$VERSION"
+git push origin "v$VERSION" --force
 echo "✓ Commit e tag pushati"
 
 # Crea release su GitHub
