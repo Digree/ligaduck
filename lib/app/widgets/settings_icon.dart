@@ -430,7 +430,7 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
         });
 
         Directory directory;
-        
+
         if (Platform.isAndroid) {
           // Su Android salva nella cartella Download pubblica
           try {
@@ -441,7 +441,8 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
             } else {
               // Fallback alla directory Documents esterna
               final externalDir = await getExternalStorageDirectory();
-              directory = externalDir ?? await getApplicationDocumentsDirectory();
+              directory =
+                  externalDir ?? await getApplicationDocumentsDirectory();
               print('Android: usando cartella esterna o Documents');
             }
           } catch (e) {
@@ -451,7 +452,9 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
         } else if (Platform.isIOS) {
           // Su iOS salva nella directory Documents dell'app (accessibile tramite Files)
           directory = await getApplicationDocumentsDirectory();
-          print('iOS: usando cartella Documents (accessibile tramite Files app)');
+          print(
+            'iOS: usando cartella Documents (accessibile tramite Files app)',
+          );
         } else {
           directory = await getApplicationDocumentsDirectory();
         }
