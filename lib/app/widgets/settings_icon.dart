@@ -424,27 +424,34 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
 
         filePath = saveLocation.path;
       } else {
-        // Su mobile (Android/iOS) salva automaticamente nella directory Downloads/Documents
+        // Su mobile (Android/iOS) salva nella directory accessibile all'utente
         setState(() {
           _status = 'Preparazione download...';
         });
 
         Directory directory;
-        if (Platform.isAndroid || Platform.isIOS) {
-          // Prova prima Downloads, altrimenti Documents
-          directory = await getApplicationDocumentsDirectory();
-
-          // Su Android prova a usare la directory Download pubblica
-          if (Platform.isAndroid) {
-            try {
-              final downloadDir = Directory('/storage/emulated/0/Download');
-              if (await downloadDir.exists()) {
-                directory = downloadDir;
-              }
-            } catch (e) {
-              print('Impossibile accedere a /storage/emulated/0/Download: $e');
+        
+        if (Platform.isAndroid) {
+          // Su Android salva nella cartella Download pubblica
+          try {
+            final downloadDir = Directory('/storage/emulated/0/Download');
+            if (await downloadDir.exists()) {
+              directory = downloadDir;
+              print('Android: usando cartella Download pubblica');
+            } else {
+              // Fallback alla directory Documents esterna
+              final externalDir = await getExternalStorageDirectory();
+              directory = externalDir ?? await getApplicationDocumentsDirectory();
+              print('Android: usando cartella esterna o Documents');
             }
+          } catch (e) {
+            print('Errore accesso Download Android: $e');
+            directory = await getApplicationDocumentsDirectory();
           }
+        } else if (Platform.isIOS) {
+          // Su iOS salva nella directory Documents dell'app (accessibile tramite Files)
+          directory = await getApplicationDocumentsDirectory();
+          print('iOS: usando cartella Documents (accessibile tramite Files app)');
         } else {
           directory = await getApplicationDocumentsDirectory();
         }
@@ -551,9 +558,9 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
     } else if (Platform.isWindows) {
       return 'Clicca "Apri file" per estrarre il contenuto del ZIP.';
     } else if (Platform.isAndroid) {
-      return 'Clicca "Installa" per installare l\'APK. Potrebbero essere necessari permessi per installare app da origini sconosciute.';
+      return 'Il file APK è stato salvato nella cartella Download. Clicca "Installa" per installare l\'APK. Potrebbero essere necessari permessi per installare app da origini sconosciute.';
     } else if (Platform.isIOS) {
-      return 'Il file IPA è stato salvato. Per installarlo su iOS è necessario un Mac con Xcode o un servizio di firma di app.';
+      return 'Il file IPA è stato salvato nella cartella Documents dell\'app, accessibile tramite l\'app Files (Su iPhone > Liga Duck Manager). Per installarlo è necessario un Mac con Xcode o un servizio di firma di app.';
     } else {
       return 'File scaricato con successo.';
     }
