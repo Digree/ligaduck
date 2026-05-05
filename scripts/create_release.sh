@@ -57,6 +57,11 @@ if [ "$BUILD_ANDROID" != "false" ]; then
     APK_DEST="build/ligaduck-v${NEW_VERSION}.apk"
     cp "$APK_SOURCE" "$APK_DEST"
     echo -e "${GREEN}  ✓ APK creato: $APK_DEST${NC}"
+    
+    # Copia in Downloads
+    DOWNLOADS_APK="$HOME/Downloads/ligaduck-v${NEW_VERSION}.apk"
+    cp "$APK_DEST" "$DOWNLOADS_APK"
+    echo -e "${GREEN}  ✓ APK copiato in Downloads${NC}"
 fi
 
 # macOS (se su macOS)
@@ -73,6 +78,11 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
             --window-size 600 400 \
             --icon-size 100 \
             --app-drop-link 450 185 \
+            
+            # Copia in Downloads
+            DOWNLOADS_DMG="$HOME/Downloads/ligaduck-v${NEW_VERSION}.dmg"
+            cp "$DMG_DEST" "$DOWNLOADS_DMG"
+            echo -e "${GREEN}  ✓ DMG copiato in Downloads${NC}"
             "$DMG_DEST" \
             "build/macos/Build/Products/Release/ligaduck.app" 2>/dev/null || true
         
@@ -95,6 +105,11 @@ if [ -d "build/windows/x64/runner/Release" ]; then
     # Crea lo zip con il contenuto della cartella Release
     if command -v zip &> /dev/null; then
         cd build/windows/x64/runner/Release
+            
+            # Copia in Downloads
+            DOWNLOADS_WIN="$HOME/Downloads/ligaduck-v${NEW_VERSION}-windows.zip"
+            cp "$WIN_DEST" "$DOWNLOADS_WIN"
+            echo -e "${GREEN}  ✓ Windows ZIP copiato in Downloads${NC}"
         zip -r "../../../../../ligaduck-v${NEW_VERSION}-windows.zip" ./* > /dev/null
         cd ../../../../../
         

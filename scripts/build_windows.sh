@@ -93,6 +93,11 @@ if [ -f "$ZIP_DEST" ]; then
   echo "✓ ZIP creato: $ZIP_DEST"
   ls -lh "$ZIP_DEST"
   
+  # Copia in Downloads
+  DOWNLOADS_ZIP="$HOME/Downloads/ligaduck-v$VERSION-windows.zip"
+  cp "$ZIP_DEST" "$DOWNLOADS_ZIP"
+  echo "✓ ZIP copiato in Downloads: $DOWNLOADS_ZIP"
+  
   # Verifica contenuto ZIP
   echo ""
   echo "Contenuto ZIP (prime 15 righe):"
@@ -104,4 +109,5 @@ fi
 
 echo ""
 echo "✅ Build Windows completato!"
-echo "File: $ZIP_DEST"
+echo "File build: $ZIP_DEST"
+echo "File Downloads: $HOME/Downloads/ligaduck-v$VERSION-windows.zip"

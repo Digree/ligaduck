@@ -4,6 +4,8 @@
     "source.fixAll": "explicit"
   },
   "dart.previewHotReloadOnSave": true,
+  "dart.flutterSdkPath": "/opt/homebrew/share/flutter",
+  "dart.sdkPath": "/opt/homebrew/share/flutter/bin/cache/dart-sdk",
   "java.jdt.ls.java.home": "/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home",
   "java.import.gradle.java.home": "/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home",
   "java.import.gradle.home": "/Users/e.digregorio/job/javasoft/gradle-8.10.2",

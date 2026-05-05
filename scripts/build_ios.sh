@@ -64,6 +64,11 @@ if [ -f "build/$IPA_NAME" ]; then
   echo "✓ IPA creato: $IPA_DEST"
   ls -lh "$IPA_DEST"
   
+  # Copia in Downloads
+  DOWNLOADS_DEST="$HOME/Downloads/ligaduck-v$VERSION.ipa"
+  cp "$IPA_DEST" "$DOWNLOADS_DEST"
+  echo "✓ IPA copiato in Downloads: $DOWNLOADS_DEST"
+  
   # Pulisci cartella Payload temporanea
   rm -rf "$PAYLOAD_DIR"
   echo "✓ Payload temporaneo rimosso"
@@ -74,7 +79,8 @@ fi
 
 echo ""
 echo "✅ Build iOS completato!"
-echo "File: $IPA_DEST"
+echo "File build: $IPA_DEST"
+echo "File Downloads: $HOME/Downloads/ligaduck-v$VERSION.ipa"
 echo ""
 echo "📝 Note:"
 echo "  - Questo è un IPA ad-hoc per test/distribuzione interna"

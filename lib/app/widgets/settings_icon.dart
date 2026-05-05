@@ -813,12 +813,16 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
 
   @override
   Widget build(BuildContext context) {
+    bool isWide = MediaQuery.of(context).size.width > 600;
     return AlertDialog(
       title: Row(
         children: [
           Icon(Icons.download, color: Colors.blueAccent),
           SizedBox(width: 12),
-          Text('Download aggiornamento'),
+          Text(
+            'Download aggiornamento',
+            style: TextStyle(fontSize: !isWide ? 24 : 16),
+          ),
         ],
       ),
       content: Column(
@@ -830,7 +834,10 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
             color: Colors.blueAccent,
           ),
           SizedBox(height: 16),
-          Text(_status),
+          Text(
+            _status,
+            style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+          ),
           if (_isDownloading) ...[
             SizedBox(height: 16),
             Text(

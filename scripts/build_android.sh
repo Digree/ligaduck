@@ -26,6 +26,11 @@ if [ -f "$APK_SOURCE" ]; then
   cp "$APK_SOURCE" "$APK_DEST"
   echo "✓ APK creato: $APK_DEST"
   ls -lh "$APK_DEST"
+  
+  # Copia in Downloads
+  DOWNLOADS_DEST="$HOME/Downloads/ligaduck-v$VERSION.apk"
+  cp "$APK_DEST" "$DOWNLOADS_DEST"
+  echo "✓ APK copiato in Downloads: $DOWNLOADS_DEST"
 else
   echo "❌ APK non trovato in $APK_SOURCE"
   exit 1
@@ -33,4 +38,5 @@ fi
 
 echo ""
 echo "✅ Build Android completato!"
-echo "File: $APK_DEST"
+echo "File build: $APK_DEST"
+echo "File Downloads: $HOME/Downloads/ligaduck-v$VERSION.apk"
