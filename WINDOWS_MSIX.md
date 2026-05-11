@@ -45,6 +45,74 @@ Doppio click sul file `.msix` oppure:
 Add-AppxPackage -Path "artifacts\LigaDuckManager-Windows-v43.01.00.msix"
 ```
 
+## ⚠️ Installazione con Certificato Auto-generato
+
+Il pacchetto MSIX viene creato con un certificato di test auto-generato. Per installarlo:
+
+### METODO 1: Script automatico (CONSIGLIATO) ✅
+
+L'artifact scaricato da GitHub Actions include uno script PowerShell che installa automaticamente il certificato e l'app:
+
+1. Scarica e estrai l'artifact MSIX da GitHub Actions
+2. Clicca destro su **`install_msix_windows.ps1`**
+3. Seleziona **"Esegui con PowerShell"**
+4. Conferma i privilegi di amministratore quando richiesto
+
+Lo script:
+- ✅ Estrae automaticamente il certificato dall'MSIX
+- ✅ Lo installa come Trusted Root Certificate
+- ✅ Installa l'applicazione
+- ✅ Gestisce errori comuni
+
+### METODO 2: Installazione manuale certificato
+
+**Passo 1 - Installa il certificato:**
+
+1. Clicca destro sul file `.msix`
+2. Seleziona **"Proprietà"**
+3. Vai alla scheda **"Firme digitali"**
+4. Seleziona il certificato → **Dettagli** → **Visualizza certificato**
+5. Clicca **"Installa certificato"**
+6. Seleziona **"Computer locale"** (richiede privilegi amministratore)
+7. Scegli **"Posiziona tutti i certificati nel seguente archivio"**
+8. Clicca **"Sfoglia"** → Seleziona **"Autorità di certificazione radice attendibili"**
+9. Completa la procedura guidata
+
+**Passo 2 - Installa l'app:**
+
+Ora puoi fare doppio click sul file `.msix` per installarlo.
+
+### METODO 3: PowerShell (per utenti avanzati)
+
+```powershell
+# Esegui PowerShell come Amministratore
+
+# Estrai e installa il certificato
+$msixPath = "artifacts\LigaDuckManager-Windows-v43.1.2.msix"
+$cert = (Get-AuthenticodeSignature $msixPath).SignerCertificate
+$store = New-Object System.Security.Cryptography.X509Certificates.X509Store("Root","LocalMachine")
+$store.Open("ReadWrite")
+$store.Add($cert)
+$store.Close()
+
+# Installa l'app
+Add-AppxPackage -Path $msixPath
+```
+
+### Errore 0x800B010A
+
+Se ricevi l'errore **"publisher certificate could not be verified (0x800B010A)"**, significa che il certificato non è ancora installato come attendibile. Segui uno dei metodi sopra per installare il certificato.
+
+### Abilitare Developer Mode (se necessario)
+
+Se continui ad avere problemi, abilita "Developer Mode" o "Sideloading" su Windows:
+
+1. **Impostazioni Windows**
+2. **Aggiornamento e sicurezza** → **Per sviluppatori**
+3. Seleziona **"Modalità sviluppatore"** oppure **"App sideload"**
+
+Questo è necessario solo se Windows blocca l'installazione di app da fonti esterne al Microsoft Store.
+
 ## ⚙️ Configurazione
 
 La configurazione MSIX si trova in `pubspec.yaml`:

@@ -88,11 +88,17 @@ jobs:
             exit 1
           }
 
+      - name: Copy installation scripts to artifacts
+        run: |
+          Copy-Item "scripts\install_msix_windows.ps1" "artifacts\"
+          Copy-Item "scripts\INSTALL_MSIX_README.txt" "artifacts\README.txt"
+          Write-Host "✓ Installation helper files added"
+
       - name: Upload MSIX artifact
         uses: actions/upload-artifact@v4
         with:
           name: ligaduck-windows-msix-${{ github.event.inputs.version }}
-          path: artifacts/LigaDuckManager-Windows-v${{ github.event.inputs.version }}.msix
+          path: artifacts/*
 
   create-release:
     needs: build-windows-msix
@@ -128,16 +134,35 @@ jobs:
           NOTES="${{ github.event.inputs.release_notes }}"
           TAG="v$VERSION"
           
+          # Aggiungi istruzioni di installazione alle note
+          INSTALL_INSTRUCTIONS="
+
+          ## 📦 Installazione MSIX (Windows 10/11)
+
+          **Metodo consigliato:**
+          1. Scarica l'artifact \`ligaduck-windows-msix-$VERSION.zip\`
+          2. Estrai tutto il contenuto
+          3. Clicca destro su \`install_msix_windows.ps1\`
+          4. Seleziona \"Esegui con PowerShell\"
+          5. Conferma privilegi amministratore
+
+          Lo script installerà automaticamente il certificato e l'app.
+
+          **Nota:** Questo pacchetto usa un certificato auto-generato per test.
+          Vedi \`README.txt\` nell'artifact per istruzioni dettagliate."
+          
+          FULL_NOTES="$NOTES$INSTALL_INSTRUCTIONS"
+          
           # Check if release exists
           if gh release view "$TAG" &>/dev/null; then
             echo "Release $TAG already exists, uploading MSIX..."
-            gh release upload "$TAG" artifacts/*.msix --clobber
+            gh release upload "$TAG" artifacts/* --clobber
           else
             echo "Creating new release $TAG..."
-            echo "$NOTES" | gh release create "$TAG" \
+            echo "$FULL_NOTES" | gh release create "$TAG" \
               --title "LigaDuck Manager v$VERSION" \
               --notes-file - \
-              artifacts/*.msix
+              artifacts/*
           fi
           
           echo "✓ Release created/updated with MSIX package"

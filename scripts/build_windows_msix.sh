@@ -50,9 +50,16 @@ ARTIFACT_NAME="LigaDuckManager-Windows-v${VERSION}.msix"
 cp "$MSIX_OUTPUT" "artifacts/$ARTIFACT_NAME"
 
 echo "✓ MSIX salvato in: artifacts/$ARTIFACT_NAME"
+
+# Copia script di installazione
+cp "scripts/install_msix_windows.ps1" "artifacts/"
+cp "scripts/INSTALL_MSIX_README.txt" "artifacts/README.txt"
+
+echo "✓ File helper per installazione aggiunti"
 echo ""
 echo "📦 Build completato!"
 echo "   File: artifacts/$ARTIFACT_NAME"
+echo "   Helper: artifacts/install_msix_windows.ps1"
+echo "   README: artifacts/README.txt"
 echo ""
-echo "💡 Per installare: fai doppio click sul file .msix"
-echo "   oppure usa: Add-AppxPackage -Path artifacts/$ARTIFACT_NAME"
+echo "💡 Per installare: Vedi artifacts/README.txt"

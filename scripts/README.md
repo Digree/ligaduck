@@ -63,6 +63,14 @@ Aggiorna solo la versione in `pubspec.yaml`.
 - ✅ Compatibile con Microsoft Store
 - ✅ Aggiornamenti automatici
 
+**Output**:
+- `artifacts/LigaDuckManager-Windows-v43.01.00.msix` - Pacchetto MSIX
+- `artifacts/install_msix_windows.ps1` - Script installazione automatica
+- `artifacts/README.txt` - Istruzioni dettagliate
+
+**Installazione**: Gli artifact includono uno script PowerShell (`install_msix_windows.ps1`) 
+che installa automaticamente il certificato di test e l'applicazione.
+
 **Nota**: Funziona solo su Windows. Richiede `flutter pub get` prima del primo utilizzo.
 
 ### 6. **Crea Release GitHub**

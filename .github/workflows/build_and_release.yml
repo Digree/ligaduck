@@ -298,11 +298,17 @@ jobs:
             exit 1
           }
 
+      - name: Copy installation scripts to artifacts
+        run: |
+          Copy-Item "scripts\install_msix_windows.ps1" "artifacts\"
+          Copy-Item "scripts\INSTALL_MSIX_README.txt" "artifacts\README.txt"
+          Write-Host "✓ Installation helper files added"
+
       - name: Upload MSIX
         uses: actions/upload-artifact@v4
         with:
           name: ligaduck-windows-msix-${{ github.event.inputs.version }}
-          path: artifacts/LigaDuckManager-Windows-v${{ github.event.inputs.version }}.msix
+          path: artifacts/*
 
   create-release:
     needs: [build-android, build-ios, build-macos, build-windows, build-windows-msix]
