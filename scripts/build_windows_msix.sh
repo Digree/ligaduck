@@ -14,7 +14,8 @@ fi
 echo "📦 Build Windows MSIX v$VERSION"
 echo "================================"
 
-# Converti versione in formato MSIX (x.y.z.0)
+# Converti versione in formato MSIX (x.y.z.0) rimuovendo zeri iniziali
+# awk con %d rimuove automaticamente gli zeri iniziali
 MSIX_VERSION=$(echo $VERSION | awk -F. '{printf "%d.%d.%d.0", $1, $2, $3}')
 
 echo "Aggiornamento versione MSIX a $MSIX_VERSION..."

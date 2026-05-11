@@ -36,15 +36,20 @@ jobs:
       - name: Update MSIX version
         run: |
           $version = '${{ github.event.inputs.version }}'
-          $msixVersion = $version -replace '(\d+)\.(\d+)\.(\d+)', '$1.$2.$3.0'
+          # Split version and remove leading zeros from each part
+          $parts = $version.Split('.')
+          $major = [int]$parts[0]
+          $minor = [int]$parts[1]
+          $patch = [int]$parts[2]
+          $msixVersion = "$major.$minor.$patch.0"
           
-          Write-Host "Updating MSIX version to: $msixVersion"
+          Write-Host "Converting version $version to MSIX format: $msixVersion"
           
           $content = Get-Content pubspec.yaml -Raw
           $content = $content -replace 'msix_version:.*', "msix_version: $msixVersion"
           $content | Set-Content pubspec.yaml -NoNewline
           
-          Write-Host "✓ MSIX version updated"
+          Write-Host "✓ MSIX version updated to $msixVersion"
 
       - name: Build MSIX package
         run: flutter pub run msix:create --release

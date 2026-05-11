@@ -52,7 +52,7 @@ msix_config:
   display_name: LigaDuck Manager
   publisher_display_name: LigaDuck
   identity_name: com.ligaduck.manager
-  msix_version: 43.1.2.0
+  msix_version: 43.1.2.0  # Format: major.minor.patch.0 (no leading zeros)
   logo_path: assets/icon/icon.png
   capabilities: internetClient
   languages: it-IT, en-US

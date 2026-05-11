@@ -54,11 +54,16 @@ msix_config:
   display_name: LigaDuck Manager              # Nome mostrato nel menu Start
   publisher_display_name: LigaDuck            # Nome publisher
   identity_name: com.ligaduck.manager         # ID unico app
-  msix_version: 43.1.2.0                      # Versione in formato x.y.z.0
+  msix_version: 43.1.2.0                      # Versione in formato x.y.z.0 (NO zeri iniziali!)
   logo_path: assets/icon/icon.png             # Icona applicazione
   capabilities: internetClient                # Permessi (accesso internet)
   languages: it-IT, en-US                     # Lingue supportate
 ```
+
+**⚠️ IMPORTANTE - Formato versione MSIX:**
+- Ogni numero deve essere tra 0-65535
+- **NON usare zeri iniziali** (es: `43.01.02.0` è INVALIDO, usa `43.1.2.0`)
+- Gli script convertono automaticamente `43.01.00` → `43.1.0.0`
 
 ### Parametri opzionali aggiuntivi
 

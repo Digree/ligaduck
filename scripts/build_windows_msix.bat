@@ -14,9 +14,12 @@ set "VERSION=%~1"
 echo 📦 Build Windows MSIX v%VERSION%
 echo ==================================
 
-REM Converti versione in formato MSIX (x.y.z.0)
+REM Converti versione in formato MSIX (x.y.z.0) rimuovendo zeri iniziali
 for /f "tokens=1,2,3 delims=." %%a in ("%VERSION%") do (
-  set "MSIX_VERSION=%%a.%%b.%%c.0"
+  set /a "MAJOR=%%a"
+  set /a "MINOR=%%b"
+  set /a "PATCH=%%c"
+  set "MSIX_VERSION=!MAJOR!.!MINOR!.!PATCH!.0"
 )
 
 echo Aggiornamento versione MSIX a %MSIX_VERSION%...
