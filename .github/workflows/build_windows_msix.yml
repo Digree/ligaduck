@@ -52,11 +52,10 @@ jobs:
             
             # Update pubspec.yaml with certificate info
             $content = Get-Content pubspec.yaml -Raw
-            $certConfig = @"
-  certificate_path: $certPath
-  certificate_password: $env:CERT_PASSWORD
-  publisher: $env:PUBLISHER
-"@
+            $certConfigLine1 = "  certificate_path: $certPath"
+            $certConfigLine2 = "  certificate_password: $env:CERT_PASSWORD"
+            $certConfigLine3 = "  publisher: $env:PUBLISHER"
+            $certConfig = "$certConfigLine1`n$certConfigLine2`n$certConfigLine3"
             $content = $content -replace '(?m)^  install_certificate:.*$', "install_certificate: false`n$certConfig"
             $content | Set-Content pubspec.yaml -NoNewline
             
