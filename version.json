@@ -1,23 +1,23 @@
 {
-  "lastUpdate": "2026-05-05",
+  "lastUpdate": "2026-05-11",
   "android": {
-    "version": "43.01.01",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.01/ligaduck-v43.01.01.apk",
-    "releaseNotes": "- Aggiornamenti app"
+    "version": "43.01.02",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.02/ligaduck-v43.01.02.apk",
+    "releaseNotes": "Prova aggiornamento"
   },
   "ios": {
-    "version": "43.01.01",
+    "version": "43.01.02",
     "downloadUrl": "https://apps.apple.com/app/ligaduck",
-    "releaseNotes": "- Aggiornamenti app"
+    "releaseNotes": "Prova aggiornamento"
   },
   "macos": {
-    "version": "43.01.01",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.01/ligaduck-v43.01.01.dmg",
-    "releaseNotes": "- Aggiornamenti app"
+    "version": "43.01.02",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.02/ligaduck-v43.01.02.dmg",
+    "releaseNotes": "Prova aggiornamento"
   },
   "windows": {
-    "version": "43.01.01",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.01/ligaduck-v43.01.01-windows.zip",
-    "releaseNotes": "- Aggiornamenti app"
+    "version": "43.01.02",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.02/ligaduck-v43.01.02-windows.zip",
+    "releaseNotes": "Prova aggiornamento"
   }
 }
