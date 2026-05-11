@@ -34,7 +34,6 @@ jobs:
         run: flutter pub get
 
       - name: Setup commercial certificate (if available)
-        if: ${{ secrets.WINDOWS_CERT_BASE64 != '' }}
         env:
           WINDOWS_CERT_BASE64: ${{ secrets.WINDOWS_CERT_BASE64 }}
           CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
