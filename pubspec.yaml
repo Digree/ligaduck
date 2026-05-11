@@ -57,6 +57,10 @@ msix_config:
   capabilities: internetClient
   languages: it-IT, en-US
   install_certificate: false  # Don't install certificate automatically (for CI/CD)
+  # Per certificato commerciale, decommenta e configura:
+  # certificate_path: C:/path/to/your-codesign-cert.pfx
+  # certificate_password: your-secure-password
+  # publisher: CN=Your Company Name, O=Your Organization, L=City, S=State, C=IT
   
 flutter:
   uses-material-design: true

@@ -43,3 +43,13 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Code signing certificates (never commit these!)
+*.pfx
+*.p12
+*.cer
+*.pem
+*cert*.txt
+*certificate*.txt
+codesign*
+certificates/

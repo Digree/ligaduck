@@ -12,6 +12,32 @@ MSIX è il formato moderno di packaging per applicazioni Windows che offre:
 - ✅ **Microsoft Store ready** - Pronto per pubblicazione sullo Store
 - ✅ **Firma digitale integrata** - Gli utenti vedono il publisher verificato
 
+## ⚠️ IMPORTANTE - Certificato e Installazione Automatica
+
+### 🔒 Problema con certificati auto-generati
+
+**NON È POSSIBILE** avere un'installazione completamente automatica (doppio click senza warning) con certificati auto-generati. Windows blocca per sicurezza app non firmate da autorità riconosciute.
+
+### ✅ Soluzioni per installazione automatica:
+
+#### Opzione 1: Certificato Code-Signing Commerciale (CONSIGLIATO)
+- Costo: €200-400/anno
+- Installazione con doppio click, zero warning
+- Publisher verificato visibile agli utenti
+- Fornitori: DigiCert, Sectigo, GlobalSign
+
+#### Opzione 2: Microsoft Store
+- Distribuzione tramite Store ufficiale
+- Microsoft firma automaticamente
+- Costo: €14/anno (account developer)
+
+#### Opzione 3: Certificato auto-generato + Script helper (ATTUALE)
+- Gratuito ma richiede step extra dall'utente
+- Utenti devono eseguire script PowerShell per installare certificato
+- Mostra warning "Publisher sconosciuto"
+
+**Per distribuzione pubblica professionale, si consiglia Opzione 1 o 2.**
+
 ## 🚀 Quick Start
 
 ### 1. Prima configurazione (una tantum)
@@ -163,7 +189,121 @@ msix_config:
 
 Per distribuzione pubblica, dovresti firmare digitalmente il pacchetto MSIX.
 
-### Certificato auto-generato (default)
+### ✅ OPZIONE CONSIGLIATA: Certificato Commerciale
+
+Questa è l'**unica soluzione** per installazione automatica senza warning.
+
+**Passo 1 - Acquista certificato code-signing:**
+
+Scegli un fornitore:
+- **DigiCert**: https://www.digicert.com/code-signing (~€300-400/anno)
+  - Più affidabile, riconosciuto istantaneamente da Windows
+  - Processo di verifica aziendale rigoroso
+  
+- **Sectigo (ex Comodo)**: https://sectigo.com/ssl-certificates-tls/code-signing (~€200-300/anno)
+  - Alternativa economica ma ugualmente valida
+  
+- **GlobalSign**: https://www.globalsign.com/en/code-signing-certificate (~€250-400/anno)
+
+**Cosa ti serve per acquistare:**
+- Partita IVA o Codice Fiscale
+- Documento identità
+- Verifica email e telefono
+- Verifica DUNS (per certificati EV - Extended Validation)
+
+**Passo 2 - Ricevi certificato (.pfx file):**
+
+Il fornitore ti darà:
+- File `.pfx` o `.p12` (certificato + chiave privata)
+- Password per il certificato
+- Informazioni del publisher (CN, O, L, S, C)
+
+**Passo 3 - Configura in pubspec.yaml:**
+
+```yaml
+msix_config:
+  display_name: LigaDuck Manager
+  publisher_display_name: LigaDuck
+  identity_name: com.ligaduck.manager
+  msix_version: 43.1.2.0
+  logo_path: assets/icon/icon.png
+  capabilities: internetClient
+  languages: it-IT, en-US
+  
+  # AGGIUNGI QUESTE RIGHE:
+  certificate_path: path/to/your-cert.pfx
+  certificate_password: your-password-here
+  publisher: CN=Your Company Name, O=Your Organization, L=Rome, S=Lazio, C=IT
+  install_certificate: false
+```
+
+**Passo 4 - Configura GitHub Actions Secrets:**
+
+Per usare il certificato in CI/CD senza esporlo pubblicamente:
+
+1. **Converti certificato in Base64:**
+   ```bash
+   # Su Mac/Linux:
+   base64 your-cert.pfx > cert-base64.txt
+   
+   # Su Windows PowerShell:
+   [Convert]::ToBase64String([IO.File]::ReadAllBytes("your-cert.pfx")) > cert-base64.txt
+   ```
+
+2. **Aggiungi secrets su GitHub:**
+   - Vai su: Repository → Settings → Secrets and variables → Actions
+   - Clicca "New repository secret"
+   - Aggiungi:
+     - Nome: `WINDOWS_CERT_BASE64`
+     - Valore: (contenuto di cert-base64.txt)
+   - Aggiungi:
+     - Nome: `WINDOWS_CERT_PASSWORD`
+     - Valore: (password del certificato)
+   - Aggiungi:
+     - Nome: `WINDOWS_PUBLISHER`
+     - Valore: `CN=Your Company, O=Your Org, L=City, S=State, C=IT`
+
+3. **Aggiorna workflow GitHub Actions:**
+
+Modifica `.github/workflows/build_windows_msix.yml` e `.github/workflows/build_and_release.yml`:
+
+```yaml
+- name: Setup certificate
+  if: ${{ env.WINDOWS_CERT_BASE64 != '' }}
+  env:
+    WINDOWS_CERT_BASE64: ${{ secrets.WINDOWS_CERT_BASE64 }}
+  run: |
+    $certBytes = [Convert]::FromBase64String($env:WINDOWS_CERT_BASE64)
+    $certPath = Join-Path $env:TEMP "cert.pfx"
+    [IO.File]::WriteAllBytes($certPath, $certBytes)
+    echo "CERT_PATH=$certPath" >> $env:GITHUB_ENV
+
+- name: Update MSIX configuration with certificate
+  if: ${{ env.CERT_PATH != '' }}
+  env:
+    CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+    PUBLISHER: ${{ secrets.WINDOWS_PUBLISHER }}
+  run: |
+    $content = Get-Content pubspec.yaml -Raw
+    $content = $content -replace 'install_certificate:.*', "install_certificate: false`n  certificate_path: $env:CERT_PATH`n  certificate_password: $env:CERT_PASSWORD`n  publisher: $env:PUBLISHER"
+    $content | Set-Content pubspec.yaml -NoNewline
+
+# Poi il normale build MSIX...
+```
+
+**Risultato finale:**
+- ✅ Doppio click sul .msix per installare (ZERO warning!)
+- ✅ "Verified publisher: Your Company Name"
+- ✅ Certificato già trusted da Windows
+- ✅ Esperienza utente professionale
+
+**Costo totale:** €200-400/anno
+
+**ROI:** Se distribuisci a 100+ utenti, il costo è ampiamente giustificato dal risparmio di supporto e dall'immagine professionale.
+
+---
+
+### ⚠️ OPZIONE FALLBACK: Certificato Auto-generato (ATTUALE)
 
 Di default, il pacchetto MSIX viene creato con un certificato di test auto-generato da `msix`.
 

@@ -33,6 +33,39 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      - name: Setup commercial certificate (if available)
+        if: ${{ secrets.WINDOWS_CERT_BASE64 != '' }}
+        env:
+          WINDOWS_CERT_BASE64: ${{ secrets.WINDOWS_CERT_BASE64 }}
+          CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+          PUBLISHER: ${{ secrets.WINDOWS_PUBLISHER }}
+        run: |
+          if ($env:WINDOWS_CERT_BASE64) {
+            Write-Host "🔐 Commercial certificate detected, configuring..."
+            
+            # Decode and save certificate
+            $certBytes = [Convert]::FromBase64String($env:WINDOWS_CERT_BASE64)
+            $certPath = Join-Path $env:TEMP "codesign-cert.pfx"
+            [IO.File]::WriteAllBytes($certPath, $certBytes)
+            
+            Write-Host "✓ Certificate saved to temp location"
+            
+            # Update pubspec.yaml with certificate info
+            $content = Get-Content pubspec.yaml -Raw
+            $certConfig = @"
+  certificate_path: $certPath
+  certificate_password: $env:CERT_PASSWORD
+  publisher: $env:PUBLISHER
+"@
+            $content = $content -replace '(?m)^  install_certificate:.*$', "install_certificate: false`n$certConfig"
+            $content | Set-Content pubspec.yaml -NoNewline
+            
+            Write-Host "✓ MSIX configured with commercial certificate"
+            Write-Host "  Publisher: $env:PUBLISHER"
+          } else {
+            Write-Host "ℹ️  No commercial certificate, using auto-generated test certificate"
+          }
+
       - name: Update MSIX version
         run: |
           $version = '${{ github.event.inputs.version }}'
