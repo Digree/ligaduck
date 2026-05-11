@@ -58,12 +58,19 @@ msix_config:
   logo_path: assets/icon/icon.png             # Icona applicazione
   capabilities: internetClient                # Permessi (accesso internet)
   languages: it-IT, en-US                     # Lingue supportate
+  install_certificate: false                  # Non installare certificato automaticamente (per CI/CD)
 ```
 
 **⚠️ IMPORTANTE - Formato versione MSIX:**
 - Ogni numero deve essere tra 0-65535
 - **NON usare zeri iniziali** (es: `43.01.02.0` è INVALIDO, usa `43.1.2.0`)
 - Gli script convertono automaticamente `43.01.00` → `43.1.0.0`
+
+**📝 NOTA - Certificato di test:**
+- Per default, `install_certificate: false` previene prompt interattivi durante il build
+- Il pacchetto MSIX sarà creato con un certificato di test auto-generato
+- **Per installarlo localmente**: clicca destro sul file .msix → Proprietà → Firme digitali → Installa certificato
+- **Per distribuzione pubblica**: vedi sezione "Firma Digitale" sotto
 
 ### Parametri opzionali aggiuntivi
 
@@ -88,7 +95,31 @@ msix_config:
 
 Per distribuzione pubblica, dovresti firmare digitalmente il pacchetto MSIX.
 
-### Opzione 1: Certificato self-signed (per test)
+### Certificato auto-generato (default)
+
+Di default, il pacchetto MSIX viene creato con un certificato di test auto-generato da `msix`.
+
+**Per installare il pacchetto con certificato auto-generato:**
+
+1. **Metodo 1 - Installazione certificato manuale:**
+   - Clicca destro sul file `.msix`
+   - Proprietà → Firme digitali
+   - Seleziona il certificato → Dettagli → Visualizza certificato
+   - Installa certificato → Computer locale
+   - Posiziona tutti i certificati nel seguente archivio → Sfoglia → Autorità di certificazione radice attendibili
+   - Completa la procedura
+   - Ora puoi installare l'MSIX con doppio click
+
+2. **Metodo 2 - PowerShell (più veloce):**
+   ```powershell
+   # Estrai e installa il certificato automaticamente
+   $msixPath = "artifacts\LigaDuckManager-Windows-v43.1.2.msix"
+   Add-AppxPackage -Path $msixPath -DeferRegistrationWhenPackagesAreInUse
+   ```
+
+**⚠️ Nota:** Il certificato auto-generato è OK per test interni, ma per distribuzione pubblica gli utenti vedranno un warning "Publisher sconosciuto".
+
+### Opzione 1: Certificato self-signed permanente (per test team)
 
 ```powershell
 # Crea certificato di test
@@ -105,6 +136,7 @@ msix_config:
   # ... altri parametri ...
   certificate_path: cert.pfx
   certificate_password: password123
+  install_certificate: false  # Ancora false per CI/CD
 ```
 
 ### Opzione 2: Certificato commerciale (per distribuzione pubblica)

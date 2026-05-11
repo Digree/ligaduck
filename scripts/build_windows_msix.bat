@@ -29,7 +29,7 @@ powershell -Command "(Get-Content pubspec.yaml) -replace 'msix_version:.*', 'msi
 
 echo Building Windows MSIX package...
 flutter pub get
-flutter pub run msix:create --release
+flutter pub run msix:create --release --install-certificate false
 
 set "MSIX_OUTPUT=build\windows\x64\runner\Release\ligaduck.msix"
 

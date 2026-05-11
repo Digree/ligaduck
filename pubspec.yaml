@@ -56,6 +56,7 @@ msix_config:
   logo_path: assets/icon/icon.png
   capabilities: internetClient
   languages: it-IT, en-US
+  install_certificate: false  # Don't install certificate automatically (for CI/CD)
   
 flutter:
   uses-material-design: true
