@@ -3,21 +3,22 @@
   "android": {
     "version": "43.01.02",
     "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.02/ligaduck-v43.01.02.apk",
-    "releaseNotes": "Prova aggiornamento"
+    "releaseNotes": "Release"
   },
   "ios": {
     "version": "43.01.02",
     "downloadUrl": "https://apps.apple.com/app/ligaduck",
-    "releaseNotes": "Prova aggiornamento"
+    "releaseNotes": "Release"
   },
   "macos": {
     "version": "43.01.02",
     "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.02/ligaduck-v43.01.02.dmg",
-    "releaseNotes": "Prova aggiornamento"
+    "releaseNotes": "Release"
   },
   "windows": {
     "version": "43.01.02",
     "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.02/ligaduck-v43.01.02-windows.zip",
-    "releaseNotes": "Prova aggiornamento"
+    "msixUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.02/LigaDuckManager-Windows-v43.01.02.msix",
+    "releaseNotes": "Release"
   }
 }
