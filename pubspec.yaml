@@ -34,6 +34,7 @@ dev_dependencies:
   flutter_launcher_icons: ^0.14.4
   flutter_gen_runner: ^5.3.1
   build_runner: any
+  msix: ^3.16.7
 
 flutter_icons:
   ios: true
@@ -47,6 +48,15 @@ flutter_icons:
     generate: true
   image_path: "assets/icon/icon.png"
 
+msix_config:
+  display_name: LigaDuck Manager
+  publisher_display_name: LigaDuck
+  identity_name: com.ligaduck.manager
+  msix_version: 43.1.2.0
+  logo_path: assets/icon/icon.png
+  capabilities: internetClient
+  languages: it-IT, en-US
+  
 flutter:
   uses-material-design: true
   fonts:

@@ -26,6 +26,7 @@ APK="build/ligaduck-v$VERSION.apk"
 IPA="build/ligaduck-v$VERSION.ipa"
 DMG="build/ligaduck-v$VERSION.dmg"
 ZIP="build/ligaduck-v$VERSION-windows.zip"
+MSIX="artifacts/LigaDuckManager-Windows-v$VERSION.msix"
 
 ARTIFACTS=()
 
@@ -57,6 +58,13 @@ else
   echo "⚠️  ZIP Windows non trovato"
 fi
 
+if [ -f "$MSIX" ]; then
+  echo "✓ Trovato MSIX Windows"
+  ARTIFACTS+=("$MSIX")
+else
+  echo "⚠️  MSIX Windows non trovato"
+fi
+
 if [ ${#ARTIFACTS[@]} -eq 0 ]; then
   echo "❌ Nessun artefatto trovato!"
   echo "   Buildate prima con gli script build_*.sh"
@@ -84,6 +92,7 @@ ANDROID_URL="$REPO_URL/releases/download/v$VERSION/ligaduck-v$VERSION.apk"
 IOS_URL="https://apps.apple.com/app/ligaduck"
 MACOS_URL="$REPO_URL/releases/download/v$VERSION/ligaduck-v$VERSION.dmg"
 WINDOWS_URL="$REPO_URL/releases/download/v$VERSION/ligaduck-v$VERSION-windows.zip"
+WINDOWS_MSIX_URL="$REPO_URL/releases/download/v$VERSION/LigaDuckManager-Windows-v$VERSION.msix"
 CURRENT_DATE=$(date +%Y-%m-%d)
 
 cat > version.json << EOF
@@ -107,6 +116,7 @@ cat > version.json << EOF
   "windows": {
     "version": "$VERSION",
     "downloadUrl": "$WINDOWS_URL",
+    "msixUrl": "$WINDOWS_MSIX_URL",
     "releaseNotes": "$RELEASE_NOTES"
   }
 }

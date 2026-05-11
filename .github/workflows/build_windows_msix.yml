@@ -1,0 +1,138 @@
+name: Build Windows MSIX
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Versione (es: 43.01.00)'
+        required: true
+        default: '0.0.0'
+      release_notes:
+        description: 'Note di rilascio (opzionale)'
+        required: false
+        default: 'Release'
+
+permissions:
+  contents: write
+  
+jobs:
+  build-windows-msix:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Update MSIX version
+        run: |
+          $version = '${{ github.event.inputs.version }}'
+          $msixVersion = $version -replace '(\d+)\.(\d+)\.(\d+)', '$1.$2.$3.0'
+          
+          Write-Host "Updating MSIX version to: $msixVersion"
+          
+          $content = Get-Content pubspec.yaml -Raw
+          $content = $content -replace 'msix_version:.*', "msix_version: $msixVersion"
+          $content | Set-Content pubspec.yaml -NoNewline
+          
+          Write-Host "✓ MSIX version updated"
+
+      - name: Build MSIX package
+        run: flutter pub run msix:create --release
+
+      - name: Verify MSIX build
+        run: |
+          $msixFile = "build\windows\x64\runner\Release\ligaduck.msix"
+          
+          if (Test-Path $msixFile) {
+            $size = (Get-Item $msixFile).Length / 1MB
+            Write-Host "✓ MSIX created: $([math]::Round($size, 2)) MB"
+          } else {
+            Write-Host "❌ MSIX file not found at: $msixFile"
+            exit 1
+          }
+
+      - name: Create artifacts directory
+        run: |
+          if (-not (Test-Path "artifacts")) {
+            New-Item -ItemType Directory -Path "artifacts"
+          }
+
+      - name: Rename and move MSIX
+        run: |
+          $version = '${{ github.event.inputs.version }}'
+          $source = "build\windows\x64\runner\Release\ligaduck.msix"
+          $destination = "artifacts\LigaDuckManager-Windows-v$version.msix"
+          
+          Copy-Item $source $destination
+          
+          if (Test-Path $destination) {
+            $size = (Get-Item $destination).Length / 1MB
+            Write-Host "✓ MSIX ready: $destination ($([math]::Round($size, 2)) MB)"
+          } else {
+            Write-Host "❌ Failed to copy MSIX"
+            exit 1
+          }
+
+      - name: Upload MSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ligaduck-windows-msix-${{ github.event.inputs.version }}
+          path: artifacts/LigaDuckManager-Windows-v${{ github.event.inputs.version }}.msix
+
+  create-release:
+    needs: build-windows-msix
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download MSIX artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ligaduck-windows-msix-${{ github.event.inputs.version }}
+          path: artifacts
+
+      - name: Ensure release script is executable
+        run: chmod +x scripts/create_github_release.sh
+
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gh
+
+      - name: Configure git for actions
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Create or update GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          NOTES="${{ github.event.inputs.release_notes }}"
+          TAG="v$VERSION"
+          
+          # Check if release exists
+          if gh release view "$TAG" &>/dev/null; then
+            echo "Release $TAG already exists, uploading MSIX..."
+            gh release upload "$TAG" artifacts/*.msix --clobber
+          else
+            echo "Creating new release $TAG..."
+            echo "$NOTES" | gh release create "$TAG" \
+              --title "LigaDuck Manager v$VERSION" \
+              --notes-file - \
+              artifacts/*.msix
+          fi
+          
+          echo "✓ Release created/updated with MSIX package"

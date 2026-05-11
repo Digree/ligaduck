@@ -234,8 +234,73 @@ jobs:
           name: ligaduck-windows-${{ github.event.inputs.version }}
           path: build/ligaduck-v${{ github.event.inputs.version }}-windows.zip
 
+  build-windows-msix:
+    needs: [update-version]
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.1'
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Update MSIX version
+        run: |
+          $version = '${{ github.event.inputs.version }}'
+          $msixVersion = $version -replace '(\d+)\.(\d+)\.(\d+)', '$1.$2.$3.0'
+          
+          Write-Host "Updating MSIX version to: $msixVersion"
+          
+          $content = Get-Content pubspec.yaml -Raw
+          $content = $content -replace 'msix_version:.*', "msix_version: $msixVersion"
+          $content | Set-Content pubspec.yaml -NoNewline
+          
+          Write-Host "✓ MSIX version updated"
+
+      - name: Build MSIX package
+        run: flutter pub run msix:create --release
+
+      - name: Verify and rename MSIX
+        run: |
+          $version = '${{ github.event.inputs.version }}'
+          $msixFile = "build\windows\x64\runner\Release\ligaduck.msix"
+          
+          if (Test-Path $msixFile) {
+            $size = (Get-Item $msixFile).Length / 1MB
+            Write-Host "✓ MSIX created: $([math]::Round($size, 2)) MB"
+            
+            # Create artifacts directory
+            if (-not (Test-Path "artifacts")) {
+              New-Item -ItemType Directory -Path "artifacts"
+            }
+            
+            # Rename and copy
+            $destination = "artifacts\LigaDuckManager-Windows-v$version.msix"
+            Copy-Item $msixFile $destination
+            Write-Host "✓ MSIX ready: $destination"
+          } else {
+            Write-Host "❌ MSIX file not found"
+            exit 1
+          }
+
+      - name: Upload MSIX
+        uses: actions/upload-artifact@v4
+        with:
+          name: ligaduck-windows-msix-${{ github.event.inputs.version }}
+          path: artifacts/LigaDuckManager-Windows-v${{ github.event.inputs.version }}.msix
+
   create-release:
-    needs: [build-android, build-ios, build-macos, build-windows]
+    needs: [build-android, build-ios, build-macos, build-windows, build-windows-msix]
     if: '!cancelled()'
     runs-on: ubuntu-latest
     steps:
@@ -272,6 +337,13 @@ jobs:
         with:
           name: ligaduck-windows-${{ github.event.inputs.version }}
           path: build
+
+      - name: Download Windows MSIX
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: ligaduck-windows-msix-${{ github.event.inputs.version }}
+          path: artifacts
 
       - name: Ensure release script is executable
         run: chmod +x scripts/create_github_release.sh

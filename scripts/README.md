@@ -36,15 +36,34 @@ Aggiorna solo la versione in `pubspec.yaml`.
 
 **Nota**: Installa create-dmg con `brew install create-dmg`
 
-### 5. **Build Windows**
+### 5. **Build Windows ZIP**
 ```bash
 ./scripts/build_windows.sh 43.01.00
 ```
 - Builda app Windows
-- Crea ZIP
+- Crea ZIP portable
 - Output: `build/ligaduck-v43.01.00-windows.zip`
 
 **Nota**: Funziona solo su Windows
+
+### 5b. **Build Windows MSIX** 🆕
+```bash
+./scripts/build_windows_msix.sh 43.01.00
+# oppure su Windows:
+.\scripts\build_windows_msix.bat 43.01.00
+```
+- Builda app Windows come pacchetto MSIX
+- Installer moderno per Windows 10/11
+- Output: `artifacts/LigaDuckManager-Windows-v43.01.00.msix`
+
+**Vantaggi MSIX**:
+- ✅ Singolo file installer
+- ✅ Installazione pulita nel menu Start
+- ✅ Disinstallazione completa
+- ✅ Compatibile con Microsoft Store
+- ✅ Aggiornamenti automatici
+
+**Nota**: Funziona solo su Windows. Richiede `flutter pub get` prima del primo utilizzo.
 
 ### 6. **Crea Release GitHub**
 ```bash
@@ -77,7 +96,10 @@ Aggiorna solo la versione in `pubspec.yaml`.
 ./scripts/build_macos.sh 43.01.00
 
 # 5. Build Windows (solo su Windows - opzionale)
+# ZIP Portable:
 # ./scripts/build_windows.sh 43.01.00
+# MSIX Installer:
+# ./scripts/build_windows_msix.sh 43.01.00
 
 # 6. Crea release GitHub con artefatti disponibili
 ./scripts/create_github_release.sh 43.01.00
@@ -89,6 +111,31 @@ Aggiorna solo la versione in `pubspec.yaml`.
 ./scripts/create_release.sh 43.01.00
 ```
 Esegue tutti i passaggi automaticamente.
+
+### Opzione C: GitHub Actions (consigliato per release ufficiali)
+
+**Workflow disponibili:**
+
+1. **Build completo** - Tutte le piattaforme + release GitHub
+   - Vai su: Actions → "Build All Platforms and Release"
+   - Clicca "Run workflow"
+   - Inserisci versione (es: 43.01.00)
+   - Include: APK, IPA, DMG, ZIP Windows, MSIX Windows
+
+2. **Build Windows ZIP** - Solo ZIP portable
+   - Actions → "Build Windows ZIP"
+   - Per distribuzione legacy
+
+3. **Build Windows MSIX** - Solo installer moderno 🆕
+   - Actions → "Build Windows MSIX"
+   - Crea pacchetto MSIX per Windows 10/11
+   - Singolo file installer professionale
+
+**Vantaggi GitHub Actions:**
+- ✅ Build automatici su macchine pulite
+- ✅ Nessuna configurazione locale necessaria
+- ✅ Artifacts scaricabili direttamente
+- ✅ Release GitHub automatica
 
 ---
 
