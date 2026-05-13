@@ -68,7 +68,7 @@ flutter:
   fonts:
     - family: Elms Sans
       fonts:
-        - asset: assets/font/framd.ttf
+        - asset: assets/font/ElmsSans-Regular.ttf
     - family: champions
       fonts:
         - asset: assets/font/champions.ttf
@@ -84,6 +84,7 @@ flutter:
 
     #loghi competizione
     - assets/logos/
+    - assets/logos/43/
 
     #loghi squadre
     - assets/squadre/

@@ -72,12 +72,15 @@ class SettingsIcon extends StatelessWidget {
     // Ottieni il provider
     final updateNotifier = Provider.of<UpdateNotifier>(context, listen: false);
 
+    bool isWide = MediaQuery.of(context).size.width > 600;
+
     await showModalBottomSheet(
       backgroundColor: Colors.blueAccent.withOpacity(0.8),
       context: context,
       builder: (BuildContext context) {
         bool isAdmin = globals.admin;
         bool isMostraColori = globals.mostraColori;
+        bool isEffettoNostalgia = globals.effettoNostalgia;
 
         Future<void> savePreference(String key, bool value) async {
           await prefs.setBool(key, value);
@@ -201,6 +204,36 @@ class SettingsIcon extends StatelessWidget {
                           ],
                         ),
                       ),
+                      if (isWide)
+                        Padding(
+                          padding: EdgeInsets.only(top: 16),
+                          child: Row(
+                            children: [
+                              Padding(
+                                padding: EdgeInsets.only(left: 16.0),
+                                child: Text(
+                                  'Effetto Nostalgia',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              Spacer(),
+                              Switch(
+                                value: isEffettoNostalgia,
+                                activeTrackColor: Colors.blueAccent,
+                                onChanged: (value) {
+                                  setModalState(() {
+                                    isEffettoNostalgia = value;
+                                    globals.effettoNostalgia = value;
+                                  });
+                                  savePreference('effettoNostalgia', value);
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
                       Padding(
                         padding: EdgeInsets.only(top: 24),
                         child: ElevatedButton.icon(

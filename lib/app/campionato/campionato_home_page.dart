@@ -14,6 +14,8 @@ import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/models/trasferimento.dart';
+import 'package:ligaduck/app/service/giornate_provider.dart';
+import 'package:ligaduck/app/service/models/giornata.dart';
 import 'package:ligaduck/app/service/partite_provider.dart';
 import 'package:ligaduck/app/service/squadre_provider.dart';
 import 'package:ligaduck/app/service/mercato_provider.dart';
@@ -309,8 +311,9 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                                       buildCompetizioneButton(
                                         CompetizioneButtonModel(
                                           text: competizione.nome,
-                                          imagePath:
-                                              'assets/logos/logo_${competizione.cod}.png',
+                                          imagePath: competizione.id <= 3
+                                              ? 'assets/logos/${widget.campionato}/logo_${competizione.cod}.png'
+                                              : 'assets/logos/logo_${competizione.cod}.png',
                                           onPressed: () {
                                             Navigator.push(
                                               context,
@@ -574,33 +577,54 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                   for (var partita in partite) {
                     String competizione = '';
                     String cod = '';
+                    String idGiornata = '';
+                    String giornataLabel = '';
                     var partitaData = partiteDataMap[partita.id];
+                    int idCompetizione = 0;
                     if (partitaData != null) {
                       competizione = partitaData['nome'];
                       cod = partitaData['cod'];
+                      idGiornata = partitaData['idGiornata'] ?? '';
+                      giornataLabel = partitaData['giornataLabel'] ?? '';
+                      idCompetizione = partitaData['idCompetizione'] ?? 0;
                     }
 
-                    if (!partitePerCompetizione.containsKey(competizione)) {
-                      partitePerCompetizione[competizione] = {
+                    final groupKey = '$competizione|$idGiornata';
+                    if (!partitePerCompetizione.containsKey(groupKey)) {
+                      partitePerCompetizione[groupKey] = {
                         'cod': cod,
+                        'idCompetizione': idCompetizione,
+                        'competizione': competizione,
+                        'idGiornata': idGiornata,
+                        'giornataLabel': giornataLabel,
                         'partite': <Partita>[],
                       };
                     }
-                    (partitePerCompetizione[competizione]!['partite']
+                    (partitePerCompetizione[groupKey]!['partite']
                             as List<Partita>)
                         .add(partita);
                   }
 
                   // Suddividi ogni giornata in pagine da max 5 partite
                   final pages = <Map<String, dynamic>>[];
-                  partitePerCompetizione.forEach((competizione, compData) {
+                  partitePerCompetizione.forEach((groupKey, compData) {
                     final List<Partita> partiteGiornata =
                         compData['partite'] as List<Partita>;
                     final String cod = compData['cod'] as String;
+                    final int idCompetizione =
+                        (compData['idCompetizione'] ?? 0) as int;
+                    final String competizione =
+                        compData['competizione'] as String;
+                    final String idGiornata = compData['idGiornata'] as String;
+                    final String giornataLabel =
+                        (compData['giornataLabel'] ?? '') as String;
                     for (var i = 0; i < partiteGiornata.length; i += 5) {
                       pages.add({
                         'competizione': competizione,
                         'cod': cod,
+                        'idCompetizione': idCompetizione,
+                        'idGiornata': idGiornata,
+                        'giornataLabel': giornataLabel,
                         'partite': partiteGiornata.sublist(
                           i,
                           (i + 5 > partiteGiornata.length)
@@ -676,6 +700,9 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                                       final page = pages[pageIndex];
                                       final String competizione =
                                           page['competizione'];
+                                      final String giornataLabel =
+                                          (page['giornataLabel'] ?? '')
+                                              as String;
                                       final List<Partita> pagePartite =
                                           page['partite'];
                                       return SingleChildScrollView(
@@ -695,7 +722,11 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                                                 child: Row(
                                                   children: [
                                                     Image.asset(
-                                                      'assets/logos/logo_${page['cod']}_comp.png',
+                                                      (page['idCompetizione']
+                                                                  as int) <=
+                                                              3
+                                                          ? 'assets/logos/${widget.campionato}/logo_${page["cod"]}_comp.png'
+                                                          : 'assets/logos/logo_${page["cod"]}_comp.png',
                                                       height: 24,
                                                       width: 24,
                                                     ),
@@ -710,6 +741,22 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                                                             Colors.blueAccent,
                                                       ),
                                                     ),
+                                                    if (giornataLabel
+                                                        .isNotEmpty) ...[
+                                                      Text(
+                                                        ' - $giornataLabel',
+                                                        style: TextStyle(
+                                                          fontSize: 15,
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          color: Colors
+                                                              .blueAccent
+                                                              .withOpacity(
+                                                                0.75,
+                                                              ),
+                                                        ),
+                                                      ),
+                                                    ],
                                                   ],
                                                 ),
                                               ),
@@ -852,13 +899,35 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
       context,
       listen: false,
     );
+    final giornateProvider = Provider.of<GiornateProvider>(
+      context,
+      listen: false,
+    );
     final squadre = await _squadreFuture;
+
+    // Cache giornate per competizione (evita chiamate duplicate)
+    final Map<int, List<Giornata>> giornateCache = {};
 
     for (var partita in partite) {
       Competizione competizione = await getCompetizione(
         competizioneProvider,
         partita,
       );
+
+      // Recupera le giornate della competizione (con cache)
+      if (!giornateCache.containsKey(competizione.id)) {
+        giornateCache[competizione.id] = await giornateProvider.fetchGiornate(
+          widget.campionato,
+          competizione.id,
+        );
+      }
+      final giornate = giornateCache[competizione.id]!;
+      String giornataLabel = '';
+      try {
+        final giornata = giornate.firstWhere((g) => g.id == partita.idGiornata);
+        final n = int.tryParse(giornata.giornata);
+        giornataLabel = n != null ? '$n^ Giornata' : giornata.giornata;
+      } catch (_) {}
 
       Squadra? squadraHome;
       Squadra? squadraAway;
@@ -878,6 +947,8 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
         'idCompetizione': competizione.id,
         'cod': competizione.cod,
         'nome': competizione.nome,
+        'idGiornata': partita.idGiornata,
+        'giornataLabel': giornataLabel,
         'squadraHome': squadraHome,
         'squadraAway': squadraAway,
       };
@@ -1321,7 +1392,9 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                         Row(
                           children: [
                             Image.asset(
-                              'assets/logos/logo_${competizione.cod}_comp.png',
+                              competizione.id <= 3
+                                  ? 'assets/logos/${widget.campionato}/logo_${competizione.cod}_comp.png'
+                                  : 'assets/logos/logo_${competizione.cod}_comp.png',
                               height: 40,
                               width: 40,
                               errorBuilder: (context, error, stackTrace) {

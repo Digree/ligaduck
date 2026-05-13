@@ -14,6 +14,7 @@ import 'package:ligaduck/app/competizione/statistiche/espulsi_page.dart';
 import 'package:ligaduck/app/competizione/statistiche/marcatori_page.dart';
 import 'package:ligaduck/app/competizione/statistiche/rigori_sbagliati_page.dart';
 import 'package:ligaduck/app/models/campionato/campionato_match_model.dart';
+import 'package:ligaduck/app/models/competizione/nostalgia_match_card.dart';
 import 'package:ligaduck/app/service/competizioni_provider.dart';
 import 'package:ligaduck/app/service/giornate_provider.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
@@ -404,7 +405,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                               children: [
                                 const SizedBox(height: 16),
                                 Image.asset(
-                                  'assets/logos/logo_${widget.competizione.cod}_comp.png',
+                                  widget.competizione.id <= 3
+                                      ? 'assets/logos/${widget.campionato}/logo_${widget.competizione.cod}_comp.png'
+                                      : 'assets/logos/logo_${widget.competizione.cod}_comp.png',
                                   fit: BoxFit.contain,
                                   height: 90,
                                 ),
@@ -517,7 +520,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                           if (selectedGiornata != null)
                             Padding(
                               padding: EdgeInsets.all(16),
-                              child: mostraClassifica
+                              child:
+                                  mostraClassifica && !globals.effettoNostalgia
                                   ? Row(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
@@ -578,39 +582,78 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                       ],
                                     )
                                   : Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        Center(
-                                          child: SizedBox(
-                                            width:
-                                                MediaQuery.of(
-                                                  context,
-                                                ).size.width *
-                                                0.4,
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  'Partite:',
-                                                  style: TextStyle(
-                                                    fontSize: 22,
-                                                    fontWeight: FontWeight.bold,
+                                        if (!globals.effettoNostalgia)
+                                          Center(
+                                            child: SizedBox(
+                                              width:
+                                                  MediaQuery.of(
+                                                    context,
+                                                  ).size.width *
+                                                  0.4,
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'Partite:',
+                                                    style: TextStyle(
+                                                      fontSize: 22,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                    textAlign: TextAlign.left,
                                                   ),
-                                                  textAlign: TextAlign.left,
-                                                ),
-                                                Padding(
-                                                  padding: EdgeInsets.only(
-                                                    top: 16,
+                                                  Padding(
+                                                    padding: EdgeInsets.only(
+                                                      top: 16,
+                                                    ),
+                                                    child: buildPartiteList(
+                                                      selectedGiornata!,
+                                                      shrinkWrap: true,
+                                                    ),
                                                   ),
-                                                  child: buildPartiteList(
-                                                    selectedGiornata!,
-                                                    shrinkWrap: true,
-                                                  ),
-                                                ),
-                                              ],
+                                                ],
+                                              ),
+                                            ),
+                                          )
+                                        else ...[
+                                          Text(
+                                            'Partite:',
+                                            style: TextStyle(
+                                              fontSize: 22,
+                                              fontWeight: FontWeight.bold,
                                             ),
                                           ),
-                                        ),
+                                          Padding(
+                                            padding: EdgeInsets.only(top: 16),
+                                            child: buildPartiteList(
+                                              selectedGiornata!,
+                                              shrinkWrap: true,
+                                            ),
+                                          ),
+                                          if (mostraClassifica) ...[
+                                            SizedBox(height: 32),
+                                            Text(
+                                              'Classifica:',
+                                              style: TextStyle(
+                                                fontSize: 22,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding: EdgeInsets.only(top: 16),
+                                              child: buildClassifica(
+                                                context,
+                                                selectedGiornata!,
+                                                mostraClassifica,
+                                                shrinkWrap: true,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
                                       ],
                                     ),
                             ),
@@ -1989,19 +2032,15 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                           padding: EdgeInsets.only(right: 8),
                                           child: Image.asset(
                                             'assets/squadre/${snapshot.data!.cod}.png',
-                                            height: 40,
-                                            width: 40,
+                                            height: 30,
+                                            width: 30,
                                             errorBuilder:
                                                 (context, error, stackTrace) {
-                                                  return Container(
-                                                    height: 20,
-                                                    width: 20,
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.grey[300],
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            10,
-                                                          ),
+                                                  return SizedBox(
+                                                    height: 30,
+                                                    width: 30,
+                                                    child: _buildColoredShield(
+                                                      snapshot.data!,
                                                     ),
                                                   );
                                                 },
@@ -2011,8 +2050,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                         Padding(
                                           padding: EdgeInsets.only(right: 8),
                                           child: Container(
-                                            height: 20,
-                                            width: 20,
+                                            height: 30,
+                                            width: 30,
                                             decoration: BoxDecoration(
                                               color: Colors.grey[300],
                                               borderRadius:
@@ -2891,6 +2930,20 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                     );
                   }
 
+                  final bool isWideNostalgia =
+                      MediaQuery.of(context).size.width > 1000;
+
+                  // Modalità nostalgia: card espansa con formazioni e panchine
+                  if (isWideNostalgia && globals.effettoNostalgia) {
+                    return NostalgiaMatchCard(
+                      partita: partita,
+                      squadraHome: squadraHome,
+                      squadraAway: squadraAway,
+                      competizione: widget.competizione,
+                      campionato: widget.campionato,
+                    );
+                  }
+
                   return buildCampionatoMatch(
                     CampionatoMatchModel(
                       match: partita.id,
@@ -3630,6 +3683,16 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     );
   }
 
+  Color? _getPositionBoxColor(int posizione, int totalTeams) {
+    if (widget.competizione.id == 1) {
+      if (posizione <= 4) return Colors.blue[900];
+      if (posizione == 5 || posizione == 6) return Colors.orange[800];
+      if (posizione == 7) return Colors.green;
+      if (posizione > totalTeams - 3) return Colors.red;
+    }
+    return null;
+  }
+
   Color _getRowBackgroundColor(int posizione, int totalTeams) {
     // Applica i colori solo per le competizioni 5, 6 e 7
     if (widget.competizione.id == 5 ||
@@ -3692,13 +3755,39 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
           ),
           child: Row(
             children: [
-              Padding(
-                padding: EdgeInsets.only(
-                  right: posizione.posizione > 9 ? 1 : 8,
-                ),
-                child: Text(
-                  '${posizione.posizione}',
-                  style: TextStyle(fontSize: 12, color: Colors.white),
+              SizedBox(
+                width: 30,
+                child: Builder(
+                  builder: (context) {
+                    final boxColor = _getPositionBoxColor(
+                      posizione.posizione,
+                      totalTeams,
+                    );
+                    if (boxColor != null) {
+                      return Container(
+                        width: 22,
+                        height: 22,
+                        decoration: BoxDecoration(
+                          color: boxColor,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          '${posizione.posizione}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    }
+                    return Text(
+                      '${posizione.posizione}',
+                      style: TextStyle(fontSize: 12, color: Colors.white),
+                      textAlign: TextAlign.center,
+                    );
+                  },
                 ),
               ),
               Padding(
@@ -4017,7 +4106,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                             Expanded(
                               flex: 1,
                               child: DropdownButtonFormField<String>(
-                                value: selectedFase,
+                                initialValue: selectedFase,
                                 isExpanded: true,
                                 decoration: InputDecoration(
                                   labelText: 'Fase',
@@ -4075,7 +4164,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                         ),
                         SizedBox(height: 16),
                         DropdownButtonFormField<String>(
-                          value: selectedFase,
+                          initialValue: selectedFase,
                           decoration: InputDecoration(
                             labelText: 'Fase',
                             labelStyle: TextStyle(color: getColor("primary")),
@@ -4494,7 +4583,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                     children: [
                                       Expanded(
                                         child: DropdownButtonFormField<int>(
-                                          value: partita['idHome'],
+                                          initialValue: partita['idHome'],
                                           decoration: InputDecoration(
                                             labelText: 'Casa',
                                             labelStyle: TextStyle(
@@ -4539,7 +4628,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                       SizedBox(width: 8),
                                       Expanded(
                                         child: DropdownButtonFormField<int>(
-                                          value: partita['idAway'],
+                                          initialValue: partita['idAway'],
                                           decoration: InputDecoration(
                                             labelText: 'Trasferta',
                                             labelStyle: TextStyle(
@@ -4591,7 +4680,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                     children: [
                                       Expanded(
                                         child: DropdownButtonFormField<int>(
-                                          value: partita['idHome'],
+                                          initialValue: partita['idHome'],
                                           isExpanded: true,
                                           decoration: InputDecoration(
                                             labelText: 'Casa',
@@ -4642,7 +4731,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                       ),
                                       Expanded(
                                         child: DropdownButtonFormField<int>(
-                                          value: partita['idAway'],
+                                          initialValue: partita['idAway'],
                                           isExpanded: true,
                                           decoration: InputDecoration(
                                             labelText: 'Trasferta',
@@ -5142,8 +5231,28 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
   }
 
   Widget _buildColoredShield(Squadra squadra) {
+    const double size = 30;
+    const shadowList = [
+      Shadow(color: Colors.black, blurRadius: 2),
+      Shadow(color: Colors.black, offset: Offset(1, 0)),
+      Shadow(color: Colors.black, offset: Offset(-1, 0)),
+      Shadow(color: Colors.black, offset: Offset(0, 1)),
+      Shadow(color: Colors.black, offset: Offset(0, -1)),
+    ];
+
     if (squadra.colori.isEmpty) {
-      return Icon(Icons.shield, size: 35, color: Colors.grey);
+      return Stack(
+        alignment: Alignment.center,
+        children: [
+          Icon(
+            Icons.shield,
+            size: size,
+            color: Colors.black,
+            shadows: shadowList,
+          ),
+          Icon(Icons.shield, size: size, color: Colors.grey),
+        ],
+      );
     }
 
     final Map<String, Color> colorMap = {
@@ -5163,26 +5272,33 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       'marrone': Color.fromARGB(255, 122, 54, 34),
     };
 
+    Widget coloredIcon;
     if (squadra.colori.length == 1) {
-      final colorName = squadra.colori[0].toLowerCase();
-      return Icon(
-        Icons.shield,
-        size: 35,
-        color: colorMap[colorName] ?? Colors.grey,
-      );
+      final color = colorMap[squadra.colori[0].toLowerCase()] ?? Colors.grey;
+      coloredIcon = Icon(Icons.shield, size: size, color: color);
     } else {
-      final colors = squadra.colori.map((c) {
-        final colorName = c.toLowerCase();
-        return colorMap[colorName] ?? Colors.grey;
-      }).toList();
-
-      return ShaderMask(
-        shaderCallback: (bounds) {
-          return LinearGradient(colors: colors).createShader(bounds);
-        },
-        child: Icon(Icons.shield, size: 35, color: Colors.white),
+      final colors = squadra.colori
+          .map((c) => colorMap[c.toLowerCase()] ?? Colors.grey)
+          .toList();
+      coloredIcon = ShaderMask(
+        shaderCallback: (bounds) =>
+            LinearGradient(colors: colors).createShader(bounds),
+        child: Icon(Icons.shield, size: size, color: Colors.white),
       );
     }
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Icon(
+          Icons.shield,
+          size: size,
+          color: Colors.black,
+          shadows: shadowList,
+        ),
+        coloredIcon,
+      ],
+    );
   }
 
   Future<void> _pickAndProcessCsvFile() async {

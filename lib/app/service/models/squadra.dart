@@ -15,6 +15,8 @@ class Squadra {
   final Formazione formazioneOld;
   final List<GiocatoreNonDisponibile> indisponibili;
   final List<int> competizioni;
+  final DateTime? divisaAltDa;
+  final DateTime? divisaAltA;
 
   Squadra({
     required this.id,
@@ -30,6 +32,8 @@ class Squadra {
     required this.formazioneOld,
     required this.indisponibili,
     required this.competizioni,
+    this.divisaAltDa,
+    this.divisaAltA,
   });
 
   factory Squadra.fromJson(Map<String, dynamic> json) {
@@ -75,6 +79,12 @@ class Squadra {
               allenatore: '',
               modulo: '',
             ),
+      divisaAltDa: json['divisaAltDa'] != null
+          ? DateTime.parse(json['divisaAltDa'])
+          : null,
+      divisaAltA: json['divisaAltA'] != null
+          ? DateTime.parse(json['divisaAltA'])
+          : null,
     );
   }
 
@@ -93,6 +103,8 @@ class Squadra {
       'formazione': formazione.toJson(),
       'formazioneOld': formazioneOld.toJson(),
       'indisponibili': indisponibili.map((e) => e.toJson()).toList(),
+      'divisaAltDa': divisaAltDa?.toIso8601String(),
+      'divisaAltA': divisaAltA?.toIso8601String(),
     };
   }
 }

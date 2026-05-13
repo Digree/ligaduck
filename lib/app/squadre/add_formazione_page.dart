@@ -174,13 +174,10 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
 
   void _handleGiocatoreSwap(int pos, GiocatoreFormazione nuovoGiocatore) {
     setState(() {
-      // La posizione corrisponde all'indice nell'array + 1
       int index = pos - 1;
 
       // Verifica che l'indice sia valido per i titolari
-      if (index < 0 || index >= _titolari.length) {
-        return;
-      }
+      if (index < 0 || index >= _titolari.length) return;
 
       // Trova se il nuovo giocatore è già nei titolari
       int indexGiocatoreNeiTitolari = _titolari.indexWhere(
@@ -266,7 +263,7 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
           },
         ),
       ),
-      body: Center(child: buildFormazione()),
+      body: SingleChildScrollView(child: buildFormazione()),
     );
   }
 
@@ -352,6 +349,225 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
     }
     widget.squadra.formazione.allenatore = allenatore?.nome ?? 'N/D';
 
+    final ordineRuoli = [
+      'Portiere',
+      'Difensore',
+      'Centrocampista',
+      'Attaccante',
+    ];
+    final Map<String, List<GiocatoreFormazione>> panchinaPerRuolo = {};
+    for (var r in ordineRuoli) {
+      panchinaPerRuolo[r] = _panchina.where((g) {
+        final ruoloEffettivo = (g.ruolo != null && g.ruolo!.isNotEmpty)
+            ? g.ruolo!
+            : widget.giocatori
+                  .firstWhere(
+                    (gj) => gj.id == g.idGiocatore,
+                    orElse: () => Giocatore(
+                      id: '',
+                      nome: '',
+                      eta: 0,
+                      ruolo: '',
+                      nazione: '',
+                      carriera: [],
+                      idSquadraAttuale: 0,
+                      attivo: false,
+                    ),
+                  )
+                  .ruolo;
+        return ruoloEffettivo == r;
+      }).toList();
+    }
+
+    List<Widget> panchinaRows = [];
+    for (var ruolo in ordineRuoli) {
+      final lista = panchinaPerRuolo[ruolo]!;
+      if (lista.isEmpty) continue;
+      panchinaRows.add(
+        Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+          margin: EdgeInsets.only(top: 6),
+          decoration: BoxDecoration(
+            color: getColor('primary').withOpacity(0.15),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Text(
+            ruolo == 'Portiere'
+                ? 'Portieri'
+                : ruolo == 'Difensore'
+                ? 'Difensori'
+                : ruolo == 'Centrocampista'
+                ? 'Centrocampisti'
+                : 'Attaccanti',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: getColor('primary', forText: true),
+            ),
+          ),
+        ),
+      );
+      for (var g in lista) {
+        final giocatoreMatch = widget.giocatori.firstWhere(
+          (gj) => gj.id == g.idGiocatore,
+          orElse: () => Giocatore(
+            id: g.idGiocatore,
+            nome: g.nome,
+            eta: 0,
+            ruolo: g.ruolo ?? '',
+            nazione: '',
+            carriera: [],
+            idSquadraAttuale: widget.squadra.id,
+            attivo: true,
+          ),
+        );
+        final numero = _getNumeroGiocatore(giocatoreMatch);
+        panchinaRows.add(
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 3, horizontal: 4),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_1.png',
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => Icon(
+                          Icons.person,
+                          size: 28,
+                          color: getColor('primary'),
+                        ),
+                      ),
+                      if (numero > 0)
+                        Text(
+                          '$numero',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            shadows: [
+                              Shadow(color: Colors.black, blurRadius: 2),
+                              Shadow(color: Colors.black, offset: Offset(1, 0)),
+                              Shadow(
+                                color: Colors.black,
+                                offset: Offset(-1, 0),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 8),
+                if (numero > 0)
+                  SizedBox(
+                    width: 22,
+                    child: Text(
+                      '$numero',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: getColor('primary', forText: true),
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
+                  ),
+                SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    CommonService.decodePlayerName(g.nome),
+                    style: TextStyle(fontSize: 14),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    }
+
+    Widget panchinaWidget = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+          child: Text(
+            'Panchina',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: getColor('primary', forText: true),
+            ),
+          ),
+        ),
+        if (_panchina.isEmpty)
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              'Nessun giocatore',
+              style: TextStyle(fontSize: 13, color: Colors.grey),
+            ),
+          )
+        else
+          ...panchinaRows,
+      ],
+    );
+
+    Widget campoWidget = Container(
+      key: ValueKey(_formazioneUpdateKey),
+      width: isWide
+          ? MediaQuery.of(context).size.width * 0.56
+          : MediaQuery.of(context).size.width * 0.95,
+      height: isWide
+          ? MediaQuery.of(context).size.height * 0.7
+          : MediaQuery.of(context).size.height * 0.45,
+      padding: EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/miscellaneous/pitch.png'),
+          fit: BoxFit.cover,
+        ),
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!, width: 1),
+      ),
+      child: Center(
+        child: _titolari.isEmpty
+            ? const SizedBox.shrink()
+            : buildPartitaFormazione(
+                PartitaFormazioneModel(
+                  codSquadra: widget.squadra.cod,
+                  formazione: [
+                    ..._titolari,
+                    // Padding a 11 slot con entry vuote
+                    for (int i = _titolari.length; i < 11; i++)
+                      GiocatoreFormazione(
+                        idGiocatore: '__vuoto__',
+                        nome: '',
+                        pos: 0,
+                        inCampo: false,
+                      ),
+                  ],
+                  campionato: widget.campionato,
+                  modulo: widget.squadra.formazione.modulo,
+                  coloriSquadra: widget.squadra.colori,
+                  giocatoriDisponibili: _panchina,
+                  competizioneId: null,
+                  onGiocatoreChanged: (pos, nuovoGiocatore) {
+                    _handleGiocatoreSwap(pos, nuovoGiocatore);
+                  },
+                ),
+                context,
+              ),
+      ),
+    );
+
     return Column(
       children: [
         Padding(
@@ -381,44 +597,47 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
                 : _buildDropdown(),
           ),
         ),
-        Container(
-          key: ValueKey(_formazioneUpdateKey),
-          width: isWide
-              ? MediaQuery.of(context).size.width * 0.56
-              : MediaQuery.of(context).size.width * 0.95,
-          height: isWide
-              ? MediaQuery.of(context).size.height * 0.7
-              : MediaQuery.of(context).size.height * 0.45,
-          padding: EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage('assets/miscellaneous/pitch.png'),
-              fit: BoxFit.cover,
-            ),
-            color: Colors.grey[50],
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[200]!, width: 1),
-          ),
-          child: Center(
-            child: _titolari.isEmpty
-                ? Center()
-                : buildPartitaFormazione(
-                    PartitaFormazioneModel(
-                      codSquadra: widget.squadra.cod,
-                      formazione: _titolari,
-                      campionato: widget.campionato,
-                      modulo: widget.squadra.formazione.modulo,
-                      coloriSquadra: widget.squadra.colori,
-                      giocatoriDisponibili: _panchina,
-                      competizioneId: null,
-                      onGiocatoreChanged: (pos, nuovoGiocatore) {
-                        _handleGiocatoreSwap(pos, nuovoGiocatore);
-                      },
+        if (isWide)
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(flex: 3, child: campoWidget),
+                SizedBox(width: 8),
+                Expanded(
+                  flex: 2,
+                  child: Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey[200]!, width: 1),
                     ),
-                    context,
+                    child: SingleChildScrollView(child: panchinaWidget),
                   ),
+                ),
+              ],
+            ),
+          )
+        else
+          Column(
+            children: [
+              campoWidget,
+              if (_panchina.isNotEmpty) ...[
+                SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[200]!, width: 1),
+                  ),
+                  child: panchinaWidget,
+                ),
+              ],
+            ],
           ),
-        ),
         Padding(
           padding: EdgeInsets.all(16),
           child: SizedBox(

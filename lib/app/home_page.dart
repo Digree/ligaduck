@@ -29,6 +29,7 @@ class _HomePage extends State<HomePage> {
     setState(() {
       globals.admin = prefs.getBool('admin') ?? false;
       globals.mostraColori = prefs.getBool('mostraColori') ?? true;
+      globals.effettoNostalgia = prefs.getBool('effettoNostalgia') ?? false;
     });
   }
 

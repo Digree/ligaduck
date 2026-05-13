@@ -48,6 +48,7 @@ class _SquadrePageState extends State<SquadrePage> {
       'Attuale'; // Tipo di formazione: Attuale o Pre-mercato
   String _selectedMercatoView =
       'Esoneri'; // Esoneri, Mercato Estivo, Mercato Invernale
+  bool _showAltDivise = false;
 
   @override
   void initState() {
@@ -244,6 +245,7 @@ class _SquadrePageState extends State<SquadrePage> {
   }
 
   int _getNumeroGiocatore(Giocatore giocatore) {
+    // Prima cerca carriera per squadra e campionato attuali
     final carrieraAttuale = giocatore.carriera.firstWhere(
       (c) =>
           c.campionato == widget.campionato && c.idSquadra == widget.squadra.id,
@@ -257,7 +259,46 @@ class _SquadrePageState extends State<SquadrePage> {
         attivo: true,
       ),
     );
-    return carrieraAttuale.numero;
+    if (carrieraAttuale.numero != 0) return carrieraAttuale.numero;
+    // Fallback: stessa annata ma squadra diversa (formazione pre-mercato)
+    final carrieraStessaAnnata = giocatore.carriera.firstWhere(
+      (c) => c.campionato == widget.campionato,
+      orElse: () => Carriera(
+        campionato: widget.campionato,
+        idSquadra: widget.squadra.id,
+        numero: 0,
+        gol: 0,
+        presenze: 0,
+        espulsioni: 0,
+        attivo: true,
+      ),
+    );
+    return carrieraStessaAnnata.numero;
+  }
+
+  /// Ritorna null = nessun asterisco, Colors.red = nuovo acquisto esterno,
+  /// Colors.lightBlue = acquisto nello stesso anno (stesso campionato, squadra diversa)
+  Color? _getAcquistoColor(Giocatore giocatore) {
+    if (giocatore.carriera.length <= 1) return null;
+
+    final annoAttuale = int.tryParse(widget.campionato);
+    if (annoAttuale == null) return null;
+    final annoPrecedente = (annoAttuale - 1).toString();
+
+    // Stesso anno, squadra diversa → acquisto invernale (azzurro)
+    final stessoAnnoAltraSquadra = giocatore.carriera.any(
+      (c) =>
+          c.campionato == widget.campionato && c.idSquadra != widget.squadra.id,
+    );
+    if (stessoAnnoAltraSquadra) return Colors.lightBlue;
+
+    // Anno precedente, squadra diversa → nuovo acquisto estivo (rosso)
+    final annoPrecAltraSquadra = giocatore.carriera.any(
+      (c) => c.campionato == annoPrecedente && c.idSquadra != widget.squadra.id,
+    );
+    if (annoPrecAltraSquadra) return Colors.red;
+
+    return null;
   }
 
   void _showEditModal(BuildContext context) {
@@ -293,23 +334,6 @@ class _SquadrePageState extends State<SquadrePage> {
                           builder: (context) => AddGiocatoriPage(
                             squadra: widget.squadra,
                             campionato: widget.campionato,
-                          ),
-                        ),
-                      );
-                      if (result == true) {
-                        await _loadGiocatori();
-                      }
-                    }),
-                    SizedBox(height: 10),
-                    _buildGlassButton('Inserisci Formazione', () async {
-                      Navigator.of(context).pop();
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AddFormazionePage(
-                            squadra: widget.squadra,
-                            campionato: widget.campionato,
-                            giocatori: giocatori,
                           ),
                         ),
                       );
@@ -611,7 +635,9 @@ class _SquadrePageState extends State<SquadrePage> {
     double screenWidth,
     double screenHeight,
   ) {
-    return Padding(
+    final hasAlt = widget.squadra.divisaAltDa != null;
+    final suffix = (hasAlt && _showAltDivise) ? '_alt' : '';
+    final card = Padding(
       padding: EdgeInsets.only(left: 16, top: 16, right: 16),
       child: Container(
         width: isWide ? screenWidth * 0.80 : screenWidth * 0.9,
@@ -646,7 +672,7 @@ class _SquadrePageState extends State<SquadrePage> {
                 Flexible(
                   flex: 1,
                   child: Image.asset(
-                    'assets/divise/divise_43/${widget.squadra.cod}_1.png',
+                    'assets/divise/divise_43/${widget.squadra.cod}_1$suffix.png',
                     fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) =>
                         SizedBox.shrink(),
@@ -655,7 +681,7 @@ class _SquadrePageState extends State<SquadrePage> {
                 Flexible(
                   flex: 1,
                   child: Image.asset(
-                    'assets/divise/divise_43/${widget.squadra.cod}_2.png',
+                    'assets/divise/divise_43/${widget.squadra.cod}_2$suffix.png',
                     fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) =>
                         SizedBox.shrink(),
@@ -664,7 +690,7 @@ class _SquadrePageState extends State<SquadrePage> {
                 Flexible(
                   flex: 1,
                   child: Image.asset(
-                    'assets/divise/divise_43/${widget.squadra.cod}_3.png',
+                    'assets/divise/divise_43/${widget.squadra.cod}_3$suffix.png',
                     fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) =>
                         SizedBox.shrink(),
@@ -677,6 +703,45 @@ class _SquadrePageState extends State<SquadrePage> {
           ),
         ),
       ),
+    );
+    if (!hasAlt) return card;
+    return Stack(
+      children: [
+        card,
+        Positioned(
+          top: 30,
+          right: 30,
+          child: GestureDetector(
+            onTap: () => setState(() => _showAltDivise = !_showAltDivise),
+            child: AnimatedContainer(
+              duration: Duration(milliseconds: 200),
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: _showAltDivise
+                    ? getColor('primary')
+                    : getColor('primary').withOpacity(0.35),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: getColor('secondary'), width: 1.5),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.checkroom, size: 14, color: Colors.white),
+                  SizedBox(width: 4),
+                  Text(
+                    'Alt',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -1707,212 +1772,259 @@ class _SquadrePageState extends State<SquadrePage> {
     double screenWidth,
     double screenHeight,
   ) {
-    // Determina il filtro in base al tipo selezionato
-    bool isPrimaSquadra = _selectedSquadType == 'Prima Squadra';
-
     List<Giocatore> allenatori =
         giocatori.where((giocatore) => giocatore.ruolo == 'Allenatore').toList()
           ..sort(
             (a, b) => _getNumeroGiocatore(a).compareTo(_getNumeroGiocatore(b)),
           );
-    List<Giocatore> portieri =
+
+    // Prima squadra (numero <= 21)
+    List<Giocatore> portieriPS =
+        giocatori
+            .where((g) => g.ruolo == 'Portiere' && _getNumeroGiocatore(g) <= 21)
+            .toList()
+          ..sort(
+            (a, b) => _getNumeroGiocatore(a).compareTo(_getNumeroGiocatore(b)),
+          );
+    List<Giocatore> difensoriPS =
         giocatori
             .where(
-              (giocatore) =>
-                  giocatore.ruolo == 'Portiere' &&
-                  (isPrimaSquadra
-                      ? _getNumeroGiocatore(giocatore) <= 21
-                      : _getNumeroGiocatore(giocatore) > 21),
+              (g) => g.ruolo == 'Difensore' && _getNumeroGiocatore(g) <= 21,
             )
             .toList()
           ..sort(
             (a, b) => _getNumeroGiocatore(a).compareTo(_getNumeroGiocatore(b)),
           );
-    List<Giocatore> difensori =
+    List<Giocatore> centrocampistiPS =
         giocatori
             .where(
-              (giocatore) =>
-                  giocatore.ruolo == 'Difensore' &&
-                  (isPrimaSquadra
-                      ? _getNumeroGiocatore(giocatore) <= 21
-                      : _getNumeroGiocatore(giocatore) > 21),
+              (g) =>
+                  g.ruolo == 'Centrocampista' && _getNumeroGiocatore(g) <= 21,
             )
             .toList()
           ..sort(
             (a, b) => _getNumeroGiocatore(a).compareTo(_getNumeroGiocatore(b)),
           );
-    List<Giocatore> centrocampisti =
+    List<Giocatore> attaccantiPS =
         giocatori
             .where(
-              (giocatore) =>
-                  giocatore.ruolo == 'Centrocampista' &&
-                  (isPrimaSquadra
-                      ? _getNumeroGiocatore(giocatore) <= 21
-                      : _getNumeroGiocatore(giocatore) > 21),
+              (g) => g.ruolo == 'Attaccante' && _getNumeroGiocatore(g) <= 21,
             )
             .toList()
           ..sort(
             (a, b) => _getNumeroGiocatore(a).compareTo(_getNumeroGiocatore(b)),
           );
-    List<Giocatore> attaccanti =
+
+    // Vivaio (numero > 21)
+    List<Giocatore> portieriV =
+        giocatori
+            .where((g) => g.ruolo == 'Portiere' && _getNumeroGiocatore(g) > 21)
+            .toList()
+          ..sort(
+            (a, b) => _getNumeroGiocatore(a).compareTo(_getNumeroGiocatore(b)),
+          );
+    List<Giocatore> difensoriV =
+        giocatori
+            .where((g) => g.ruolo == 'Difensore' && _getNumeroGiocatore(g) > 21)
+            .toList()
+          ..sort(
+            (a, b) => _getNumeroGiocatore(a).compareTo(_getNumeroGiocatore(b)),
+          );
+    List<Giocatore> centrocampistiV =
         giocatori
             .where(
-              (giocatore) =>
-                  giocatore.ruolo == 'Attaccante' &&
-                  (isPrimaSquadra
-                      ? _getNumeroGiocatore(giocatore) <= 21
-                      : _getNumeroGiocatore(giocatore) > 21),
+              (g) => g.ruolo == 'Centrocampista' && _getNumeroGiocatore(g) > 21,
             )
             .toList()
           ..sort(
             (a, b) => _getNumeroGiocatore(a).compareTo(_getNumeroGiocatore(b)),
           );
-    return _isLoadingGiocatori
-        ? Center(
+    List<Giocatore> attaccantiV =
+        giocatori
+            .where(
+              (g) => g.ruolo == 'Attaccante' && _getNumeroGiocatore(g) > 21,
+            )
+            .toList()
+          ..sort(
+            (a, b) => _getNumeroGiocatore(a).compareTo(_getNumeroGiocatore(b)),
+          );
+
+    if (_isLoadingGiocatori) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(getColor("primary")),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Caricamento giocatori...',
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            ),
+          ],
+        ),
+      );
+    }
+
+    Widget primaSquadraList = ListView(
+      children: [
+        teamListHeader(
+          context,
+          isWide,
+          screenWidth,
+          screenHeight,
+          'Allenatore',
+        ),
+        for (var g in allenatori)
+          teamListPlayer(context, isWide, screenWidth, screenHeight, g),
+        teamListHeader(context, isWide, screenWidth, screenHeight, 'Portieri'),
+        for (var g in portieriPS)
+          teamListPlayer(context, isWide, screenWidth, screenHeight, g),
+        teamListHeader(context, isWide, screenWidth, screenHeight, 'Difensori'),
+        for (var g in difensoriPS)
+          teamListPlayer(context, isWide, screenWidth, screenHeight, g),
+        teamListHeader(
+          context,
+          isWide,
+          screenWidth,
+          screenHeight,
+          'Centrocampisti',
+        ),
+        for (var g in centrocampistiPS)
+          teamListPlayer(context, isWide, screenWidth, screenHeight, g),
+        teamListHeader(
+          context,
+          isWide,
+          screenWidth,
+          screenHeight,
+          'Attaccanti',
+        ),
+        for (var g in attaccantiPS)
+          teamListPlayer(context, isWide, screenWidth, screenHeight, g),
+      ],
+    );
+
+    Widget vivaioList = ListView(
+      children: [
+        teamListHeader(context, isWide, screenWidth, screenHeight, 'Portieri'),
+        for (var g in portieriV)
+          teamListPlayer(context, isWide, screenWidth, screenHeight, g),
+        teamListHeader(context, isWide, screenWidth, screenHeight, 'Difensori'),
+        for (var g in difensoriV)
+          teamListPlayer(context, isWide, screenWidth, screenHeight, g),
+        teamListHeader(
+          context,
+          isWide,
+          screenWidth,
+          screenHeight,
+          'Centrocampisti',
+        ),
+        for (var g in centrocampistiV)
+          teamListPlayer(context, isWide, screenWidth, screenHeight, g),
+        teamListHeader(
+          context,
+          isWide,
+          screenWidth,
+          screenHeight,
+          'Attaccanti',
+        ),
+        for (var g in attaccantiV)
+          teamListPlayer(context, isWide, screenWidth, screenHeight, g),
+      ],
+    );
+
+    if (isWide) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    getColor("primary"),
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    'Prima Squadra',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: getColor('primary', forText: true),
+                    ),
                   ),
                 ),
-                SizedBox(height: 16),
-                Text(
-                  'Caricamento giocatori...',
-                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                ),
+                Expanded(child: primaSquadraList),
               ],
             ),
-          )
-        : Column(
-            children: [
-              // Dropdown per selezionare Prima Squadra o Vivaio
-              Container(
-                width: double.infinity,
-                margin: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                padding: EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: getColor('primary', forText: true).withOpacity(0.3),
-                  ),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedSquadType,
-                    isExpanded: true,
-                    icon: Icon(
-                      Icons.arrow_drop_down,
-                      color: getColor('primary', forText: true),
-                    ),
+          ),
+          VerticalDivider(width: 1, color: Colors.grey[300]),
+          Expanded(
+            child: Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    'Vivaio',
                     style: TextStyle(
-                      color: getColor('primary', forText: true),
                       fontSize: 16,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.bold,
+                      color: getColor('primary', forText: true),
                     ),
-                    items: ['Prima Squadra', 'Vivaio'].map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      if (newValue != null) {
-                        setState(() {
-                          _selectedSquadType = newValue;
-                        });
-                      }
-                    },
                   ),
                 ),
+                Expanded(child: vivaioList),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Mobile: dropdown + lista filtrata
+    bool isPrimaSquadra = _selectedSquadType == 'Prima Squadra';
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          margin: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: getColor('primary', forText: true).withOpacity(0.3),
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _selectedSquadType,
+              isExpanded: true,
+              icon: Icon(
+                Icons.arrow_drop_down,
+                color: getColor('primary', forText: true),
               ),
-              // Lista giocatori
-              Expanded(
-                child: ListView(
-                  children: [
-                    if (isPrimaSquadra) ...[
-                      teamListHeader(
-                        context,
-                        isWide,
-                        screenWidth,
-                        screenHeight,
-                        'Allenatore',
-                      ),
-                      for (var i = 0; i < allenatori.length; i++)
-                        teamListPlayer(
-                          context,
-                          isWide,
-                          screenWidth,
-                          screenHeight,
-                          allenatori[i],
-                        ),
-                    ],
-                    teamListHeader(
-                      context,
-                      isWide,
-                      screenWidth,
-                      screenHeight,
-                      'Portieri',
-                    ),
-                    for (var i = 0; i < portieri.length; i++)
-                      teamListPlayer(
-                        context,
-                        isWide,
-                        screenWidth,
-                        screenHeight,
-                        portieri[i],
-                      ),
-                    teamListHeader(
-                      context,
-                      isWide,
-                      screenWidth,
-                      screenHeight,
-                      'Difensori',
-                    ),
-                    for (var i = 0; i < difensori.length; i++)
-                      teamListPlayer(
-                        context,
-                        isWide,
-                        screenWidth,
-                        screenHeight,
-                        difensori[i],
-                      ),
-                    teamListHeader(
-                      context,
-                      isWide,
-                      screenWidth,
-                      screenHeight,
-                      'Centrocampisti',
-                    ),
-                    for (var i = 0; i < centrocampisti.length; i++)
-                      teamListPlayer(
-                        context,
-                        isWide,
-                        screenWidth,
-                        screenHeight,
-                        centrocampisti[i],
-                      ),
-                    teamListHeader(
-                      context,
-                      isWide,
-                      screenWidth,
-                      screenHeight,
-                      'Attaccanti',
-                    ),
-                    for (var i = 0; i < attaccanti.length; i++)
-                      teamListPlayer(
-                        context,
-                        isWide,
-                        screenWidth,
-                        screenHeight,
-                        attaccanti[i],
-                      ),
-                  ],
-                ),
+              style: TextStyle(
+                color: getColor('primary', forText: true),
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
               ),
-            ],
-          );
+              items: ['Prima Squadra', 'Vivaio'].map((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
+              onChanged: (String? newValue) {
+                if (newValue != null) {
+                  setState(() {
+                    _selectedSquadType = newValue;
+                  });
+                }
+              },
+            ),
+          ),
+        ),
+        Expanded(child: isPrimaSquadra ? primaSquadraList : vivaioList),
+      ],
+    );
   }
 
   Widget teamListVivaio(
@@ -2166,13 +2278,36 @@ class _SquadrePageState extends State<SquadrePage> {
             ),
           Padding(
             padding: EdgeInsets.only(left: 20),
-            child: Text(
-              CommonService.decodePlayerName(giocatore.nome),
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  CommonService.decodePlayerName(giocatore.nome),
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (giocatore.ruolo != 'Allenatore')
+                  Builder(
+                    builder: (context) {
+                      final color = _getAcquistoColor(giocatore);
+                      if (color == null) return const SizedBox.shrink();
+                      return Padding(
+                        padding: EdgeInsets.only(left: 3),
+                        child: Text(
+                          '*',
+                          style: TextStyle(
+                            color: color,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+              ],
             ),
           ),
           // Icona capitano
@@ -3530,7 +3665,9 @@ class _SquadrePageState extends State<SquadrePage> {
                       title: Row(
                         children: [
                           Image.asset(
-                            'assets/logos/logo_${competizione.cod}_comp.png',
+                            competizione.id <= 3
+                                ? 'assets/logos/${widget.campionato}/logo_${competizione.cod}_comp.png'
+                                : 'assets/logos/logo_${competizione.cod}_comp.png',
                             height: 24,
                             width: 24,
                             errorBuilder: (context, error, stackTrace) => Icon(
@@ -3663,6 +3800,7 @@ class _SquadrePageState extends State<SquadrePage> {
                 titolo: 'Formazione Pre-mercato',
                 isWide: isWide,
                 showAdminButtons: false,
+                showAddButton: false,
               ),
             ),
             SizedBox(width: 16),
@@ -3673,6 +3811,7 @@ class _SquadrePageState extends State<SquadrePage> {
                 titolo: 'Formazione Attuale',
                 isWide: isWide,
                 showAdminButtons: globals.admin,
+                showAddButton: globals.admin,
               ),
             ),
           ],
@@ -3718,6 +3857,8 @@ class _SquadrePageState extends State<SquadrePage> {
             isWide: isWide,
             showAdminButtons:
                 _selectedFormazioneType == 'Attuale' && globals.admin,
+            showAddButton:
+                _selectedFormazioneType == 'Attuale' && globals.admin,
           ),
         ],
       );
@@ -3729,7 +3870,301 @@ class _SquadrePageState extends State<SquadrePage> {
     required String? titolo,
     required bool isWide,
     required bool showAdminButtons,
+    bool showAddButton = false,
   }) {
+    Widget campo = Container(
+      width: isWide ? null : double.infinity,
+      height: isWide ? 400 : MediaQuery.of(context).size.height * 0.46,
+      padding: EdgeInsets.all(isWide ? 12 : 24),
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/miscellaneous/pitch.png'),
+          fit: BoxFit.cover,
+        ),
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!, width: 1),
+      ),
+      child: Center(
+        child: formazione.titolari.isEmpty
+            ? (showAddButton
+                  ? GestureDetector(
+                      onTap: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AddFormazionePage(
+                              squadra: widget.squadra,
+                              campionato: widget.campionato,
+                              giocatori: giocatori,
+                            ),
+                          ),
+                        );
+                        if (result == true) {
+                          await _loadGiocatori();
+                          setState(() {});
+                        }
+                      },
+                      child: GlassmorphicContainer(
+                        width: 64,
+                        height: 64,
+                        borderRadius: 32,
+                        blur: 15,
+                        alignment: Alignment.center,
+                        border: 2,
+                        linearGradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            getColor('primary').withOpacity(0.6),
+                            getColor('secondary').withOpacity(0.4),
+                          ],
+                        ),
+                        borderGradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white.withOpacity(0.5),
+                            Colors.white.withOpacity(0.2),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.add,
+                          size: 36,
+                          color: getIconColor('primary'),
+                        ),
+                      ),
+                    )
+                  : const SizedBox.shrink())
+            : buildPartitaFormazione(
+                PartitaFormazioneModel(
+                  codSquadra: widget.squadra.cod,
+                  formazione: formazione.titolari,
+                  campionato: widget.campionato,
+                  modulo: formazione.modulo,
+                  coloriSquadra: widget.squadra.colori,
+                  giocatoriDisponibili: formazione.panchina,
+                  competizioneId: null,
+                ),
+              ),
+      ),
+    );
+
+    // Raggruppa la panchina per ruolo (con fallback ai dati Giocatore)
+    final ordineRuoli = [
+      'Portiere',
+      'Difensore',
+      'Centrocampista',
+      'Attaccante',
+    ];
+    final Map<String, List<GiocatoreFormazione>> panchinaPerRuolo = {};
+    for (var r in ordineRuoli) {
+      panchinaPerRuolo[r] = formazione.panchina.where((g) {
+        final ruoloEffettivo = (g.ruolo != null && g.ruolo!.isNotEmpty)
+            ? g.ruolo!
+            : giocatori
+                  .firstWhere(
+                    (gj) => gj.id == g.idGiocatore,
+                    orElse: () => Giocatore(
+                      id: '',
+                      nome: '',
+                      eta: 0,
+                      ruolo: '',
+                      nazione: '',
+                      carriera: [],
+                      idSquadraAttuale: 0,
+                      attivo: false,
+                    ),
+                  )
+                  .ruolo;
+        return ruoloEffettivo == r;
+      }).toList();
+    }
+    // Giocatori senza ruolo specificato
+    final senzaRuolo = formazione.panchina.where((g) {
+      final ruoloEffettivo = (g.ruolo != null && g.ruolo!.isNotEmpty)
+          ? g.ruolo!
+          : giocatori
+                .firstWhere(
+                  (gj) => gj.id == g.idGiocatore,
+                  orElse: () => Giocatore(
+                    id: '',
+                    nome: '',
+                    eta: 0,
+                    ruolo: '',
+                    nazione: '',
+                    carriera: [],
+                    idSquadraAttuale: 0,
+                    attivo: false,
+                  ),
+                )
+                .ruolo;
+      return !ordineRuoli.contains(ruoloEffettivo);
+    }).toList();
+
+    List<Widget> panchinaRows = [];
+    for (var ruolo in ordineRuoli) {
+      final lista = panchinaPerRuolo[ruolo]!;
+      if (lista.isEmpty) continue;
+      // Header ruolo
+      panchinaRows.add(
+        Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+          margin: EdgeInsets.only(top: 6),
+          decoration: BoxDecoration(
+            color: getColor('primary').withOpacity(0.15),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Text(
+            ruolo == 'Portiere'
+                ? 'Portieri'
+                : ruolo == 'Difensore'
+                ? 'Difensori'
+                : ruolo == 'Centrocampista'
+                ? 'Centrocampisti'
+                : 'Attaccanti',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: getColor('primary', forText: true),
+            ),
+          ),
+        ),
+      );
+      for (var g in lista) {
+        // Cerca il numero nella lista giocatori
+        final giocatoreMatch = giocatori.firstWhere(
+          (gj) => gj.id == g.idGiocatore,
+          orElse: () => Giocatore(
+            id: g.idGiocatore,
+            nome: g.nome,
+            eta: 0,
+            ruolo: g.ruolo ?? '',
+            nazione: '',
+            carriera: [],
+            idSquadraAttuale: widget.squadra.id,
+            attivo: true,
+          ),
+        );
+        final numero = _getNumeroGiocatore(giocatoreMatch);
+        panchinaRows.add(
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 3, horizontal: 4),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_1.png',
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => Icon(
+                          Icons.person,
+                          size: 28,
+                          color: getColor('primary'),
+                        ),
+                      ),
+                      if (numero > 0)
+                        Text(
+                          '$numero',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            shadows: [
+                              Shadow(color: Colors.black, blurRadius: 2),
+                              Shadow(color: Colors.black, offset: Offset(1, 0)),
+                              Shadow(
+                                color: Colors.black,
+                                offset: Offset(-1, 0),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+
+                Expanded(
+                  child: Text(
+                    CommonService.decodePlayerName(g.nome),
+                    style: TextStyle(fontSize: 14),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    }
+    // Giocatori senza ruolo
+    if (senzaRuolo.isNotEmpty) {
+      for (var g in senzaRuolo) {
+        panchinaRows.add(
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 3, horizontal: 4),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: Image.asset(
+                    'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_1.png',
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => Icon(
+                      Icons.person,
+                      size: 28,
+                      color: getColor('primary'),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    CommonService.decodePlayerName(g.nome),
+                    style: TextStyle(fontSize: 14),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    }
+
+    Widget panchinaWidget = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+          child: Text(
+            'Panchina',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: getColor('primary', forText: true),
+            ),
+          ),
+        ),
+        if (formazione.panchina.isEmpty)
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              'Nessun giocatore',
+              style: TextStyle(fontSize: 13, color: Colors.grey),
+            ),
+          )
+        else
+          ...panchinaRows,
+      ],
+    );
+
     return Column(
       children: [
         // Titolo (solo se fornito)
@@ -3778,37 +4213,117 @@ class _SquadrePageState extends State<SquadrePage> {
             ),
           ),
         ),
-        // Campo da gioco con formazione
-        Container(
-          width: isWide ? null : double.infinity,
-          height: isWide ? 400 : MediaQuery.of(context).size.height * 0.46,
-          padding: EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage('assets/miscellaneous/pitch.png'),
-              fit: BoxFit.cover,
+        // Campo + panchina affiancati su wide, sotto su mobile
+        if (isWide)
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(flex: 3, child: campo),
+                SizedBox(width: 8),
+                Expanded(
+                  flex: 2,
+                  child: Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey[200]!, width: 1),
+                    ),
+                    child: SingleChildScrollView(child: panchinaWidget),
+                  ),
+                ),
+              ],
             ),
-            color: Colors.grey[50],
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[200]!, width: 1),
+          )
+        else
+          Column(
+            children: [
+              campo,
+              if (formazione.panchina.isNotEmpty) ...[
+                SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[200]!, width: 1),
+                  ),
+                  child: panchinaWidget,
+                ),
+              ],
+            ],
           ),
-          child: Center(
-            child: formazione.titolari.isEmpty
-                ? Center()
-                : buildPartitaFormazione(
-                    PartitaFormazioneModel(
-                      codSquadra: widget.squadra.cod,
-                      formazione: formazione.titolari,
+        // Pulsanti admin (solo se richiesto)
+        if (showAdminButtons && formazione.titolari.isNotEmpty) ...[
+          Padding(
+            padding: EdgeInsets.only(
+              left: isWide ? 0 : 8,
+              right: isWide ? 0 : 8,
+              top: 8,
+              bottom: 4,
+            ),
+            child: InkWell(
+              onTap: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AddFormazionePage(
+                      squadra: widget.squadra,
                       campionato: widget.campionato,
-                      modulo: formazione.modulo,
-                      coloriSquadra: widget.squadra.colori,
-                      giocatoriDisponibili: formazione.panchina,
-                      competizioneId: null,
+                      giocatori: giocatori,
                     ),
                   ),
+                );
+                if (result == true) {
+                  await _loadGiocatori();
+                  setState(() {});
+                }
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: GlassmorphicContainer(
+                width: double.infinity,
+                height: 50,
+                borderRadius: 12,
+                blur: 15,
+                alignment: Alignment.center,
+                border: 2,
+                linearGradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    getColor('primary').withOpacity(0.5),
+                    getColor('secondary').withOpacity(0.3),
+                  ],
+                ),
+                borderGradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withOpacity(0.4),
+                    Colors.white.withOpacity(0.15),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.edit, size: 18, color: getIconColor('primary')),
+                    SizedBox(width: 8),
+                    Text(
+                      'Modifica formazione',
+                      style: TextStyle(
+                        color: getIconColor('primary'),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
-        // Pulsanti admin (solo se richiesto)
+        ],
         if (showAdminButtons) ...[
           Padding(
             padding: EdgeInsets.only(
@@ -3817,15 +4332,52 @@ class _SquadrePageState extends State<SquadrePage> {
               top: 8,
               bottom: 8,
             ),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () async {
-                  await _aggiornaFormazionePreMercato();
-                },
-                child: Text(
-                  'Aggiorna formazione pre mercato',
-                  style: TextStyle(color: getColor('primary', forText: true)),
+            child: InkWell(
+              onTap: () async {
+                await _aggiornaFormazionePreMercato();
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: GlassmorphicContainer(
+                width: double.infinity,
+                height: 50,
+                borderRadius: 12,
+                blur: 15,
+                alignment: Alignment.center,
+                border: 2,
+                linearGradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    getColor('primary').withOpacity(0.5),
+                    getColor('secondary').withOpacity(0.3),
+                  ],
+                ),
+                borderGradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withOpacity(0.4),
+                    Colors.white.withOpacity(0.15),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.save_alt,
+                      size: 18,
+                      color: getIconColor('primary'),
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Aggiorna formazione pre mercato',
+                      style: TextStyle(
+                        color: getIconColor('primary'),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -3837,19 +4389,48 @@ class _SquadrePageState extends State<SquadrePage> {
               top: 4,
               bottom: 4,
             ),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red[700],
-                  foregroundColor: Colors.white,
+            child: InkWell(
+              onTap: () async {
+                await _resetFormazione();
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: GlassmorphicContainer(
+                width: double.infinity,
+                height: 50,
+                borderRadius: 12,
+                blur: 15,
+                alignment: Alignment.center,
+                border: 2,
+                linearGradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.red[700]!.withOpacity(0.7),
+                    Colors.red[400]!.withOpacity(0.4),
+                  ],
                 ),
-                onPressed: () async {
-                  await _resetFormazione();
-                },
-                child: Text(
-                  'Reset formazione',
-                  style: TextStyle(color: Colors.white),
+                borderGradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withOpacity(0.4),
+                    Colors.white.withOpacity(0.15),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.delete_outline, size: 18, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text(
+                      'Reset formazione',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

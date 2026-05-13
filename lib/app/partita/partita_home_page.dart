@@ -42,6 +42,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   bool showFormazioneAway = false; // Controlla se mostrare formazione trasferta
   int selectedDivisa = 1; // Divisa selezionata nel modal
   late final Future<List<Squadra>> _squadreFuture;
+  List<Squadra> _squadreCache = [];
   List<Giocatore> giocatoriHome = []; // Giocatori completi casa
   List<Giocatore> giocatoriAway = []; // Giocatori completi trasferta
 
@@ -135,6 +136,9 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       listen: false,
     );
     _squadreFuture = squadreProvider.fetchSquadre(widget.campionato);
+    _squadreFuture.then((squadre) {
+      if (mounted) setState(() => _squadreCache = squadre);
+    });
     fetchPartita()
         .then((fetchedPartita) {
           setState(() {
@@ -1535,6 +1539,11 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     bool hasMostratoDivisoreTS = false;
     bool hasMostratoDivisoreRigori = false;
 
+    // Aggiunge il divisore 1° Tempo solo se ci sono eventi
+    if (partita!.tabellino.isNotEmpty) {
+      tabellinoWidgets.add(buildDivisore1T());
+    }
+
     for (var evento in partita!.tabellino) {
       // Se l'evento è oltre il 45' e non ho ancora mostrato il divisore 2° Tempo
       if (evento.minuto > 45 && !hasMostratoDivisore2T) {
@@ -1737,6 +1746,36 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
         ],
       );
     }
+  }
+
+  Widget buildDivisore1T() {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+      child: Row(
+        children: [
+          Expanded(child: Divider(color: Colors.grey[400], thickness: 1.5)),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              '1° Tempo',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[700],
+                fontFamily: competizione?.id == 5
+                    ? 'champions'
+                    : competizione?.id == 6 || competizione?.id == 7
+                    ? 'europa'
+                    : competizione?.id == 8
+                    ? 'supercup'
+                    : null,
+              ),
+            ),
+          ),
+          Expanded(child: Divider(color: Colors.grey[400], thickness: 1.5)),
+        ],
+      ),
+    );
   }
 
   Widget buildDivisore2T() {
@@ -3466,9 +3505,10 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       ),
       iconColor: competizioneColor,
       collapsedIconColor: competizioneColor,
+      childrenPadding: EdgeInsets.zero,
       children: [
         Container(
-          margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          margin: EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 4),
           padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: competizioneColor.withOpacity(0.1),
@@ -4724,6 +4764,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                   sostituzioni: sostituzioniHome,
                                   espulsi: espulsiHome,
                                   competizioneId: competizione?.id,
+                                  useAlt: _useDivisaAlt(partita!.codHome),
                                   onGiocatoreChanged: (pos, nuovoGiocatore) {
                                     _handleGiocatoreChanged(
                                       0,
@@ -4750,6 +4791,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                   sostituzioni: sostituzioniAway,
                                   espulsi: espulsiAway,
                                   competizioneId: competizione?.id,
+                                  useAlt: _useDivisaAlt(partita!.codAway),
                                   onGiocatoreChanged: (pos, nuovoGiocatore) {
                                     _handleGiocatoreChanged(
                                       1,
@@ -4928,6 +4970,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                               sostituzioni: sostituzioniHome,
                               espulsi: espulsiHome,
                               competizioneId: competizione?.id,
+                              useAlt: _useDivisaAlt(partita!.codHome),
                               onGiocatoreChanged: (pos, nuovoGiocatore) {
                                 _handleGiocatoreChanged(0, pos, nuovoGiocatore);
                               },
@@ -4950,6 +4993,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                               sostituzioni: sostituzioniAway,
                               espulsi: espulsiAway,
                               competizioneId: competizione?.id,
+                              useAlt: _useDivisaAlt(partita!.codAway),
                               onGiocatoreChanged: (pos, nuovoGiocatore) {
                                 _handleGiocatoreChanged(1, pos, nuovoGiocatore);
                               },
@@ -5081,8 +5125,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                 children: [
                   Image.asset(
                     team == 0
-                        ? 'assets/divise/divise_${widget.campionato}/${partita!.codHome}_${partita!.divisaHome}.png'
-                        : 'assets/divise/divise_${widget.campionato}/${partita!.codAway}_${partita!.divisaAway}.png',
+                        ? _getDivisaPath(partita!.codHome, partita!.divisaHome)
+                        : _getDivisaPath(partita!.codAway, partita!.divisaAway),
                     width: 40,
                     height: 40,
                     fit: BoxFit.cover,
@@ -5843,8 +5887,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                         children: [
                           Image.asset(
                             team == 0
-                                ? 'assets/divise/divise_${widget.campionato}/${partita!.codHome}_${partita!.divisaHome}.png'
-                                : 'assets/divise/divise_${widget.campionato}/${partita!.codAway}_${partita!.divisaAway}.png',
+                                ? _getDivisaPath(
+                                    partita!.codHome,
+                                    partita!.divisaHome,
+                                  )
+                                : _getDivisaPath(
+                                    partita!.codAway,
+                                    partita!.divisaAway,
+                                  ),
                             width: 40,
                             height: 40,
                             fit: BoxFit.cover,
@@ -6173,6 +6223,23 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     );
   }
 
+  bool _useDivisaAlt(String cod) {
+    Squadra? squadra;
+    try {
+      squadra = _squadreCache.firstWhere((s) => s.cod == cod);
+    } catch (_) {}
+    if (squadra?.divisaAltDa == null || partita == null) return false;
+    final data = partita!.data;
+    final da = squadra!.divisaAltDa!;
+    final a = squadra.divisaAltA;
+    return !data.isBefore(da) && (a == null || !data.isAfter(a));
+  }
+
+  String _getDivisaPath(String cod, int divisa) {
+    final suffix = _useDivisaAlt(cod) ? '_alt' : '';
+    return 'assets/divise/divise_${widget.campionato}/${cod}_$divisa$suffix.png';
+  }
+
   Future<List<String>> getColoriSquadra(String codSquadra) async {
     print('getColoriSquadra chiamato per: $codSquadra');
     try {
@@ -6448,6 +6515,12 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                 partita: partita!,
                 selectedDivisaModal: selectedDivisaModal,
                 giocatori: team == 0 ? giocatoriHome : giocatoriAway,
+                squadra: _squadreCache.cast<Squadra?>().firstWhere(
+                  (s) =>
+                      s!.cod ==
+                      (team == 0 ? partita!.codHome : partita!.codAway),
+                  orElse: () => null,
+                ),
               );
             },
           );
@@ -6713,8 +6786,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                 builder: (context, snapshot) {
                   return Image.asset(
                     team == 0
-                        ? 'assets/divise/divise_${widget.campionato}/${partita!.codHome}_${partita!.divisaHome}.png'
-                        : 'assets/divise/divise_${widget.campionato}/${partita!.codAway}_${partita!.divisaAway}.png',
+                        ? _getDivisaPath(partita!.codHome, partita!.divisaHome)
+                        : _getDivisaPath(partita!.codAway, partita!.divisaAway),
                     fit: BoxFit.fill,
                     errorBuilder: (context, error, stackTrace) {
                       if (snapshot.hasData && snapshot.data!.isNotEmpty) {

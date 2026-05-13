@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
+import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/service/partite_provider.dart';
 import 'package:ligaduck/app/service/squadre_provider.dart';
 import 'package:provider/provider.dart';
@@ -16,6 +17,7 @@ class SetInfoSquadraModalPage extends StatefulWidget {
   int selectedDivisaModal;
   final Partita partita;
   final List<Giocatore> giocatori;
+  final Squadra? squadra;
 
   SetInfoSquadraModalPage({
     super.key,
@@ -25,6 +27,7 @@ class SetInfoSquadraModalPage extends StatefulWidget {
     required this.selectedDivisaModal,
     required this.partita,
     required this.giocatori,
+    this.squadra,
   });
 
   @override
@@ -374,6 +377,14 @@ class _SetInfoSquadraModalPageState extends State<SetInfoSquadraModalPage> {
     );
   }
 
+  bool _useDivisaAlt() {
+    final da = widget.squadra?.divisaAltDa;
+    if (da == null) return false;
+    final data = widget.partita.data;
+    final a = widget.squadra?.divisaAltA;
+    return !data.isBefore(da) && (a == null || !data.isAfter(a));
+  }
+
   Widget _buildDivisaButton(
     int team,
     int divisaNumber,
@@ -381,9 +392,10 @@ class _SetInfoSquadraModalPageState extends State<SetInfoSquadraModalPage> {
     Function(int) onDivisaSelected,
   ) {
     bool isSelected = currentDivisa == divisaNumber;
+    final altSuffix = _useDivisaAlt() ? '_alt' : '';
     String assetPath = team == 0
-        ? 'assets/divise/divise_${widget.campionato}/${widget.partita.codHome}_$divisaNumber.png'
-        : 'assets/divise/divise_${widget.campionato}/${widget.partita.codAway}_$divisaNumber.png';
+        ? 'assets/divise/divise_${widget.campionato}/${widget.partita.codHome}_$divisaNumber$altSuffix.png'
+        : 'assets/divise/divise_${widget.campionato}/${widget.partita.codAway}_$divisaNumber$altSuffix.png';
 
     return FutureBuilder<bool>(
       future: _assetExists(assetPath),
@@ -452,10 +464,11 @@ class _SetInfoSquadraModalPageState extends State<SetInfoSquadraModalPage> {
   }
 
   Future<bool> _anyDivisaExists() async {
+    final altSuffix = _useDivisaAlt() ? '_alt' : '';
     for (int i = 1; i <= 3; i++) {
       String assetPath = widget.team == 0
-          ? 'assets/divise/divise_${widget.campionato}/${widget.partita.codHome}_$i.png'
-          : 'assets/divise/divise_${widget.campionato}/${widget.partita.codAway}_$i.png';
+          ? 'assets/divise/divise_${widget.campionato}/${widget.partita.codHome}_$i$altSuffix.png'
+          : 'assets/divise/divise_${widget.campionato}/${widget.partita.codAway}_$i$altSuffix.png';
       if (await _assetExists(assetPath)) {
         return true;
       }

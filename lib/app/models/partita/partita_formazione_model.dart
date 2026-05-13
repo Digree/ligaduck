@@ -20,6 +20,7 @@ class PartitaFormazioneModel {
   final List<String>? sostituzioni; // Lista di ID giocatori entrati in campo
   final List<String>? espulsi; // Lista di ID giocatori espulsi
   final int? competizioneId; // ID della competizione per il font condizionale
+  final bool useAlt; // true se la partita è dopo divisaAlt della squadra
 
   PartitaFormazioneModel({
     required this.codSquadra,
@@ -36,6 +37,7 @@ class PartitaFormazioneModel {
     this.sostituzioni,
     this.espulsi,
     this.competizioneId,
+    this.useAlt = false,
   });
 }
 
@@ -295,6 +297,50 @@ Widget buildGiocatore(
   // Trova il giocatore corrispondente alla posizione sul campo per ottenere il suo numero di maglia
   String numeroMaglietta = '$pos'; // Default fallback se non trova il giocatore
 
+  // Slot vuoto — mostra divisa fantasma
+  if (pos <= model.formazione.length &&
+      model.formazione[pos - 1].idGiocatore == '__vuoto__') {
+    Widget vuotoWidget = Opacity(
+      opacity: 0.45,
+      child: SizedBox(
+        width: 40,
+        height: 40,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Image.asset(
+              'assets/divise/divise_${model.campionato}/${model.codSquadra}_1.png',
+              width: 40,
+              height: 40,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.grey[400],
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+            Text(
+              '?',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                shadows: [Shadow(color: Colors.black, blurRadius: 2)],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (globals.admin && context != null && model.onGiocatoreChanged != null) {
+      return vuotoWidget;
+    }
+    return vuotoWidget;
+  }
+
   try {
     // La posizione sul campo corrisponde all'indice nell'array + 1
     // pos = 1 -> indice 0, pos = 2 -> indice 1, ecc.
@@ -368,8 +414,8 @@ Widget buildGiocatore(
           children: [
             Image.asset(
               model.divisa != null
-                  ? 'assets/divise/divise_${model.campionato}/${model.codSquadra}_${model.divisa}.png'
-                  : 'assets/divise/divise_${model.campionato}/${model.codSquadra}_1.png',
+                  ? 'assets/divise/divise_${model.campionato}/${model.codSquadra}_${model.divisa}${model.useAlt ? '_alt' : ''}.png'
+                  : 'assets/divise/divise_${model.campionato}/${model.codSquadra}_1${model.useAlt ? '_alt' : ''}.png',
               width: 40,
               height: 40,
               fit: BoxFit.cover,
@@ -516,11 +562,7 @@ Widget buildGiocatore(
     ],
   );
 
-  if (globals.admin &&
-      context != null &&
-      model.giocatoriDisponibili != null &&
-      model.giocatoriDisponibili!.isNotEmpty &&
-      model.onGiocatoreChanged != null) {
+  if (globals.admin && context != null && model.onGiocatoreChanged != null) {
     return GestureDetector(
       onTap: () {
         _showGiocatoreDropdown(context, model, pos);
@@ -537,8 +579,11 @@ void _showGiocatoreDropdown(
   PartitaFormazioneModel model,
   int pos,
 ) {
-  // Mostra tutti i giocatori (eccetto gli allenatori)
-  final giocatoriFiltered = model.formazione + model.giocatoriDisponibili!;
+  // Mostra tutti i giocatori (eccetto gli allenatori e gli slot vuoti)
+  final giocatoriFiltered = [
+    ...model.formazione.where((g) => g.idGiocatore != '__vuoto__'),
+    ...model.giocatoriDisponibili!,
+  ];
 
   showDialog(
     context: context,
