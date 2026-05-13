@@ -437,7 +437,7 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
                       Image.asset(
                         'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_1.png',
                         fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => Icon(
+                        errorBuilder: (_, _, _) => Icon(
                           Icons.person,
                           size: 28,
                           color: getColor('primary'),

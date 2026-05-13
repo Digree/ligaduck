@@ -166,7 +166,7 @@ class _NostalgiaMatchCardState extends State<NostalgiaMatchCard> {
             iconPath,
             width: 15,
             height: 15,
-            errorBuilder: (_, __, ___) =>
+            errorBuilder: (_, _, _) =>
                 Icon(Icons.sports_soccer, size: 15, color: iconColor),
           )
         : Icon(Icons.sports_soccer, size: 15, color: iconColor);
@@ -340,7 +340,7 @@ class _NostalgiaMatchCardState extends State<NostalgiaMatchCard> {
               width: 26,
               height: 26,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) {
+              errorBuilder: (_, _, _) {
                 final Map<String, Color> colorMap = {
                   'rosso': Colors.red,
                   'verde': Colors.green,

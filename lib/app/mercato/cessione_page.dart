@@ -757,7 +757,7 @@ class _CessionePageState extends State<CessionePage> {
                       _getNazioneBandiera(squadra.categoria),
                     ),
                   ),
-                  onBackgroundImageError: (_, __) {},
+                  onBackgroundImageError: (_, _) {},
                   child: Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,

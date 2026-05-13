@@ -2353,7 +2353,7 @@ class _SquadrePageState extends State<SquadrePage> {
                   backgroundImage: NetworkImage(
                     CommonService.getFlagUrl(giocatore.nazione),
                   ),
-                  onBackgroundImageError: (_, __) {},
+                  onBackgroundImageError: (_, _) {},
                   child: Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
@@ -4062,7 +4062,7 @@ class _SquadrePageState extends State<SquadrePage> {
                       Image.asset(
                         'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_1.png',
                         fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => Icon(
+                        errorBuilder: (_, _, _) => Icon(
                           Icons.person,
                           size: 28,
                           color: getColor('primary'),
@@ -4116,7 +4116,7 @@ class _SquadrePageState extends State<SquadrePage> {
                   child: Image.asset(
                     'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_1.png',
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => Icon(
+                    errorBuilder: (_, _, _) => Icon(
                       Icons.person,
                       size: 28,
                       color: getColor('primary'),

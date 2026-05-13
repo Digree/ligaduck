@@ -275,7 +275,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
               child: SizedBox(
                 width: double.infinity,
                 child: DropdownButtonFormField<String>(
-                  value: _ruoloSelezionato,
+                  initialValue: _ruoloSelezionato,
                   isExpanded: true,
                   decoration: InputDecoration(
                     labelText: 'Ruolo',
@@ -367,7 +367,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
                         ),
                       )
                     : DropdownButtonFormField<String>(
-                        value: _nazioneSelezionata,
+                        initialValue: _nazioneSelezionata,
                         isExpanded: true,
                         menuMaxHeight: 300,
                         decoration: InputDecoration(
@@ -908,9 +908,10 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
 
   Future<void> _processCsvString(String input) async {
     try {
-      List<List<dynamic>> csvData = const CsvToListConverter(
+      List<List<dynamic>> csvData = Csv(
         fieldDelimiter: ';',
-      ).convert(input);
+        autoDetect: false,
+      ).decode(input);
 
       if (csvData.length < 2) {
         _showMessage(
@@ -1115,10 +1116,10 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
       ];
 
       // Converte in stringa CSV
-      String csv = const ListToCsvConverter(
+      String csv = Csv(
         fieldDelimiter: ';',
-        eol: '\n',
-      ).convert(csvData);
+        lineDelimiter: '\n',
+      ).encode(csvData);
 
       // Mostra dialog con opzioni di salvataggio
       _showCsvDownloadOptions(csv);

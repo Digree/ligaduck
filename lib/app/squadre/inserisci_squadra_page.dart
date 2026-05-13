@@ -943,7 +943,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
                   ),
                   SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    value: _campionatoSelezionato,
+                    initialValue: _campionatoSelezionato,
                     decoration: InputDecoration(
                       labelText: 'Campionato',
                       labelStyle: TextStyle(color: Colors.blueAccent),
@@ -980,7 +980,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
                   ),
                   SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    value: _categoriaSelezionata,
+                    initialValue: _categoriaSelezionata,
                     decoration: InputDecoration(
                       labelText: 'Categoria',
                       labelStyle: TextStyle(color: Colors.blueAccent),

@@ -175,7 +175,7 @@ Widget buildGiocatoreCard({
                 backgroundImage: NetworkImage(
                   CommonService.getFlagUrl(giocatore.nazione),
                 ),
-                onBackgroundImageError: (_, __) {},
+                onBackgroundImageError: (_, _) {},
                 child: Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,

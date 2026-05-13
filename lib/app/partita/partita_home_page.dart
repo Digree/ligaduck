@@ -6630,8 +6630,9 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
               );
             }
           }
-        } else
+        } else {
           return;
+        }
       }),
       child: Container(
         padding: EdgeInsets.all(16),

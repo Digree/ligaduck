@@ -269,7 +269,7 @@ class PartiteProvider with ChangeNotifier {
     final body = {
       'divisa': divisa,
       'modulo': modulo,
-      if (capitano != null) 'capitano': capitano,
+      'capitano': ?capitano,
     };
     try {
       final response = await http.post(

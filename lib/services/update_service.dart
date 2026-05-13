@@ -143,8 +143,12 @@ class UpdateService {
       final parts2 = v2.split('.').map((e) => int.tryParse(e) ?? 0).toList();
 
       // Assicurati che entrambe abbiano 3 parti
-      while (parts1.length < 3) parts1.add(0);
-      while (parts2.length < 3) parts2.add(0);
+      while (parts1.length < 3) {
+        parts1.add(0);
+      }
+      while (parts2.length < 3) {
+        parts2.add(0);
+      }
 
       for (int i = 0; i < 3; i++) {
         if (parts1[i] > parts2[i]) return 1;

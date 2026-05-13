@@ -5431,9 +5431,10 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
         return;
       }
 
-      List<List<dynamic>> csvData = const CsvToListConverter(
+      List<List<dynamic>> csvData = Csv(
         fieldDelimiter: ';',
-      ).convert(input);
+        autoDetect: false,
+      ).decode(input);
 
       if (csvData.length < 2) {
         // Chiudi loader
@@ -5775,10 +5776,10 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       ];
 
       // Converte in stringa CSV
-      String csv = const ListToCsvConverter(
+      String csv = Csv(
         fieldDelimiter: ';',
-        eol: '\n',
-      ).convert(csvData);
+        lineDelimiter: '\n',
+      ).encode(csvData);
 
       // Mostra dialog con opzioni di salvataggio
       _showCsvDownloadOptions(csv);
