@@ -29,6 +29,17 @@ else
   sed -i "s/msix_version:.*/msix_version: $MSIX_VERSION/" pubspec.yaml
 fi
 
+# Genera icona 44x44 per MSIX
+echo "Generazione icona 44x44 per MSIX..."
+if command -v convert &>/dev/null; then
+  convert assets/icon/icon.png -resize 44x44 assets/icon/msix/Square44x44Logo.png
+elif command -v sips &>/dev/null; then
+  sips -z 44 44 assets/icon/icon.png --out assets/icon/msix/Square44x44Logo.png
+else
+  echo "⚠️  ImageMagick (convert) o sips non trovati, skip generazione icona 44x44"
+fi
+echo "✓ Icona 44x44 generata: assets/icon/msix/Square44x44Logo.png"
+
 echo "Building Windows MSIX package..."
 flutter pub get
 flutter pub run msix:create --release --install-certificate false
