@@ -19,7 +19,7 @@ pluginManagement {
         eachPlugin {
             when (requested.id.id) {
                     "com.android.application" -> useModule("com.android.tools.build:gradle:8.9.1")
-                    "kotlin-android" -> useModule("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.20")
+                    "kotlin-android" -> useModule("org.jetbrains.kotlin:kotlin-gradle-plugin:2.2.0")
             }
         }
     }
