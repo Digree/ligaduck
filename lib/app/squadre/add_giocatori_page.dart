@@ -908,10 +908,9 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
 
   Future<void> _processCsvString(String input) async {
     try {
-      List<List<dynamic>> csvData = Csv(
+      List<List<dynamic>> csvData = const CsvToListConverter(
         fieldDelimiter: ';',
-        autoDetect: false,
-      ).decode(input);
+      ).convert(input);
 
       if (csvData.length < 2) {
         _showMessage(
@@ -1116,10 +1115,10 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
       ];
 
       // Converte in stringa CSV
-      String csv = Csv(
+      String csv = const ListToCsvConverter(
         fieldDelimiter: ';',
-        lineDelimiter: '\n',
-      ).encode(csvData);
+        eol: '\n',
+      ).convert(csvData);
 
       // Mostra dialog con opzioni di salvataggio
       _showCsvDownloadOptions(csv);
