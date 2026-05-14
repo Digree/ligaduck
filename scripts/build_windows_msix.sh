@@ -40,6 +40,21 @@ else
 fi
 echo "✓ Icona 44x44 generata: assets/icon/msix/Square44x44Logo.png"
 
+# Genera icon.ico per la finestra Windows (256/64/48/32/16 px)
+echo "Generazione icon.ico per finestra Windows..."
+if command -v python3 &>/dev/null; then
+  python3 - << 'PYEOF'
+from PIL import Image
+src = Image.open("assets/icon/icon.png").convert("RGBA")
+sizes = [(256,256),(64,64),(48,48),(32,32),(16,16)]
+imgs = [src.resize(s, Image.LANCZOS) for s in sizes]
+imgs[0].save("windows/runner/resources/icon.ico", format="ICO", sizes=sizes, append_images=imgs[1:])
+PYEOF
+  echo "✓ icon.ico generato: windows/runner/resources/icon.ico"
+else
+  echo "⚠️  python3 non trovato, skip generazione icon.ico"
+fi
+
 echo "Building Windows MSIX package..."
 flutter pub get
 flutter pub run msix:create --release --install-certificate false

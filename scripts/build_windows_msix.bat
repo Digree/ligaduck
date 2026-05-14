@@ -31,6 +31,10 @@ echo Generazione icona 44x44 per MSIX...
 powershell -Command "Add-Type -AssemblyName System.Drawing; $src = [System.Drawing.Image]::FromFile((Resolve-Path 'assets\icon\icon.png')); $bmp = New-Object System.Drawing.Bitmap(44, 44); $g = [System.Drawing.Graphics]::FromImage($bmp); $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic; $g.DrawImage($src, 0, 0, 44, 44); $bmp.Save((Join-Path (Get-Location) 'assets\icon\msix\Square44x44Logo.png'), [System.Drawing.Imaging.ImageFormat]::Png); $g.Dispose(); $bmp.Dispose(); $src.Dispose()"
 echo ✓ Icona 44x44 generata: assets\icon\msix\Square44x44Logo.png
 
+echo Generazione icon.ico per finestra Windows...
+powershell -Command "Add-Type -AssemblyName System.Drawing; $src = [System.Drawing.Image]::FromFile((Resolve-Path 'assets\icon\icon.png')); $sizes = @(256,64,48,32,16); $ms = New-Object System.IO.MemoryStream; $bw = New-Object System.IO.BinaryWriter($ms); $bw.Write([byte]0); $bw.Write([byte]0); $bw.Write([uint16]1); $bw.Write([uint16]$sizes.Count); $offset = 6 + $sizes.Count*16; $imgs = @(); foreach ($s in $sizes) { $b = New-Object System.Drawing.Bitmap($s,$s); $g = [System.Drawing.Graphics]::FromImage($b); $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic; $g.DrawImage($src,0,0,$s,$s); $g.Dispose(); $ms2 = New-Object System.IO.MemoryStream; $b.Save($ms2,[System.Drawing.Imaging.ImageFormat]::Png); $imgs += $ms2.ToArray(); $b.Dispose() }; foreach ($i in 0..($sizes.Count-1)) { $s=$sizes[$i]; $bw.Write([byte]$(if($s -eq 256){0}else{$s})); $bw.Write([byte]$(if($s -eq 256){0}else{$s})); $bw.Write([byte]0); $bw.Write([byte]0); $bw.Write([uint16]1); $bw.Write([uint16]32); $bw.Write([uint32]$imgs[$i].Length); $bw.Write([uint32]$offset); $offset += $imgs[$i].Length }; foreach ($img in $imgs) { $bw.Write($img) }; [System.IO.File]::WriteAllBytes((Join-Path (Get-Location) 'windows\runner\resources\icon.ico'), $ms.ToArray()); $bw.Dispose(); $src.Dispose()"
+echo ✓ icon.ico generato: windows\runner\resources\icon.ico
+
 echo Building Windows MSIX package...
 flutter pub get
 flutter pub run msix:create --release --install-certificate false
