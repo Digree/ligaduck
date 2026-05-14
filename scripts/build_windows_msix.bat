@@ -28,7 +28,7 @@ REM Aggiorna versione nel pubspec.yaml
 powershell -Command "(Get-Content pubspec.yaml) -replace 'msix_version:.*', 'msix_version: %MSIX_VERSION%' | Set-Content pubspec.yaml"
 
 echo Generazione icona 44x44 per MSIX...
-powershell -Command "Add-Type -AssemblyName System.Drawing; $src = [System.Drawing.Image]::FromFile((Resolve-Path 'assets\icon\icon.png')); $bmp = New-Object System.Drawing.Bitmap(44, 44); $g = [System.Drawing.Graphics]::FromImage($bmp); $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic; $g.DrawImage($src, 0, 0, 44, 44); $bmp.Save((Join-Path (Get-Location) 'assets\icon\msix\Square44x44Logo.png'), [System.Drawing.Imaging.ImageFormat]::Png); $g.Dispose(); $bmp.Dispose(); $src.Dispose()"
+powershell -Command "Add-Type -AssemblyName System.Drawing; $src = [System.Drawing.Image]::FromFile((Resolve-Path 'assets\icon\icon44x44msix.png')); $bmp = New-Object System.Drawing.Bitmap(44, 44); $g = [System.Drawing.Graphics]::FromImage($bmp); $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic; $g.DrawImage($src, 0, 0, 44, 44); $bmp.Save((Join-Path (Get-Location) 'assets\icon\msix\Square44x44Logo.png'), [System.Drawing.Imaging.ImageFormat]::Png); $g.Dispose(); $bmp.Dispose(); $src.Dispose()"
 echo ✓ Icona 44x44 generata: assets\icon\msix\Square44x44Logo.png
 
 echo Generazione icon.ico per finestra Windows...

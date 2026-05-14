@@ -32,9 +32,9 @@ fi
 # Genera icona 44x44 per MSIX
 echo "Generazione icona 44x44 per MSIX..."
 if command -v convert &>/dev/null; then
-  convert assets/icon/icon.png -resize 44x44 assets/icon/msix/Square44x44Logo.png
+  convert assets/icon/icon44x44msix.png -resize 44x44 assets/icon/msix/Square44x44Logo.png
 elif command -v sips &>/dev/null; then
-  sips -z 44 44 assets/icon/icon.png --out assets/icon/msix/Square44x44Logo.png
+  sips -z 44 44 assets/icon/icon44x44msix.png --out assets/icon/msix/Square44x44Logo.png
 else
   echo "⚠️  ImageMagick (convert) o sips non trovati, skip generazione icona 44x44"
 fi
@@ -45,7 +45,7 @@ echo "Generazione icon.ico per finestra Windows..."
 if command -v python3 &>/dev/null; then
   python3 - << 'PYEOF'
 from PIL import Image
-src = Image.open("assets/icon/icon.png").convert("RGBA")
+src = Image.open("assets/icon/icon44x44msix.png").convert("RGBA")
 sizes = [(256,256),(64,64),(48,48),(32,32),(16,16)]
 imgs = [src.resize(s, Image.LANCZOS) for s in sizes]
 imgs[0].save("windows/runner/resources/icon.ico", format="ICO", sizes=sizes, append_images=imgs[1:])
