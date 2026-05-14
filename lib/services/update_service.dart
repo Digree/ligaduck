@@ -86,6 +86,7 @@ class UpdateService {
 
         // Determina l'URL di download in base alla piattaforma
         String downloadUrl = '';
+        String windowsZipUrl = '';
         final assets = releaseData['assets'] as List<dynamic>? ?? [];
 
         for (var asset in assets) {
@@ -99,11 +100,13 @@ class UpdateService {
           } else if (platform == 'macos' && assetName.endsWith('.dmg')) {
             downloadUrl = browserDownloadUrl;
             break;
-          } else if (platform == 'windows' &&
-              assetName.contains('windows') &&
-              assetName.endsWith('.zip')) {
+          } else if (platform == 'windows' && assetName.endsWith('.msix')) {
             downloadUrl = browserDownloadUrl;
             break;
+          } else if (platform == 'windows' &&
+              assetName.toLowerCase().contains('windows') &&
+              assetName.endsWith('.zip')) {
+            windowsZipUrl = browserDownloadUrl;
           } else if (platform == 'ios' && assetName.endsWith('.ipa')) {
             downloadUrl = browserDownloadUrl;
             break;
@@ -112,7 +115,9 @@ class UpdateService {
 
         // Se non troviamo un download URL specifico, usiamo la pagina della release
         if (downloadUrl.isEmpty) {
-          downloadUrl = releaseData['html_url'] ?? '';
+          downloadUrl = windowsZipUrl.isNotEmpty
+              ? windowsZipUrl
+              : (releaseData['html_url'] ?? '');
         }
 
         // Confronta le versioni
