@@ -1,16 +1,26 @@
 {
   "lastUpdate": "2026-05-14",
   "android": {
+<<<<<<< Updated upstream
     "version": "43.01.02",
     "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.02/ligaduck-v43.01.02.apk",
     "releaseNotes": "Release"
   },
   "ios": {
     "version": "43.01.02",
+=======
+    "version": "43.01.01",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.01/ligaduck-v43.01.01.apk",
+    "releaseNotes": "- Aggiornamenti app - Migliorie Grafiche - Divise alternative - Loghi nuovi"
+  },
+  "ios": {
+    "version": "43.01.01",
+>>>>>>> Stashed changes
     "downloadUrl": "https://apps.apple.com/app/ligaduck",
     "releaseNotes": "Release"
   },
   "macos": {
+<<<<<<< Updated upstream
     "version": "43.01.02",
     "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.02/ligaduck-v43.01.02.dmg",
     "releaseNotes": "Release"
@@ -20,5 +30,16 @@
     "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.02/ligaduck-v43.01.02-windows.zip",
     "msixUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.02/LigaDuckManager-Windows-v43.01.02.msix",
     "releaseNotes": "Release"
+=======
+    "version": "43.01.01",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.01/ligaduck-v43.01.01.dmg",
+    "releaseNotes": "- Aggiornamenti app - Migliorie Grafiche - Divise alternative - Loghi nuovi"
+  },
+  "windows": {
+    "version": "43.01.01",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.01/ligaduck-v43.01.01-windows.zip",
+    "msixUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.01/LigaDuckManager-Windows-v43.01.01.msix",
+    "releaseNotes": "- Aggiornamenti app - Migliorie Grafiche - Divise alternative - Loghi nuovi"
+>>>>>>> Stashed changes
   }
 }
