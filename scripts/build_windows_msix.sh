@@ -29,30 +29,42 @@ else
   sed -i "s/msix_version:.*/msix_version: $MSIX_VERSION/" pubspec.yaml
 fi
 
-# Genera icona 44x44 per MSIX
-echo "Generazione icona 44x44 per MSIX..."
-if command -v convert &>/dev/null; then
-  convert assets/icon/icon44x44msix.png -resize 44x44 assets/icon/msix/Square44x44Logo.png
-elif command -v sips &>/dev/null; then
-  sips -z 44 44 assets/icon/icon44x44msix.png --out assets/icon/msix/Square44x44Logo.png
-else
-  echo "⚠️  ImageMagick (convert) o sips non trovati, skip generazione icona 44x44"
-fi
-echo "✓ Icona 44x44 generata: assets/icon/msix/Square44x44Logo.png"
-
-# Genera icon.ico per la finestra Windows (256/64/48/32/16 px)
-echo "Generazione icon.ico per finestra Windows..."
+# Genera icona quadrata per logo_path MSIX (sfondo trasparente, centrata)
+# e icon.ico per finestra Windows — entrambi da icon_msix.png
+echo "Generazione icone MSIX da icon_msix.png..."
 if command -v python3 &>/dev/null; then
   python3 - << 'PYEOF'
 from PIL import Image
-src = Image.open("assets/icon/icon44x44msix.png").convert("RGBA")
+
+src = Image.open("assets/icon/icon_msix.png").convert("RGBA")
+w, h = src.size
+
+# Quadrato 620x620 centrato, sfondo trasparente → logo_path MSIX
+canvas = Image.new("RGBA", (w, w), (0, 0, 0, 0))
+canvas.paste(src, (0, (w - h) // 2), src)
+canvas.save("assets/icon/icon_msix_square.png")
+
+# icon.ico per finestra Windows (sfondo trasparente)
 sizes = [(256,256),(64,64),(48,48),(32,32),(16,16)]
-imgs = [src.resize(s, Image.LANCZOS) for s in sizes]
-imgs[0].save("windows/runner/resources/icon.ico", format="ICO", sizes=sizes, append_images=imgs[1:])
+frames = []
+for (sw, sh) in sizes:
+    frame = Image.new("RGBA", (sw, sh), (0, 0, 0, 0))
+    ratio = min(sw / w, sh / h)
+    nw, nh = int(w * ratio), int(h * ratio)
+    resized = src.resize((nw, nh), Image.LANCZOS)
+    frame.paste(resized, ((sw - nw) // 2, (sh - nh) // 2), resized)
+    frames.append(frame)
+frames[0].save("windows/runner/resources/icon.ico", format="ICO",
+               sizes=sizes, append_images=frames[1:])
+
+# Square44x44Logo per MSIX (dalla versione quadrata)
+sq = Image.open("assets/icon/icon_msix_square.png").convert("RGBA")
+sq44 = sq.resize((44, 44), Image.LANCZOS)
+sq44.save("assets/icon/msix/Square44x44Logo.png")
 PYEOF
-  echo "✓ icon.ico generato: windows/runner/resources/icon.ico"
+  echo "✓ icon_msix_square.png, icon.ico e Square44x44Logo.png generati"
 else
-  echo "⚠️  python3 non trovato, skip generazione icon.ico"
+  echo "⚠️  python3 non trovato, skip generazione icone"
 fi
 
 echo "Building Windows MSIX package..."

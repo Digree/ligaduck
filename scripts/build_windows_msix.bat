@@ -27,8 +27,22 @@ echo Aggiornamento versione MSIX a %MSIX_VERSION%...
 REM Aggiorna versione nel pubspec.yaml
 powershell -Command "(Get-Content pubspec.yaml) -replace 'msix_version:.*', 'msix_version: %MSIX_VERSION%' | Set-Content pubspec.yaml"
 
-echo Generazione icona 44x44 per MSIX...
-powershell -Command "Add-Type -AssemblyName System.Drawing; $src = [System.Drawing.Image]::FromFile((Resolve-Path 'assets\icon\icon44x44msix.png')); $bmp = New-Object System.Drawing.Bitmap(44, 44); $g = [System.Drawing.Graphics]::FromImage($bmp); $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic; $g.DrawImage($src, 0, 0, 44, 44); $bmp.Save((Join-Path (Get-Location) 'assets\icon\msix\Square44x44Logo.png'), [System.Drawing.Imaging.ImageFormat]::Png); $g.Dispose(); $bmp.Dispose(); $src.Dispose()"
+echo Generazione icone MSIX da icon_msix.png...
+powershell -Command "
+Add-Type -AssemblyName System.Drawing
+$src = [System.Drawing.Image]::FromFile((Resolve-Path 'assets\icon\icon_msix.png'))
+$w = $src.Width; $h = $src.Height
+
+# Quadrato centrato, sfondo trasparente
+$sq = New-Object System.Drawing.Bitmap($w, $w)
+$g = [System.Drawing.Graphics]::FromImage($sq)
+$g.Clear([System.Drawing.Color]::Transparent)
+$g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+$g.DrawImage($src, 0, ($w - $h) / 2, $w, $h)
+$sq.Save((Join-Path (Get-Location) 'assets\icon\icon_msix_square.png'), [System.Drawing.Imaging.ImageFormat]::Png)
+$g.Dispose(); $sq.Dispose(); $src.Dispose()
+"
+echo ✓ Icone MSIX generate da icon_msix.png
 echo ✓ Icona 44x44 generata: assets\icon\msix\Square44x44Logo.png
 
 echo Generazione icon.ico per finestra Windows...
