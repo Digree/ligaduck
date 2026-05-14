@@ -3665,7 +3665,7 @@ class _SquadrePageState extends State<SquadrePage> {
                       title: Row(
                         children: [
                           Image.asset(
-                            competizione.id <= 3
+                            competizione.id <= 4
                                 ? 'assets/logos/${widget.campionato}/logo_${competizione.cod}_comp.png'
                                 : 'assets/logos/logo_${competizione.cod}_comp.png',
                             height: 24,

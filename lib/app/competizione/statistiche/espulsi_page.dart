@@ -163,11 +163,17 @@ class _EspulsiPageState extends State<EspulsiPage> {
                       children: [
                         const SizedBox(height: 16),
                         Image.asset(
-                          widget.competizione.id <= 3
+                          widget.competizione.id <= 4
                               ? 'assets/logos/${widget.campionato}/logo_${widget.competizione.cod}_comp.png'
                               : 'assets/logos/logo_${widget.competizione.cod}_comp.png',
                           fit: BoxFit.contain,
                           height: 90,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(
+                                Icons.emoji_events,
+                                size: 60,
+                                color: Colors.white54,
+                              ),
                         ),
                         const SizedBox(height: 8),
                         Text(

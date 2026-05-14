@@ -62,6 +62,11 @@ Widget buildCompetizioneButton(
                   model.imagePath!,
                   fit: BoxFit.contain,
                   height: 115,
+                  errorBuilder: (context, error, stackTrace) => const Icon(
+                    Icons.emoji_events,
+                    size: 60,
+                    color: Colors.white54,
+                  ),
                 ),
               ),
             if (isWide)

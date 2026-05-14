@@ -311,7 +311,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                                       buildCompetizioneButton(
                                         CompetizioneButtonModel(
                                           text: competizione.nome,
-                                          imagePath: competizione.id <= 3
+                                          imagePath: competizione.id <= 4
                                               ? 'assets/logos/${widget.campionato}/logo_${competizione.cod}.png'
                                               : 'assets/logos/logo_${competizione.cod}.png',
                                           onPressed: () {
@@ -724,11 +724,21 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                                                     Image.asset(
                                                       (page['idCompetizione']
                                                                   as int) <=
-                                                              3
+                                                              4
                                                           ? 'assets/logos/${widget.campionato}/logo_${page["cod"]}_comp.png'
                                                           : 'assets/logos/logo_${page["cod"]}_comp.png',
                                                       height: 24,
                                                       width: 24,
+                                                      errorBuilder:
+                                                          (
+                                                            context,
+                                                            error,
+                                                            stackTrace,
+                                                          ) => const Icon(
+                                                            Icons.emoji_events,
+                                                            size: 24,
+                                                            color: Colors.grey,
+                                                          ),
                                                     ),
                                                     SizedBox(width: 8),
                                                     Text(
@@ -1392,7 +1402,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                         Row(
                           children: [
                             Image.asset(
-                              competizione.id <= 3
+                              competizione.id <= 4
                                   ? 'assets/logos/${widget.campionato}/logo_${competizione.cod}_comp.png'
                                   : 'assets/logos/logo_${competizione.cod}_comp.png',
                               height: 40,
