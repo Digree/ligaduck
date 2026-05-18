@@ -26,6 +26,7 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
   globals.admin = prefs.getBool('admin') ?? false;
   globals.mostraColori = prefs.getBool('mostraColori') ?? false;
+  globals.effettoNostalgia = prefs.getBool('effettoNostalgia') ?? false;
 
   runApp(
     MultiProvider(
@@ -62,7 +63,7 @@ class _MyAppState extends State<MyApp> {
     _cacheCleanupTimer = Timer.periodic(Duration(minutes: 30), (timer) {
       _cache.cleanOldCache();
     });
-    
+
     // Controlla aggiornamenti all'avvio (silenzioso)
     _checkForUpdatesOnStart();
   }
@@ -70,10 +71,13 @@ class _MyAppState extends State<MyApp> {
   Future<void> _checkForUpdatesOnStart() async {
     // Attendi che l'app si carichi
     await Future.delayed(Duration(seconds: 3));
-    
+
     // Controlla aggiornamenti in modo silenzioso
     try {
-      final updateNotifier = Provider.of<UpdateNotifier>(context, listen: false);
+      final updateNotifier = Provider.of<UpdateNotifier>(
+        context,
+        listen: false,
+      );
       await updateNotifier.checkForUpdates(silent: true);
     } catch (e) {
       // Ignora errori nel check silenzioso

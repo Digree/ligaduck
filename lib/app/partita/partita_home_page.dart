@@ -5051,7 +5051,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
 
     final isEspulso = espulsi.contains(giocatore.idGiocatore);
 
-    // Conta i gol del giocatore
+    // Conta i gol del giocatore (esclusi i rigori dopo il 120, minuto 121)
     final marcatori = team == 0
         ? partita!.tabellino
               .where(
@@ -5059,7 +5059,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     (evento.codAzione == 'gol' ||
                         evento.codAzione == 'rig' ||
                         evento.codAzione == 'pun') &&
-                    evento.idTeam == partita!.idTeamHome,
+                    evento.idTeam == partita!.idTeamHome &&
+                    evento.minuto != 121,
               )
               .map((evento) => evento.idGiocatore)
               .toList()
@@ -5069,7 +5070,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     (evento.codAzione == 'gol' ||
                         evento.codAzione == 'rig' ||
                         evento.codAzione == 'pun') &&
-                    evento.idTeam == partita!.idTeamAway,
+                    evento.idTeam == partita!.idTeamAway &&
+                    evento.minuto != 121,
               )
               .map((evento) => evento.idGiocatore)
               .toList();
@@ -5280,6 +5282,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
 
     final giocatoriCompleti = team == 0 ? giocatoriHome : giocatoriAway;
 
+    // ID giocatori non disponibili: esclusi dalla panchina
+    final idIndisponibili =
+        (team == 0
+                ? partita!.formazioneHome.indisponibili
+                : partita!.formazioneAway.indisponibili)
+            .map((g) => g.idGiocatore)
+            .toSet();
+
     // Dividi la panchina per ruoli
     final portieri = <GiocatoreFormazione>[];
     final difensori = <GiocatoreFormazione>[];
@@ -5287,6 +5297,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     final attaccanti = <GiocatoreFormazione>[];
 
     for (var giocatorePanchina in panchina) {
+      if (idIndisponibili.contains(giocatorePanchina.idGiocatore)) continue;
+
       final giocatoreCompleto = giocatoriCompleti.firstWhere(
         (g) => g.id == giocatorePanchina.idGiocatore,
         orElse: () => Giocatore(
@@ -5960,6 +5972,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                             color: Colors.black,
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
+                            fontFamily: competizione?.id == 5
+                                ? 'champions'
+                                : competizione?.id == 6 || competizione?.id == 7
+                                ? 'europa'
+                                : competizione?.id == 8
+                                ? 'supercup'
+                                : null,
                           ),
                         ),
                         SizedBox(height: 2),
@@ -5973,6 +5992,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                             color: Colors.grey[600],
                             fontSize: 11,
                             fontWeight: FontWeight.normal,
+                            fontFamily: competizione?.id == 5
+                                ? 'champions'
+                                : competizione?.id == 6 || competizione?.id == 7
+                                ? 'europa'
+                                : competizione?.id == 8
+                                ? 'supercup'
+                                : null,
                           ),
                         ),
                       ],
@@ -5987,14 +6013,26 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   }
 
   Widget buildNonConvocati(int team) {
+    final idIndisponibili =
+        (team == 0
+                ? partita!.formazioneHome.indisponibili
+                : partita!.formazioneAway.indisponibili)
+            .map((g) => g.idGiocatore)
+            .toSet();
+    final nonConvocati =
+        (team == 0
+                ? partita!.formazioneHome.nonConvocati
+                : partita!.formazioneAway.nonConvocati)
+            .where((g) => !idIndisponibili.contains(g.idGiocatore))
+            .toList();
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(height: 16),
-          if (team == 0 && partita!.formazioneHome.nonConvocati.isNotEmpty ||
-              team == 1 && partita!.formazioneAway.nonConvocati.isNotEmpty)
+          if (nonConvocati.isNotEmpty)
             Text(
               'Non Convocati',
               style: TextStyle(
@@ -6010,10 +6048,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
               ),
             ),
 
-          for (var giocatore
-              in (team == 0
-                  ? partita!.formazioneHome.nonConvocati
-                  : partita!.formazioneAway.nonConvocati))
+          for (var giocatore in nonConvocati)
             if (admin && !partita!.salvata)
               Dismissible(
                 key: Key(giocatore.idGiocatore),

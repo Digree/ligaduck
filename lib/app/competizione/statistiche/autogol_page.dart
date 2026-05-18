@@ -184,38 +184,364 @@ class _AutogolPageState extends State<AutogolPage> {
               itemCount: widget.autogol.length,
               itemBuilder: (context, index) {
                 final autogolItem = widget.autogol[index];
-                return FutureBuilder<Squadra>(
-                  future: getSquadra(
-                    Provider.of<SquadreProvider>(context, listen: false),
-                    autogolItem.idSquadraPro,
-                  ),
-                  builder: (context, snapshot) {
-                    return Container(
-                      padding: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: Colors.grey[300]!,
-                            width: 1.0,
-                          ),
+                bool isHovered = false;
+                return StatefulBuilder(
+                  builder: (context, setRowState) {
+                    return MouseRegion(
+                      onEnter: (_) => setRowState(() => isHovered = true),
+                      onExit: (_) => setRowState(() => isHovered = false),
+                      child: FutureBuilder<Squadra>(
+                        future: getSquadra(
+                          Provider.of<SquadreProvider>(context, listen: false),
+                          autogolItem.idSquadraPro,
                         ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Padding(
-                              padding: EdgeInsets.only(right: 8, left: 16),
-                              child: Row(
-                                children: [
-                                  if (snapshot.hasData)
-                                    Padding(
-                                      padding: EdgeInsets.only(right: 8),
-                                      child: Image.asset(
-                                        'assets/squadre/${snapshot.data!.cod}.png',
-                                        height: 30,
-                                        width: 30,
-                                        errorBuilder: (context, error, stackTrace) {
+                        builder: (context, snapshot) {
+                          return Container(
+                            padding: EdgeInsets.symmetric(
+                              vertical: 8,
+                              horizontal: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isHovered
+                                  ? Colors.black.withOpacity(0.05)
+                                  : null,
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Colors.grey[300]!,
+                                  width: 1.0,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Padding(
+                                    padding: EdgeInsets.only(
+                                      right: 8,
+                                      left: 16,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        if (snapshot.hasData)
+                                          Padding(
+                                            padding: EdgeInsets.only(right: 8),
+                                            child: Image.asset(
+                                              'assets/squadre/${snapshot.data!.cod}.png',
+                                              height: 30,
+                                              width: 30,
+                                              errorBuilder: (context, error, stackTrace) {
+                                                return SizedBox(
+                                                  height: 30,
+                                                  width: 30,
+                                                  child: Stack(
+                                                    alignment: Alignment.center,
+                                                    children: [
+                                                      Icon(
+                                                        Icons.shield,
+                                                        size: 30,
+                                                        color: Colors.black,
+                                                        shadows: [
+                                                          Shadow(
+                                                            color: Colors.black,
+                                                            blurRadius: 2,
+                                                          ),
+                                                          Shadow(
+                                                            color: Colors.black,
+                                                            offset: Offset(
+                                                              1,
+                                                              0,
+                                                            ),
+                                                          ),
+                                                          Shadow(
+                                                            color: Colors.black,
+                                                            offset: Offset(
+                                                              -1,
+                                                              0,
+                                                            ),
+                                                          ),
+                                                          Shadow(
+                                                            color: Colors.black,
+                                                            offset: Offset(
+                                                              0,
+                                                              1,
+                                                            ),
+                                                          ),
+                                                          Shadow(
+                                                            color: Colors.black,
+                                                            offset: Offset(
+                                                              0,
+                                                              -1,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      ShaderMask(
+                                                        shaderCallback: (bounds) => LinearGradient(
+                                                          colors: [
+                                                            snapshot
+                                                                    .data!
+                                                                    .colori
+                                                                    .isNotEmpty
+                                                                ? _parseColor(
+                                                                    snapshot
+                                                                        .data!
+                                                                        .colori[0],
+                                                                  )
+                                                                : Colors.white,
+                                                            snapshot
+                                                                        .data!
+                                                                        .colori
+                                                                        .length >
+                                                                    1
+                                                                ? _parseColor(
+                                                                    snapshot
+                                                                        .data!
+                                                                        .colori[1],
+                                                                  )
+                                                                : (snapshot
+                                                                          .data!
+                                                                          .colori
+                                                                          .isNotEmpty
+                                                                      ? _parseColor(
+                                                                          snapshot
+                                                                              .data!
+                                                                              .colori[0],
+                                                                        )
+                                                                      : Colors
+                                                                            .grey[300]!),
+                                                          ],
+                                                          begin: Alignment
+                                                              .topCenter,
+                                                          end: Alignment
+                                                              .bottomCenter,
+                                                        ).createShader(bounds),
+                                                        child: Icon(
+                                                          Icons.shield,
+                                                          size: 30,
+                                                          color: Colors.white,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          )
+                                        else
+                                          Padding(
+                                            padding: EdgeInsets.only(right: 8),
+                                            child: SizedBox(
+                                              height: 30,
+                                              width: 30,
+                                              child: Stack(
+                                                alignment: Alignment.center,
+                                                children: [
+                                                  Icon(
+                                                    Icons.shield,
+                                                    size: 30,
+                                                    color: Colors.black,
+                                                    shadows: [
+                                                      Shadow(
+                                                        color: Colors.black,
+                                                        blurRadius: 2,
+                                                      ),
+                                                      Shadow(
+                                                        color: Colors.black,
+                                                        offset: Offset(1, 0),
+                                                      ),
+                                                      Shadow(
+                                                        color: Colors.black,
+                                                        offset: Offset(-1, 0),
+                                                      ),
+                                                      Shadow(
+                                                        color: Colors.black,
+                                                        offset: Offset(0, 1),
+                                                      ),
+                                                      Shadow(
+                                                        color: Colors.black,
+                                                        offset: Offset(0, -1),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  ShaderMask(
+                                                    shaderCallback: (bounds) =>
+                                                        LinearGradient(
+                                                          colors: [
+                                                            Colors.white,
+                                                            Colors.grey[300]!,
+                                                          ],
+                                                          begin: Alignment
+                                                              .topCenter,
+                                                          end: Alignment
+                                                              .bottomCenter,
+                                                        ).createShader(bounds),
+                                                    child: Icon(
+                                                      Icons.shield,
+                                                      size: 30,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        Expanded(
+                                          child: Text(
+                                            '${CommonService.decodePlayerName(autogolItem.nome)} - ${() {
+                                              for (var g in widget.giornate) {
+                                                if (g.id == autogolItem.idGiornata) {
+                                                  final giornataText = CommonService.decodePlayerName(g.giornata);
+                                                  // Verifica se la giornata è numerica
+                                                  final isNumeric = int.tryParse(g.giornata) != null;
+                                                  return isNumeric ? '$giornataText^ Giornata' : giornataText;
+                                                }
+                                              }
+                                              return 'N/A';
+                                            }()}',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500,
+                                              fontFamily:
+                                                  widget.competizione.id == 5
+                                                  ? 'champions'
+                                                  : widget.competizione.id ==
+                                                            6 ||
+                                                        widget
+                                                                .competizione
+                                                                .id ==
+                                                            7
+                                                  ? 'europa'
+                                                  : widget.competizione.id == 8
+                                                  ? 'supercup'
+                                                  : null,
+                                            ),
+                                            textAlign: TextAlign.left,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                Row(
+                                  children: [
+                                    Text(
+                                      'pro',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: widget.competizione.id == 5
+                                            ? 'champions'
+                                            : widget.competizione.id == 6 ||
+                                                  widget.competizione.id == 7
+                                            ? 'europa'
+                                            : widget.competizione.id == 8
+                                            ? 'supercup'
+                                            : null,
+                                      ),
+                                      textAlign: TextAlign.right,
+                                    ),
+                                    SizedBox(width: 8),
+                                    FutureBuilder<Squadra>(
+                                      future: getSquadra(
+                                        Provider.of<SquadreProvider>(
+                                          context,
+                                          listen: false,
+                                        ),
+                                        autogolItem.idSquadra,
+                                      ),
+                                      builder: (context, proSnapshot) {
+                                        if (proSnapshot.hasData) {
+                                          return Image.asset(
+                                            'assets/squadre/${proSnapshot.data!.cod}.png',
+                                            height: 30,
+                                            width: 30,
+                                            errorBuilder: (context, error, stackTrace) {
+                                              return SizedBox(
+                                                height: 30,
+                                                width: 30,
+                                                child: Stack(
+                                                  alignment: Alignment.center,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.shield,
+                                                      size: 30,
+                                                      color: Colors.black,
+                                                      shadows: [
+                                                        Shadow(
+                                                          color: Colors.black,
+                                                          blurRadius: 2,
+                                                        ),
+                                                        Shadow(
+                                                          color: Colors.black,
+                                                          offset: Offset(1, 0),
+                                                        ),
+                                                        Shadow(
+                                                          color: Colors.black,
+                                                          offset: Offset(-1, 0),
+                                                        ),
+                                                        Shadow(
+                                                          color: Colors.black,
+                                                          offset: Offset(0, 1),
+                                                        ),
+                                                        Shadow(
+                                                          color: Colors.black,
+                                                          offset: Offset(0, -1),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    ShaderMask(
+                                                      shaderCallback: (bounds) => LinearGradient(
+                                                        colors: [
+                                                          proSnapshot
+                                                                  .data!
+                                                                  .colori
+                                                                  .isNotEmpty
+                                                              ? _parseColor(
+                                                                  proSnapshot
+                                                                      .data!
+                                                                      .colori[0],
+                                                                )
+                                                              : Colors.white,
+                                                          proSnapshot
+                                                                      .data!
+                                                                      .colori
+                                                                      .length >
+                                                                  1
+                                                              ? _parseColor(
+                                                                  proSnapshot
+                                                                      .data!
+                                                                      .colori[1],
+                                                                )
+                                                              : (proSnapshot
+                                                                        .data!
+                                                                        .colori
+                                                                        .isNotEmpty
+                                                                    ? _parseColor(
+                                                                        proSnapshot
+                                                                            .data!
+                                                                            .colori[0],
+                                                                      )
+                                                                    : Colors
+                                                                          .grey[300]!),
+                                                        ],
+                                                        begin:
+                                                            Alignment.topCenter,
+                                                        end: Alignment
+                                                            .bottomCenter,
+                                                      ).createShader(bounds),
+                                                      child: Icon(
+                                                        Icons.shield,
+                                                        size: 30,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          );
+                                        } else {
                                           return SizedBox(
                                             height: 30,
                                             width: 30,
@@ -250,43 +576,17 @@ class _AutogolPageState extends State<AutogolPage> {
                                                   ],
                                                 ),
                                                 ShaderMask(
-                                                  shaderCallback: (bounds) => LinearGradient(
-                                                    colors: [
-                                                      snapshot
-                                                              .data!
-                                                              .colori
-                                                              .isNotEmpty
-                                                          ? _parseColor(
-                                                              snapshot
-                                                                  .data!
-                                                                  .colori[0],
-                                                            )
-                                                          : Colors.white,
-                                                      snapshot
-                                                                  .data!
-                                                                  .colori
-                                                                  .length >
-                                                              1
-                                                          ? _parseColor(
-                                                              snapshot
-                                                                  .data!
-                                                                  .colori[1],
-                                                            )
-                                                          : (snapshot
-                                                                    .data!
-                                                                    .colori
-                                                                    .isNotEmpty
-                                                                ? _parseColor(
-                                                                    snapshot
-                                                                        .data!
-                                                                        .colori[0],
-                                                                  )
-                                                                : Colors
-                                                                      .grey[300]!),
-                                                    ],
-                                                    begin: Alignment.topCenter,
-                                                    end: Alignment.bottomCenter,
-                                                  ).createShader(bounds),
+                                                  shaderCallback: (bounds) =>
+                                                      LinearGradient(
+                                                        colors: [
+                                                          Colors.white,
+                                                          Colors.grey[300]!,
+                                                        ],
+                                                        begin:
+                                                            Alignment.topCenter,
+                                                        end: Alignment
+                                                            .bottomCenter,
+                                                      ).createShader(bounds),
                                                   child: Icon(
                                                     Icons.shield,
                                                     size: 30,
@@ -296,275 +596,15 @@ class _AutogolPageState extends State<AutogolPage> {
                                               ],
                                             ),
                                           );
-                                        },
-                                      ),
-                                    )
-                                  else
-                                    Padding(
-                                      padding: EdgeInsets.only(right: 8),
-                                      child: SizedBox(
-                                        height: 30,
-                                        width: 30,
-                                        child: Stack(
-                                          alignment: Alignment.center,
-                                          children: [
-                                            Icon(
-                                              Icons.shield,
-                                              size: 30,
-                                              color: Colors.black,
-                                              shadows: [
-                                                Shadow(
-                                                  color: Colors.black,
-                                                  blurRadius: 2,
-                                                ),
-                                                Shadow(
-                                                  color: Colors.black,
-                                                  offset: Offset(1, 0),
-                                                ),
-                                                Shadow(
-                                                  color: Colors.black,
-                                                  offset: Offset(-1, 0),
-                                                ),
-                                                Shadow(
-                                                  color: Colors.black,
-                                                  offset: Offset(0, 1),
-                                                ),
-                                                Shadow(
-                                                  color: Colors.black,
-                                                  offset: Offset(0, -1),
-                                                ),
-                                              ],
-                                            ),
-                                            ShaderMask(
-                                              shaderCallback: (bounds) =>
-                                                  LinearGradient(
-                                                    colors: [
-                                                      Colors.white,
-                                                      Colors.grey[300]!,
-                                                    ],
-                                                    begin: Alignment.topCenter,
-                                                    end: Alignment.bottomCenter,
-                                                  ).createShader(bounds),
-                                              child: Icon(
-                                                Icons.shield,
-                                                size: 30,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  Expanded(
-                                    child: Text(
-                                      '${CommonService.decodePlayerName(autogolItem.nome)} - ${() {
-                                        for (var g in widget.giornate) {
-                                          if (g.id == autogolItem.idGiornata) {
-                                            final giornataText = CommonService.decodePlayerName(g.giornata);
-                                            // Verifica se la giornata è numerica
-                                            final isNumeric = int.tryParse(g.giornata) != null;
-                                            return isNumeric ? '$giornataText^ Giornata' : giornataText;
-                                          }
                                         }
-                                        return 'N/A';
-                                      }()}',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
-                                        fontFamily: widget.competizione.id == 5
-                                            ? 'champions'
-                                            : widget.competizione.id == 6 ||
-                                                  widget.competizione.id == 7
-                                            ? 'europa'
-                                            : widget.competizione.id == 8
-                                            ? 'supercup'
-                                            : null,
-                                      ),
-                                      textAlign: TextAlign.left,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              Text(
-                                'pro',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: widget.competizione.id == 5
-                                      ? 'champions'
-                                      : widget.competizione.id == 6 ||
-                                            widget.competizione.id == 7
-                                      ? 'europa'
-                                      : widget.competizione.id == 8
-                                      ? 'supercup'
-                                      : null,
-                                ),
-                                textAlign: TextAlign.right,
-                              ),
-                              SizedBox(width: 8),
-                              FutureBuilder<Squadra>(
-                                future: getSquadra(
-                                  Provider.of<SquadreProvider>(
-                                    context,
-                                    listen: false,
-                                  ),
-                                  autogolItem.idSquadra,
-                                ),
-                                builder: (context, proSnapshot) {
-                                  if (proSnapshot.hasData) {
-                                    return Image.asset(
-                                      'assets/squadre/${proSnapshot.data!.cod}.png',
-                                      height: 30,
-                                      width: 30,
-                                      errorBuilder: (context, error, stackTrace) {
-                                        return SizedBox(
-                                          height: 30,
-                                          width: 30,
-                                          child: Stack(
-                                            alignment: Alignment.center,
-                                            children: [
-                                              Icon(
-                                                Icons.shield,
-                                                size: 30,
-                                                color: Colors.black,
-                                                shadows: [
-                                                  Shadow(
-                                                    color: Colors.black,
-                                                    blurRadius: 2,
-                                                  ),
-                                                  Shadow(
-                                                    color: Colors.black,
-                                                    offset: Offset(1, 0),
-                                                  ),
-                                                  Shadow(
-                                                    color: Colors.black,
-                                                    offset: Offset(-1, 0),
-                                                  ),
-                                                  Shadow(
-                                                    color: Colors.black,
-                                                    offset: Offset(0, 1),
-                                                  ),
-                                                  Shadow(
-                                                    color: Colors.black,
-                                                    offset: Offset(0, -1),
-                                                  ),
-                                                ],
-                                              ),
-                                              ShaderMask(
-                                                shaderCallback: (bounds) =>
-                                                    LinearGradient(
-                                                      colors: [
-                                                        proSnapshot
-                                                                .data!
-                                                                .colori
-                                                                .isNotEmpty
-                                                            ? _parseColor(
-                                                                proSnapshot
-                                                                    .data!
-                                                                    .colori[0],
-                                                              )
-                                                            : Colors.white,
-                                                        proSnapshot
-                                                                    .data!
-                                                                    .colori
-                                                                    .length >
-                                                                1
-                                                            ? _parseColor(
-                                                                proSnapshot
-                                                                    .data!
-                                                                    .colori[1],
-                                                              )
-                                                            : (proSnapshot
-                                                                      .data!
-                                                                      .colori
-                                                                      .isNotEmpty
-                                                                  ? _parseColor(
-                                                                      proSnapshot
-                                                                          .data!
-                                                                          .colori[0],
-                                                                    )
-                                                                  : Colors
-                                                                        .grey[300]!),
-                                                      ],
-                                                      begin:
-                                                          Alignment.topCenter,
-                                                      end: Alignment
-                                                          .bottomCenter,
-                                                    ).createShader(bounds),
-                                                child: Icon(
-                                                  Icons.shield,
-                                                  size: 30,
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        );
                                       },
-                                    );
-                                  } else {
-                                    return SizedBox(
-                                      height: 30,
-                                      width: 30,
-                                      child: Stack(
-                                        alignment: Alignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.shield,
-                                            size: 30,
-                                            color: Colors.black,
-                                            shadows: [
-                                              Shadow(
-                                                color: Colors.black,
-                                                blurRadius: 2,
-                                              ),
-                                              Shadow(
-                                                color: Colors.black,
-                                                offset: Offset(1, 0),
-                                              ),
-                                              Shadow(
-                                                color: Colors.black,
-                                                offset: Offset(-1, 0),
-                                              ),
-                                              Shadow(
-                                                color: Colors.black,
-                                                offset: Offset(0, 1),
-                                              ),
-                                              Shadow(
-                                                color: Colors.black,
-                                                offset: Offset(0, -1),
-                                              ),
-                                            ],
-                                          ),
-                                          ShaderMask(
-                                            shaderCallback: (bounds) =>
-                                                LinearGradient(
-                                                  colors: [
-                                                    Colors.white,
-                                                    Colors.grey[300]!,
-                                                  ],
-                                                  begin: Alignment.topCenter,
-                                                  end: Alignment.bottomCenter,
-                                                ).createShader(bounds),
-                                            child: Icon(
-                                              Icons.shield,
-                                              size: 30,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  }
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
                     );
                   },

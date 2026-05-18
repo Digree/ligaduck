@@ -40,6 +40,7 @@ class SquadrePage extends StatefulWidget {
 
 class _SquadrePageState extends State<SquadrePage> {
   List<Giocatore> giocatori = [];
+  List<Giocatore> _giocatoriVenduti = [];
   bool _isLoadingGiocatori = false;
   Squadra? _squadra;
   Future<List<Esonero>>? _esoneriFuture;
@@ -105,6 +106,7 @@ class _SquadrePageState extends State<SquadrePage> {
       _isLoadingGiocatori = true;
     });
     await fetchGiocatori();
+    await _loadGiocatoriVenduti();
     if (mounted) {
       setState(() {
         _isLoadingGiocatori = false;
@@ -2499,6 +2501,7 @@ class _SquadrePageState extends State<SquadrePage> {
                           fontSize: isWide ? 20 : 15,
                           fontWeight: FontWeight.bold,
                         ),
+                        textAlign: TextAlign.center,
                       ),
                     ),
                   ],
@@ -2649,6 +2652,51 @@ class _SquadrePageState extends State<SquadrePage> {
         });
       }
     }
+  }
+
+  /// Carica i giocatori presenti nella formazioneOld ma non più nella rosa attuale
+  /// (cioè venduti nel mercato invernale).
+  Future<void> _loadGiocatoriVenduti() async {
+    final tuttiGliId = {
+      ...widget.squadra.formazioneOld.titolari.map((g) => g.idGiocatore),
+      ...widget.squadra.formazioneOld.panchina.map((g) => g.idGiocatore),
+    };
+    final idAttuali = giocatori.map((g) => g.id).toSet();
+    final idVenduti = tuttiGliId
+        .where((id) => !idAttuali.contains(id) && id != '__vuoto__')
+        .toList();
+
+    if (idVenduti.isEmpty) return;
+
+    final provider = GiocatoriProvider();
+    final List<Giocatore> venduti = [];
+    for (final id in idVenduti) {
+      final g = await provider.fetchGiocatoreById(widget.campionato, id);
+      if (g != null) venduti.add(g);
+    }
+    if (mounted) {
+      setState(() {
+        _giocatoriVenduti = venduti;
+      });
+    }
+  }
+
+  /// Ritorna il numero di maglia dalla prima carriera del campionato attuale
+  /// (indipendentemente dalla squadra). Usato per la formazioneOld.
+  int _getNumeroGiocatoreOld(Giocatore giocatore) {
+    final prima = giocatore.carriera.firstWhere(
+      (c) => c.campionato == widget.campionato,
+      orElse: () => Carriera(
+        campionato: widget.campionato,
+        idSquadra: 0,
+        numero: 0,
+        gol: 0,
+        presenze: 0,
+        espulsioni: 0,
+        attivo: true,
+      ),
+    );
+    return prima.numero;
   }
 
   Future<void> _mostraDialogSceltaAllenatore() async {
@@ -3801,6 +3849,7 @@ class _SquadrePageState extends State<SquadrePage> {
                 isWide: isWide,
                 showAdminButtons: false,
                 showAddButton: false,
+                isOldFormazione: true,
               ),
             ),
             SizedBox(width: 16),
@@ -3859,6 +3908,7 @@ class _SquadrePageState extends State<SquadrePage> {
                 _selectedFormazioneType == 'Attuale' && globals.admin,
             showAddButton:
                 _selectedFormazioneType == 'Attuale' && globals.admin,
+            isOldFormazione: _selectedFormazioneType != 'Attuale',
           ),
         ],
       );
@@ -3871,6 +3921,7 @@ class _SquadrePageState extends State<SquadrePage> {
     required bool isWide,
     required bool showAdminButtons,
     bool showAddButton = false,
+    bool isOldFormazione = false,
   }) {
     Widget campo = Container(
       width: isWide ? null : double.infinity,
@@ -3951,6 +4002,11 @@ class _SquadrePageState extends State<SquadrePage> {
     );
 
     // Raggruppa la panchina per ruolo (con fallback ai dati Giocatore)
+    // Per la formazioneOld include anche i giocatori venduti nel mercato invernale.
+    final tuttiGiocatori = isOldFormazione
+        ? [...giocatori, ..._giocatoriVenduti]
+        : giocatori;
+
     final ordineRuoli = [
       'Portiere',
       'Difensore',
@@ -3962,7 +4018,7 @@ class _SquadrePageState extends State<SquadrePage> {
       panchinaPerRuolo[r] = formazione.panchina.where((g) {
         final ruoloEffettivo = (g.ruolo != null && g.ruolo!.isNotEmpty)
             ? g.ruolo!
-            : giocatori
+            : tuttiGiocatori
                   .firstWhere(
                     (gj) => gj.id == g.idGiocatore,
                     orElse: () => Giocatore(
@@ -3984,7 +4040,7 @@ class _SquadrePageState extends State<SquadrePage> {
     final senzaRuolo = formazione.panchina.where((g) {
       final ruoloEffettivo = (g.ruolo != null && g.ruolo!.isNotEmpty)
           ? g.ruolo!
-          : giocatori
+          : tuttiGiocatori
                 .firstWhere(
                   (gj) => gj.id == g.idGiocatore,
                   orElse: () => Giocatore(
@@ -4033,8 +4089,8 @@ class _SquadrePageState extends State<SquadrePage> {
         ),
       );
       for (var g in lista) {
-        // Cerca il numero nella lista giocatori
-        final giocatoreMatch = giocatori.firstWhere(
+        // Cerca il numero nella lista giocatori (include venduti per formazioneOld)
+        final giocatoreMatch = tuttiGiocatori.firstWhere(
           (gj) => gj.id == g.idGiocatore,
           orElse: () => Giocatore(
             id: g.idGiocatore,
@@ -4047,7 +4103,9 @@ class _SquadrePageState extends State<SquadrePage> {
             attivo: true,
           ),
         );
-        final numero = _getNumeroGiocatore(giocatoreMatch);
+        final numero = isOldFormazione
+            ? _getNumeroGiocatoreOld(giocatoreMatch)
+            : _getNumeroGiocatore(giocatoreMatch);
         panchinaRows.add(
           Padding(
             padding: EdgeInsets.symmetric(vertical: 3, horizontal: 4),

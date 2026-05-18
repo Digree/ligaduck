@@ -250,193 +250,230 @@ class _CleanSheetPageState extends State<CleanSheetPage> {
               itemCount: _displayedCleanSheet.length,
               itemBuilder: (context, index) {
                 final cleanSheet = _displayedCleanSheet[index];
-                return FutureBuilder<Squadra>(
-                  future: getSquadra(
-                    Provider.of<SquadreProvider>(context, listen: false),
-                    cleanSheet.idSquadra,
-                  ),
-                  builder: (context, snapshot) {
-                    return Container(
-                      padding: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: Colors.grey[300]!,
-                            width: 1.0,
-                          ),
+                bool isHovered = false;
+                return StatefulBuilder(
+                  builder: (context, setRowState) {
+                    return MouseRegion(
+                      onEnter: (_) => setRowState(() => isHovered = true),
+                      onExit: (_) => setRowState(() => isHovered = false),
+                      child: FutureBuilder<Squadra>(
+                        future: getSquadra(
+                          Provider.of<SquadreProvider>(context, listen: false),
+                          cleanSheet.idSquadra,
                         ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
+                        builder: (context, snapshot) {
+                          return Container(
+                            padding: EdgeInsets.symmetric(
+                              vertical: 8,
+                              horizontal: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isHovered
+                                  ? Colors.black.withOpacity(0.05)
+                                  : null,
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Colors.grey[300]!,
+                                  width: 1.0,
+                                ),
+                              ),
+                            ),
                             child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                if (snapshot.hasData)
-                                  Padding(
-                                    padding: EdgeInsets.only(
-                                      right: 8,
-                                      left: 16,
-                                    ),
-                                    child: Image.asset(
-                                      'assets/squadre/${snapshot.data!.cod}.png',
-                                      height: 30,
-                                      width: 30,
-                                      errorBuilder: (context, error, stackTrace) {
-                                        return SizedBox(
-                                          height: 30,
-                                          width: 30,
-                                          child: Stack(
-                                            alignment: Alignment.center,
-                                            children: [
-                                              Icon(
-                                                Icons.shield,
-                                                size: 30,
-                                                color: Colors.black,
-                                                shadows: [
-                                                  Shadow(
-                                                    color: Colors.black,
-                                                    blurRadius: 2,
-                                                  ),
-                                                  Shadow(
-                                                    color: Colors.black,
-                                                    offset: Offset(1, 0),
-                                                  ),
-                                                  Shadow(
-                                                    color: Colors.black,
-                                                    offset: Offset(-1, 0),
-                                                  ),
-                                                  Shadow(
-                                                    color: Colors.black,
-                                                    offset: Offset(0, 1),
-                                                  ),
-                                                  Shadow(
-                                                    color: Colors.black,
-                                                    offset: Offset(0, -1),
-                                                  ),
-                                                ],
-                                              ),
-                                              ShaderMask(
-                                                shaderCallback: (bounds) =>
-                                                    LinearGradient(
-                                                      colors: [
-                                                        snapshot
-                                                                .data!
-                                                                .colori
-                                                                .isNotEmpty
-                                                            ? _parseColor(
-                                                                snapshot
-                                                                    .data!
-                                                                    .colori[0],
-                                                              )
-                                                            : Colors.white,
-                                                        snapshot
-                                                                    .data!
-                                                                    .colori
-                                                                    .length >
-                                                                1
-                                                            ? _parseColor(
-                                                                snapshot
-                                                                    .data!
-                                                                    .colori[1],
-                                                              )
-                                                            : (snapshot
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      if (snapshot.hasData)
+                                        Padding(
+                                          padding: EdgeInsets.only(
+                                            right: 8,
+                                            left: 16,
+                                          ),
+                                          child: Image.asset(
+                                            'assets/squadre/${snapshot.data!.cod}.png',
+                                            height: 30,
+                                            width: 30,
+                                            errorBuilder: (context, error, stackTrace) {
+                                              return SizedBox(
+                                                height: 30,
+                                                width: 30,
+                                                child: Stack(
+                                                  alignment: Alignment.center,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.shield,
+                                                      size: 30,
+                                                      color: Colors.black,
+                                                      shadows: [
+                                                        Shadow(
+                                                          color: Colors.black,
+                                                          blurRadius: 2,
+                                                        ),
+                                                        Shadow(
+                                                          color: Colors.black,
+                                                          offset: Offset(1, 0),
+                                                        ),
+                                                        Shadow(
+                                                          color: Colors.black,
+                                                          offset: Offset(-1, 0),
+                                                        ),
+                                                        Shadow(
+                                                          color: Colors.black,
+                                                          offset: Offset(0, 1),
+                                                        ),
+                                                        Shadow(
+                                                          color: Colors.black,
+                                                          offset: Offset(0, -1),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    ShaderMask(
+                                                      shaderCallback: (bounds) => LinearGradient(
+                                                        colors: [
+                                                          snapshot
+                                                                  .data!
+                                                                  .colori
+                                                                  .isNotEmpty
+                                                              ? _parseColor(
+                                                                  snapshot
+                                                                      .data!
+                                                                      .colori[0],
+                                                                )
+                                                              : Colors.white,
+                                                          snapshot
                                                                       .data!
                                                                       .colori
-                                                                      .isNotEmpty
-                                                                  ? _parseColor(
-                                                                      snapshot
-                                                                          .data!
-                                                                          .colori[0],
-                                                                    )
-                                                                  : Colors
-                                                                        .grey[300]!),
-                                                      ],
-                                                      begin:
-                                                          Alignment.topCenter,
-                                                      end: Alignment
-                                                          .bottomCenter,
-                                                    ).createShader(bounds),
-                                                child: Icon(
+                                                                      .length >
+                                                                  1
+                                                              ? _parseColor(
+                                                                  snapshot
+                                                                      .data!
+                                                                      .colori[1],
+                                                                )
+                                                              : (snapshot
+                                                                        .data!
+                                                                        .colori
+                                                                        .isNotEmpty
+                                                                    ? _parseColor(
+                                                                        snapshot
+                                                                            .data!
+                                                                            .colori[0],
+                                                                      )
+                                                                    : Colors
+                                                                          .grey[300]!),
+                                                        ],
+                                                        begin:
+                                                            Alignment.topCenter,
+                                                        end: Alignment
+                                                            .bottomCenter,
+                                                      ).createShader(bounds),
+                                                      child: Icon(
+                                                        Icons.shield,
+                                                        size: 30,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        )
+                                      else
+                                        Padding(
+                                          padding: EdgeInsets.only(
+                                            right: 8,
+                                            left: 16,
+                                          ),
+                                          child: SizedBox(
+                                            height: 30,
+                                            width: 30,
+                                            child: Stack(
+                                              alignment: Alignment.center,
+                                              children: [
+                                                Icon(
                                                   Icons.shield,
                                                   size: 30,
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  )
-                                else
-                                  Padding(
-                                    padding: EdgeInsets.only(
-                                      right: 8,
-                                      left: 16,
-                                    ),
-                                    child: SizedBox(
-                                      height: 30,
-                                      width: 30,
-                                      child: Stack(
-                                        alignment: Alignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.shield,
-                                            size: 30,
-                                            color: Colors.black,
-                                            shadows: [
-                                              Shadow(
-                                                color: Colors.black,
-                                                blurRadius: 2,
-                                              ),
-                                              Shadow(
-                                                color: Colors.black,
-                                                offset: Offset(1, 0),
-                                              ),
-                                              Shadow(
-                                                color: Colors.black,
-                                                offset: Offset(-1, 0),
-                                              ),
-                                              Shadow(
-                                                color: Colors.black,
-                                                offset: Offset(0, 1),
-                                              ),
-                                              Shadow(
-                                                color: Colors.black,
-                                                offset: Offset(0, -1),
-                                              ),
-                                            ],
-                                          ),
-                                          ShaderMask(
-                                            shaderCallback: (bounds) =>
-                                                LinearGradient(
-                                                  colors: [
-                                                    Colors.white,
-                                                    Colors.grey[300]!,
+                                                  color: Colors.black,
+                                                  shadows: [
+                                                    Shadow(
+                                                      color: Colors.black,
+                                                      blurRadius: 2,
+                                                    ),
+                                                    Shadow(
+                                                      color: Colors.black,
+                                                      offset: Offset(1, 0),
+                                                    ),
+                                                    Shadow(
+                                                      color: Colors.black,
+                                                      offset: Offset(-1, 0),
+                                                    ),
+                                                    Shadow(
+                                                      color: Colors.black,
+                                                      offset: Offset(0, 1),
+                                                    ),
+                                                    Shadow(
+                                                      color: Colors.black,
+                                                      offset: Offset(0, -1),
+                                                    ),
                                                   ],
-                                                  begin: Alignment.topCenter,
-                                                  end: Alignment.bottomCenter,
-                                                ).createShader(bounds),
-                                            child: Icon(
-                                              Icons.shield,
-                                              size: 30,
-                                              color: Colors.white,
+                                                ),
+                                                ShaderMask(
+                                                  shaderCallback: (bounds) =>
+                                                      LinearGradient(
+                                                        colors: [
+                                                          Colors.white,
+                                                          Colors.grey[300]!,
+                                                        ],
+                                                        begin:
+                                                            Alignment.topCenter,
+                                                        end: Alignment
+                                                            .bottomCenter,
+                                                      ).createShader(bounds),
+                                                  child: Icon(
+                                                    Icons.shield,
+                                                    size: 30,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
-                                        ],
+                                        ),
+                                      // Nome del marcatore
+                                      Expanded(
+                                        child: Text(
+                                          CommonService.decodePlayerName(
+                                            cleanSheet.nome,
+                                          ),
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                            fontFamily:
+                                                widget.competizione.id == 5
+                                                ? 'champions'
+                                                : widget.competizione.id == 6 ||
+                                                      widget.competizione.id ==
+                                                          7
+                                                ? 'europa'
+                                                : widget.competizione.id == 8
+                                                ? 'supercup'
+                                                : null,
+                                          ),
+                                          textAlign: TextAlign.left,
+                                        ),
                                       ),
-                                    ),
+                                    ],
                                   ),
-                                // Nome del marcatore
-                                Expanded(
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.only(right: 32),
                                   child: Text(
-                                    CommonService.decodePlayerName(
-                                      cleanSheet.nome,
-                                    ),
+                                    '${cleanSheet.quantita}',
                                     style: TextStyle(
                                       fontSize: 16,
-                                      fontWeight: FontWeight.w500,
+                                      fontWeight: FontWeight.bold,
                                       fontFamily: widget.competizione.id == 5
                                           ? 'champions'
                                           : widget.competizione.id == 6 ||
@@ -446,32 +483,13 @@ class _CleanSheetPageState extends State<CleanSheetPage> {
                                           ? 'supercup'
                                           : null,
                                     ),
-                                    textAlign: TextAlign.left,
+                                    textAlign: TextAlign.right,
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.only(right: 32),
-                            child: Text(
-                              '${cleanSheet.quantita}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: widget.competizione.id == 5
-                                    ? 'champions'
-                                    : widget.competizione.id == 6 ||
-                                          widget.competizione.id == 7
-                                    ? 'europa'
-                                    : widget.competizione.id == 8
-                                    ? 'supercup'
-                                    : null,
-                              ),
-                              textAlign: TextAlign.right,
-                            ),
-                          ),
-                        ],
+                          );
+                        },
                       ),
                     );
                   },
