@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/campionato/campionato_home_page.dart';
-import 'package:ligaduck/app/config/models/config.dart';
 import 'package:ligaduck/app/config/models/service/config_provider.dart';
-import 'package:ligaduck/app/models/campionato/campionato_button_model.dart';
 import 'package:provider/provider.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -183,8 +181,11 @@ class _HomePage extends State<HomePage> {
           ),
         ],
       ),
-      body: FutureBuilder(
-        future: configs(context),
+      body: FutureBuilder<List<String>>(
+        future: Provider.of<ConfigProvider>(
+          context,
+          listen: false,
+        ).fetchCampionati(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
@@ -211,36 +212,88 @@ class _HomePage extends State<HomePage> {
               ),
             );
           } else {
-            final filteredConfigs = snapshot.data!;
-            String campionato = '';
+            final campionati = snapshot.data!
+              ..sort(
+                (a, b) =>
+                    (int.tryParse(b) ?? 0).compareTo(int.tryParse(a) ?? 0),
+              );
+            final isWide = MediaQuery.of(context).size.width > 600;
+            final crossAxisCount = isWide ? 4 : 2;
 
-            for (var config in filteredConfigs) {
-              if (config.cod == "camp_attuale") {
-                campionato = config.value;
-                break;
-              }
-            }
-
-            final campionatoCount = int.tryParse(campionato) ?? 0;
-
-            return ListView.builder(
-              itemCount: campionatoCount,
+            return GridView.builder(
+              padding: EdgeInsets.all(16),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount: campionati.length,
               itemBuilder: (context, index) {
-                final i = campionatoCount - index;
-                return buildCampionatoButton(
-                  CampionatoButtonModel(
-                    text: '$i° Campionato',
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => CampionatoHomePage(
-                            title: '$i° Campionato',
-                            campionato: '$i',
-                          ),
+                final campionato = campionati[index];
+                final logoPath = 'assets/logos/$campionato/logo_liga_duck.png';
+
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CampionatoHomePage(
+                          title: '$campionato° Campionato',
+                          campionato: campionato,
                         ),
-                      );
-                    },
+                      ),
+                    );
+                  },
+                  child: Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.blueAccent.withOpacity(0.85),
+                            Colors.blue[900]!,
+                          ],
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                              child: Image.asset(
+                                logoPath,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Icon(
+                                      Icons.emoji_events,
+                                      size: 48,
+                                      color: Colors.white70,
+                                    ),
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.fromLTRB(8, 0, 8, 12),
+                            child: Text(
+                              '$campionato° Campionato',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 );
               },
@@ -250,12 +303,5 @@ class _HomePage extends State<HomePage> {
       ),
       floatingActionButton: SizedBox(),
     );
-  }
-
-  Future<List<Config>> configs(BuildContext context) async {
-    return await Provider.of<ConfigProvider>(
-      context,
-      listen: false,
-    ).fetchConfig();
   }
 }

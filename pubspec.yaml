@@ -86,12 +86,14 @@ flutter:
     #loghi competizione
     - assets/logos/
     - assets/logos/43/
+    - assets/logos/44/
 
     #loghi squadre
     - assets/squadre/
 
     #divise
     - assets/divise/divise_43/
+    - assets/divise/divise_44/
 
     #miscellaneous
     - assets/miscellaneous/

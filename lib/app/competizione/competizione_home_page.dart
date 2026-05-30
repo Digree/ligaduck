@@ -2705,8 +2705,14 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
           giornate_ = snapshot.data!;
           if (giornate.isEmpty) {
             return Padding(
-              padding: EdgeInsetsGeometry.only(top: 10),
-              child: Center(),
+              padding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+              child: Center(
+                child: Text(
+                  'Nessuna giornata disponibile',
+                  style: TextStyle(color: Colors.grey, fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+              ),
             );
           } else {
             giornate.sort((a, b) {
@@ -2730,18 +2736,19 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                   if (nonConcluse.isNotEmpty) {
                     selectedGiornata = nonConcluse.first.id;
                   } else {
-                    // Verifica se tutte le giornate sono chiuse e non numeriche
-                    final tutteChiuse = giornate.every((g) => g.conclusa);
-                    final tutteNonNumeriche = giornate.every(
-                      (g) => int.tryParse(g.giornata) == null,
-                    );
-
-                    if (tutteChiuse && tutteNonNumeriche) {
-                      // Se tutte chiuse e non numeriche, seleziona l'ultima (creata più recentemente)
+                    // Tutte le giornate sono concluse
+                    if (widget.competizione.conclusa) {
+                      // Competizione conclusa: mostra l'ultima giornata (es. G38 o Finale)
                       selectedGiornata = giornate.last.id;
                     } else {
-                      // Altrimenti seleziona la prima
-                      selectedGiornata = giornate.first.id;
+                      final tutteNonNumeriche = giornate.every(
+                        (g) => int.tryParse(g.giornata) == null,
+                      );
+                      if (tutteNonNumeriche) {
+                        selectedGiornata = giornate.last.id;
+                      } else {
+                        selectedGiornata = giornate.first.id;
+                      }
                     }
                   }
                 });

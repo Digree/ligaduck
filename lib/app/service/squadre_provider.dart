@@ -384,6 +384,33 @@ class SquadreProvider with ChangeNotifier {
     }
   }
 
+  Future<bool> aggiornaCategoria(
+    String campionato,
+    int idSquadra,
+    String categoria,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${Env.apiUrl}/$campionato/squadra/$idSquadra/categoria'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'categoria': categoria}),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        notifyListeners();
+        return true;
+      } else {
+        print(
+          'Errore POST categoria: ${response.statusCode} - ${response.body}',
+        );
+        return false;
+      }
+    } catch (e) {
+      print('Errore POST categoria: $e');
+      return false;
+    }
+  }
+
   Future<List<String>> fetchNazioniSquadre(String campionato) async {
     try {
       String url = '${Env.apiUrl}/$campionato/squadre/nazionalita';

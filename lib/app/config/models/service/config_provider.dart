@@ -48,4 +48,20 @@ class ConfigProvider with ChangeNotifier {
       return [];
     }
   }
+
+  Future<List<String>> fetchCampionati() async {
+    try {
+      final response = await http.get(Uri.parse('${Env.apiUrl}/campionati'));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((item) => item.toString()).toList();
+      } else {
+        throw Exception('Errore nel caricamento: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Errore fetchCampionati: $e');
+      return [];
+    }
+  }
 }

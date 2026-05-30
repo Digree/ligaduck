@@ -295,10 +295,17 @@ class _SquadrePageState extends State<SquadrePage> {
     if (stessoAnnoAltraSquadra) return Colors.lightBlue;
 
     // Anno precedente, squadra diversa → nuovo acquisto estivo (rosso)
+    // Ma solo se non era già nella stessa squadra l'anno precedente
     final annoPrecAltraSquadra = giocatore.carriera.any(
       (c) => c.campionato == annoPrecedente && c.idSquadra != widget.squadra.id,
     );
-    if (annoPrecAltraSquadra) return Colors.red;
+    if (annoPrecAltraSquadra) {
+      final eraNellaStessaSquadra = giocatore.carriera.any(
+        (c) =>
+            c.campionato == annoPrecedente && c.idSquadra == widget.squadra.id,
+      );
+      if (!eraNellaStessaSquadra) return Colors.red;
+    }
 
     return null;
   }
@@ -361,6 +368,13 @@ class _SquadrePageState extends State<SquadrePage> {
                       Navigator.of(context).pop();
                       await _mostraDialogAssegnaNumeri();
                     }),
+                    if (widget.squadra.campionato == 'Paperi') ...[
+                      SizedBox(height: 10),
+                      _buildGlassButton('Modifica Categoria', () async {
+                        Navigator.of(context).pop();
+                        await _mostraDialogModificaCategoria();
+                      }),
+                    ],
                   ],
                 ),
               ),
@@ -674,7 +688,7 @@ class _SquadrePageState extends State<SquadrePage> {
                 Flexible(
                   flex: 1,
                   child: Image.asset(
-                    'assets/divise/divise_43/${widget.squadra.cod}_1$suffix.png',
+                    'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_1$suffix.png',
                     fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) =>
                         SizedBox.shrink(),
@@ -683,7 +697,7 @@ class _SquadrePageState extends State<SquadrePage> {
                 Flexible(
                   flex: 1,
                   child: Image.asset(
-                    'assets/divise/divise_43/${widget.squadra.cod}_2$suffix.png',
+                    'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_2$suffix.png',
                     fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) =>
                         SizedBox.shrink(),
@@ -692,7 +706,7 @@ class _SquadrePageState extends State<SquadrePage> {
                 Flexible(
                   flex: 1,
                   child: Image.asset(
-                    'assets/divise/divise_43/${widget.squadra.cod}_3$suffix.png',
+                    'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_3$suffix.png',
                     fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) =>
                         SizedBox.shrink(),
@@ -2372,6 +2386,7 @@ class _SquadrePageState extends State<SquadrePage> {
 
     // Wrap in Dismissible only for Allenatore when admin is true
     if (giocatore.ruolo == 'Allenatore' && globals.admin) {
+      String? azioneScelya;
       return Dismissible(
         key: Key('allenatore_${giocatore.id}'),
         direction: DismissDirection.endToStart,
@@ -2382,17 +2397,17 @@ class _SquadrePageState extends State<SquadrePage> {
           child: Icon(Icons.delete, color: Colors.white),
         ),
         confirmDismiss: (direction) async {
-          return await showDialog(
+          final scelta = await showDialog<String>(
             context: context,
             builder: (BuildContext context) {
               return AlertDialog(
-                title: Text('Conferma esonero'),
+                title: Text('Cosa vuoi fare?'),
                 content: Text(
-                  'Sei sicuro di voler esonerare ${CommonService.decodePlayerName(giocatore.nome)}?',
+                  'Seleziona un\'azione per ${CommonService.decodePlayerName(giocatore.nome)}:',
                 ),
                 actions: <Widget>[
                   TextButton(
-                    onPressed: () => Navigator.of(context).pop(false),
+                    onPressed: () => Navigator.of(context).pop(null),
                     child: Text(
                       'Annulla',
                       style: TextStyle(
@@ -2401,29 +2416,47 @@ class _SquadrePageState extends State<SquadrePage> {
                     ),
                   ),
                   TextButton(
-                    onPressed: () => Navigator.of(context).pop(true),
+                    onPressed: () => Navigator.of(context).pop('svincola'),
+                    child: Text(
+                      'Svincola',
+                      style: TextStyle(color: Colors.orange),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop('esonera'),
                     child: Text('Esonera', style: TextStyle(color: Colors.red)),
                   ),
                 ],
               );
             },
           );
+          azioneScelya = scelta;
+          return scelta != null;
         },
         onDismissed: (direction) async {
           final giocatoriProvider = GiocatoriProvider();
-          await giocatoriProvider.esoneraAllenatore(
-            widget.campionato,
-            giocatore.id,
-            widget.squadra.id,
-          );
+          if (azioneScelya == 'esonera') {
+            await giocatoriProvider.esoneraAllenatore(
+              widget.campionato,
+              giocatore.id,
+              widget.squadra.id,
+            );
+          } else if (azioneScelya == 'svincola') {
+            await giocatoriProvider.svincolaAllenatore(
+              widget.campionato,
+              giocatore.id,
+              widget.squadra.id,
+            );
+          }
           await _loadGiocatori();
 
           if (!mounted) return;
 
+          final label = azioneScelya == 'esonera' ? 'esonerato' : 'svincolato';
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Allenatore ${CommonService.decodePlayerName(giocatore.nome)} esonerato',
+                'Allenatore ${CommonService.decodePlayerName(giocatore.nome)} $label',
               ),
               duration: Duration(seconds: 2),
             ),
@@ -2997,6 +3030,165 @@ class _SquadrePageState extends State<SquadrePage> {
         );
       }
     }
+  }
+
+  Future<void> _mostraDialogModificaCategoria() async {
+    final categorie = ['Serie A', 'Serie B', 'Serie C', 'Serie D'];
+    String categoriaSelezionata =
+        categorie.contains((_squadra ?? widget.squadra).categoria)
+        ? (_squadra ?? widget.squadra).categoria
+        : categorie.first;
+
+    final outerContext = context;
+    await showModalBottomSheet(
+      backgroundColor: getColor('primary').withOpacity(0.8),
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Container(
+              padding: EdgeInsets.all(16),
+              height: MediaQuery.of(context).size.height * 0.25,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(top: 20, bottom: 16),
+                    child: Text(
+                      'Modifica Categoria',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: getIconColor('primary'),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: GlassmorphicContainer(
+                      width: double.infinity,
+                      height: double.infinity,
+                      borderRadius: 12,
+                      blur: 15,
+                      alignment: Alignment.center,
+                      border: 2,
+                      linearGradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.white.withOpacity(0.3),
+                          Colors.white.withOpacity(0.1),
+                        ],
+                      ),
+                      borderGradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.white.withOpacity(0.1),
+                          Colors.white.withOpacity(0.1),
+                        ],
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: DropdownButtonFormField<String>(
+                          initialValue: categoriaSelezionata,
+                          dropdownColor: getColor('primary'),
+                          style: TextStyle(
+                            color: getIconColor('primary'),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                          icon: Icon(
+                            Icons.arrow_drop_down,
+                            color: getIconColor('primary'),
+                          ),
+                          decoration: InputDecoration(
+                            labelText: 'Categoria',
+                            labelStyle: TextStyle(
+                              color: getIconColor('primary').withOpacity(0.7),
+                            ),
+                            prefixIcon: Icon(
+                              Icons.category,
+                              color: getIconColor('primary'),
+                            ),
+                            border: InputBorder.none,
+                          ),
+                          items: categorie.map((String cat) {
+                            return DropdownMenuItem<String>(
+                              value: cat,
+                              child: Text(cat),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            if (newValue != null) {
+                              setSheetState(() {
+                                categoriaSelezionata = newValue;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: getColor('primary').withOpacity(0.5),
+                        ),
+                        child: Icon(Icons.close, color: getColor('primary')),
+                      ),
+                      SizedBox(width: 12),
+                      ElevatedButton(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          final squadreProvider = Provider.of<SquadreProvider>(
+                            outerContext,
+                            listen: false,
+                          );
+                          final success = await squadreProvider
+                              .aggiornaCategoria(
+                                widget.campionato,
+                                (_squadra ?? widget.squadra).id,
+                                categoriaSelezionata,
+                              );
+                          if (success) {
+                            showToast(
+                              'Categoria aggiornata a $categoriaSelezionata',
+                              duration: Duration(seconds: 2),
+                            );
+                          } else {
+                            showToast(
+                              'Errore nell\'aggiornamento della categoria',
+                              duration: Duration(seconds: 2),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: getColor(
+                            'secondary',
+                          ).withOpacity(0.8),
+                        ),
+                        child: Text(
+                          'Salva',
+                          style: TextStyle(
+                            color: getIconColor('secondary'),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _mostraDialogSelezionaCapitano() async {

@@ -136,4 +136,58 @@ class CompetizioniProvider with ChangeNotifier {
       return [];
     }
   }
+
+  Future<bool> inizializzaCampionato(String campionato) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${Env.apiUrl}/campionati/$campionato/inizializza'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        notifyListeners();
+        return true;
+      } else if (response.statusCode == 409) {
+        print('Campionato già inizializzato');
+        return false;
+      } else {
+        print(
+          'Errore POST inizializza campionato: ${response.statusCode} - ${response.body}',
+        );
+        return false;
+      }
+    } catch (e) {
+      print('Errore POST inizializza campionato: $e');
+      return false;
+    }
+  }
+
+  Future<bool> aggiornaAttivazioneCompetizione(
+    String campionato,
+    int idCompetizione,
+    bool attiva,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse(
+          '${Env.apiUrl}/$campionato/competizioni/$idCompetizione/attiva',
+        ),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(attiva),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        notifyListeners();
+        return true;
+      } else {
+        print(
+          'Errore POST attiva competizione: ${response.statusCode} - ${response.body}',
+        );
+        return false;
+      }
+    } catch (e) {
+      print('Errore POST attiva competizione: $e');
+      return false;
+    }
+  }
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:glassmorphism/glassmorphism.dart';
@@ -24,6 +25,7 @@ import 'package:ligaduck/app/widgets/squadra_logo_widget.dart';
 import 'package:ligaduck/app/squadre/inserisci_squadra_page.dart';
 import 'package:ligaduck/app/campionato/search_page.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class CampionatoHomePage extends StatefulWidget {
@@ -45,10 +47,11 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
   final PageController _pageController = PageController();
   final partitaCompList = [];
   int _selectedIndex = 0;
-  late final Future<List<Squadra>> _squadreFuture;
-  late final Future<List<Competizione>> _competizioniFuture;
-  late final Future<List<Partita>> _partiteFuture;
+  late Future<List<Squadra>> _squadreFuture;
+  late Future<List<Competizione>> _competizioniFuture;
+  late Future<List<Partita>> _partiteFuture;
   late TabController _mercatoTabController;
+  List<int> _competizioniOrder = [];
 
   @override
   void dispose() {
@@ -79,22 +82,331 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
     );
     _partiteFuture = _loadPartite(partiteProvider);
     _mercatoTabController = TabController(length: 2, vsync: this);
+    _loadCompetizioniOrder();
   }
 
-  void _showAddSquadraModal(BuildContext context) {
+  void _refreshPage() {
+    final squadreProvider = Provider.of<SquadreProvider>(
+      context,
+      listen: false,
+    );
+    final competizioniProvider = Provider.of<CompetizioniProvider>(
+      context,
+      listen: false,
+    );
+    final partiteProvider = Provider.of<PartiteProvider>(
+      context,
+      listen: false,
+    );
+    setState(() {
+      _squadreFuture = squadreProvider.fetchSquadre(widget.campionato);
+      _competizioniFuture = competizioniProvider.fetchCompetizioni(
+        widget.campionato,
+      );
+      _partiteFuture = _loadPartite(partiteProvider);
+    });
+  }
+
+  Future<void> _loadCompetizioniOrder() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getStringList(
+      'competizioni_order_${widget.campionato}',
+    );
+    if (saved != null && mounted) {
+      setState(() {
+        _competizioniOrder = saved
+            .map((s) => int.tryParse(s) ?? -1)
+            .where((id) => id != -1)
+            .toList();
+      });
+    }
+  }
+
+  Future<void> _saveCompetizioniOrder(List<int> order) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(
+      'competizioni_order_${widget.campionato}',
+      order.map((id) => id.toString()).toList(),
+    );
+  }
+
+  List<Competizione> _applyCompetizioniOrder(List<Competizione> competizioni) {
+    if (_competizioniOrder.isEmpty) return competizioni;
+    final byId = {for (final c in competizioni) c.id: c};
+    final ordered = <Competizione>[];
+    for (final id in _competizioniOrder) {
+      if (byId.containsKey(id)) ordered.add(byId[id]!);
+    }
+    for (final c in competizioni) {
+      if (!_competizioniOrder.contains(c.id)) ordered.add(c);
+    }
+    return ordered;
+  }
+
+  Future<void> _showRiordinaCompetizioniDialog() async {
+    final competizioni = await _competizioniFuture;
+    if (!mounted) return;
+    final filtered = competizioni.where((c) => c.attiva != false).toList();
+    final ordered = _applyCompetizioniOrder(filtered);
+
+    await showDialog(
+      context: context,
+      builder: (ctx) {
+        List<Competizione> dialogOrder = List.from(ordered);
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text('Riordina Competizioni'),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 400,
+                child: ReorderableListView(
+                  onReorder: (oldIndex, newIndex) {
+                    setDialogState(() {
+                      if (newIndex > oldIndex) newIndex--;
+                      final item = dialogOrder.removeAt(oldIndex);
+                      dialogOrder.insert(newIndex, item);
+                    });
+                  },
+                  children: [
+                    for (final comp in dialogOrder)
+                      ListTile(
+                        key: ValueKey(comp.id),
+                        leading: Image.asset(
+                          comp.id <= 4
+                              ? 'assets/logos/${widget.campionato}/logo_${comp.cod}_comp.png'
+                              : 'assets/logos/logo_${comp.cod}_comp.png',
+                          height: 32,
+                          width: 32,
+                          errorBuilder: (_, _, _) =>
+                              Icon(Icons.emoji_events, color: Colors.amber),
+                        ),
+                        title: Text(comp.nome),
+                        trailing: Icon(Icons.drag_handle, color: Colors.grey),
+                      ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: Text('Annulla', style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                  ),
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    setState(() {
+                      _competizioniOrder = dialogOrder
+                          .map((c) => c.id)
+                          .toList();
+                    });
+                    _saveCompetizioniOrder(_competizioniOrder);
+                  },
+                  child: Text('Salva', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildCompetizioneCard(
+    List<Competizione> ordered,
+    int i,
+    BuildContext context,
+  ) {
+    final comp = ordered[i];
+
+    Widget cardButton(VoidCallback onTap) => buildCompetizioneButton(
+      CompetizioneButtonModel(
+        text: comp.nome,
+        imagePath: comp.id <= 4
+            ? 'assets/logos/${widget.campionato}/logo_${comp.cod}.png'
+            : 'assets/logos/logo_${comp.cod}.png',
+        onPressed: onTap,
+      ),
+      context,
+    );
+
+    void onNavigate() => Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CompetizioneHomePage(
+          title: comp.nome,
+          campionato: widget.campionato,
+          competizione: comp,
+        ),
+      ),
+    );
+
+    if (!admin) return cardButton(onNavigate);
+
+    return DragTarget<int>(
+      onAcceptWithDetails: (details) {
+        final draggedIndex = details.data;
+        if (draggedIndex == i) return;
+        setState(() {
+          final newOrder = List<Competizione>.from(ordered);
+          final item = newOrder.removeAt(draggedIndex);
+          newOrder.insert(draggedIndex < i ? i - 1 : i, item);
+          _competizioniOrder = newOrder.map((c) => c.id).toList();
+        });
+        _saveCompetizioniOrder(_competizioniOrder);
+      },
+      builder: (context, candidates, rejected) {
+        final isHovered = candidates.any((d) => d != null && d != i);
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            LongPressDraggable<int>(
+              data: i,
+              feedback: Material(
+                color: Colors.transparent,
+                child: cardButton(() {}),
+              ),
+              childWhenDragging: Opacity(
+                opacity: 0.3,
+                child: cardButton(() {}),
+              ),
+              child: cardButton(onNavigate),
+            ),
+            if (isHovered)
+              Positioned(
+                left: -2,
+                top: 8,
+                bottom: 16,
+                width: 4,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.blueAccent,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _mostraDialogCompetizioniAbilitate() async {
+    final competizioniProvider = Provider.of<CompetizioniProvider>(
+      context,
+      listen: false,
+    );
+
+    final tutte = await competizioniProvider.fetchCompetizioni(
+      widget.campionato,
+    );
+
+    // Copia dello stato attuale (attiva può essere null → false)
+    final Map<int, bool> stato = {for (var c in tutte) c.id: c.attiva ?? false};
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text(
+                'Competizioni Abilitate',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 400,
+                child: ListView.builder(
+                  itemCount: tutte.length,
+                  itemBuilder: (context, index) {
+                    final comp = tutte[index];
+                    return CheckboxListTile(
+                      title: Row(
+                        children: [
+                          Image.asset(
+                            comp.id <= 4
+                                ? 'assets/logos/${widget.campionato}/logo_${comp.cod}_comp.png'
+                                : 'assets/logos/logo_${comp.cod}_comp.png',
+                            height: 24,
+                            width: 24,
+                            errorBuilder: (_, _, _) => Icon(
+                              Icons.emoji_events,
+                              size: 24,
+                              color: Colors.amber,
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              comp.nome,
+                              style: TextStyle(fontSize: 14),
+                            ),
+                          ),
+                        ],
+                      ),
+                      value: stato[comp.id] ?? false,
+                      activeColor: Colors.blueAccent,
+                      onChanged: (bool? value) {
+                        setDialogState(() {
+                          stato[comp.id] = value ?? false;
+                        });
+                      },
+                    );
+                  },
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('Annulla', style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                  ),
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    for (final comp in tutte) {
+                      final nuovoStato = stato[comp.id] ?? false;
+                      if ((comp.attiva ?? false) != nuovoStato) {
+                        await competizioniProvider
+                            .aggiornaAttivazioneCompetizione(
+                              widget.campionato,
+                              comp.id,
+                              nuovoStato,
+                            );
+                      }
+                    }
+                    _refreshPage();
+                  },
+                  child: Text('Salva', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showAddSquadraModal(BuildContext pageContext) {
     showModalBottomSheet(
       backgroundColor: Colors.blueAccent.withOpacity(0.8),
-      context: context,
+      context: pageContext,
       builder: (BuildContext context) {
         return Container(
           padding: EdgeInsets.all(16),
-          height: 300,
+          height: 430,
           child: Column(
             children: [
               Padding(
                 padding: EdgeInsets.only(top: 20, bottom: 16),
                 child: Text(
-                  'Aggiungi Elemento',
+                  'Modifica',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -106,12 +418,12 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                 onTap: () {
                   Navigator.of(context).pop();
                   Navigator.push(
-                    context,
+                    pageContext,
                     MaterialPageRoute(
                       builder: (context) =>
                           InserisciSquadraPage(campionato: widget.campionato),
                     ),
-                  );
+                  ).then((_) => _refreshPage());
                 },
                 borderRadius: BorderRadius.circular(12),
                 child: GlassmorphicContainer(
@@ -147,8 +459,219 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                   ),
                 ),
               ),
+              SizedBox(height: 10),
+              InkWell(
+                onTap: () async {
+                  final provider = Provider.of<CompetizioniProvider>(
+                    pageContext,
+                    listen: false,
+                  );
+                  Navigator.of(context).pop();
+                  final conferma = await showDialog<bool>(
+                    context: pageContext,
+                    builder: (ctx) => AlertDialog(
+                      title: Text('Inizializza campionato'),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Vuoi davvero inizializzare il campionato "${widget.campionato}"? L\'operazione aggiungerà la nuova carriera a tutti i giocatori.',
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'L\'operazione può richiedere qualche minuto.',
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 13,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(false),
+                          child: Text(
+                            'Annulla',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blueAccent,
+                          ),
+                          onPressed: () => Navigator.of(ctx).pop(true),
+                          child: Text(
+                            'Conferma',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (conferma == true) {
+                    final progressNotifier = ValueNotifier<double>(0.0);
+
+                    showDialog(
+                      context: pageContext,
+                      barrierDismissible: false,
+                      builder: (ctx) => PopScope(
+                        canPop: false,
+                        child: AlertDialog(
+                          title: Text('Inizializzazione in corso...'),
+                          content: ValueListenableBuilder<double>(
+                            valueListenable: progressNotifier,
+                            builder: (_, value, _) => Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                LinearProgressIndicator(
+                                  value: value,
+                                  backgroundColor: Colors.grey.shade300,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.blueAccent,
+                                  ),
+                                  minHeight: 8,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                SizedBox(height: 10),
+                                Text(
+                                  '${(value * 100).toInt()}%',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  'L\'operazione può richiedere qualche minuto.',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 12,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+
+                    final timer = Timer.periodic(Duration(milliseconds: 200), (
+                      t,
+                    ) {
+                      if (progressNotifier.value < 0.85) {
+                        progressNotifier.value = (progressNotifier.value + 0.04)
+                            .clamp(0.0, 0.85);
+                      } else {
+                        t.cancel();
+                      }
+                    });
+
+                    final ok = await provider.inizializzaCampionato(
+                      widget.campionato,
+                    );
+
+                    timer.cancel();
+                    progressNotifier.value = 1.0;
+                    await Future.delayed(Duration(milliseconds: 400));
+
+                    if (mounted) Navigator.of(pageContext).pop();
+                    progressNotifier.dispose();
+
+                    if (mounted) {
+                      ScaffoldMessenger.of(pageContext).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            ok
+                                ? 'Campionato inizializzato con successo'
+                                : 'Campionato già inizializzato',
+                          ),
+                          backgroundColor: ok ? Colors.green : Colors.red,
+                        ),
+                      );
+                      if (ok) _refreshPage();
+                    }
+                  }
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: GlassmorphicContainer(
+                  width: double.infinity,
+                  height: 50,
+                  borderRadius: 12,
+                  blur: 15,
+                  alignment: Alignment.center,
+                  border: 2,
+                  linearGradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withOpacity(0.3),
+                      Colors.white.withOpacity(0.1),
+                    ],
+                  ),
+                  borderGradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withOpacity(0.1),
+                      Colors.white.withOpacity(0.1),
+                    ],
+                  ),
+                  child: Text(
+                    'Inizializza campionato',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 10),
+              InkWell(
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _mostraDialogCompetizioniAbilitate();
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: GlassmorphicContainer(
+                  width: double.infinity,
+                  height: 50,
+                  borderRadius: 12,
+                  blur: 15,
+                  alignment: Alignment.center,
+                  border: 2,
+                  linearGradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withOpacity(0.3),
+                      Colors.white.withOpacity(0.1),
+                    ],
+                  ),
+                  borderGradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withOpacity(0.1),
+                      Colors.white.withOpacity(0.1),
+                    ],
+                  ),
+                  child: Text(
+                    'Competizioni Abilitate',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
               Padding(
-                padding: EdgeInsets.only(top: 70.0),
+                padding: EdgeInsets.only(top: 20.0),
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.pop(context);
@@ -184,7 +707,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
         actions: [
           if (admin && (_selectedIndex == 0 || _selectedIndex == 1))
             IconButton(
-              icon: Icon(Icons.add, color: Colors.white),
+              icon: Icon(Icons.edit, color: Colors.white),
               onPressed: () {
                 _showAddSquadraModal(context);
               },
@@ -251,20 +774,28 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (!isWide) SizedBox(height: 0), // Spazio per la navbar
-                      const Padding(
-                        padding: EdgeInsets.only(top: 15.0, bottom: 8.0),
-                        child: Padding(
-                          padding: EdgeInsets.only(left: 16.0, top: 8.0),
-                          child: Align(
-                            alignment: Alignment.topLeft,
-                            child: Text(
+                      Padding(
+                        padding: EdgeInsets.only(
+                          top: 23.0,
+                          bottom: 8.0,
+                          left: 16.0,
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
                               'Competizioni:',
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                          ),
+                            if (admin)
+                              IconButton(
+                                icon: Icon(Icons.sort, color: Colors.grey),
+                                onPressed: _showRiordinaCompetizioniDialog,
+                                tooltip: 'Riordina',
+                              ),
+                          ],
                         ),
                       ),
                       Listener(
@@ -299,37 +830,22 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                                   );
                                 }
 
-                                final competizioni = snapshot.data ?? [];
-
-                                competizioni.removeWhere(
-                                  (comp) => comp.attiva == false,
-                                );
+                                final competizioni = (snapshot.data ?? [])
+                                    .where((comp) => comp.attiva != false)
+                                    .toList();
+                                final orderedCompetizioni =
+                                    _applyCompetizioniOrder(competizioni);
 
                                 return Row(
                                   children: [
-                                    for (var competizione in competizioni)
-                                      buildCompetizioneButton(
-                                        CompetizioneButtonModel(
-                                          text: competizione.nome,
-                                          imagePath: competizione.id <= 4
-                                              ? 'assets/logos/${widget.campionato}/logo_${competizione.cod}.png'
-                                              : 'assets/logos/logo_${competizione.cod}.png',
-                                          onPressed: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    CompetizioneHomePage(
-                                                      title: competizione.nome,
-                                                      campionato:
-                                                          widget.campionato,
-                                                      competizione:
-                                                          competizione,
-                                                    ),
-                                              ),
-                                            );
-                                          },
-                                        ),
+                                    for (
+                                      int i = 0;
+                                      i < orderedCompetizioni.length;
+                                      i++
+                                    )
+                                      _buildCompetizioneCard(
+                                        orderedCompetizioni,
+                                        i,
                                         context,
                                       ),
                                   ],

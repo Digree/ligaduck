@@ -76,6 +76,31 @@ class GiocatoriProvider with ChangeNotifier {
     }
   }
 
+  Future<bool> svincolaAllenatore(
+    String campionato,
+    String idAllenatore,
+    int idSquadra,
+  ) async {
+    try {
+      final response = await http.delete(
+        Uri.parse(
+          '${Env.apiUrl}/$campionato/allenatore/$idAllenatore/svincola/$idSquadra',
+        ),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return true;
+      } else {
+        print('Errore DELETE: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Errore DELETE: $e');
+      return false;
+    }
+  }
+
   Future<List<Giocatore>> fetchGiocatori(
     String campionato,
     int idSquadra,
