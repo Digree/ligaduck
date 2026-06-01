@@ -33,6 +33,7 @@ class _SearchPageState extends State<SearchPage> {
   bool _hasSearched = false;
   List<Squadra> _squadre = [];
   String _sortType = 'Nome'; // Tipo di ordinamento: Nome, Squadra, Nazione
+  final Set<int> _selectedNumeriMaglia = {};
 
   @override
   void initState() {
@@ -131,6 +132,7 @@ class _SearchPageState extends State<SearchPage> {
           nomeRicerca,
           ruoloParam,
           nazioneParam,
+          _selectedNumeriMaglia.isEmpty ? null : _selectedNumeriMaglia.toList(),
         );
 
         setState(() {
@@ -203,6 +205,7 @@ class _SearchPageState extends State<SearchPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (BuildContext context) {
+        final numeroController = TextEditingController();
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return Container(
@@ -357,6 +360,107 @@ class _SearchPageState extends State<SearchPage> {
                                 ),
                               ],
                             ),
+                            SizedBox(height: 24),
+                            // Numero maglia multi-select
+                            Text(
+                              'Numero maglia',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: numeroController,
+                                    keyboardType: TextInputType.number,
+                                    cursorColor: Colors.white,
+                                    style: TextStyle(color: Colors.white),
+                                    decoration: InputDecoration(
+                                      hintText: 'Es. 10',
+                                      hintStyle: TextStyle(
+                                        color: Colors.white54,
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: Colors.white.withOpacity(0.3),
+                                        ),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: Colors.white,
+                                        ),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 10,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: Colors.blueAccent,
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    final n = int.tryParse(
+                                      numeroController.text.trim(),
+                                    );
+                                    if (n != null && n >= 0) {
+                                      setDialogState(() {
+                                        _selectedNumeriMaglia.add(n);
+                                      });
+                                      setState(() {});
+                                      numeroController.clear();
+                                    }
+                                  },
+                                  child: Text('Aggiungi'),
+                                ),
+                              ],
+                            ),
+                            if (_selectedNumeriMaglia.isNotEmpty) ...[
+                              SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 4,
+                                children:
+                                    (_selectedNumeriMaglia.toList()..sort())
+                                        .map(
+                                          (n) => Chip(
+                                            label: Text(
+                                              '#$n',
+                                              style: TextStyle(
+                                                color: Colors.blueAccent,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            backgroundColor: Colors.white,
+                                            deleteIconColor: Colors.blueAccent,
+                                            onDeleted: () {
+                                              setDialogState(() {
+                                                _selectedNumeriMaglia.remove(n);
+                                              });
+                                              setState(() {});
+                                            },
+                                          ),
+                                        )
+                                        .toList(),
+                              ),
+                            ],
                           ] else ...[
                             // Filtri per Squadre
                             Text(
@@ -422,6 +526,7 @@ class _SearchPageState extends State<SearchPage> {
                             _selectedNazione = null;
                             _selectedNazioneSquadre = null;
                             _selectedRuolo = null;
+                            _selectedNumeriMaglia.clear();
                           });
                         },
                         color: Colors.red,

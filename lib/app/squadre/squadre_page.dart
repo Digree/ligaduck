@@ -1604,6 +1604,7 @@ class _SquadrePageState extends State<SquadrePage> {
 
     // Determina se è acquisto o cessione per questa squadra
     final isAcquisto = trasferimento.idSquadraAcquisto == widget.squadra.id;
+    final isFineCarriera = trasferimento.idSquadraAcquisto == 0;
 
     return Card(
       margin: EdgeInsets.only(bottom: 16),
@@ -1657,6 +1658,39 @@ class _SquadrePageState extends State<SquadrePage> {
                 future: _fetchGiocatore(trasferimento.idGiocatore),
                 builder: (context, snapshot) {
                   final nomeGiocatore = snapshot.data?.nome ?? 'Caricamento...';
+
+                  final Color badgeBg;
+                  final Color badgeBorder;
+                  final Color badgeText;
+                  final Color arrowColor;
+                  final String label;
+
+                  if (isFineCarriera) {
+                    badgeBg = Colors.grey[100]!;
+                    badgeBorder = Colors.grey[400]!;
+                    badgeText = Colors.grey[700]!;
+                    arrowColor = Colors.grey;
+                    label = 'FINE CARRIERA';
+                  } else if (!trasferimento.definitivo) {
+                    badgeBg = Colors.orange[50]!;
+                    badgeBorder = Colors.orange[300]!;
+                    badgeText = Colors.orange[900]!;
+                    arrowColor = Colors.orange;
+                    label = 'PRESTITO';
+                  } else if (isAcquisto) {
+                    badgeBg = Colors.green[50]!;
+                    badgeBorder = Colors.green[300]!;
+                    badgeText = Colors.green[900]!;
+                    arrowColor = Colors.green;
+                    label = 'ACQUISTO';
+                  } else {
+                    badgeBg = Colors.red[50]!;
+                    badgeBorder = Colors.red[300]!;
+                    badgeText = Colors.red[900]!;
+                    arrowColor = Colors.red;
+                    label = 'CESSIONE';
+                  }
+
                   return Column(
                     children: [
                       Container(
@@ -1665,45 +1699,25 @@ class _SquadrePageState extends State<SquadrePage> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: !trasferimento.definitivo
-                              ? Colors.orange[50]
-                              : (isAcquisto
-                                    ? Colors.green[50]
-                                    : Colors.red[50]),
+                          color: badgeBg,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: !trasferimento.definitivo
-                                ? Colors.orange[300]!
-                                : (isAcquisto
-                                      ? Colors.green[300]!
-                                      : Colors.red[300]!),
-                          ),
+                          border: Border.all(color: badgeBorder),
                         ),
                         child: Text(
-                          isAcquisto
-                              ? (trasferimento.definitivo
-                                    ? 'ACQUISTO'
-                                    : 'PRESTITO')
-                              : (trasferimento.definitivo
-                                    ? 'CESSIONE'
-                                    : 'PRESTITO'),
+                          label,
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            color: !trasferimento.definitivo
-                                ? Colors.orange[900]
-                                : (isAcquisto
-                                      ? Colors.green[900]
-                                      : Colors.red[900]),
+                            color: badgeText,
                           ),
                         ),
                       ),
                       SizedBox(height: 4),
                       Icon(
-                        Icons.arrow_forward,
-                        color: !trasferimento.definitivo
-                            ? Colors.orange
-                            : (isAcquisto ? Colors.green : Colors.red),
+                        isFineCarriera
+                            ? Icons.sports_score
+                            : Icons.arrow_forward,
+                        color: arrowColor,
                         size: 32,
                       ),
                       SizedBox(height: 8),
@@ -1725,39 +1739,61 @@ class _SquadrePageState extends State<SquadrePage> {
             // Squadra acquirente (destra)
             Expanded(
               flex: 2,
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => SquadrePage(
-                        squadra: squadraAcquisto,
-                        campionato: widget.campionato,
+              child: isFineCarriera
+                  ? Column(
+                      children: [
+                        Icon(
+                          Icons.sports_score,
+                          size: 50,
+                          color: Colors.grey[400],
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Ritirato',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                      ],
+                    )
+                  : GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SquadrePage(
+                              squadra: squadraAcquisto,
+                              campionato: widget.campionato,
+                            ),
+                          ),
+                        );
+                      },
+                      child: Column(
+                        children: [
+                          SquadraLogoWidget(
+                            codSquadra: squadraAcquisto.cod,
+                            squadra: squadraAcquisto,
+                            size: 50,
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            CommonService.decodePlayerName(
+                              squadraAcquisto.nome,
+                            ),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
                     ),
-                  );
-                },
-                child: Column(
-                  children: [
-                    SquadraLogoWidget(
-                      codSquadra: squadraAcquisto.cod,
-                      squadra: squadraAcquisto,
-                      size: 50,
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      CommonService.decodePlayerName(squadraAcquisto.nome),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
             ),
           ],
         ),
@@ -3767,6 +3803,59 @@ class _SquadrePageState extends State<SquadrePage> {
                   ),
                 ),
               ),
+              SizedBox(height: 12),
+              InkWell(
+                onTap: () async {
+                  Navigator.of(context).pop();
+                  await _mostraDialogFineCarriera(tipoMercato);
+                },
+                child: Card(
+                  elevation: 4,
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.sports_score,
+                            color: Colors.grey[700],
+                            size: 32,
+                          ),
+                        ),
+                        SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Fine carriera',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Il giocatore si ritira dal calcio giocato',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(Icons.arrow_forward_ios, size: 16),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
           actions: [
@@ -3852,6 +3941,137 @@ class _SquadrePageState extends State<SquadrePage> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
+              child: Text('Annulla', style: TextStyle(color: Colors.grey)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _mostraDialogFineCarriera(String tipoMercato) async {
+    final giocatoriDisponibili = giocatori
+        .where(
+          (g) =>
+              g.attivo &&
+              g.idSquadraAttuale == widget.squadra.id &&
+              g.ruolo != 'Allenatore',
+        )
+        .toList();
+
+    if (giocatoriDisponibili.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Nessun giocatore disponibile'),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    // Cattura il provider e il context della pagina prima di aprire il dialog
+    final mercatoProvider = Provider.of<MercatoProvider>(
+      context,
+      listen: false,
+    );
+    final pageContext = context;
+
+    await showDialog(
+      context: pageContext,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text(
+            'Fine carriera',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+          content: Container(
+            width: double.maxFinite,
+            constraints: BoxConstraints(maxHeight: 400),
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: giocatoriDisponibili.length,
+              itemBuilder: (context, index) {
+                final giocatore = giocatoriDisponibili[index];
+                return Card(
+                  margin: EdgeInsets.symmetric(vertical: 4),
+                  child: ListTile(
+                    leading: buildRuoloBadge(giocatore.ruolo),
+                    title: Text(
+                      CommonService.decodePlayerName(giocatore.nome),
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      '#${_getNumeroGiocatore(giocatore)} · ${giocatore.ruolo}',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    ),
+                    trailing: Icon(Icons.sports_score, color: Colors.grey),
+                    onTap: () async {
+                      Navigator.of(dialogContext).pop();
+                      final conferma = await showDialog<bool>(
+                        context: pageContext,
+                        builder: (ctx) => AlertDialog(
+                          title: Text('Conferma fine carriera'),
+                          content: Text(
+                            '${CommonService.decodePlayerName(giocatore.nome)} si ritira dal calcio giocato. Continuare?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(ctx).pop(false),
+                              child: Text(
+                                'Annulla',
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                            ),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey[700],
+                              ),
+                              onPressed: () => Navigator.of(ctx).pop(true),
+                              child: Text(
+                                'Conferma',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (conferma == true && mounted) {
+                        final trasferimento = Trasferimento(
+                          idGiocatore: giocatore.id,
+                          idSquadraAcquisto: 0,
+                          idSquadraCessione: widget.squadra.id,
+                          definitivo: true,
+                          prestito: false,
+                          sessione: tipoMercato,
+                        );
+                        final ok = await mercatoProvider.addTrasferimento(
+                          widget.campionato,
+                          trasferimento,
+                        );
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(pageContext).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              ok
+                                  ? '${CommonService.decodePlayerName(giocatore.nome)} si è ritirato'
+                                  : 'Errore durante l\'operazione',
+                            ),
+                            backgroundColor: ok ? Colors.grey[700] : Colors.red,
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                        if (ok) await _loadGiocatori();
+                      }
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
               child: Text('Annulla', style: TextStyle(color: Colors.grey)),
             ),
           ],

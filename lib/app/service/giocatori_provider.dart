@@ -319,6 +319,7 @@ class GiocatoriProvider with ChangeNotifier {
     String nome,
     String? ruolo,
     String? nazione,
+    List<int>? numeriMaglia,
   ) async {
     try {
       Map<String, String> queryParams = {};
@@ -327,6 +328,9 @@ class GiocatoriProvider with ChangeNotifier {
       }
       if (nazione != null && nazione.isNotEmpty) {
         queryParams['nazione'] = nazione;
+      }
+      if (numeriMaglia != null && numeriMaglia.isNotEmpty) {
+        queryParams['numeriMaglia'] = numeriMaglia.join(',');
       }
 
       final uri = Uri.parse(

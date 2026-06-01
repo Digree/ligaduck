@@ -111,6 +111,7 @@ class _AcquistoPageState extends State<AcquistoPage> {
         nomeRicerca,
         ruoloParam,
         nazioneParam,
+        null,
       );
 
       setState(() {
