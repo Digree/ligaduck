@@ -52,6 +52,8 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
   late Future<List<Partita>> _partiteFuture;
   late TabController _mercatoTabController;
   List<int> _competizioniOrder = [];
+  int? _mercatoFilterSquadraId;
+  bool _mercatoSortBySquadra = false;
 
   @override
   void dispose() {
@@ -1578,46 +1580,397 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
             final tuttiTrasferimenti = trasferimentiSnapshot.data ?? [];
 
             // Filtra solo i trasferimenti che coinvolgono squadre del campionato
-            final trasferimentiFiltrati = tuttiTrasferimenti.where((t) {
-              // Verifica se almeno una squadra del campionato è coinvolta
+            var trasferimentiFiltrati = tuttiTrasferimenti.where((t) {
               final haSquadraAcquisto = squadre.any(
                 (s) => s.id == t.idSquadraAcquisto,
               );
               final haSquadraCessione = squadre.any(
                 (s) => s.id == t.idSquadraCessione,
               );
-
               return haSquadraAcquisto || haSquadraCessione;
             }).toList();
 
-            // Ordina dall'ultimo al primo (ordine inverso per ID)
-            trasferimentiFiltrati.sort((a, b) {
-              if (a.id == null && b.id == null) return 0;
-              if (a.id == null) return 1;
-              if (b.id == null) return -1;
-              return b.id!.compareTo(a.id!);
-            });
+            // Raccoglie le squadre coinvolte (per il dropdown di filtro)
+            final squadreIdsInTransfers = <int>{};
+            for (final t in trasferimentiFiltrati) {
+              squadreIdsInTransfers.add(t.idSquadraAcquisto);
+              squadreIdsInTransfers.add(t.idSquadraCessione);
+            }
+            final squadreCoinvolte =
+                squadre
+                    .where((s) => squadreIdsInTransfers.contains(s.id))
+                    .toList()
+                  ..sort((a, b) => a.nome.compareTo(b.nome));
 
-            if (trasferimentiFiltrati.isEmpty) {
-              return Center(
-                child: Text(
-                  'Nessun trasferimento per il mercato $sessione',
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
-                ),
-              );
+            // Applica filtro per squadra
+            if (_mercatoFilterSquadraId != null) {
+              trasferimentiFiltrati = trasferimentiFiltrati
+                  .where(
+                    (t) =>
+                        t.idSquadraAcquisto == _mercatoFilterSquadraId ||
+                        t.idSquadraCessione == _mercatoFilterSquadraId,
+                  )
+                  .toList();
+            }
+
+            // Ordina
+            if (_mercatoSortBySquadra) {
+              trasferimentiFiltrati.sort((a, b) {
+                String nomeA = '';
+                String nomeB = '';
+                try {
+                  nomeA = squadre
+                      .firstWhere((s) => s.id == a.idSquadraCessione)
+                      .nome;
+                } catch (_) {}
+                try {
+                  nomeB = squadre
+                      .firstWhere((s) => s.id == b.idSquadraCessione)
+                      .nome;
+                } catch (_) {}
+                return nomeA.compareTo(nomeB);
+              });
+            } else {
+              trasferimentiFiltrati.sort((a, b) {
+                if (a.id == null && b.id == null) return 0;
+                if (a.id == null) return 1;
+                if (b.id == null) return -1;
+                return b.id!.compareTo(a.id!);
+              });
             }
 
             final isWide = MediaQuery.of(context).size.width > 600;
-            return ListView.builder(
-              padding: EdgeInsets.fromLTRB(16, 16, 16, isWide ? 16 : 116),
-              itemCount: trasferimentiFiltrati.length,
-              itemBuilder: (context, index) {
-                return _buildTrasferimentoCard(
-                  context,
-                  trasferimentiFiltrati[index],
-                  squadre,
-                );
-              },
+
+            return Column(
+              children: [
+                // Barra filtro e ordinamento
+                Container(
+                  color: Colors.grey[50],
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Builder(
+                          builder: (context) {
+                            Squadra? selectedSquadra;
+                            try {
+                              if (_mercatoFilterSquadraId != null) {
+                                selectedSquadra = squadreCoinvolte.firstWhere(
+                                  (s) => s.id == _mercatoFilterSquadraId,
+                                );
+                              }
+                            } catch (_) {}
+                            return InkWell(
+                              onTap: () async {
+                                final result = await showDialog<int>(
+                                  context: context,
+                                  builder: (ctx) {
+                                    String query = '';
+                                    List<Squadra> filtered = List.from(
+                                      squadreCoinvolte,
+                                    );
+                                    return StatefulBuilder(
+                                      builder: (context, setDialogState) {
+                                        return AlertDialog(
+                                          title: Text(
+                                            'Filtra per squadra',
+                                            style: TextStyle(
+                                              color: Colors.blueAccent,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          contentPadding: EdgeInsets.fromLTRB(
+                                            16,
+                                            16,
+                                            16,
+                                            0,
+                                          ),
+                                          content: SizedBox(
+                                            width: double.maxFinite,
+                                            height: 400,
+                                            child: Column(
+                                              children: [
+                                                TextField(
+                                                  autofocus: true,
+                                                  cursorColor:
+                                                      Colors.blueAccent,
+                                                  decoration: InputDecoration(
+                                                    hintText:
+                                                        'Cerca squadra...',
+                                                    prefixIcon: Icon(
+                                                      Icons.search,
+                                                      color: Colors.blueAccent,
+                                                    ),
+                                                    border: OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8,
+                                                          ),
+                                                      borderSide: BorderSide(
+                                                        color:
+                                                            Colors.blueAccent,
+                                                      ),
+                                                    ),
+                                                    enabledBorder:
+                                                        OutlineInputBorder(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                8,
+                                                              ),
+                                                          borderSide: BorderSide(
+                                                            color: Colors
+                                                                .blueAccent
+                                                                .withOpacity(
+                                                                  0.5,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                    focusedBorder:
+                                                        OutlineInputBorder(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                8,
+                                                              ),
+                                                          borderSide:
+                                                              BorderSide(
+                                                                color: Colors
+                                                                    .blueAccent,
+                                                                width: 2,
+                                                              ),
+                                                        ),
+                                                    contentPadding:
+                                                        EdgeInsets.symmetric(
+                                                          vertical: 8,
+                                                          horizontal: 12,
+                                                        ),
+                                                  ),
+                                                  onChanged: (value) {
+                                                    setDialogState(() {
+                                                      query = value
+                                                          .toLowerCase();
+                                                      filtered = squadreCoinvolte
+                                                          .where(
+                                                            (s) => s.nome
+                                                                .toLowerCase()
+                                                                .contains(
+                                                                  query,
+                                                                ),
+                                                          )
+                                                          .toList();
+                                                    });
+                                                  },
+                                                ),
+                                                SizedBox(height: 8),
+                                                Expanded(
+                                                  child: ListView(
+                                                    children: [
+                                                      ListTile(
+                                                        leading: Icon(
+                                                          Icons.groups,
+                                                          color: Colors.grey,
+                                                        ),
+                                                        title: Text(
+                                                          'Tutte le squadre',
+                                                        ),
+                                                        selected:
+                                                            _mercatoFilterSquadraId ==
+                                                            null,
+                                                        selectedTileColor:
+                                                            Colors.blueAccent
+                                                                .withOpacity(
+                                                                  0.1,
+                                                                ),
+                                                        selectedColor:
+                                                            Colors.blueAccent,
+                                                        onTap: () =>
+                                                            Navigator.of(
+                                                              ctx,
+                                                            ).pop(-1),
+                                                      ),
+                                                      Divider(height: 1),
+                                                      ...filtered.map(
+                                                        (s) => ListTile(
+                                                          leading:
+                                                              SquadraLogoWidget(
+                                                                codSquadra:
+                                                                    s.cod,
+                                                                squadra: s,
+                                                                size: 28,
+                                                              ),
+                                                          title: Text(s.nome),
+                                                          selected:
+                                                              _mercatoFilterSquadraId ==
+                                                              s.id,
+                                                          selectedTileColor:
+                                                              Colors.blueAccent
+                                                                  .withOpacity(
+                                                                    0.1,
+                                                                  ),
+                                                          selectedColor:
+                                                              Colors.blueAccent,
+                                                          onTap: () =>
+                                                              Navigator.of(
+                                                                ctx,
+                                                              ).pop(s.id),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.of(ctx).pop(null),
+                                              child: Text(
+                                                'Annulla',
+                                                style: TextStyle(
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  },
+                                );
+                                // null = annullato, -1 = tutte le squadre, >0 = id squadra
+                                if (result != null) {
+                                  setState(() {
+                                    _mercatoFilterSquadraId = result == -1
+                                        ? null
+                                        : result;
+                                  });
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.blueAccent),
+                                  borderRadius: BorderRadius.circular(8),
+                                  color: selectedSquadra != null
+                                      ? Colors.blueAccent.withOpacity(0.08)
+                                      : Colors.blueAccent.withOpacity(0.03),
+                                ),
+                                child: Row(
+                                  children: [
+                                    if (selectedSquadra != null) ...[
+                                      SquadraLogoWidget(
+                                        codSquadra: selectedSquadra.cod,
+                                        squadra: selectedSquadra,
+                                        size: 20,
+                                      ),
+                                      SizedBox(width: 8),
+                                    ],
+                                    Expanded(
+                                      child: Text(
+                                        selectedSquadra?.nome ??
+                                            'Filtra per squadra',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.blueAccent,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.arrow_drop_down,
+                                      color: Colors.blueAccent,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Tooltip(
+                        message: _mercatoSortBySquadra
+                            ? 'Ordina per data'
+                            : 'Ordina per squadra',
+                        child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              _mercatoSortBySquadra = !_mercatoSortBySquadra;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _mercatoSortBySquadra
+                                  ? Colors.blueAccent.withOpacity(0.1)
+                                  : Colors.blueAccent.withOpacity(0.03),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.blueAccent),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.sort,
+                                  size: 18,
+                                  color: Colors.blueAccent,
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  _mercatoSortBySquadra ? 'Squadra' : 'Recenti',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.blueAccent,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Lista trasferimenti
+                if (trasferimentiFiltrati.isEmpty)
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        _mercatoFilterSquadraId != null
+                            ? 'Nessun trasferimento per questa squadra'
+                            : 'Nessun trasferimento per il mercato $sessione',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: ListView.builder(
+                      padding: EdgeInsets.fromLTRB(
+                        16,
+                        16,
+                        16,
+                        isWide ? 16 : 116,
+                      ),
+                      itemCount: trasferimentiFiltrati.length,
+                      itemBuilder: (context, index) {
+                        return _buildTrasferimentoCard(
+                          context,
+                          trasferimentiFiltrati[index],
+                          squadre,
+                        );
+                      },
+                    ),
+                  ),
+              ],
             );
           },
         );
@@ -1875,7 +2228,9 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
               );
             }
 
-            final competizioni = competizioniSnapshot.data ?? [];
+            final competizioni = (competizioniSnapshot.data ?? [])
+                .where((c) => c.attiva == true)
+                .toList();
 
             if (competizioni.isEmpty) {
               return Center(

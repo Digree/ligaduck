@@ -439,7 +439,8 @@ class _SquadrePageState extends State<SquadrePage> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     bool isWide = MediaQuery.of(context).size.width > 1000;
-    return Scaffold(
+    return OKToast(
+      child: Scaffold(
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(kToolbarHeight),
         child: AppBar(
@@ -503,7 +504,8 @@ class _SquadrePageState extends State<SquadrePage> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget headerTeam(
@@ -1091,13 +1093,11 @@ class _SquadrePageState extends State<SquadrePage> {
                 child: TabBarView(
                   children: [
                     teamList(context, isWide, screenWidth, screenHeight),
-                    OKToast(
-                      child: buildPalmares(
-                        context,
-                        isWide,
-                        screenWidth,
-                        screenHeight,
-                      ),
+                    buildPalmares(
+                      context,
+                      isWide,
+                      screenWidth,
+                      screenHeight,
                     ),
                     SingleChildScrollView(
                       child: Column(children: [showFormazione()]),
