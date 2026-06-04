@@ -3,22 +3,22 @@
   "android": {
     "version": "44.00.00",
     "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.00.00/ligaduck-v44.00.00.apk",
-    "releaseNotes": "- Nuovo campionato"
+    "releaseNotes": "- Nuova stagione"
   },
   "ios": {
     "version": "44.00.00",
     "downloadUrl": "https://apps.apple.com/app/ligaduck",
-    "releaseNotes": "- Nuovo campionato"
+    "releaseNotes": "- Nuova stagione"
   },
   "macos": {
     "version": "44.00.00",
     "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.00.00/ligaduck-v44.00.00.dmg",
-    "releaseNotes": "- Nuovo campionato"
+    "releaseNotes": "- Nuova stagione"
   },
   "windows": {
     "version": "44.00.00",
     "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.00.00/ligaduck-v44.00.00-windows.zip",
     "msixUrl": "https://github.com/Digree/ligaduck/releases/download/v44.00.00/LigaDuckManager-Windows-v44.00.00.msix",
-    "releaseNotes": "- Nuovo campionato"
+    "releaseNotes": "- Nuova stagione"
   }
 }
