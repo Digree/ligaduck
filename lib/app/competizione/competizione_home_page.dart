@@ -2703,7 +2703,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
         } else if (snapshot.hasData) {
           giornate = snapshot.data!;
           giornate_ = snapshot.data!;
-          if (giornate.isEmpty) {
+          if (giornate.isEmpty && isWide) {
             return Padding(
               padding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
               child: Center(
