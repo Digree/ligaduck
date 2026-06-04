@@ -67,9 +67,16 @@ msix_config:
 flutter:
   uses-material-design: true
   fonts:
-    - family: Elms Sans
+    - family: Inter
       fonts:
-        - asset: assets/font/ElmsSans-Regular.ttf
+        - asset: assets/font/Inter-Regular.ttf
+        - asset: assets/font/Inter-Italic.ttf
+          style: italic
+        - asset: assets/font/Inter-Bold.ttf
+          weight: 700
+        - asset: assets/font/Inter-BoldItalic.ttf
+          weight: 700
+          style: italic
     - family: champions
       fonts:
         - asset: assets/font/champions.ttf
