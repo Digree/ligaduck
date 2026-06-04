@@ -1,24 +1,24 @@
 {
-  "lastUpdate": "2026-05-22",
+  "lastUpdate": "2026-06-04",
   "android": {
-    "version": "43.01.02",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.02/ligaduck-v43.01.02.apk",
-    "releaseNotes": "- Bug Fix"
+    "version": "44.00.00",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.00.00/ligaduck-v44.00.00.apk",
+    "releaseNotes": "- Nuovo campionato"
   },
   "ios": {
-    "version": "43.01.02",
+    "version": "44.00.00",
     "downloadUrl": "https://apps.apple.com/app/ligaduck",
-    "releaseNotes": "- Bug Fix"
+    "releaseNotes": "- Nuovo campionato"
   },
   "macos": {
-    "version": "43.01.02",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.02/ligaduck-v43.01.02.dmg",
-    "releaseNotes": "- Bug Fix"
+    "version": "44.00.00",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.00.00/ligaduck-v44.00.00.dmg",
+    "releaseNotes": "- Nuovo campionato"
   },
   "windows": {
-    "version": "43.01.02",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.02/ligaduck-v43.01.02-windows.zip",
-    "msixUrl": "https://github.com/Digree/ligaduck/releases/download/v43.01.02/LigaDuckManager-Windows-v43.01.02.msix",
-    "releaseNotes": "- Bug Fix"
+    "version": "44.00.00",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.00.00/ligaduck-v44.00.00-windows.zip",
+    "msixUrl": "https://github.com/Digree/ligaduck/releases/download/v44.00.00/LigaDuckManager-Windows-v44.00.00.msix",
+    "releaseNotes": "- Nuovo campionato"
   }
 }
