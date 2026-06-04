@@ -11,10 +11,10 @@ class GiocatoriProvider with ChangeNotifier {
   List<Giocatore> _giocatori = [];
   final _cache = CacheService();
 
-  Future<bool> aggiungiGiocatore(Giocatore giocatore) async {
+  Future<bool> aggiungiGiocatore(Giocatore giocatore, String campionato) async {
     try {
       final response = await http.post(
-        Uri.parse('${Env.apiUrl}/giocatori/add'),
+        Uri.parse('${Env.apiUrl}/$campionato/giocatori/add'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(giocatore.toJson()),
       );

@@ -441,71 +441,71 @@ class _SquadrePageState extends State<SquadrePage> {
     bool isWide = MediaQuery.of(context).size.width > 1000;
     return OKToast(
       child: Scaffold(
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(kToolbarHeight),
-        child: AppBar(
-          actions: [
-            globals.admin
-                ? Row(
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: IconButton(
-                          icon: Icon(
-                            Icons.edit,
-                            color: getIconColor('secondary'),
+        appBar: PreferredSize(
+          preferredSize: Size.fromHeight(kToolbarHeight),
+          child: AppBar(
+            actions: [
+              globals.admin
+                  ? Row(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: IconButton(
+                            icon: Icon(
+                              Icons.edit,
+                              color: getIconColor('secondary'),
+                            ),
+                            onPressed: () {
+                              _showEditModal(context);
+                            },
                           ),
-                          onPressed: () {
-                            _showEditModal(context);
-                          },
                         ),
-                      ),
-                    ],
-                  )
-                : SizedBox(),
-            SettingsIcon(
-              iconColor: getIconColor('secondary'),
-              onDismiss: () async {
-                await _loadGiocatori();
-                setState(() {});
-              },
-            ),
-          ],
-          flexibleSpace: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [getColor('primary'), getColor('secondary')],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                      ],
+                    )
+                  : SizedBox(),
+              SettingsIcon(
+                iconColor: getIconColor('secondary'),
+                onDismiss: () async {
+                  await _loadGiocatori();
+                  setState(() {});
+                },
+              ),
+            ],
+            flexibleSpace: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [getColor('primary'), getColor('secondary')],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
               ),
             ),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back, color: getIconColor('primary')),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+            title: Text(
+              CommonService.decodePlayerName(widget.squadra.nome),
+              style: TextStyle(color: getIconColor('primary')),
+            ),
           ),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: getIconColor('primary')),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-          title: Text(
-            CommonService.decodePlayerName(widget.squadra.nome),
-            style: TextStyle(color: getIconColor('primary')),
+        ),
+        body: SizedBox(
+          width: MediaQuery.of(context).size.width * 1.0,
+          height: MediaQuery.of(context).size.height * 1.0,
+          child: Column(
+            children: [
+              headerTeam(context, isWide, screenWidth, screenHeight),
+              infoTeam(context, isWide, screenWidth, screenHeight),
+            ],
           ),
         ),
       ),
-      body: SizedBox(
-        width: MediaQuery.of(context).size.width * 1.0,
-        height: MediaQuery.of(context).size.height * 1.0,
-        child: Column(
-          children: [
-            headerTeam(context, isWide, screenWidth, screenHeight),
-            infoTeam(context, isWide, screenWidth, screenHeight),
-          ],
-        ),
-      ),
-    ),
-  );
+    );
   }
 
   Widget headerTeam(
@@ -1093,12 +1093,7 @@ class _SquadrePageState extends State<SquadrePage> {
                 child: TabBarView(
                   children: [
                     teamList(context, isWide, screenWidth, screenHeight),
-                    buildPalmares(
-                      context,
-                      isWide,
-                      screenWidth,
-                      screenHeight,
-                    ),
+                    buildPalmares(context, isWide, screenWidth, screenHeight),
                     SingleChildScrollView(
                       child: Column(children: [showFormazione()]),
                     ),
@@ -1930,6 +1925,19 @@ class _SquadrePageState extends State<SquadrePage> {
         ),
         for (var g in allenatori)
           teamListPlayer(context, isWide, screenWidth, screenHeight, g),
+        if (allenatori.isEmpty && globals.admin)
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: OutlinedButton.icon(
+              onPressed: () => _mostraDialogSceltaAllenatore(),
+              icon: Icon(Icons.person_add),
+              label: Text('Aggiungi allenatore'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: getColor('primary', forText: true),
+                side: BorderSide(color: getColor('primary', forText: true)),
+              ),
+            ),
+          ),
         teamListHeader(context, isWide, screenWidth, screenHeight, 'Portieri'),
         for (var g in portieriPS)
           teamListPlayer(context, isWide, screenWidth, screenHeight, g),
@@ -2771,7 +2779,7 @@ class _SquadrePageState extends State<SquadrePage> {
   Future<void> _mostraDialogSceltaAllenatore() async {
     await showDialog(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text(
@@ -2799,9 +2807,6 @@ class _SquadrePageState extends State<SquadrePage> {
                   );
                   if (result == true) {
                     await _loadGiocatori();
-                  } else {
-                    // Se non ha aggiunto nessuno, torna al dialog di scelta
-                    await _mostraDialogSceltaAllenatore();
                   }
                 },
                 child: Card(
@@ -2906,6 +2911,12 @@ class _SquadrePageState extends State<SquadrePage> {
               ),
             ],
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Salta', style: TextStyle(color: Colors.grey[600])),
+            ),
+          ],
         );
       },
     );
@@ -3041,6 +3052,7 @@ class _SquadrePageState extends State<SquadrePage> {
 
     bool success = await giocatoriProvider.aggiungiGiocatore(
       allenatoraAggiornato,
+      widget.campionato,
     );
 
     if (success) {

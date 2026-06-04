@@ -1066,7 +1066,10 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
 
     try {
       final provider = GiocatoriProvider();
-      bool success = await provider.aggiungiGiocatore(giocatore);
+      bool success = await provider.aggiungiGiocatore(
+        giocatore,
+        widget.campionato,
+      );
 
       Navigator.pop(context); // Chiudi loader
 
