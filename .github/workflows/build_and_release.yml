@@ -167,8 +167,18 @@ jobs:
       - name: Enable Windows desktop
         run: flutter config --enable-windows-desktop
 
+      - name: Setup MSVC for VS 2022
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Force CMAKE_GENERATOR to VS 2022
+        run: Add-Content -Path $env:GITHUB_ENV -Value "CMAKE_GENERATOR=Visual Studio 17 2022"
+
       - name: Build Windows release
-        run: flutter build windows --release -v
+        run: |
+          flutter clean
+          flutter build windows --release -v
 
       - name: Verify build structure
         run: |
@@ -303,11 +313,13 @@ jobs:
           
           Write-Host "✓ MSIX version updated to $msixVersion"
 
-      - name: Set CMAKE_GENERATOR for Windows build
+      - name: Setup MSVC for VS 2022
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Force CMAKE_GENERATOR to VS 2022
         run: |
-          $env:CMAKE_GENERATOR = 'Visual Studio 17 2022'
-          Write-Host "CMAKE_GENERATOR set to: $env:CMAKE_GENERATOR"
-          # Add to GitHub environment for subsequent steps
           Add-Content -Path $env:GITHUB_ENV -Value "CMAKE_GENERATOR=Visual Studio 17 2022"
 
       - name: Build Windows app
