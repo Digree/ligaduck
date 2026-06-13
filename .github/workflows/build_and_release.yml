@@ -162,7 +162,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.38.1'
+          channel: 'stable'
 
       - name: Enable Windows desktop
         run: flutter config --enable-windows-desktop
@@ -172,10 +172,10 @@ jobs:
         with:
           arch: x64
 
-      - name: Force CMAKE_GENERATOR to VS 2022
-        run: Add-Content -Path $env:GITHUB_ENV -Value "CMAKE_GENERATOR=Visual Studio 17 2022"
-
       - name: Build Windows release
+        env:
+          CMAKE_GENERATOR: "Visual Studio 17 2022"
+          CMAKE_GENERATOR_PLATFORM: x64
         run: |
           flutter clean
           flutter build windows --release -v
@@ -256,7 +256,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.38.1'
+          channel: 'stable'
 
       - name: Enable Windows desktop
         run: flutter config --enable-windows-desktop
@@ -318,11 +318,10 @@ jobs:
         with:
           arch: x64
 
-      - name: Force CMAKE_GENERATOR to VS 2022
-        run: |
-          Add-Content -Path $env:GITHUB_ENV -Value "CMAKE_GENERATOR=Visual Studio 17 2022"
-
       - name: Build Windows app
+        env:
+          CMAKE_GENERATOR: "Visual Studio 17 2022"
+          CMAKE_GENERATOR_PLATFORM: x64
         run: |
           flutter clean
           flutter build windows --release
