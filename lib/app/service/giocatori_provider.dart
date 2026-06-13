@@ -14,7 +14,7 @@ class GiocatoriProvider with ChangeNotifier {
   Future<bool> aggiungiGiocatore(Giocatore giocatore, String campionato) async {
     try {
       final response = await http.post(
-        Uri.parse('${Env.apiUrl}/$campionato/giocatori/add'),
+        Uri.parse('${Env.apiUrl}/giocatori/add'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(giocatore.toJson()),
       );
@@ -243,6 +243,34 @@ class GiocatoriProvider with ChangeNotifier {
       final response = await http.put(
         Uri.parse(
           '${Env.apiUrl}/$campionato/giocatore/$idGiocatore/capitano/$idSquadra',
+        ),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(capitano),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        notifyListeners();
+        return true;
+      } else {
+        print('Errore PUT: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Errore PUT: $e');
+      return false;
+    }
+  }
+
+  Future<bool> aggiornaCapitanoNazionale(
+    String campionato,
+    String idGiocatore,
+    String idNazionale,
+    bool capitano,
+  ) async {
+    try {
+      final response = await http.put(
+        Uri.parse(
+          '${Env.apiUrl}/$campionato/giocatore/$idGiocatore/capitano/nazionale/$idNazionale',
         ),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(capitano),

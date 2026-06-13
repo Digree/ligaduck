@@ -420,7 +420,7 @@ Widget buildGiocatore(
               height: 40,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) =>
-                  _buildJerseyPlaceholderFormazione(
+                  buildJerseyPlaceholderFormazione(
                     int.tryParse(numeroMaglietta) ?? 0,
                     model.coloriSquadra ?? [],
                   ),
@@ -794,7 +794,7 @@ String _formatPlayerName(String nomeCompleto) {
   return nomeDecodificato;
 }
 
-Widget _buildJerseyPlaceholderFormazione(int numero, List<String> colori) {
+Widget buildJerseyPlaceholderFormazione(int numero, List<String> colori) {
   print('Placeholder chiamato con colori: $colori per numero: $numero');
   List<Color> colorList = [];
   final Map<String, Color> colorMap = {
@@ -848,6 +848,34 @@ Widget _buildJerseyPlaceholderFormazione(int numero, List<String> colori) {
                   ),
           ),
         ),
+        if (numero > 0)
+          Align(
+            alignment: const Alignment(0, 0.15),
+            child: Text(
+              '$numero',
+              style: TextStyle(
+                color:
+                    colorList.isNotEmpty &&
+                        colorList[0].computeLuminance() > 0.4
+                    ? Colors.black87
+                    : Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 11,
+                shadows: const [
+                  Shadow(
+                    offset: Offset(-0.8, -0.8),
+                    blurRadius: 1.5,
+                    color: Colors.black54,
+                  ),
+                  Shadow(
+                    offset: Offset(0.8, 0.8),
+                    blurRadius: 1.5,
+                    color: Colors.black54,
+                  ),
+                ],
+              ),
+            ),
+          ),
       ],
     ),
   );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
+import 'package:ligaduck/services/commonService.dart';
 
 /// Widget riutilizzabile per mostrare il logo di una squadra con placeholder colorato
 class SquadraLogoWidget extends StatelessWidget {
@@ -8,48 +9,69 @@ class SquadraLogoWidget extends StatelessWidget {
   final double size;
   final BoxFit fit;
 
+  /// Se valorizzato, usa la bandiera della nazione (in un cerchio) come fallback
+  final String? nomeNazionale;
+
   const SquadraLogoWidget({
     super.key,
     required this.codSquadra,
     this.squadra,
     this.size = 50,
     this.fit = BoxFit.contain,
+    this.nomeNazionale,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Per le nazionali mostra sempre la bandiera in cerchio, come per i giocatori
+    if (nomeNazionale != null) {
+      return CircleAvatar(
+        radius: size / 3,
+        backgroundImage: NetworkImage(CommonService.getFlagUrl(nomeNazionale!)),
+        onBackgroundImageError: (_, _) {},
+      );
+    }
+
     return Image.asset(
       'assets/squadre/$codSquadra.png',
       fit: fit,
       height: size,
       width: size,
       errorBuilder: (context, error, stackTrace) {
-        List<Color> teamColors = getSquadraColors(squadra, codSquadra);
-        return SizedBox(
-          width: size,
+        return Image.asset(
+          'assets/nations/$codSquadra.png',
+          fit: fit,
           height: size,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // Icona nera di sfondo per il contorno
-              Icon(Icons.shield, size: size * 0.86, color: Colors.black),
-              // Icona colorata sopra
-              ShaderMask(
-                shaderCallback: (bounds) {
-                  return LinearGradient(
-                    colors: teamColors,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ).createShader(bounds);
-                },
-                child: Icon(
-                  Icons.shield,
-                  size: size * 0.8,
-                  color: Colors.white,
-                ),
+          width: size,
+          errorBuilder: (context, error2, stackTrace2) {
+            List<Color> teamColors = getSquadraColors(squadra, codSquadra);
+            return SizedBox(
+              width: size,
+              height: size,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Icona nera di sfondo per il contorno
+                  Icon(Icons.shield, size: size * 0.86, color: Colors.black),
+                  // Icona colorata sopra
+                  ShaderMask(
+                    shaderCallback: (bounds) {
+                      return LinearGradient(
+                        colors: teamColors,
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ).createShader(bounds);
+                    },
+                    child: Icon(
+                      Icons.shield,
+                      size: size * 0.8,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );

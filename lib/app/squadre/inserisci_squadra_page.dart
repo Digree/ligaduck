@@ -4,6 +4,8 @@ import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/service/models/trofeo.dart';
+import 'package:ligaduck/app/service/models/nazionale.dart';
+import 'package:ligaduck/app/service/nazionali_provider.dart';
 import 'package:ligaduck/app/service/squadre_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -29,6 +31,8 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
   List<Competizione> _competizioniDisponibili = [];
   List<String> _anniTrofei = [];
   bool _isSaving = false;
+  String _tipo = 'Club';
+  String? _federazioneSelezionata;
 
   final List<String> _campionati = ['Paperi', 'Europa', 'Resto del Mondo'];
 
@@ -140,6 +144,24 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
     'ciano',
     'marrone',
   ];
+
+  final List<String> _federazioniDisponibili = [
+    'UEFA',
+    'CAF',
+    'AFC',
+    'CONMEBOL',
+    'CONCACAF',
+    'OFC',
+  ];
+
+  static const Map<String, String> _federazioneToCategoria = {
+    'UEFA': 'Europa',
+    'CAF': 'Africa',
+    'AFC': 'Asia',
+    'CONMEBOL': 'Sud America',
+    'CONCACAF': 'America',
+    'OFC': 'Oceania',
+  };
 
   @override
   void initState() {
@@ -278,6 +300,168 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
         );
       }
     }
+  }
+
+  Future<void> _salvaNazionale() async {
+    setState(() => _isSaving = true);
+    final provider = Provider.of<NazionaliProvider>(context, listen: false);
+    final nazionale = Nazionale(
+      id: '',
+      nome: _nomeController.text,
+      federazione: _federazioneSelezionata ?? '',
+      codNazione: _nomeController.text.toLowerCase().replaceAll(' ', '_'),
+      categoria: _federazioneToCategoria[_federazioneSelezionata] ?? '',
+      colori: _coloriSelezionati,
+      competizioni: _competizioniSelezionate.map((c) => c.id).toList(),
+      trofei: _trofeiSelezionati
+          .map(
+            (t) => Trofeo(
+              idCompetizione: t['idCompetizione'],
+              nome: t['nome'],
+              cod: t['cod'],
+              quantita: t['quantita'],
+              anni: List<String>.from(t['anni'] ?? []),
+            ),
+          )
+          .toList(),
+      formazione: Formazione(
+        titolari: [],
+        panchina: [],
+        allenatore: '',
+        modulo: '',
+        indisponibili: [],
+        nonConvocati: [],
+      ),
+      indisponibili: [],
+      convocati: [],
+    );
+    try {
+      final success = await provider.addNazionale(widget.campionato, nazionale);
+      if (success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Nazionale salvata con successo!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+          Navigator.pop(context, true);
+        }
+      } else {
+        if (mounted) {
+          setState(() => _isSaving = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Errore nel salvataggio della nazionale'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Errore: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildTipoSelector() {
+    return Row(
+      children: ['Club', 'Nazionale'].map((tipo) {
+        final sel = _tipo == tipo;
+        return Expanded(
+          child: GestureDetector(
+            onTap: () => setState(() => _tipo = tipo),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(
+                color: sel ? Colors.blueAccent : Colors.grey[200],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Center(
+                child: Text(
+                  tipo,
+                  style: TextStyle(
+                    color: sel ? Colors.white : Colors.grey[700],
+                    fontWeight: sel ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  List<Widget> _buildNazionaleFormFields() {
+    return [
+      TextFormField(
+        controller: _nomeController,
+        decoration: InputDecoration(
+          labelText: 'Nome nazionale',
+          labelStyle: TextStyle(color: Colors.blueAccent),
+          prefixIcon: Icon(Icons.flag),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.blueAccent, width: 2),
+          ),
+        ),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Inserisci il nome della nazionale';
+          }
+          return null;
+        },
+      ),
+      SizedBox(height: 16),
+      DropdownButtonFormField<String>(
+        initialValue: _federazioneSelezionata,
+        decoration: InputDecoration(
+          labelText: 'Federazione',
+          labelStyle: TextStyle(color: Colors.blueAccent),
+          prefixIcon: Icon(Icons.public),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.blueAccent, width: 2),
+          ),
+        ),
+        items: _federazioniDisponibili.map((String fed) {
+          return DropdownMenuItem<String>(
+            value: fed,
+            child: Text('$fed — ${_federazioneToCategoria[fed] ?? ''}'),
+          );
+        }).toList(),
+        onChanged: (String? val) =>
+            setState(() => _federazioneSelezionata = val),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Seleziona una federazione';
+          }
+          return null;
+        },
+      ),
+      SizedBox(height: 16),
+      _buildColoriField(),
+      SizedBox(height: 16),
+      _buildTrofeiField(),
+      SizedBox(height: 16),
+      _buildCompetizioniField(),
+    ];
   }
 
   Widget _buildColoriField() {
@@ -458,7 +642,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
         ],
         // Pulsante per aggiungere trofei
         ElevatedButton.icon(
-          onPressed: _competizioniDisponibili.isNotEmpty
+          onPressed: _competizioniTrofeiDisponibili.isNotEmpty
               ? _showTrofeiDialog
               : null,
           icon: Icon(Icons.add, color: Colors.white),
@@ -477,6 +661,29 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
     );
   }
 
+  List<Competizione> get _competizioniTrofeiDisponibili {
+    if (_tipo == 'Nazionale') {
+      return _competizioniDisponibili
+          .where((c) => c.id == 17 || c.id == 18)
+          .toList();
+    } else {
+      return _competizioniDisponibili
+          .where((c) => c.id != 17 && c.id != 18)
+          .toList();
+    }
+  }
+
+  List<Competizione> get _competizioniAbilitateDisponibili {
+    if (_tipo == 'Nazionale') {
+      return _competizioniDisponibili
+          .where((c) => c.id == 17 || c.id == 18)
+          .toList();
+    }
+    return _competizioniDisponibili
+        .where((c) => c.id != 17 && c.id != 18)
+        .toList();
+  }
+
   void _showTrofeiDialog() {
     showDialog(
       context: context,
@@ -486,7 +693,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: _competizioniDisponibili.map((competizione) {
+              children: _competizioniTrofeiDisponibili.map((competizione) {
                 return ListTile(
                   leading: Container(
                     width: 40,
@@ -731,7 +938,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
         SizedBox(height: 8),
         // Pulsante per aggiungere competizioni - sempre presente
         ElevatedButton.icon(
-          onPressed: _competizioniDisponibili.isNotEmpty
+          onPressed: _competizioniAbilitateDisponibili.isNotEmpty
               ? _showCompetizioniDialog
               : () {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -747,12 +954,12 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
           icon: Icon(Icons.add, color: Colors.white),
           label: Text(
             _competizioniSelezionate.isEmpty
-                ? 'Aggiungi competizioni (${_competizioniDisponibili.length} disponibili)'
+                ? 'Aggiungi competizioni (${_competizioniAbilitateDisponibili.length} disponibili)'
                 : 'Aggiungi altra competizione',
             style: TextStyle(color: Colors.white),
           ),
           style: ElevatedButton.styleFrom(
-            backgroundColor: _competizioniDisponibili.isNotEmpty
+            backgroundColor: _competizioniAbilitateDisponibili.isNotEmpty
                 ? Colors.blueAccent
                 : Colors.grey,
             padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -763,8 +970,12 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
   }
 
   void _showCompetizioniDialog() {
-    // Filtra le competizioni già selezionate
-    List<Competizione> competizioniNonSelezionate = _competizioniDisponibili
+    final baseList = _tipo == 'Nazionale'
+        ? _competizioniDisponibili
+              .where((c) => c.id == 17 || c.id == 18)
+              .toList()
+        : _competizioniAbilitateDisponibili;
+    List<Competizione> competizioniNonSelezionate = baseList
         .where(
           (competizione) => !_competizioniSelezionate.any(
             (selezionata) => selezionata.id == competizione.id,
@@ -861,167 +1072,175 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   SizedBox(height: 20),
+                  _buildTipoSelector(),
+                  SizedBox(height: 20),
                   Text(
-                    'Dati della squadra',
+                    _tipo == 'Club'
+                        ? 'Dati della squadra'
+                        : 'Dati della nazionale',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
-                  SizedBox(height: 32),
-                  TextFormField(
-                    controller: _nomeController,
-                    decoration: InputDecoration(
-                      labelText: 'Nome',
-                      labelStyle: TextStyle(color: Colors.blueAccent),
-                      prefixIcon: Icon(Icons.shield),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: Colors.blueAccent,
-                          width: 2,
+                  SizedBox(height: 20),
+                  if (_tipo == 'Nazionale')
+                    ..._buildNazionaleFormFields()
+                  else ...[
+                    TextFormField(
+                      controller: _nomeController,
+                      decoration: InputDecoration(
+                        labelText: 'Nome',
+                        labelStyle: TextStyle(color: Colors.blueAccent),
+                        prefixIcon: Icon(Icons.shield),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: Colors.blueAccent,
+                            width: 2,
+                          ),
                         ),
                       ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Inserisci il nome della squadra';
+                        }
+                        return null;
+                      },
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Inserisci il nome della squadra';
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: 16),
-                  TextFormField(
-                    controller: _cittaController,
-                    decoration: InputDecoration(
-                      labelText: 'Città',
-                      labelStyle: TextStyle(color: Colors.blueAccent),
-                      prefixIcon: Icon(Icons.location_city),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: Colors.blueAccent,
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Inserisci la città';
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: 16),
-                  TextFormField(
-                    controller: _stadioController,
-                    decoration: InputDecoration(
-                      labelText: 'Stadio',
-                      labelStyle: TextStyle(color: Colors.blueAccent),
-                      prefixIcon: Icon(Icons.stadium),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: Colors.blueAccent,
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Inserisci il nome dello stadio';
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    initialValue: _campionatoSelezionato,
-                    decoration: InputDecoration(
-                      labelText: 'Campionato',
-                      labelStyle: TextStyle(color: Colors.blueAccent),
-                      prefixIcon: Icon(Icons.emoji_events),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: Colors.blueAccent,
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                    items: _campionati.map((String campionato) {
-                      return DropdownMenuItem<String>(
-                        value: campionato,
-                        child: Text(campionato),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        _campionatoSelezionato = newValue;
-                        _categoriaSelezionata = _categorieCorrente.first;
-                      });
-                    },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Seleziona un campionato';
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    initialValue: _categoriaSelezionata,
-                    decoration: InputDecoration(
-                      labelText: 'Categoria',
-                      labelStyle: TextStyle(color: Colors.blueAccent),
-                      prefixIcon: Icon(Icons.category),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: Colors.blueAccent,
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                    items: _categorieCorrente.map((String categoria) {
-                      return DropdownMenuItem<String>(
-                        value: categoria,
-                        child: Text(categoria),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        _categoriaSelezionata = newValue;
-                      });
-                    },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Seleziona una categoria';
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: 16),
-                  _buildColoriField(),
-                  SizedBox(height: 16),
-                  if (_campionatoSelezionato != 'Estero') ...[
-                    _buildTrofeiField(),
                     SizedBox(height: 16),
-                  ],
-                  _buildCompetizioniField(),
+                    TextFormField(
+                      controller: _cittaController,
+                      decoration: InputDecoration(
+                        labelText: 'Città',
+                        labelStyle: TextStyle(color: Colors.blueAccent),
+                        prefixIcon: Icon(Icons.location_city),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: Colors.blueAccent,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Inserisci la città';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 16),
+                    TextFormField(
+                      controller: _stadioController,
+                      decoration: InputDecoration(
+                        labelText: 'Stadio',
+                        labelStyle: TextStyle(color: Colors.blueAccent),
+                        prefixIcon: Icon(Icons.stadium),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: Colors.blueAccent,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Inserisci il nome dello stadio';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      initialValue: _campionatoSelezionato,
+                      decoration: InputDecoration(
+                        labelText: 'Campionato',
+                        labelStyle: TextStyle(color: Colors.blueAccent),
+                        prefixIcon: Icon(Icons.emoji_events),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: Colors.blueAccent,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                      items: _campionati.map((String campionato) {
+                        return DropdownMenuItem<String>(
+                          value: campionato,
+                          child: Text(campionato),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          _campionatoSelezionato = newValue;
+                          _categoriaSelezionata = _categorieCorrente.first;
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Seleziona un campionato';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      initialValue: _categoriaSelezionata,
+                      decoration: InputDecoration(
+                        labelText: 'Categoria',
+                        labelStyle: TextStyle(color: Colors.blueAccent),
+                        prefixIcon: Icon(Icons.category),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: Colors.blueAccent,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                      items: _categorieCorrente.map((String categoria) {
+                        return DropdownMenuItem<String>(
+                          value: categoria,
+                          child: Text(categoria),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          _categoriaSelezionata = newValue;
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Seleziona una categoria';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 16),
+                    _buildColoriField(),
+                    SizedBox(height: 16),
+                    if (_campionatoSelezionato != 'Estero') ...[
+                      _buildTrofeiField(),
+                      SizedBox(height: 16),
+                    ],
+                    _buildCompetizioniField(),
+                  ], // club fields
                   SizedBox(height: 32),
                   if (_isSaving)
                     Center(
@@ -1045,7 +1264,9 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
                         ? null
                         : () {
                             if (_formKey.currentState!.validate()) {
-                              _salvaSquadra();
+                              _tipo == 'Club'
+                                  ? _salvaSquadra()
+                                  : _salvaNazionale();
                             }
                           },
                     style: ElevatedButton.styleFrom(
@@ -1054,7 +1275,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
                       padding: EdgeInsets.symmetric(vertical: 16),
                     ),
                     child: Text(
-                      'Salva Squadra',
+                      _tipo == 'Club' ? 'Salva Squadra' : 'Salva Nazionale',
                       style: TextStyle(fontSize: 16),
                     ),
                   ),

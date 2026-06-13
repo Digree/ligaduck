@@ -56,6 +56,7 @@ class Giornata {
 class PosizioneClassifica {
   final int posizione;
   final int idSquadra;
+  final String? idNazionale;
   final String? nomeSquadra;
   final String? codSquadra;
   final int win;
@@ -71,6 +72,7 @@ class PosizioneClassifica {
   PosizioneClassifica({
     required this.posizione,
     required this.idSquadra,
+    this.idNazionale,
     this.nomeSquadra,
     this.codSquadra,
     required this.win,
@@ -88,6 +90,7 @@ class PosizioneClassifica {
     return PosizioneClassifica(
       posizione: json['posizione'] ?? 0,
       idSquadra: json['idSquadra'] ?? 0,
+      idNazionale: json['idNazionale'],
       nomeSquadra: json['nomeSquadra'],
       codSquadra: json['codSquadra'],
       win: json['win'] ?? 0,
@@ -106,6 +109,7 @@ class PosizioneClassifica {
     return {
       'posizione': posizione,
       'idSquadra': idSquadra,
+      'idNazionale': idNazionale,
       'nomeSquadra': nomeSquadra,
       'codSquadra': codSquadra,
       'win': win,
@@ -187,7 +191,8 @@ class StatisticheGiornata {
 
 class Marcatura {
   final String idGiocatore;
-  final int idSquadra;
+  final int? idSquadra;
+  final String? idNazionale;
   final int quantita;
   final String nome;
   final int rig;
@@ -195,7 +200,8 @@ class Marcatura {
 
   Marcatura({
     required this.idGiocatore,
-    required this.idSquadra,
+    this.idSquadra,
+    this.idNazionale,
     required this.quantita,
     required this.nome,
     required this.rig,
@@ -205,7 +211,8 @@ class Marcatura {
   factory Marcatura.fromJson(Map<String, dynamic> json) {
     return Marcatura(
       idGiocatore: json['idGiocatore'] ?? '',
-      idSquadra: json['idSquadra'] ?? 0,
+      idSquadra: json['idSquadra'],
+      idNazionale: json['idNazionale'],
       quantita: json['quantita'] ?? 0,
       nome: json['nome'] ?? '',
       rig: json['rig'] ?? 0,
@@ -217,6 +224,7 @@ class Marcatura {
     return {
       'idGiocatore': idGiocatore,
       'idSquadra': idSquadra,
+      'idNazionale': idNazionale,
       'quantita': quantita,
       'nome': nome,
       'rig': rig,
@@ -227,13 +235,15 @@ class Marcatura {
 
 class Malus {
   final String idGiocatore;
-  final int idSquadra;
+  final int? idSquadra;
+  final String? idNazionale;
   final int quantita;
   final String nome;
 
   Malus({
     required this.idGiocatore,
-    required this.idSquadra,
+    this.idSquadra,
+    this.idNazionale,
     required this.quantita,
     required this.nome,
   });
@@ -241,7 +251,8 @@ class Malus {
   factory Malus.fromJson(Map<String, dynamic> json) {
     return Malus(
       idGiocatore: json['idGiocatore'] ?? '',
-      idSquadra: json['idSquadra'] ?? 0,
+      idSquadra: json['idSquadra'],
+      idNazionale: json['idNazionale'],
       quantita: json['quantita'] ?? 0,
       nome: json['nome'] ?? '',
     );
@@ -251,6 +262,7 @@ class Malus {
     return {
       'idGiocatore': idGiocatore,
       'idSquadra': idSquadra,
+      'idNazionale': idNazionale,
       'quantita': quantita,
       'nome': nome,
     };
@@ -259,16 +271,20 @@ class Malus {
 
 class Autogol {
   final String idGiocatore;
-  final int idSquadra;
+  final int? idSquadra;
   final String idGiornata;
-  final int idSquadraPro;
+  final int? idSquadraPro;
+  final String? idNazionale;
+  final String? idNazionalePro;
   final String nome;
 
   Autogol({
     required this.idGiocatore,
-    required this.idSquadra,
+    this.idSquadra,
     required this.idGiornata,
-    required this.idSquadraPro,
+    this.idSquadraPro,
+    this.idNazionale,
+    this.idNazionalePro,
     required this.nome,
   });
 
@@ -277,7 +293,9 @@ class Autogol {
       idGiocatore: json['idGiocatore'] ?? '',
       idSquadra: json['idSquadra'] ?? 0,
       idGiornata: json['idGiornata'] ?? '',
-      idSquadraPro: json['idSquadraPro'] ?? 0,
+      idSquadraPro: json['idSquadraPro'],
+      idNazionale: json['idNazionale'],
+      idNazionalePro: json['idNazionalePro'],
       nome: json['nome'] ?? '',
     );
   }
@@ -288,6 +306,8 @@ class Autogol {
       'idSquadra': idSquadra,
       'idGiornata': idGiornata,
       'idSquadraPro': idSquadraPro,
+      'idNazionale': idNazionale,
+      'idNazionalePro': idNazionalePro,
       'nome': nome,
     };
   }

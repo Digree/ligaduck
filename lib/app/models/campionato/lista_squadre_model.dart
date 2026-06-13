@@ -1,7 +1,10 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:glassmorphism/glassmorphism.dart';
 import 'package:ligaduck/app/config/models/global.dart';
+import 'package:ligaduck/app/models/campionato/lista_nazionali_model.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
+import 'package:ligaduck/app/service/models/nazionale.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/squadre/squadre_page.dart';
 import 'package:ligaduck/services/commonService.dart';
@@ -10,11 +13,13 @@ class ListaSquadreModel {
   final String campionato;
   final Future<List<Squadra>> squadreFuture;
   final Future<List<Competizione>> competizioniFuture;
+  final Future<List<Nazionale>> nazionaliFuture;
 
   ListaSquadreModel({
     required this.campionato,
     required this.squadreFuture,
     required this.competizioniFuture,
+    required this.nazionaliFuture,
   });
 }
 
@@ -27,258 +32,476 @@ class _ListaSquadreState extends StatefulWidget {
   State<_ListaSquadreState> createState() => _ListaSquadreStateWidget();
 }
 
-class _ListaSquadreStateWidget extends State<_ListaSquadreState> {
+class _ListaSquadreStateWidget extends State<_ListaSquadreState>
+    with SingleTickerProviderStateMixin {
   String _selectedCampionato = 'Paperi';
+  late TabController _mainTabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _mainTabController = TabController(length: 2, vsync: this);
+    _mainTabController.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _mainTabController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    bool isWide = MediaQuery.of(context).size.width > 600;
-    final screenHeight = isWide
-        ? MediaQuery.of(context).size.height * 1.2
-        : MediaQuery.of(context).size.height;
-    return SizedBox(
-      width: isWide
-          ? MediaQuery.of(context).size.width * 0.5
-          : MediaQuery.of(context).size.width,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(
-              left: 16.0,
-              right: 16.0,
-              top: 16.0,
-              bottom: 16.0,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double height = constraints.hasBoundedHeight
+            ? constraints.maxHeight
+            : MediaQuery.of(context).size.height - kToolbarHeight - 80;
+        return SizedBox(
+          height: height,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(
+                  left: 16.0,
+                  right: 16.0,
+                  top: 16.0,
+                  bottom: 8.0,
+                ),
+                child: Text(
                   'Squadre:',
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.blueAccent),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: DropdownButton<String>(
-                    value: _selectedCampionato,
-                    underline: SizedBox(),
-                    items: ['Paperi', 'Europa', 'Resto del Mondo'].map((
-                      String value,
-                    ) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      if (newValue != null) {
-                        setState(() {
-                          _selectedCampionato = newValue;
-                        });
-                      }
-                    },
+              ),
+              // Liquid glass main tab: Club | Nazionali
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 6.0,
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(26),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                    child: Container(
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.28),
+                        borderRadius: BorderRadius.circular(26),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.5),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.blueAccent.withOpacity(0.10),
+                            blurRadius: 16,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                      child: AnimatedBuilder(
+                        animation: _mainTabController.animation!,
+                        builder: (context, _) {
+                          final t = _mainTabController.animation!.value;
+                          return LayoutBuilder(
+                            builder: (context, constraints) {
+                              final pillWidth = constraints.maxWidth / 2;
+                              return Stack(
+                                children: [
+                                  // Sliding pill
+                                  Positioned(
+                                    left: 4 + t * pillWidth,
+                                    top: 4,
+                                    bottom: 4,
+                                    width: pillWidth - 8,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.85),
+                                        borderRadius: BorderRadius.circular(22),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(
+                                              0.10,
+                                            ),
+                                            blurRadius: 8,
+                                            offset: Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  // Labels
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: GestureDetector(
+                                          onTap: () =>
+                                              _mainTabController.animateTo(0),
+                                          child: Center(
+                                            child: Text(
+                                              'Club',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: t < 0.5
+                                                    ? FontWeight.w700
+                                                    : FontWeight.w500,
+                                                color: Color.lerp(
+                                                  Colors.blueAccent,
+                                                  Colors.grey[600],
+                                                  t.clamp(0.0, 1.0),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: GestureDetector(
+                                          onTap: () =>
+                                              _mainTabController.animateTo(1),
+                                          child: Center(
+                                            child: Text(
+                                              'Nazionali',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: t > 0.5
+                                                    ? FontWeight.w700
+                                                    : FontWeight.w500,
+                                                color: Color.lerp(
+                                                  Colors.grey[600],
+                                                  Colors.blueAccent,
+                                                  t.clamp(0.0, 1.0),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
                   ),
                 ),
-              ],
+              ),
+              // Dropdown del campionato (solo tab Club), largo tutto lo spazio
+              AnimatedBuilder(
+                animation: _mainTabController.animation!,
+                builder: (context, _) {
+                  final t = _mainTabController.animation!.value;
+                  if (t >= 1.0) return SizedBox.shrink();
+                  return Opacity(
+                    opacity: (1.0 - t).clamp(0.0, 1.0),
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                        left: 16.0,
+                        right: 16.0,
+                        top: 6.0,
+                        bottom: 2.0,
+                      ),
+                      child: Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.blueAccent),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: DropdownButton<String>(
+                          value: _selectedCampionato,
+                          isExpanded: true,
+                          underline: SizedBox(),
+                          items: ['Paperi', 'Europa', 'Resto del Mondo'].map((
+                            String value,
+                          ) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            if (newValue != null) {
+                              setState(() {
+                                _selectedCampionato = newValue;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              // Contenuto dei tab
+              Expanded(
+                child: TabBarView(
+                  controller: _mainTabController,
+                  children: [
+                    // Tab Club
+                    _selectedCampionato == 'Paperi'
+                        ? _PaperiContent(model: widget.model)
+                        : _EsteroContent(
+                            model: widget.model,
+                            nazioni: _nazioniPerCategoria(_selectedCampionato),
+                          ),
+                    // Tab Nazionali
+                    ListaNazionaliWidget(
+                      model: ListaNazionaliModel(
+                        campionato: widget.model.campionato,
+                        nazionaliFuture: widget.model.nazionaliFuture,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ─── helper top-level ────────────────────────────────────────────────────────
+
+List<String> _nazioniPerCategoria(String categoria) {
+  final List<String> nazioni;
+  if (categoria == 'Europa') {
+    nazioni = [
+      'Austria',
+      'Belgio',
+      'Bulgaria',
+      'Cipro',
+      'Croazia',
+      'Danimarca',
+      'Estonia',
+      'Finlandia',
+      'Francia',
+      'Georgia',
+      'Germania',
+      'Grecia',
+      'Inghilterra',
+      'Irlanda',
+      'Islanda',
+      'Israele',
+      'Kosovo',
+      'Lussemburgo',
+      'Malta',
+      'Norvegia',
+      'Olanda',
+      'Polonia',
+      'Portogallo',
+      'Repubblica Ceca',
+      'Romania',
+      'Russia',
+      'Scozia',
+      'Serbia',
+      'Slovacchia',
+      'Slovenia',
+      'Spagna',
+      'Svezia',
+      'Svizzera',
+      'Turchia',
+      'Ucraina',
+      'Ungheria',
+    ];
+  } else if (categoria == 'Resto del Mondo') {
+    nazioni = [
+      'Argentina',
+      'Australia',
+      'Brasile',
+      'Uruguay',
+      'Cile',
+      'Colombia',
+      'Perù',
+      'Venezuela',
+      'Ecuador',
+      'Paraguay',
+      'Bolivia',
+      'Costa Rica',
+      'Panama',
+      'Giamaica',
+      'Honduras',
+      'El Salvador',
+      'Nicaragua',
+      'Cuba',
+      'Repubblica Dominicana',
+      'Haiti',
+      'Giappone',
+      'Corea del Sud',
+      'Stati Uniti',
+      'Canada',
+      'Messico',
+      'Cina',
+      'India',
+      'Sudafrica',
+      'Nigeria',
+      'Egitto',
+      'Marocco',
+      'Tunisia',
+      'Arabia Saudita',
+      'Emirati Arabi Uniti',
+      'Filippine',
+      'Nuova Zelanda',
+    ];
+  } else {
+    nazioni = [];
+  }
+  nazioni.sort();
+  return nazioni;
+}
+
+Widget _buildCategoryChip({
+  required String label,
+  required bool isSelected,
+  required VoidCallback onTap,
+}) {
+  return GestureDetector(
+    onTap: onTap,
+    child: AnimatedContainer(
+      duration: Duration(milliseconds: 200),
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 9),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? Colors.blueAccent
+            : Colors.blueAccent.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isSelected
+              ? Colors.blueAccent
+              : Colors.blueAccent.withOpacity(0.35),
+          width: isSelected ? 2 : 1,
+        ),
+      ),
+      child: Center(
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            color: isSelected ? Colors.white : Colors.blueAccent,
+          ),
+          textAlign: TextAlign.center,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    ),
+  );
+}
+
+// ─── _PaperiContent ──────────────────────────────────────────────────────────
+
+class _PaperiContent extends StatefulWidget {
+  final ListaSquadreModel model;
+  const _PaperiContent({required this.model});
+
+  @override
+  State<_PaperiContent> createState() => _PaperiContentState();
+}
+
+class _PaperiContentState extends State<_PaperiContent> {
+  String _selected = 'Serie A';
+  static const _series = ['Serie A', 'Serie B', 'Serie C', 'Serie D'];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: Row(
+            children: _series.map((s) {
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: _buildCategoryChip(
+                    label: s,
+                    isSelected: _selected == s,
+                    onTap: () => setState(() => _selected = s),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        Expanded(child: showSquadre(widget.model, _selected)),
+      ],
+    );
+  }
+}
+
+// ─── _EsteroContent ──────────────────────────────────────────────────────────
+
+class _EsteroContent extends StatefulWidget {
+  final ListaSquadreModel model;
+  final List<String> nazioni;
+  const _EsteroContent({required this.model, required this.nazioni});
+
+  @override
+  State<_EsteroContent> createState() => _EsteroContentState();
+}
+
+class _EsteroContentState extends State<_EsteroContent> {
+  late String _selected;
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = widget.nazioni.isNotEmpty ? widget.nazioni.first : '';
+  }
+
+  @override
+  void didUpdateWidget(_EsteroContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.nazioni != oldWidget.nazioni) {
+      _selected = widget.nazioni.isNotEmpty ? widget.nazioni.first : '';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 8,
+            bottom: 4,
+          ),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: widget.nazioni.map((nazione) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: _buildCategoryChip(
+                    label: nazione,
+                    isSelected: _selected == nazione,
+                    onTap: () => setState(() => _selected = nazione),
+                  ),
+                );
+              }).toList(),
             ),
           ),
-          _selectedCampionato == 'Paperi'
-              ? _buildPaperiTabs(widget.model, isWide, screenHeight)
-              : _buildEsteroTabs(
-                  widget.model,
-                  isWide,
-                  screenHeight,
-                  _selectedCampionato,
-                ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPaperiTabs(
-    ListaSquadreModel model,
-    bool isWide,
-    double screenHeight,
-  ) {
-    return DefaultTabController(
-      length: 4,
-      child: SizedBox(
-        height: isWide ? screenHeight * 0.5 : screenHeight * 0.7,
-        child: Column(
-          children: [
-            Container(
-              constraints: BoxConstraints(maxHeight: 50, maxWidth: 900),
-              child: Padding(
-                padding: EdgeInsets.only(
-                  right: 16.0,
-                  left: isWide ? 16.0 : 8.0,
-                ),
-                child: TabBar(
-                  labelColor: Colors.blueAccent,
-                  unselectedLabelColor: Colors.grey,
-                  indicatorColor: Colors.blueAccent,
-                  tabs: [
-                    Tab(text: 'Serie A'),
-                    Tab(text: 'Serie B'),
-                    Tab(text: 'Serie C'),
-                    Tab(text: 'Serie D'),
-                  ],
-                ),
-              ),
-            ),
-            Expanded(
-              flex: 1,
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width * 1,
-                child: TabBarView(
-                  children: [
-                    showSquadre(model, 'Serie A'),
-                    showSquadre(model, 'Serie B'),
-                    showSquadre(model, 'Serie C'),
-                    showSquadre(model, 'Serie D'),
-                  ],
-                ),
-              ),
-            ),
-          ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildEsteroTabs(
-    ListaSquadreModel model,
-    bool isWide,
-    double screenHeight,
-    String categoria,
-  ) {
-    final List<String> nazioni;
-    if (categoria == 'Europa') {
-      nazioni = [
-        'Austria',
-        'Belgio',
-        'Bulgaria',
-        'Cipro',
-        'Croazia',
-        'Danimarca',
-        'Estonia',
-        'Finlandia',
-        'Francia',
-        'Georgia',
-        'Germania',
-        'Grecia',
-        'Inghilterra',
-        'Irlanda',
-        'Islanda',
-        'Israele',
-        'Kosovo',
-        'Lussemburgo',
-        'Malta',
-        'Norvegia',
-        'Olanda',
-        'Polonia',
-        'Portogallo',
-        'Repubblica Ceca',
-        'Romania',
-        'Russia',
-        'Scozia',
-        'Serbia',
-        'Slovacchia',
-        'Slovenia',
-        'Spagna',
-        'Svezia',
-        'Svizzera',
-        'Turchia',
-        'Ucraina',
-        'Ungheria',
-      ];
-    } else if (categoria == 'Resto del Mondo') {
-      nazioni = [
-        'Argentina',
-        'Australia',
-        'Brasile',
-        'Uruguay',
-        'Cile',
-        'Colombia',
-        'Perù',
-        'Venezuela',
-        'Ecuador',
-        'Paraguay',
-        'Bolivia',
-        'Costa Rica',
-        'Panama',
-        'Giamaica',
-        'Honduras',
-        'El Salvador',
-        'Nicaragua',
-        'Cuba',
-        'Repubblica Dominicana',
-        'Haiti',
-        'Giappone',
-        'Corea del Sud',
-        'Stati Uniti',
-        'Canada',
-        'Messico',
-        'Cina',
-        'India',
-        'Sudafrica',
-        'Nigeria',
-        'Egitto',
-        'Marocco',
-        'Tunisia',
-        'Arabia Saudita',
-        'Emirati Arabi Uniti',
-        'Filippine',
-        'Nuova Zelanda',
-      ];
-    } else {
-      nazioni = [];
-    }
-
-    nazioni.sort();
-
-    return DefaultTabController(
-      length: nazioni.length,
-      child: SizedBox(
-        height: isWide ? screenHeight * 0.5 : screenHeight * 0.7,
-        child: Column(
-          children: [
-            Container(
-              constraints: BoxConstraints(maxHeight: 50, maxWidth: 900),
-              child: Padding(
-                padding: EdgeInsets.only(
-                  right: 16.0,
-                  left: isWide ? 16.0 : 8.0,
+        Expanded(
+          child: _selected.isNotEmpty
+              ? showSquadre(widget.model, _selected)
+              : Center(
+                  child: Text(
+                    'Nessuna nazione disponibile',
+                    style: TextStyle(color: Colors.grey),
+                  ),
                 ),
-                child: TabBar(
-                  isScrollable: true,
-                  tabAlignment: TabAlignment.start,
-                  padding: EdgeInsets.zero,
-                  labelColor: Colors.blueAccent,
-                  unselectedLabelColor: Colors.grey,
-                  indicatorColor: Colors.blueAccent,
-                  tabs: nazioni.map((nazione) => Tab(text: nazione)).toList(),
-                ),
-              ),
-            ),
-            Expanded(
-              flex: 1,
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width * 1,
-                child: TabBarView(
-                  children: nazioni
-                      .map((nazione) => showSquadre(model, nazione))
-                      .toList(),
-                ),
-              ),
-            ),
-          ],
         ),
-      ),
+      ],
     );
   }
 }
@@ -412,7 +635,7 @@ Widget showSquadre(ListaSquadreModel model, String categoria) {
                     ),
                   ),
                 SizedBox(
-                  height: 60,
+                  height: MediaQuery.of(context).size.width > 600 ? 16 : 100,
                 ), // Padding in fondo per evitare che l'ultima squadra venga tagliata
               ],
             );

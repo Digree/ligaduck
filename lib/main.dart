@@ -9,11 +9,12 @@ import 'package:ligaduck/app/service/partite_provider.dart';
 import 'package:ligaduck/app/service/squadre_provider.dart';
 import 'package:ligaduck/app/service/giocatori_provider.dart';
 import 'package:ligaduck/app/service/mercato_provider.dart';
+import 'package:ligaduck/app/service/nazionali_provider.dart';
 import 'package:ligaduck/services/update_notifier.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
-import 'package:ligaduck/gen/fonts.gen.dart';
+
 import 'package:ligaduck/app/service/cache_service.dart';
 import 'dart:async';
 
@@ -39,6 +40,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => PartiteProvider()),
         ChangeNotifierProvider(create: (_) => GiocatoriProvider()),
         ChangeNotifierProvider(create: (_) => MercatoProvider()),
+        ChangeNotifierProvider(create: (_) => NazionaliProvider()),
         ChangeNotifierProvider(create: (_) => UpdateNotifier()),
       ],
       child: MyApp(),

@@ -3,6 +3,8 @@ class Partita {
   final String idGiornata;
   final int idTeamHome;
   final int idTeamAway;
+  final String? idNazionaleHome;
+  final String? idNazionaleAway;
   final String teamHome;
   final String teamAway;
   final String codHome;
@@ -21,6 +23,8 @@ class Partita {
     required this.idGiornata,
     required this.idTeamHome,
     required this.idTeamAway,
+    this.idNazionaleHome,
+    this.idNazionaleAway,
     required this.id,
     required this.teamHome,
     required this.teamAway,
@@ -42,6 +46,8 @@ class Partita {
       idGiornata: json['idGiornata'],
       idTeamHome: json['idTeamHome'],
       idTeamAway: json['idTeamAway'],
+      idNazionaleHome: json['idNazionaleHome'],
+      idNazionaleAway: json['idNazionaleAway'],
       id: json['id'],
       teamHome: json['teamHome'],
       teamAway: json['teamAway'],
@@ -66,6 +72,8 @@ class Partita {
       'idGiornata': idGiornata,
       'idTeamHome': idTeamHome,
       'idTeamAway': idTeamAway,
+      'idNazionaleHome': idNazionaleHome,
+      'idNazionaleAway': idNazionaleAway,
       'id': id,
       'teamHome': teamHome,
       'teamAway': teamAway,
@@ -227,7 +235,8 @@ class Evento {
   final int minuto;
   final int recupero;
   final String codAzione;
-  final int idTeam;
+  final int? idTeam;
+  final String? idNazionale;
   bool? esitoRigore;
 
   Evento({
@@ -237,7 +246,8 @@ class Evento {
     required this.minuto,
     required this.recupero,
     required this.codAzione,
-    required this.idTeam,
+    this.idTeam,
+    this.idNazionale,
     this.esitoRigore,
   });
 
@@ -250,6 +260,7 @@ class Evento {
       recupero: json['recupero'] ?? 0,
       codAzione: json['codAzione'],
       idTeam: json['idTeam'],
+      idNazionale: json['idNazionale'],
       esitoRigore: json['esitoRigore'],
     );
   }
@@ -263,6 +274,7 @@ class Evento {
       'recupero': recupero,
       'codAzione': codAzione,
       'idTeam': idTeam,
+      'idNazionale': idNazionale,
       'esitoRigore': esitoRigore,
     };
   }

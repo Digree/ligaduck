@@ -19,11 +19,15 @@ import 'package:ligaduck/app/service/competizioni_provider.dart';
 import 'package:ligaduck/app/service/giornate_provider.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/giornata.dart';
+import 'package:ligaduck/app/service/models/nazionale.dart';
+import 'package:ligaduck/app/service/nazionali_provider.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/service/partite_provider.dart';
 import 'package:ligaduck/app/service/squadre_provider.dart';
+import 'package:ligaduck/app/nazionali/nazionale_page.dart';
 import 'package:ligaduck/app/squadre/squadre_page.dart';
+import 'package:ligaduck/app/widgets/squadra_logo_widget.dart';
 import 'package:ligaduck/services/commonService.dart';
 import 'package:mongo_dart/mongo_dart.dart' as mongo;
 import 'package:provider/provider.dart';
@@ -62,12 +66,19 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
   late final Future<List<Giornata>> _giornateFuture;
   late final Future<List<Squadra>> _squadreFuture;
   late final Future<List<Squadra>> _squadreCompetizioneFuture;
+
+  /// Mappa fakeId (int) → id reale Nazionale (String ObjectId), per comp 17/18
+  final Map<int, String> _nazionaleIdByFakeId = {};
+
+  /// Mappa nome nazionale (lowercase) → id reale Nazionale, per creazione CSV
+  final Map<String, String> _nazionaleIdByNome = {};
   final Map<String, Future<Map<String, dynamic>>> _partiteCache = {};
   final Map<String, Widget> _partiteWidgetCache =
       {}; // Cache dei widget FutureBuilder
   int _invalidateCacheKey = 0; // Chiave separata per invalidare cache
   bool _testFireworks =
       true; // Flag per attivare/disattivare i fuochi d'artificio
+  List<Girone> _gironiConfigurati = [];
 
   @override
   void initState() {
@@ -80,11 +91,82 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     );
     _giornateFuture = getGiornate(provider);
     _squadreFuture = squadreProvider.fetchSquadre(widget.campionato);
-    _squadreCompetizioneFuture = squadreProvider.fetchSquadreByCompetizione(
-      widget.campionato,
-      widget.competizione.id,
-    );
+    final isNazionaleComp =
+        widget.competizione.id == 17 || widget.competizione.id == 18;
+    if (isNazionaleComp) {
+      final nazionaliProvider = Provider.of<NazionaliProvider>(
+        context,
+        listen: false,
+      );
+      _squadreCompetizioneFuture = nazionaliProvider
+          .fetchNazionali(widget.campionato)
+          .then(
+            (list) =>
+                list
+                    .where(
+                      (n) => n.competizioni.contains(widget.competizione.id),
+                    )
+                    .map(_nazionaleAsSquadra)
+                    .toList()
+                  ..sort((a, b) => a.nome.compareTo(b.nome)),
+          );
+    } else {
+      _squadreCompetizioneFuture = squadreProvider.fetchSquadreByCompetizione(
+        widget.campionato,
+        widget.competizione.id,
+      );
+    }
+    _gironiConfigurati = List<Girone>.from(widget.competizione.gironi ?? []);
     _caricaClassifica();
+  }
+
+  bool _isClassificaGironi() {
+    return widget.competizione.classifica == 'Gironi' ||
+        widget.competizione.classifica == 'Girone';
+  }
+
+  bool _isNazionaleSquadra(Squadra? squadra, {String? idNazionale}) {
+    return (idNazionale?.isNotEmpty ?? false) ||
+        (squadra?.categoria.toLowerCase().contains('naz') ?? false);
+  }
+
+  String? _nomeNazionaleOrNull(
+    Squadra? squadra, {
+    String? idNazionale,
+    String? fallbackName,
+  }) {
+    if (_isNazionaleSquadra(squadra, idNazionale: idNazionale)) {
+      return fallbackName ?? squadra?.nome;
+    }
+    return null;
+  }
+
+  /// Trova il nome del girone per un ID di squadra (club o nazionale)
+  String? _findGironeNome(int squadraId) {
+    if (!_isClassificaGironi() ||
+        widget.competizione.gironi == null ||
+        widget.competizione.gironi!.isEmpty) {
+      return null;
+    }
+
+    for (final girone in widget.competizione.gironi!) {
+      // Controlla se la squadra è in un girone di club
+      if (girone.idSquadre != null && girone.idSquadre!.contains(squadraId)) {
+        return girone.nome;
+      }
+      // Controlla se la squadra è in un girone di nazionali (confronta con fake id)
+      if (girone.idNazioni != null && girone.idNazioni!.isNotEmpty) {
+        // Cerca il fake id corrispondente alla nazionale
+        for (final fakeId in _nazionaleIdByFakeId.keys) {
+          if (_nazionaleIdByFakeId[fakeId] == squadraId &&
+              girone.idNazioni!.contains(squadraId)) {
+            return girone.nome;
+          }
+        }
+      }
+    }
+
+    return null;
   }
 
   @override
@@ -405,7 +487,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                               children: [
                                 const SizedBox(height: 16),
                                 Image.asset(
-                                  widget.competizione.id <= 4
+                                  widget.competizione.id <= 4 ||
+                                          widget.competizione.id == 17 ||
+                                          widget.competizione.id == 18
                                       ? 'assets/logos/${widget.campionato}/logo_${widget.competizione.cod}_comp.png'
                                       : 'assets/logos/logo_${widget.competizione.cod}_comp.png',
                                   fit: BoxFit.contain,
@@ -1022,7 +1106,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                       FutureBuilder<Squadra>(
                         future: getSquadra(
                           Provider.of<SquadreProvider>(context, listen: false),
-                          marcatore.idSquadra,
+                          marcatore.idSquadra ?? 0,
+                          idNazionale: marcatore.idNazionale,
                         ),
                         builder: (context, snapshot) {
                           return Container(
@@ -1047,94 +1132,15 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                       if (snapshot.hasData)
                                         Padding(
                                           padding: EdgeInsets.only(right: 8),
-                                          child: Image.asset(
-                                            'assets/squadre/${snapshot.data!.cod}.png',
-                                            height: 30,
-                                            width: 30,
-                                            errorBuilder: (context, error, stackTrace) {
-                                              return SizedBox(
-                                                height: 30,
-                                                width: 30,
-                                                child: Stack(
-                                                  alignment: Alignment.center,
-                                                  children: [
-                                                    Icon(
-                                                      Icons.shield,
-                                                      size: 30,
-                                                      color: Colors.black,
-                                                      shadows: [
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          blurRadius: 2,
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(1, 0),
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(-1, 0),
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(0, 1),
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(0, -1),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    ShaderMask(
-                                                      shaderCallback: (bounds) => LinearGradient(
-                                                        colors: [
-                                                          snapshot
-                                                                  .data!
-                                                                  .colori
-                                                                  .isNotEmpty
-                                                              ? _parseColor(
-                                                                  snapshot
-                                                                      .data!
-                                                                      .colori[0],
-                                                                )
-                                                              : Colors.white,
-                                                          snapshot
-                                                                      .data!
-                                                                      .colori
-                                                                      .length >
-                                                                  1
-                                                              ? _parseColor(
-                                                                  snapshot
-                                                                      .data!
-                                                                      .colori[1],
-                                                                )
-                                                              : (snapshot
-                                                                        .data!
-                                                                        .colori
-                                                                        .isNotEmpty
-                                                                    ? _parseColor(
-                                                                        snapshot
-                                                                            .data!
-                                                                            .colori[0],
-                                                                      )
-                                                                    : Colors
-                                                                          .grey[300]!),
-                                                        ],
-                                                        begin:
-                                                            Alignment.topCenter,
-                                                        end: Alignment
-                                                            .bottomCenter,
-                                                      ).createShader(bounds),
-                                                      child: Icon(
-                                                        Icons.shield,
-                                                        size: 30,
-                                                        color: Colors.white,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            },
+                                          child: SquadraLogoWidget(
+                                            codSquadra: snapshot.data!.cod,
+                                            squadra: snapshot.data!,
+                                            size: 30,
+                                            nomeNazionale: _nomeNazionaleOrNull(
+                                              snapshot.data,
+                                              idNazionale:
+                                                  marcatore.idNazionale,
+                                            ),
                                           ),
                                         )
                                       else
@@ -1294,7 +1300,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                       FutureBuilder<Squadra>(
                         future: getSquadra(
                           Provider.of<SquadreProvider>(context, listen: false),
-                          autogol.idSquadraPro,
+                          autogol.idSquadraPro ?? 0,
+                          idNazionale: autogol.idNazionalePro,
                         ),
                         builder: (context, snapshot) {
                           return Container(
@@ -1319,94 +1326,15 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                       if (snapshot.hasData)
                                         Padding(
                                           padding: EdgeInsets.only(right: 8),
-                                          child: Image.asset(
-                                            'assets/squadre/${snapshot.data!.cod}.png',
-                                            height: 30,
-                                            width: 30,
-                                            errorBuilder: (context, error, stackTrace) {
-                                              return SizedBox(
-                                                height: 30,
-                                                width: 30,
-                                                child: Stack(
-                                                  alignment: Alignment.center,
-                                                  children: [
-                                                    Icon(
-                                                      Icons.shield,
-                                                      size: 30,
-                                                      color: Colors.black,
-                                                      shadows: [
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          blurRadius: 2,
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(1, 0),
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(-1, 0),
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(0, 1),
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(0, -1),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    ShaderMask(
-                                                      shaderCallback: (bounds) => LinearGradient(
-                                                        colors: [
-                                                          snapshot
-                                                                  .data!
-                                                                  .colori
-                                                                  .isNotEmpty
-                                                              ? _parseColor(
-                                                                  snapshot
-                                                                      .data!
-                                                                      .colori[0],
-                                                                )
-                                                              : Colors.white,
-                                                          snapshot
-                                                                      .data!
-                                                                      .colori
-                                                                      .length >
-                                                                  1
-                                                              ? _parseColor(
-                                                                  snapshot
-                                                                      .data!
-                                                                      .colori[1],
-                                                                )
-                                                              : (snapshot
-                                                                        .data!
-                                                                        .colori
-                                                                        .isNotEmpty
-                                                                    ? _parseColor(
-                                                                        snapshot
-                                                                            .data!
-                                                                            .colori[0],
-                                                                      )
-                                                                    : Colors
-                                                                          .grey[300]!),
-                                                        ],
-                                                        begin:
-                                                            Alignment.topCenter,
-                                                        end: Alignment
-                                                            .bottomCenter,
-                                                      ).createShader(bounds),
-                                                      child: Icon(
-                                                        Icons.shield,
-                                                        size: 30,
-                                                        color: Colors.white,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            },
+                                          child: SquadraLogoWidget(
+                                            codSquadra: snapshot.data!.cod,
+                                            squadra: snapshot.data!,
+                                            size: 30,
+                                            nomeNazionale: _nomeNazionaleOrNull(
+                                              snapshot.data,
+                                              idNazionale:
+                                                  autogol.idNazionalePro,
+                                            ),
                                           ),
                                         )
                                       else
@@ -1507,98 +1435,19 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                           context,
                                           listen: false,
                                         ),
-                                        autogol.idSquadra,
+                                        autogol.idSquadra ?? 0,
+                                        idNazionale: autogol.idNazionale,
                                       ),
                                       builder: (context, proSnapshot) {
                                         if (proSnapshot.hasData) {
-                                          return Image.asset(
-                                            'assets/squadre/${proSnapshot.data!.cod}.png',
-                                            height: 30,
-                                            width: 30,
-                                            errorBuilder: (context, error, stackTrace) {
-                                              return SizedBox(
-                                                height: 30,
-                                                width: 30,
-                                                child: Stack(
-                                                  alignment: Alignment.center,
-                                                  children: [
-                                                    Icon(
-                                                      Icons.shield,
-                                                      size: 30,
-                                                      color: Colors.black,
-                                                      shadows: [
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          blurRadius: 2,
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(1, 0),
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(-1, 0),
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(0, 1),
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(0, -1),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    ShaderMask(
-                                                      shaderCallback: (bounds) => LinearGradient(
-                                                        colors: [
-                                                          proSnapshot
-                                                                  .data!
-                                                                  .colori
-                                                                  .isNotEmpty
-                                                              ? _parseColor(
-                                                                  proSnapshot
-                                                                      .data!
-                                                                      .colori[0],
-                                                                )
-                                                              : Colors.white,
-                                                          proSnapshot
-                                                                      .data!
-                                                                      .colori
-                                                                      .length >
-                                                                  1
-                                                              ? _parseColor(
-                                                                  proSnapshot
-                                                                      .data!
-                                                                      .colori[1],
-                                                                )
-                                                              : (proSnapshot
-                                                                        .data!
-                                                                        .colori
-                                                                        .isNotEmpty
-                                                                    ? _parseColor(
-                                                                        proSnapshot
-                                                                            .data!
-                                                                            .colori[0],
-                                                                      )
-                                                                    : Colors
-                                                                          .grey[300]!),
-                                                        ],
-                                                        begin:
-                                                            Alignment.topCenter,
-                                                        end: Alignment
-                                                            .bottomCenter,
-                                                      ).createShader(bounds),
-                                                      child: Icon(
-                                                        Icons.shield,
-                                                        size: 30,
-                                                        color: Colors.white,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            },
+                                          return SquadraLogoWidget(
+                                            codSquadra: proSnapshot.data!.cod,
+                                            squadra: proSnapshot.data!,
+                                            size: 30,
+                                            nomeNazionale: _nomeNazionaleOrNull(
+                                              proSnapshot.data,
+                                              idNazionale: autogol.idNazionale,
+                                            ),
                                           );
                                         } else {
                                           return SizedBox(
@@ -1739,7 +1588,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                       FutureBuilder<Squadra>(
                         future: getSquadra(
                           Provider.of<SquadreProvider>(context, listen: false),
-                          rigoreSbagliato.idSquadra,
+                          rigoreSbagliato.idSquadra ?? 0,
+                          idNazionale: rigoreSbagliato.idNazionale,
                         ),
                         builder: (context, snapshot) {
                           return Container(
@@ -1764,94 +1614,15 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                       if (snapshot.hasData)
                                         Padding(
                                           padding: EdgeInsets.only(right: 8),
-                                          child: Image.asset(
-                                            'assets/squadre/${snapshot.data!.cod}.png',
-                                            height: 30,
-                                            width: 30,
-                                            errorBuilder: (context, error, stackTrace) {
-                                              return SizedBox(
-                                                height: 30,
-                                                width: 30,
-                                                child: Stack(
-                                                  alignment: Alignment.center,
-                                                  children: [
-                                                    Icon(
-                                                      Icons.shield,
-                                                      size: 30,
-                                                      color: Colors.black,
-                                                      shadows: [
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          blurRadius: 2,
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(1, 0),
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(-1, 0),
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(0, 1),
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(0, -1),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    ShaderMask(
-                                                      shaderCallback: (bounds) => LinearGradient(
-                                                        colors: [
-                                                          snapshot
-                                                                  .data!
-                                                                  .colori
-                                                                  .isNotEmpty
-                                                              ? _parseColor(
-                                                                  snapshot
-                                                                      .data!
-                                                                      .colori[0],
-                                                                )
-                                                              : Colors.white,
-                                                          snapshot
-                                                                      .data!
-                                                                      .colori
-                                                                      .length >
-                                                                  1
-                                                              ? _parseColor(
-                                                                  snapshot
-                                                                      .data!
-                                                                      .colori[1],
-                                                                )
-                                                              : (snapshot
-                                                                        .data!
-                                                                        .colori
-                                                                        .isNotEmpty
-                                                                    ? _parseColor(
-                                                                        snapshot
-                                                                            .data!
-                                                                            .colori[0],
-                                                                      )
-                                                                    : Colors
-                                                                          .grey[300]!),
-                                                        ],
-                                                        begin:
-                                                            Alignment.topCenter,
-                                                        end: Alignment
-                                                            .bottomCenter,
-                                                      ).createShader(bounds),
-                                                      child: Icon(
-                                                        Icons.shield,
-                                                        size: 30,
-                                                        color: Colors.white,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            },
+                                          child: SquadraLogoWidget(
+                                            codSquadra: snapshot.data!.cod,
+                                            squadra: snapshot.data!,
+                                            size: 30,
+                                            nomeNazionale: _nomeNazionaleOrNull(
+                                              snapshot.data,
+                                              idNazionale:
+                                                  rigoreSbagliato.idNazionale,
+                                            ),
                                           ),
                                         )
                                       else
@@ -2011,7 +1782,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                       FutureBuilder<Squadra>(
                         future: getSquadra(
                           Provider.of<SquadreProvider>(context, listen: false),
-                          golAnnullato.idSquadra,
+                          golAnnullato.idSquadra ?? 0,
+                          idNazionale: golAnnullato.idNazionale,
                         ),
                         builder: (context, snapshot) {
                           return Container(
@@ -2036,20 +1808,15 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                       if (snapshot.hasData)
                                         Padding(
                                           padding: EdgeInsets.only(right: 8),
-                                          child: Image.asset(
-                                            'assets/squadre/${snapshot.data!.cod}.png',
-                                            height: 30,
-                                            width: 30,
-                                            errorBuilder:
-                                                (context, error, stackTrace) {
-                                                  return SizedBox(
-                                                    height: 30,
-                                                    width: 30,
-                                                    child: _buildColoredShield(
-                                                      snapshot.data!,
-                                                    ),
-                                                  );
-                                                },
+                                          child: SquadraLogoWidget(
+                                            codSquadra: snapshot.data!.cod,
+                                            squadra: snapshot.data!,
+                                            size: 30,
+                                            nomeNazionale: _nomeNazionaleOrNull(
+                                              snapshot.data,
+                                              idNazionale:
+                                                  golAnnullato.idNazionale,
+                                            ),
                                           ),
                                         )
                                       else
@@ -2164,7 +1931,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                       FutureBuilder<Squadra>(
                         future: getSquadra(
                           Provider.of<SquadreProvider>(context, listen: false),
-                          cleanSheet.idSquadra,
+                          cleanSheet.idSquadra ?? 0,
+                          idNazionale: cleanSheet.idNazionale,
                         ),
                         builder: (context, snapshot) {
                           return Container(
@@ -2189,94 +1957,15 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                       if (snapshot.hasData)
                                         Padding(
                                           padding: EdgeInsets.only(right: 8),
-                                          child: Image.asset(
-                                            'assets/squadre/${snapshot.data!.cod}.png',
-                                            height: 30,
-                                            width: 30,
-                                            errorBuilder: (context, error, stackTrace) {
-                                              return SizedBox(
-                                                height: 30,
-                                                width: 30,
-                                                child: Stack(
-                                                  alignment: Alignment.center,
-                                                  children: [
-                                                    Icon(
-                                                      Icons.shield,
-                                                      size: 30,
-                                                      color: Colors.black,
-                                                      shadows: [
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          blurRadius: 2,
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(1, 0),
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(-1, 0),
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(0, 1),
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(0, -1),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    ShaderMask(
-                                                      shaderCallback: (bounds) => LinearGradient(
-                                                        colors: [
-                                                          snapshot
-                                                                  .data!
-                                                                  .colori
-                                                                  .isNotEmpty
-                                                              ? _parseColor(
-                                                                  snapshot
-                                                                      .data!
-                                                                      .colori[0],
-                                                                )
-                                                              : Colors.white,
-                                                          snapshot
-                                                                      .data!
-                                                                      .colori
-                                                                      .length >
-                                                                  1
-                                                              ? _parseColor(
-                                                                  snapshot
-                                                                      .data!
-                                                                      .colori[1],
-                                                                )
-                                                              : (snapshot
-                                                                        .data!
-                                                                        .colori
-                                                                        .isNotEmpty
-                                                                    ? _parseColor(
-                                                                        snapshot
-                                                                            .data!
-                                                                            .colori[0],
-                                                                      )
-                                                                    : Colors
-                                                                          .grey[300]!),
-                                                        ],
-                                                        begin:
-                                                            Alignment.topCenter,
-                                                        end: Alignment
-                                                            .bottomCenter,
-                                                      ).createShader(bounds),
-                                                      child: Icon(
-                                                        Icons.shield,
-                                                        size: 30,
-                                                        color: Colors.white,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            },
+                                          child: SquadraLogoWidget(
+                                            codSquadra: snapshot.data!.cod,
+                                            squadra: snapshot.data!,
+                                            size: 30,
+                                            nomeNazionale: _nomeNazionaleOrNull(
+                                              snapshot.data,
+                                              idNazionale:
+                                                  cleanSheet.idNazionale,
+                                            ),
                                           ),
                                         )
                                       else
@@ -2435,7 +2124,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                       FutureBuilder<Squadra>(
                         future: getSquadra(
                           Provider.of<SquadreProvider>(context, listen: false),
-                          espulso.idSquadra,
+                          espulso.idSquadra ?? 0,
+                          idNazionale: espulso.idNazionale,
                         ),
                         builder: (context, snapshot) {
                           return Container(
@@ -2460,94 +2150,14 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                       if (snapshot.hasData)
                                         Padding(
                                           padding: EdgeInsets.only(right: 8),
-                                          child: Image.asset(
-                                            'assets/squadre/${snapshot.data!.cod}.png',
-                                            height: 30,
-                                            width: 30,
-                                            errorBuilder: (context, error, stackTrace) {
-                                              return SizedBox(
-                                                height: 30,
-                                                width: 30,
-                                                child: Stack(
-                                                  alignment: Alignment.center,
-                                                  children: [
-                                                    Icon(
-                                                      Icons.shield,
-                                                      size: 30,
-                                                      color: Colors.black,
-                                                      shadows: [
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          blurRadius: 2,
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(1, 0),
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(-1, 0),
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(0, 1),
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(0, -1),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    ShaderMask(
-                                                      shaderCallback: (bounds) => LinearGradient(
-                                                        colors: [
-                                                          snapshot
-                                                                  .data!
-                                                                  .colori
-                                                                  .isNotEmpty
-                                                              ? _parseColor(
-                                                                  snapshot
-                                                                      .data!
-                                                                      .colori[0],
-                                                                )
-                                                              : Colors.white,
-                                                          snapshot
-                                                                      .data!
-                                                                      .colori
-                                                                      .length >
-                                                                  1
-                                                              ? _parseColor(
-                                                                  snapshot
-                                                                      .data!
-                                                                      .colori[1],
-                                                                )
-                                                              : (snapshot
-                                                                        .data!
-                                                                        .colori
-                                                                        .isNotEmpty
-                                                                    ? _parseColor(
-                                                                        snapshot
-                                                                            .data!
-                                                                            .colori[0],
-                                                                      )
-                                                                    : Colors
-                                                                          .grey[300]!),
-                                                        ],
-                                                        begin:
-                                                            Alignment.topCenter,
-                                                        end: Alignment
-                                                            .bottomCenter,
-                                                      ).createShader(bounds),
-                                                      child: Icon(
-                                                        Icons.shield,
-                                                        size: 30,
-                                                        color: Colors.white,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            },
+                                          child: SquadraLogoWidget(
+                                            codSquadra: snapshot.data!.cod,
+                                            squadra: snapshot.data!,
+                                            size: 30,
+                                            nomeNazionale: _nomeNazionaleOrNull(
+                                              snapshot.data,
+                                              idNazionale: espulso.idNazionale,
+                                            ),
                                           ),
                                         )
                                       else
@@ -2730,6 +2340,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
             if (selectedGiornata == null) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 setState(() {
+                  if (giornate.isEmpty) return;
                   final nonConcluse = giornate
                       .where((g) => !g.conclusa)
                       .toList();
@@ -2858,6 +2469,13 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
             } catch (e) {
               currentFase = null;
             }
+
+            // Pre-processing: crea una mappa di quale girone è stato mostrato per ogni partita
+            final Map<int, String?> partitaGironeMap = {};
+            for (int i = 0; i < partite.length; i++) {
+              partitaGironeMap[i] = _findGironeNome(partite[i].idTeamHome);
+            }
+
             return Padding(
               padding: EdgeInsets.only(top: 16),
               child: ListView.builder(
@@ -2943,41 +2561,79 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                     );
                   }
 
+                  // Determina il girone della partita
+                  final gironeNome = partitaGironeMap[index];
+                  final gironePrecedente = index > 0
+                      ? partitaGironeMap[index - 1]
+                      : null;
+
                   final bool isWideNostalgia =
                       MediaQuery.of(context).size.width > 1000;
 
                   // Modalità nostalgia: card espansa con formazioni e panchine
+                  Widget matchWidget;
                   if (isWideNostalgia && globals.effettoNostalgia) {
-                    return NostalgiaMatchCard(
+                    matchWidget = NostalgiaMatchCard(
                       partita: partita,
                       squadraHome: squadraHome,
                       squadraAway: squadraAway,
                       competizione: widget.competizione,
                       campionato: widget.campionato,
                     );
+                  } else {
+                    matchWidget = buildCampionatoMatch(
+                      CampionatoMatchModel(
+                        match: partita.id,
+                        partita: partita,
+                        campionato: widget.campionato,
+                        squadraHome: squadraHome,
+                        squadraAway: squadraAway,
+                        competizione: widget.competizione,
+                        andataPartita: andataPartita,
+                        onRefreshRequired: () {
+                          setState(() {
+                            _partiteCache.clear();
+                            _invalidateCacheKey++; // Invalida la cache
+                          });
+                          _caricaGiornate();
+                          _verificaPartiteSalvate();
+                        },
+                      ),
+                      context,
+                      currentFase,
+                    );
                   }
 
-                  return buildCampionatoMatch(
-                    CampionatoMatchModel(
-                      match: partita.id,
-                      partita: partita,
-                      campionato: widget.campionato,
-                      squadraHome: squadraHome,
-                      squadraAway: squadraAway,
-                      competizione: widget.competizione,
-                      andataPartita: andataPartita,
-                      onRefreshRequired: () {
-                        setState(() {
-                          _partiteCache.clear();
-                          _invalidateCacheKey++; // Invalida la cache
-                        });
-                        _caricaGiornate();
-                        _verificaPartiteSalvate();
-                      },
-                    ),
-                    context,
-                    currentFase,
-                  );
+                  // Mostra il titolo del girone solo se è diverso da quello precedente
+                  if (gironeNome != null && gironeNome != gironePrecedente) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
+                          child: Text(
+                            'Girone $gironeNome',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(
+                                widget.competizione.colori.isNotEmpty
+                                    ? int.parse(
+                                        widget.competizione.colori[0]
+                                            .replaceFirst('#', 'FF'),
+                                        radix: 16,
+                                      )
+                                    : 0xFF000000,
+                              ),
+                            ),
+                          ),
+                        ),
+                        matchWidget,
+                      ],
+                    );
+                  }
+
+                  return matchWidget;
                 },
               ),
             );
@@ -3031,10 +2687,21 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       return Center(child: Text('Nessuna classifica disponibile'));
     }
 
-    for (var pos in giornata.classifica!) {
-      if (pos.girone == String.fromCharCode(65 + count)) {
-        count++;
+    // Determina il numero di gironi da visualizzare
+    int numGironi = 0;
+    if (_isClassificaGironi() &&
+        widget.competizione.gironi != null &&
+        widget.competizione.gironi!.isNotEmpty) {
+      // Usa i gironi salvati nella competizione
+      numGironi = widget.competizione.gironi!.length;
+    } else {
+      // Conta i gironi dal campo 'girone' della classifica
+      for (var pos in giornata.classifica!) {
+        if (pos.girone == String.fromCharCode(65 + count)) {
+          count++;
+        }
       }
+      numGironi = count;
     }
 
     return Padding(
@@ -3043,7 +2710,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
           ? ListView.builder(
               shrinkWrap: shrinkWrap,
               physics: shrinkWrap ? NeverScrollableScrollPhysics() : null,
-              itemCount: count,
+              itemCount: numGironi,
               itemBuilder: (context, index) {
                 return cardClassifica(
                   giornata,
@@ -3051,6 +2718,12 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                   screenWidth,
                   screenHeight,
                   index,
+                  girone:
+                      _isClassificaGironi() &&
+                          widget.competizione.gironi != null &&
+                          widget.competizione.gironi!.isNotEmpty
+                      ? widget.competizione.gironi![index]
+                      : null,
                 );
               },
             )
@@ -3063,8 +2736,9 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     bool isWide,
     screenWidth,
     screenHeight,
-    int index,
-  ) {
+    int index, {
+    Girone? girone,
+  }) {
     List<PosizioneClassifica>? classifica = [];
 
     // Verifica che la classifica della giornata non sia null
@@ -3076,12 +2750,45 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
 
     if (widget.competizione.classifica == "Gironi") {
       giornata.classifica?.sort((a, b) => a.posizione.compareTo(b.posizione));
-      for (var pos in giornata.classifica!) {
-        if (pos.girone == String.fromCharCode(65 + index)) {
-          classifica.add(pos);
+
+      if (girone != null) {
+        // Filtra usando gli ID salvati nel girone della competizione
+        for (var pos in giornata.classifica!) {
+          bool belongs = false;
+
+          if (girone.idNazioni != null && girone.idNazioni!.isNotEmpty) {
+            // Girone di nazionali: confronta con idNazionale
+            belongs = girone.idNazioni!.contains(pos.idNazionale);
+          } else if (girone.idSquadre != null && girone.idSquadre!.isNotEmpty) {
+            // Girone di club: confronta con idSquadra
+            belongs = girone.idSquadre!.contains(pos.idSquadra);
+          }
+
+          if (belongs) {
+            classifica.add(pos);
+          }
+        }
+      } else {
+        // Fallback: usa il campo girone della classifica
+        for (var pos in giornata.classifica!) {
+          if (pos.girone == String.fromCharCode(65 + index)) {
+            classifica.add(pos);
+          }
         }
       }
-      classifica.sort((a, b) => a.posizione.compareTo(b.posizione));
+
+      classifica.sort((a, b) {
+        final punti = b.punti.compareTo(a.punti);
+        if (punti != 0) return punti;
+
+        final diff = b.diff.compareTo(a.diff);
+        if (diff != 0) return diff;
+
+        final golFatti = b.gFatti.compareTo(a.gFatti);
+        if (golFatti != 0) return golFatti;
+
+        return a.posizione.compareTo(b.posizione);
+      });
     } else {
       giornata.classifica?.sort((a, b) => a.posizione.compareTo(b.posizione));
       classifica = giornata.classifica;
@@ -3106,26 +2813,37 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  "Girone ${classifica!.isNotEmpty ? classifica[0].girone : String.fromCharCode(65 + index)}",
+                  "Girone ${girone?.nome ?? (classifica!.isNotEmpty ? classifica[0].girone : String.fromCharCode(65 + index))}",
                   style: TextStyle(color: Colors.white, fontSize: 20),
                 ),
               ),
             buildHeader(isWide),
             Flexible(
               fit: FlexFit.loose,
-              child: ListView(
-                shrinkWrap: true,
-                children: [
-                  for (var i = 0; i < (classifica?.length ?? 0); i++)
-                    teamListClassifica(
-                      context,
-                      isWide,
-                      screenWidth,
-                      screenHeight,
-                      classifica![i],
-                      classifica.length,
-                    ),
-                ],
+              child: FutureBuilder<List<Squadra>>(
+                future: _squadreCompetizioneFuture,
+                builder: (context, snapshot) {
+                  final squadreList = snapshot.data ?? [];
+                  return ListView(
+                    shrinkWrap: true,
+                    children: [
+                      for (var i = 0; i < (classifica?.length ?? 0); i++)
+                        teamListClassifica(
+                          context,
+                          isWide,
+                          screenWidth,
+                          screenHeight,
+                          classifica![i],
+                          classifica.length,
+                          posizioneVisualizzata:
+                              widget.competizione.classifica == "Gironi"
+                              ? i + 1
+                              : classifica[i].posizione,
+                          squadreList: squadreList,
+                        ),
+                    ],
+                  );
+                },
               ),
             ),
           ],
@@ -3454,13 +3172,11 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
             return Card(
               margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: ListTile(
-                leading: Image.asset(
-                  'assets/squadre/${squadra.cod}.png',
-                  width: 40,
-                  height: 40,
-                  errorBuilder: (context, error, stackTrace) {
-                    return _buildColoredShield(squadra);
-                  },
+                leading: SquadraLogoWidget(
+                  codSquadra: squadra.cod,
+                  squadra: squadra,
+                  size: 40,
+                  nomeNazionale: _nomeNazionaleOrNull(squadra),
                 ),
                 title: Text(
                   CommonService.decodePlayerName(squadra.nome),
@@ -3729,36 +3445,81 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     bool isWide,
     double screenWidth,
     double screenHeight,
-    PosizioneClassifica? posizione,
-    int totalTeams,
-  ) {
+    PosizioneClassifica posizione,
+    int totalTeams, {
+    required int posizioneVisualizzata,
+    List<Squadra>? squadreList,
+  }) {
     final provider = Provider.of<SquadreProvider>(context, listen: false);
     final competizioniProvider = Provider.of<CompetizioniProvider>(
       context,
       listen: false,
     );
+
+    // Trova la squadra nella lista se disponibile
+    Squadra? squadraCorrispondente;
+    if (squadreList != null &&
+        (posizione.idNazionale == null || !posizione.idNazionale!.isNotEmpty)) {
+      try {
+        squadraCorrispondente = squadreList.firstWhere(
+          (s) => s.id == posizione.idSquadra,
+        );
+      } catch (e) {
+        squadraCorrispondente = null;
+      }
+    }
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: () async {
-          var squadra = await getSquadra(provider, posizione.idSquadra);
-          squadra = addCompetizioni(
-            squadra,
-            await competizioniProvider.fetchCompetizioni(widget.campionato),
-          );
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) =>
-                  SquadrePage(squadra: squadra, campionato: widget.campionato),
-            ),
-          );
+          if (posizione.idNazionale?.isNotEmpty == true ||
+              widget.competizione.id == 17 ||
+              widget.competizione.id == 18) {
+            final nazionaliProvider = Provider.of<NazionaliProvider>(
+              context,
+              listen: false,
+            );
+            final nazionali = await nazionaliProvider.fetchNazionali(
+              widget.campionato,
+            );
+            final nazionale = nazionali.firstWhere(
+              (n) => posizione.idNazionale?.isNotEmpty == true
+                  ? n.id == posizione.idNazionale
+                  : n.nome == posizione.nomeSquadra,
+              orElse: () => nazionali.first,
+            );
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => NazionalePage(
+                  nazionale: nazionale,
+                  campionato: widget.campionato,
+                ),
+              ),
+            );
+          } else {
+            var squadra = await getSquadra(provider, posizione.idSquadra);
+            squadra = addCompetizioni(
+              squadra,
+              await competizioniProvider.fetchCompetizioni(widget.campionato),
+            );
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SquadrePage(
+                  squadra: squadra,
+                  campionato: widget.campionato,
+                ),
+              ),
+            );
+          }
         },
         child: Container(
           width: screenWidth * 1,
           height: 45,
           decoration: BoxDecoration(
-            color: _getRowBackgroundColor(posizione!.posizione, totalTeams),
+            color: _getRowBackgroundColor(posizioneVisualizzata, totalTeams),
             border: Border(
               bottom: BorderSide(
                 color: Colors.grey[350] ?? Colors.grey,
@@ -3773,7 +3534,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                 child: Builder(
                   builder: (context) {
                     final boxColor = _getPositionBoxColor(
-                      posizione.posizione,
+                      posizioneVisualizzata,
                       totalTeams,
                     );
                     if (boxColor != null) {
@@ -3786,7 +3547,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          '${posizione.posizione}',
+                          '$posizioneVisualizzata',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.white,
@@ -3796,7 +3557,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                       );
                     }
                     return Text(
-                      '${posizione.posizione}',
+                      '$posizioneVisualizzata',
                       style: TextStyle(fontSize: 12, color: Colors.white),
                       textAlign: TextAlign.center,
                     );
@@ -3805,21 +3566,15 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
               ),
               Padding(
                 padding: EdgeInsets.only(left: 8),
-                child: Image.asset(
-                  'assets/squadre/${posizione.codSquadra}.png',
-                  fit: BoxFit.cover,
-                  height: 35,
-                  errorBuilder: (context, error, stackTrace) {
-                    return FutureBuilder<Squadra>(
-                      future: getSquadra(provider, posizione.idSquadra),
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          return _buildColoredShield(snapshot.data!);
-                        }
-                        return Icon(Icons.shield, size: 35, color: Colors.grey);
-                      },
-                    );
-                  },
+                child: SquadraLogoWidget(
+                  codSquadra: posizione.codSquadra!,
+                  squadra: squadraCorrispondente,
+                  size: 35,
+                  nomeNazionale: _nomeNazionaleOrNull(
+                    squadraCorrispondente,
+                    idNazionale: posizione.idNazionale,
+                    fallbackName: posizione.nomeSquadra,
+                  ),
                 ),
               ),
               Expanded(
@@ -3980,7 +3735,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       builder: (BuildContext context) {
         return Container(
           padding: EdgeInsets.all(16),
-          height: 350,
+          height: _isClassificaGironi() ? 420 : 350,
           width: 500,
           child: Column(
             children: [
@@ -4022,6 +3777,23 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                   _showCreaGiornataDialog();
                 },
               ),
+              if (_isClassificaGironi()) ...[
+                SizedBox(height: 16),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent.withOpacity(0.1),
+                  ),
+                  icon: Icon(Icons.groups, color: Colors.white),
+                  label: Text(
+                    'Configura gruppi',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _showConfiguraGironiDialog();
+                  },
+                ),
+              ],
               Padding(
                 padding: EdgeInsets.only(top: 70.0),
                 child: ElevatedButton(
@@ -4033,6 +3805,327 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
               ),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showConfiguraGironiDialog() async {
+    final squadre = await _squadreCompetizioneFuture;
+    squadre.sort((a, b) => a.nome.compareTo(b.nome));
+
+    final isNazioniCompetition = _nazionaleIdByFakeId.isNotEmpty;
+    final fakeIdByNazionaleId = <String, int>{
+      for (final entry in _nazionaleIdByFakeId.entries) entry.value: entry.key,
+    };
+
+    List<Map<String, dynamic>> gruppiConfig = _gironiConfigurati.isNotEmpty
+        ? _gironiConfigurati
+              .map(
+                (g) => <String, dynamic>{
+                  'nome': g.nome,
+                  'ids': isNazioniCompetition
+                      ? (g.idNazioni ?? const <String>[])
+                            .map((idNazione) => fakeIdByNazionaleId[idNazione])
+                            .whereType<int>()
+                            .toList()
+                      : List<int>.from(g.idSquadre ?? const <int>[]),
+                },
+              )
+              .toList()
+        : [
+            <String, dynamic>{'nome': 'A', 'ids': <int>[]},
+          ];
+
+    bool isSaving = false;
+
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        final isWide = MediaQuery.of(context).size.width > 600;
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Configura gruppi',
+                      style: TextStyle(color: getColor('primary')),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close, color: getColor('primary')),
+                    onPressed: isSaving
+                        ? null
+                        : () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: SizedBox(
+                  width: isWide ? 700 : double.maxFinite,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Gruppi',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: getColor('primary'),
+                            ),
+                          ),
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: getColor('primary'),
+                              foregroundColor: Colors.white,
+                              visualDensity: VisualDensity.compact,
+                            ),
+                            onPressed: () {
+                              setStateDialog(() {
+                                final nextIndex = gruppiConfig.length;
+                                gruppiConfig.add(<String, dynamic>{
+                                  'nome': String.fromCharCode(65 + nextIndex),
+                                  'ids': <int>[],
+                                });
+                              });
+                            },
+                            icon: Icon(Icons.add),
+                            label: Text('Aggiungi gruppo'),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 8),
+                      ...gruppiConfig.asMap().entries.map((entry) {
+                        final groupIndex = entry.key;
+                        final group = entry.value;
+                        final nomeController = TextEditingController(
+                          text: (group['nome'] ?? '').toString(),
+                        );
+
+                        return Card(
+                          margin: EdgeInsets.only(bottom: 8),
+                          child: Padding(
+                            padding: EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextFormField(
+                                        controller: nomeController,
+                                        decoration: InputDecoration(
+                                          labelText: 'Nome gruppo',
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                          isDense: true,
+                                        ),
+                                        onChanged: (value) {
+                                          setStateDialog(() {
+                                            gruppiConfig[groupIndex]['nome'] =
+                                                value;
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                    if (gruppiConfig.length > 1)
+                                      IconButton(
+                                        onPressed: () {
+                                          setStateDialog(() {
+                                            gruppiConfig.removeAt(groupIndex);
+                                          });
+                                        },
+                                        icon: Icon(
+                                          Icons.delete,
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                SizedBox(height: 10),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: squadre.map((squadra) {
+                                    final idsGruppo = List<int>.from(
+                                      group['ids'] ?? const <int>[],
+                                    );
+                                    final isSelected = idsGruppo.contains(
+                                      squadra.id,
+                                    );
+                                    final selectedInOtherGroup = gruppiConfig
+                                        .asMap()
+                                        .entries
+                                        .any((e) {
+                                          if (e.key == groupIndex) {
+                                            return false;
+                                          }
+                                          final ids = List<int>.from(
+                                            e.value['ids'] ?? const <int>[],
+                                          );
+                                          return ids.contains(squadra.id);
+                                        });
+
+                                    return FilterChip(
+                                      label: Text(
+                                        CommonService.decodePlayerName(
+                                          squadra.nome,
+                                        ),
+                                      ),
+                                      selected: isSelected,
+                                      onSelected: selectedInOtherGroup
+                                          ? null
+                                          : (selected) {
+                                              setStateDialog(() {
+                                                final currentIds = List<int>.from(
+                                                  gruppiConfig[groupIndex]['ids'] ??
+                                                      const <int>[],
+                                                );
+                                                if (selected) {
+                                                  currentIds.add(squadra.id);
+                                                } else {
+                                                  currentIds.remove(squadra.id);
+                                                }
+                                                gruppiConfig[groupIndex]['ids'] =
+                                                    currentIds;
+                                              });
+                                            },
+                                      backgroundColor: Colors.white,
+                                      selectedColor: getColor(
+                                        'primary',
+                                      ).withOpacity(0.2),
+                                      side: BorderSide(
+                                        color: getColor(
+                                          'primary',
+                                        ).withOpacity(0.3),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSaving
+                      ? null
+                      : () => Navigator.of(context).pop(),
+                  child: Text('Annulla'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: getColor('primary'),
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: isSaving
+                      ? null
+                      : () async {
+                          final idsAssegnati = <int>{};
+                          final gironi = <Girone>[];
+
+                          for (int i = 0; i < gruppiConfig.length; i++) {
+                            final nome = (gruppiConfig[i]['nome'] ?? '')
+                                .toString()
+                                .trim();
+                            final ids = List<int>.from(
+                              gruppiConfig[i]['ids'] ?? const <int>[],
+                            );
+
+                            if (nome.isEmpty) {
+                              _showMessage(
+                                'Inserisci il nome per il gruppo ${i + 1}',
+                              );
+                              return;
+                            }
+                            if (ids.isEmpty) {
+                              _showMessage(
+                                'Seleziona almeno una squadra per il gruppo "$nome"',
+                              );
+                              return;
+                            }
+
+                            for (final id in ids) {
+                              if (idsAssegnati.contains(id)) {
+                                _showMessage(
+                                  'Una squadra non può essere in più gruppi',
+                                );
+                                return;
+                              }
+                              idsAssegnati.add(id);
+                            }
+
+                            // Distingui tra nazionali e club
+                            if (isNazioniCompetition) {
+                              // Converti gli id fake (int) agli id reali (string) delle nazionali
+                              final idNazioniReali = ids
+                                  .map((fakeId) => _nazionaleIdByFakeId[fakeId])
+                                  .whereType<String>()
+                                  .toList();
+                              gironi.add(
+                                Girone(nome: nome, idNazioni: idNazioniReali),
+                              );
+                            } else {
+                              // Usa idSquadre per i club
+                              gironi.add(Girone(nome: nome, idSquadre: ids));
+                            }
+                          }
+
+                          setStateDialog(() {
+                            isSaving = true;
+                          });
+
+                          final provider = Provider.of<CompetizioniProvider>(
+                            context,
+                            listen: false,
+                          );
+                          final saved = await provider
+                              .aggiornaGironiCompetizione(
+                                widget.campionato,
+                                widget.competizione.id,
+                                gironi,
+                              );
+
+                          if (!context.mounted) return;
+
+                          setState(() {
+                            _gironiConfigurati = gironi;
+                          });
+
+                          Navigator.of(context).pop();
+                          if (saved) {
+                            _showMessage('Gruppi salvati con successo');
+                          } else {
+                            _showMessage('Impossibile salvare i gruppi');
+                          }
+                        },
+                  child: isSaving
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text('Salva gruppi'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -4051,7 +4144,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
         []; // Lista di partite con idHome e idAway
     bool isCreating = false;
 
-    // Carica le squadre abilitate
+    // Carica le squadre/nazionali abilitate
     final squadre = await _squadreCompetizioneFuture;
     squadre.sort((a, b) => a.nome.compareTo(b.nome));
 
@@ -4105,6 +4198,13 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: getColor("primary"),
+                                      width: 1,
+                                    ),
+                                  ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(8),
                                     borderSide: BorderSide(
@@ -4128,6 +4228,13 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                   ),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: getColor("primary"),
+                                      width: 1,
+                                    ),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(8),
@@ -4166,6 +4273,13 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: getColor("primary"),
+                                width: 1,
+                              ),
+                            ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(
@@ -4183,6 +4297,13 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                             labelStyle: TextStyle(color: getColor("primary")),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: getColor("primary"),
+                                width: 1,
+                              ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
@@ -4606,6 +4727,22 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                               borderRadius:
                                                   BorderRadius.circular(8),
                                             ),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              borderSide: BorderSide(
+                                                color: getColor("primary"),
+                                                width: 1,
+                                              ),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              borderSide: BorderSide(
+                                                color: getColor("primary"),
+                                                width: 2,
+                                              ),
+                                            ),
                                           ),
                                           items: squadre.map((squadra) {
                                             return DropdownMenuItem<int>(
@@ -4650,6 +4787,22 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                             border: OutlineInputBorder(
                                               borderRadius:
                                                   BorderRadius.circular(8),
+                                            ),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              borderSide: BorderSide(
+                                                color: getColor("primary"),
+                                                width: 1,
+                                              ),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              borderSide: BorderSide(
+                                                color: getColor("primary"),
+                                                width: 2,
+                                              ),
                                             ),
                                           ),
                                           items: squadre.map((squadra) {
@@ -4705,6 +4858,22 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                               borderRadius:
                                                   BorderRadius.circular(8),
                                             ),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              borderSide: BorderSide(
+                                                color: getColor("primary"),
+                                                width: 1,
+                                              ),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              borderSide: BorderSide(
+                                                color: getColor("primary"),
+                                                width: 2,
+                                              ),
+                                            ),
                                             contentPadding:
                                                 EdgeInsets.symmetric(
                                                   horizontal: 8,
@@ -4755,6 +4924,22 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                             border: OutlineInputBorder(
                                               borderRadius:
                                                   BorderRadius.circular(8),
+                                            ),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              borderSide: BorderSide(
+                                                color: getColor("primary"),
+                                                width: 1,
+                                              ),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              borderSide: BorderSide(
+                                                color: getColor("primary"),
+                                                width: 2,
+                                              ),
                                             ),
                                             contentPadding:
                                                 EdgeInsets.symmetric(
@@ -4846,6 +5031,21 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                               SnackBar(
                                 content: Text(
                                   'Inserisci un nome per la giornata',
+                                ),
+                                backgroundColor: Colors.red,
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                            return;
+                          }
+
+                          if (selectedFase == 'G' &&
+                              _isClassificaGironi() &&
+                              _gironiConfigurati.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Configura prima i gruppi dal menu calendario',
                                 ),
                                 backgroundColor: Colors.red,
                                 duration: Duration(seconds: 2),
@@ -4957,11 +5157,21 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
         final squadre = await _squadreCompetizioneFuture;
         squadre.sort((a, b) => a.nome.compareTo(b.nome));
 
+        final Map<int, String> gironeByTeamId = {};
+        if (fase == 'G' && _gironiConfigurati.isNotEmpty) {
+          for (final g in _gironiConfigurati) {
+            for (final id in g.idSquadre ?? const <int>[]) {
+              gironeByTeamId[id] = g.nome;
+            }
+          }
+        }
+
         for (int i = 0; i < squadre.length; i++) {
           classificaIniziale.add(
             PosizioneClassifica(
               posizione: i + 1,
               idSquadra: squadre[i].id,
+              idNazionale: _nazionaleIdByFakeId[squadre[i].id] ?? '',
               nomeSquadra: squadre[i].nome,
               codSquadra: squadre[i].cod,
               punti: 0,
@@ -4972,6 +5182,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
               gFatti: 0,
               gSubiti: 0,
               diff: 0,
+              girone: fase == 'G' ? gironeByTeamId[squadre[i].id] : null,
             ),
           );
         }
@@ -5053,6 +5264,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                 teamAway: CommonService.decodePlayerName(squadraAway.nome),
                 idTeamHome: squadraHome.id,
                 idTeamAway: squadraAway.id,
+                idNazionaleHome: _nazionaleIdByFakeId[squadraHome.id] ?? '',
+                idNazionaleAway: _nazionaleIdByFakeId[squadraAway.id] ?? '',
                 codHome: squadraHome.cod,
                 codAway: squadraAway.cod,
                 risultatoHome: 0,
@@ -5090,6 +5303,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                 teamAway: CommonService.decodePlayerName(squadraHome.nome),
                 idTeamHome: squadraAway.id,
                 idTeamAway: squadraHome.id,
+                idNazionaleHome: _nazionaleIdByFakeId[squadraAway.id] ?? '',
+                idNazionaleAway: _nazionaleIdByFakeId[squadraHome.id] ?? '',
                 codHome: squadraAway.cod,
                 codAway: squadraHome.cod,
                 risultatoHome: 0,
@@ -5178,6 +5393,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                 teamAway: CommonService.decodePlayerName(squadraAway.nome),
                 idTeamHome: squadraHome.id,
                 idTeamAway: squadraAway.id,
+                idNazionaleHome: _nazionaleIdByFakeId[squadraHome.id] ?? '',
+                idNazionaleAway: _nazionaleIdByFakeId[squadraAway.id] ?? '',
                 codHome: squadraHome.cod,
                 codAway: squadraAway.cod,
                 risultatoHome: 0,
@@ -5232,7 +5449,41 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     }
   }
 
-  Future<Squadra> getSquadra(SquadreProvider provider, int idSquadra) async {
+  /// Converte una [Nazionale] in uno [Squadra] fittizio usabile nei
+  /// dropdown di creazione giornata. Usa il nome come cod.
+  Squadra _nazionaleAsSquadra(Nazionale n) {
+    final emptyFormazione = Formazione(
+      titolari: [],
+      panchina: [],
+      indisponibili: [],
+      nonConvocati: [],
+      allenatore: '',
+      modulo: '',
+    );
+    final fakeId = n.nome.hashCode.abs();
+    _nazionaleIdByFakeId[fakeId] = n.id;
+    _nazionaleIdByNome[n.nome.toLowerCase()] = n.id;
+    return Squadra(
+      id: fakeId,
+      nome: n.nome,
+      cod: n.codNazione,
+      citta: '',
+      stadio: '',
+      campionato: widget.campionato,
+      categoria: n.categoria,
+      colori: n.colori,
+      formazione: emptyFormazione,
+      formazioneOld: emptyFormazione,
+      indisponibili: [],
+      competizioni: n.competizioni,
+    );
+  }
+
+  Future<Squadra> getSquadra(
+    SquadreProvider provider,
+    int idSquadra, {
+    String? idNazionale,
+  }) async {
     List<Squadra> squadre = await _squadreFuture;
 
     for (var squadra in squadre) {
@@ -5240,78 +5491,32 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
         return squadra;
       }
     }
+
+    final squadreCompetizione = await _squadreCompetizioneFuture;
+    for (var squadra in squadreCompetizione) {
+      if (squadra.id == idSquadra ||
+          ((idNazionale?.isNotEmpty ?? false) &&
+              _nazionaleIdByFakeId[squadra.id] == idNazionale)) {
+        return squadra;
+      }
+    }
+
+    if (idNazionale?.isNotEmpty ?? false) {
+      final nazionaliProvider = Provider.of<NazionaliProvider>(
+        context,
+        listen: false,
+      );
+      final nazionali = await nazionaliProvider.fetchNazionali(
+        widget.campionato,
+      );
+      for (var nazionale in nazionali) {
+        if (nazionale.id == idNazionale) {
+          return _nazionaleAsSquadra(nazionale);
+        }
+      }
+    }
+
     throw Exception('Squadra non trovata');
-  }
-
-  Widget _buildColoredShield(Squadra squadra) {
-    const double size = 30;
-    const shadowList = [
-      Shadow(color: Colors.black, blurRadius: 2),
-      Shadow(color: Colors.black, offset: Offset(1, 0)),
-      Shadow(color: Colors.black, offset: Offset(-1, 0)),
-      Shadow(color: Colors.black, offset: Offset(0, 1)),
-      Shadow(color: Colors.black, offset: Offset(0, -1)),
-    ];
-
-    if (squadra.colori.isEmpty) {
-      return Stack(
-        alignment: Alignment.center,
-        children: [
-          Icon(
-            Icons.shield,
-            size: size,
-            color: Colors.black,
-            shadows: shadowList,
-          ),
-          Icon(Icons.shield, size: size, color: Colors.grey),
-        ],
-      );
-    }
-
-    final Map<String, Color> colorMap = {
-      'rosso': Colors.red,
-      'verde': Colors.green,
-      'blu': Colors.blueAccent,
-      'blu scuro': Colors.blue[900]!,
-      'giallo': Colors.yellow[600]!,
-      'arancione': Colors.orange[900]!,
-      'viola': Colors.purple[800]!,
-      'nero': Colors.black,
-      'bianco': Colors.white,
-      'grigio': Colors.grey,
-      'fucsia': Colors.pink[700]!,
-      'rosa': Color.fromARGB(255, 255, 147, 183),
-      'ciano': Colors.lightBlue[300]!,
-      'marrone': Color.fromARGB(255, 122, 54, 34),
-    };
-
-    Widget coloredIcon;
-    if (squadra.colori.length == 1) {
-      final color = colorMap[squadra.colori[0].toLowerCase()] ?? Colors.grey;
-      coloredIcon = Icon(Icons.shield, size: size, color: color);
-    } else {
-      final colors = squadra.colori
-          .map((c) => colorMap[c.toLowerCase()] ?? Colors.grey)
-          .toList();
-      coloredIcon = ShaderMask(
-        shaderCallback: (bounds) =>
-            LinearGradient(colors: colors).createShader(bounds),
-        child: Icon(Icons.shield, size: size, color: Colors.white),
-      );
-    }
-
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Icon(
-          Icons.shield,
-          size: size,
-          color: Colors.black,
-          shadows: shadowList,
-        ),
-        coloredIcon,
-      ],
-    );
   }
 
   Future<void> _pickAndProcessCsvFile() async {
@@ -5423,6 +5628,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
             PosizioneClassifica(
               posizione: i + 1,
               idSquadra: squadre[i].id,
+              idNazionale: _nazionaleIdByFakeId[squadre[i].id] ?? '',
               nomeSquadra: squadre[i].nome,
               codSquadra: squadre[i].cod,
               punti: 0,
@@ -5665,6 +5871,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       teamAway: squadraTrasferta,
       idTeamHome: 0,
       idTeamAway: 0,
+      idNazionaleHome: _nazionaleIdByNome[squadraCasa.toLowerCase()] ?? '',
+      idNazionaleAway: _nazionaleIdByNome[squadraTrasferta.toLowerCase()] ?? '',
       codHome: '',
       codAway: '',
       risultatoHome: 0,

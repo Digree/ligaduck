@@ -7,6 +7,7 @@ class Competizione {
   final List<String> colori;
   final int idCampione;
   final bool conclusa;
+  final List<Girone>? gironi;
 
   Competizione({
     required this.id,
@@ -17,6 +18,7 @@ class Competizione {
     required this.colori,
     this.idCampione = 0,
     this.conclusa = false,
+    this.gironi,
   });
 
   factory Competizione.fromJson(Map<String, dynamic> json) {
@@ -29,6 +31,11 @@ class Competizione {
       colori: json['colori'] != null ? List<String>.from(json['colori']) : [],
       idCampione: json['idCampione'] ?? 0,
       conclusa: json['conclusa'] ?? false,
+      gironi: json['gironi'] != null
+          ? (json['gironi'] as List)
+                .map((e) => Girone.fromJson(e as Map<String, dynamic>))
+                .toList()
+          : null,
     );
   }
 
@@ -40,6 +47,9 @@ class Competizione {
       'attiva': attiva,
       'classifica': classifica,
       'colori': colori,
+      'idCampione': idCampione,
+      'conclusa': conclusa,
+      'gironi': gironi?.map((g) => g.toJson()).toList(),
     };
   }
 }
@@ -77,5 +87,29 @@ class CompetizioneVincitore {
       'colori': colori,
       'cod': cod,
     };
+  }
+}
+
+class Girone {
+  final String nome;
+  final List<int>? idSquadre;
+  final List<String>? idNazioni;
+
+  Girone({required this.nome, this.idSquadre, this.idNazioni});
+
+  factory Girone.fromJson(Map<String, dynamic> json) {
+    return Girone(
+      nome: json['nome'],
+      idSquadre: json['idSquadre'] != null
+          ? List<int>.from(json['idSquadre'])
+          : null,
+      idNazioni: json['idNazioni'] != null
+          ? List<String>.from(json['idNazioni'])
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'nome': nome, 'idSquadre': idSquadre, 'idNazioni': idNazioni};
   }
 }

@@ -20,6 +20,7 @@ class AddGiocatoriPage extends StatefulWidget {
   final String campionato;
   final bool soloAllenatori;
   final bool disabilitaCsv;
+  final String? idNazionale;
 
   const AddGiocatoriPage({
     super.key,
@@ -27,6 +28,7 @@ class AddGiocatoriPage extends StatefulWidget {
     required this.campionato,
     this.soloAllenatori = false,
     this.disabilitaCsv = false,
+    this.idNazionale,
   });
 
   @override
@@ -275,7 +277,9 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
               child: SizedBox(
                 width: double.infinity,
                 child: DropdownButtonFormField<String>(
-                  initialValue: _ruoloSelezionato,
+                  initialValue: widget.soloAllenatori
+                      ? 'Allenatore'
+                      : _ruoloSelezionato,
                   isExpanded: true,
                   decoration: InputDecoration(
                     labelText: 'Ruolo',
@@ -552,7 +556,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
     _numeroMagliaController.clear();
 
     setState(() {
-      _ruoloSelezionato = 'Portiere';
+      _ruoloSelezionato = widget.soloAllenatori ? 'Allenatore' : 'Portiere';
       _nazioneSelezionata = _nazioni.isNotEmpty ? _nazioni.first : 'Italia';
       _isEx = false;
       _idGiocatoreEx = null;
@@ -676,22 +680,24 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
       Carriera nuovaCarriera = _ruoloSelezionato == 'Allenatore'
           ? Carriera(
               campionato: widget.campionato,
-              idSquadra: widget.squadra.id,
+              idSquadra: widget.idNazionale != null ? 0 : widget.squadra.id,
               numero: numeroMaglia,
               gol: 0,
               presenze: 0,
               espulsioni: 0,
               esonero: false,
               attivo: true,
+              idNazionale: widget.idNazionale,
             )
           : Carriera(
               campionato: widget.campionato,
-              idSquadra: widget.squadra.id,
+              idSquadra: widget.idNazionale != null ? 0 : widget.squadra.id,
               numero: numeroMaglia,
               gol: 0,
               presenze: 0,
               espulsioni: 0,
               attivo: true,
+              idNazionale: widget.idNazionale,
             );
       int etaCasuale = Random().nextInt(3) + 18;
       Giocatore nuovoGiocatore = Giocatore(
@@ -701,7 +707,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
         ruolo: _ruoloSelezionato,
         nazione: _nazioneSelezionata.toLowerCase(),
         carriera: [nuovaCarriera],
-        idSquadraAttuale: widget.squadra.id,
+        idSquadraAttuale: widget.idNazionale != null ? 0 : widget.squadra.id,
         ex: _isEx ? _idGiocatoreEx : null,
         attivo: true,
       );
@@ -1010,22 +1016,24 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
     Carriera nuovaCarriera = ruolo == 'Allenatore'
         ? Carriera(
             campionato: widget.campionato,
-            idSquadra: widget.squadra.id,
+            idSquadra: widget.idNazionale != null ? 0 : widget.squadra.id,
             numero: numero,
             gol: 0,
             presenze: 0,
             espulsioni: 0,
             esonero: false,
             attivo: true,
+            idNazionale: widget.idNazionale,
           )
         : Carriera(
             campionato: widget.campionato,
-            idSquadra: widget.squadra.id,
+            idSquadra: widget.idNazionale != null ? 0 : widget.squadra.id,
             numero: numero,
             gol: 0,
             presenze: 0,
             espulsioni: 0,
             attivo: true,
+            idNazionale: widget.idNazionale,
           );
 
     Giocatore nuovoGiocatore = Giocatore(
@@ -1035,7 +1043,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
       ruolo: ruolo,
       nazione: nazione.toLowerCase(),
       carriera: [nuovaCarriera],
-      idSquadraAttuale: widget.squadra.id,
+      idSquadraAttuale: widget.idNazionale != null ? 0 : widget.squadra.id,
       attivo: true,
     );
 

@@ -474,7 +474,7 @@ class _SquadrePageState extends State<SquadrePage> {
             flexibleSpace: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [getColor('primary'), getColor('secondary')],
+                  colors: _allGradientColors(),
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -576,7 +576,7 @@ class _SquadrePageState extends State<SquadrePage> {
         height: isWide ? 250 : screenWidth * 0.4,
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [getColor('primary'), getColor('secondary')],
+            colors: _allGradientColors(),
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -662,7 +662,7 @@ class _SquadrePageState extends State<SquadrePage> {
         height: isWide ? 250 : screenWidth * 0.4,
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [getColor('primary'), getColor('secondary')],
+            colors: _allGradientColors(),
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -2694,6 +2694,31 @@ class _SquadrePageState extends State<SquadrePage> {
     }
   }
 
+  List<Color> _allGradientColors() {
+    final Map<String, Color> colorMap = {
+      'rosso': Colors.red,
+      'verde': Colors.green,
+      'blu': Colors.blueAccent,
+      'blu scuro': Colors.blue[900]!,
+      'giallo': Colors.yellow[600]!,
+      'arancione': Colors.orange[900]!,
+      'viola': Colors.purple[800]!,
+      'nero': Colors.black,
+      'bianco': Colors.white,
+      'grigio': Colors.grey,
+      'fucsia': Colors.pink[700]!,
+      'rosa': Color.fromARGB(255, 255, 147, 183),
+      'ciano': Colors.lightBlue[300]!,
+      'marrone': Color.fromARGB(255, 122, 54, 34),
+    };
+    final colors = widget.squadra.colori
+        .map((c) => colorMap[c.toLowerCase()] ?? Colors.grey)
+        .toList();
+    if (colors.isEmpty) return [Colors.grey, Colors.grey];
+    if (colors.length == 1) return [colors[0], colors[0]];
+    return colors;
+  }
+
   bool isLightColor(Color color) {
     final brightness = color.computeLuminance();
     return brightness > 0.5;
@@ -4137,7 +4162,9 @@ class _SquadrePageState extends State<SquadrePage> {
                       title: Row(
                         children: [
                           Image.asset(
-                            competizione.id <= 4
+                            competizione.id <= 4 ||
+                                    competizione.id == 17 ||
+                                    competizione.id == 18
                                 ? 'assets/logos/${widget.campionato}/logo_${competizione.cod}_comp.png'
                                 : 'assets/logos/logo_${competizione.cod}_comp.png',
                             height: 24,

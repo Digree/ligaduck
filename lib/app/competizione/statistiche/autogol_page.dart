@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:ligaduck/app/competizione/competizione_home_page.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/giornata.dart';
+import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
+import 'package:ligaduck/app/service/nazionali_provider.dart';
 import 'package:ligaduck/app/service/squadre_provider.dart';
+import 'package:ligaduck/app/widgets/squadra_logo_widget.dart';
 import 'package:ligaduck/services/commonService.dart';
 import 'package:provider/provider.dart';
 
@@ -36,39 +39,6 @@ class _AutogolPageState extends State<AutogolPage> {
       listen: false,
     );
     _squadreFuture = squadreProvider.fetchSquadre(widget.campionato);
-  }
-
-  Color _parseColor(String colorString) {
-    final Map<String, Color> colorMap = {
-      'rosso': Colors.red,
-      'verde': Colors.green,
-      'blu': Colors.blueAccent,
-      'blu scuro': Colors.blue[900]!,
-      'giallo': Colors.yellow[600]!,
-      'arancione': Colors.orange[900]!,
-      'viola': Colors.purple[800]!,
-      'nero': Colors.black,
-      'bianco': Colors.white,
-      'grigio': Colors.grey,
-      'fucsia': Colors.pink[700]!,
-      'rosa': Color.fromARGB(255, 255, 147, 183),
-      'ciano': Colors.lightBlue[300]!,
-      'marrone': Color.fromARGB(255, 122, 54, 34),
-    };
-
-    try {
-      final colorName = colorString.toLowerCase();
-      if (colorMap.containsKey(colorName)) {
-        return colorMap[colorName]!;
-      }
-
-      if (colorString.startsWith('#')) {
-        return Color(int.parse(colorString.replaceFirst('#', 'FF'), radix: 16));
-      }
-      return Color(int.parse('FF$colorString', radix: 16));
-    } catch (e) {
-      return Colors.grey[300]!;
-    }
   }
 
   @override
@@ -138,7 +108,9 @@ class _AutogolPageState extends State<AutogolPage> {
                       children: [
                         const SizedBox(height: 16),
                         Image.asset(
-                          widget.competizione.id <= 4
+                          widget.competizione.id <= 4 ||
+                                  widget.competizione.id == 17 ||
+                                  widget.competizione.id == 18
                               ? 'assets/logos/${widget.campionato}/logo_${widget.competizione.cod}_comp.png'
                               : 'assets/logos/logo_${widget.competizione.cod}_comp.png',
                           fit: BoxFit.contain,
@@ -193,7 +165,8 @@ class _AutogolPageState extends State<AutogolPage> {
                       child: FutureBuilder<Squadra>(
                         future: getSquadra(
                           Provider.of<SquadreProvider>(context, listen: false),
-                          autogolItem.idSquadraPro,
+                          autogolItem.idSquadraPro ?? 0,
+                          idNazionale: autogolItem.idNazionalePro,
                         ),
                         builder: (context, snapshot) {
                           return Container(
@@ -226,106 +199,16 @@ class _AutogolPageState extends State<AutogolPage> {
                                         if (snapshot.hasData)
                                           Padding(
                                             padding: EdgeInsets.only(right: 8),
-                                            child: Image.asset(
-                                              'assets/squadre/${snapshot.data!.cod}.png',
-                                              height: 30,
-                                              width: 30,
-                                              errorBuilder: (context, error, stackTrace) {
-                                                return SizedBox(
-                                                  height: 30,
-                                                  width: 30,
-                                                  child: Stack(
-                                                    alignment: Alignment.center,
-                                                    children: [
-                                                      Icon(
-                                                        Icons.shield,
-                                                        size: 30,
-                                                        color: Colors.black,
-                                                        shadows: [
-                                                          Shadow(
-                                                            color: Colors.black,
-                                                            blurRadius: 2,
-                                                          ),
-                                                          Shadow(
-                                                            color: Colors.black,
-                                                            offset: Offset(
-                                                              1,
-                                                              0,
-                                                            ),
-                                                          ),
-                                                          Shadow(
-                                                            color: Colors.black,
-                                                            offset: Offset(
-                                                              -1,
-                                                              0,
-                                                            ),
-                                                          ),
-                                                          Shadow(
-                                                            color: Colors.black,
-                                                            offset: Offset(
-                                                              0,
-                                                              1,
-                                                            ),
-                                                          ),
-                                                          Shadow(
-                                                            color: Colors.black,
-                                                            offset: Offset(
-                                                              0,
-                                                              -1,
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      ShaderMask(
-                                                        shaderCallback: (bounds) => LinearGradient(
-                                                          colors: [
-                                                            snapshot
-                                                                    .data!
-                                                                    .colori
-                                                                    .isNotEmpty
-                                                                ? _parseColor(
-                                                                    snapshot
-                                                                        .data!
-                                                                        .colori[0],
-                                                                  )
-                                                                : Colors.white,
-                                                            snapshot
-                                                                        .data!
-                                                                        .colori
-                                                                        .length >
-                                                                    1
-                                                                ? _parseColor(
-                                                                    snapshot
-                                                                        .data!
-                                                                        .colori[1],
-                                                                  )
-                                                                : (snapshot
-                                                                          .data!
-                                                                          .colori
-                                                                          .isNotEmpty
-                                                                      ? _parseColor(
-                                                                          snapshot
-                                                                              .data!
-                                                                              .colori[0],
-                                                                        )
-                                                                      : Colors
-                                                                            .grey[300]!),
-                                                          ],
-                                                          begin: Alignment
-                                                              .topCenter,
-                                                          end: Alignment
-                                                              .bottomCenter,
-                                                        ).createShader(bounds),
-                                                        child: Icon(
-                                                          Icons.shield,
-                                                          size: 30,
-                                                          color: Colors.white,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                );
-                                              },
+                                            child: SquadraLogoWidget(
+                                              codSquadra: snapshot.data!.cod,
+                                              squadra: snapshot.data!,
+                                              size: 30,
+                                              nomeNazionale:
+                                                  snapshot.data!.categoria
+                                                      .toLowerCase()
+                                                      .contains('naz')
+                                                  ? snapshot.data!.nome
+                                                  : null,
                                             ),
                                           )
                                         else
@@ -448,98 +331,21 @@ class _AutogolPageState extends State<AutogolPage> {
                                           context,
                                           listen: false,
                                         ),
-                                        autogolItem.idSquadra,
+                                        autogolItem.idSquadra ?? 0,
+                                        idNazionale: autogolItem.idNazionale,
                                       ),
                                       builder: (context, proSnapshot) {
                                         if (proSnapshot.hasData) {
-                                          return Image.asset(
-                                            'assets/squadre/${proSnapshot.data!.cod}.png',
-                                            height: 30,
-                                            width: 30,
-                                            errorBuilder: (context, error, stackTrace) {
-                                              return SizedBox(
-                                                height: 30,
-                                                width: 30,
-                                                child: Stack(
-                                                  alignment: Alignment.center,
-                                                  children: [
-                                                    Icon(
-                                                      Icons.shield,
-                                                      size: 30,
-                                                      color: Colors.black,
-                                                      shadows: [
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          blurRadius: 2,
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(1, 0),
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(-1, 0),
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(0, 1),
-                                                        ),
-                                                        Shadow(
-                                                          color: Colors.black,
-                                                          offset: Offset(0, -1),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    ShaderMask(
-                                                      shaderCallback: (bounds) => LinearGradient(
-                                                        colors: [
-                                                          proSnapshot
-                                                                  .data!
-                                                                  .colori
-                                                                  .isNotEmpty
-                                                              ? _parseColor(
-                                                                  proSnapshot
-                                                                      .data!
-                                                                      .colori[0],
-                                                                )
-                                                              : Colors.white,
-                                                          proSnapshot
-                                                                      .data!
-                                                                      .colori
-                                                                      .length >
-                                                                  1
-                                                              ? _parseColor(
-                                                                  proSnapshot
-                                                                      .data!
-                                                                      .colori[1],
-                                                                )
-                                                              : (proSnapshot
-                                                                        .data!
-                                                                        .colori
-                                                                        .isNotEmpty
-                                                                    ? _parseColor(
-                                                                        proSnapshot
-                                                                            .data!
-                                                                            .colori[0],
-                                                                      )
-                                                                    : Colors
-                                                                          .grey[300]!),
-                                                        ],
-                                                        begin:
-                                                            Alignment.topCenter,
-                                                        end: Alignment
-                                                            .bottomCenter,
-                                                      ).createShader(bounds),
-                                                      child: Icon(
-                                                        Icons.shield,
-                                                        size: 30,
-                                                        color: Colors.white,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            },
+                                          return SquadraLogoWidget(
+                                            codSquadra: proSnapshot.data!.cod,
+                                            squadra: proSnapshot.data!,
+                                            size: 30,
+                                            nomeNazionale:
+                                                proSnapshot.data!.categoria
+                                                    .toLowerCase()
+                                                    .contains('naz')
+                                                ? proSnapshot.data!.nome
+                                                : null,
                                           );
                                         } else {
                                           return SizedBox(
@@ -617,7 +423,11 @@ class _AutogolPageState extends State<AutogolPage> {
     );
   }
 
-  Future<Squadra> getSquadra(SquadreProvider provider, int idSquadra) async {
+  Future<Squadra> getSquadra(
+    SquadreProvider provider,
+    int idSquadra, {
+    String? idNazionale,
+  }) async {
     List<Squadra> squadre = await _squadreFuture;
 
     for (var squadra in squadre) {
@@ -625,6 +435,48 @@ class _AutogolPageState extends State<AutogolPage> {
         return squadra;
       }
     }
+
+    if (widget.competizione.id == 17 || widget.competizione.id == 18) {
+      final nazionaliProvider = Provider.of<NazionaliProvider>(
+        context,
+        listen: false,
+      );
+      final nazionali = await nazionaliProvider.fetchNazionali(
+        widget.campionato,
+      );
+      for (var n in nazionali) {
+        final idMatch =
+            idNazionale != null &&
+            idNazionale.isNotEmpty &&
+            n.id == idNazionale;
+        final hashMatch = n.nome.hashCode.abs() == idSquadra;
+        if (idMatch || hashMatch) {
+          final emptyFormazione = Formazione(
+            titolari: [],
+            panchina: [],
+            indisponibili: [],
+            nonConvocati: [],
+            allenatore: '',
+            modulo: '',
+          );
+          return Squadra(
+            id: n.nome.hashCode.abs(),
+            nome: n.nome,
+            cod: n.codNazione,
+            citta: '',
+            stadio: '',
+            campionato: widget.campionato,
+            categoria: n.categoria,
+            colori: n.colori,
+            formazione: emptyFormazione,
+            formazioneOld: emptyFormazione,
+            indisponibili: [],
+            competizioni: n.competizioni,
+          );
+        }
+      }
+    }
+
     throw Exception('Squadra non trovata');
   }
 }

@@ -429,19 +429,21 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
             child: Row(
               children: [
                 SizedBox(
-                  width: 32,
-                  height: 32,
+                  width: 40,
+                  height: 40,
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
                       Image.asset(
                         'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_1.png',
+                        width: 40,
+                        height: 40,
                         fit: BoxFit.contain,
-                        errorBuilder: (_, _, _) => Icon(
-                          Icons.person,
-                          size: 28,
-                          color: getColor('primary'),
-                        ),
+                        errorBuilder: (_, _, _) =>
+                            buildJerseyPlaceholderFormazione(
+                              0,
+                              widget.squadra.colori,
+                            ),
                       ),
                       if (numero > 0)
                         Text(

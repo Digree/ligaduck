@@ -190,4 +190,33 @@ class CompetizioniProvider with ChangeNotifier {
       return false;
     }
   }
+
+  Future<bool> aggiornaGironiCompetizione(
+    String campionato,
+    int idCompetizione,
+    List<Girone> gironi,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse(
+          '${Env.apiUrl}/$campionato/competizioni/$idCompetizione/gironi',
+        ),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(gironi.map((g) => g.toJson()).toList()),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        notifyListeners();
+        return true;
+      } else {
+        print(
+          'Errore POST aggiorna gironi: ${response.statusCode} - ${response.body}',
+        );
+        return false;
+      }
+    } catch (e) {
+      print('Errore POST aggiorna gironi: $e');
+      return false;
+    }
+  }
 }

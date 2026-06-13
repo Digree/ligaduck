@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:glassmorphism/glassmorphism.dart';
 import 'package:ligaduck/app/partita/partita_home_page.dart';
+import 'package:ligaduck/app/service/models/nazionale.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
@@ -16,6 +17,8 @@ class CampionatoMatchModel {
   final String campionato;
   final Squadra? squadraHome;
   final Squadra? squadraAway;
+  final Nazionale? nazionaleHome;
+  final Nazionale? nazionaleAway;
   final Competizione? competizione;
   final VoidCallback? onRefreshRequired;
   final Partita?
@@ -30,6 +33,8 @@ class CampionatoMatchModel {
     this.competizione,
     this.onRefreshRequired,
     this.andataPartita,
+    this.nazionaleHome,
+    this.nazionaleAway,
   });
 }
 
@@ -154,13 +159,15 @@ Widget buildCampionatoMatch(
             model.squadraHome!.categoria != 'Serie A' &&
             model.squadraHome!.categoria != 'Serie B' &&
             model.squadraHome!.categoria != 'Serie C' &&
-            model.squadraHome!.categoria != 'Serie D';
+            model.squadraHome!.categoria != 'Serie D' &&
+            model.nazionaleHome != null;
         bool isAwayEstera =
             model.squadraAway?.categoria != null &&
             model.squadraAway!.categoria != 'Serie A' &&
             model.squadraAway!.categoria != 'Serie B' &&
             model.squadraAway!.categoria != 'Serie C' &&
-            model.squadraAway!.categoria != 'Serie D';
+            model.squadraAway!.categoria != 'Serie D' &&
+            model.nazionaleAway != null;
 
         // Check phase logic
         bool isPhaseE = (currentFase ?? '').toUpperCase() == 'E';
@@ -241,6 +248,10 @@ Widget buildCampionatoMatch(
                   squadra: model.squadraHome,
                   size: 50,
                   fit: BoxFit.contain,
+                  nomeNazionale:
+                      (model.partita.idNazionaleHome?.isNotEmpty ?? false)
+                      ? model.partita.teamHome
+                      : null,
                 ),
               ),
               Padding(
@@ -393,6 +404,10 @@ Widget buildCampionatoMatch(
                   squadra: model.squadraAway,
                   size: 50,
                   fit: BoxFit.cover,
+                  nomeNazionale:
+                      (model.partita.idNazionaleAway?.isNotEmpty ?? false)
+                      ? model.partita.teamAway
+                      : null,
                 ),
               ),
             ],
@@ -623,6 +638,10 @@ Future<void> _showRisultatoDialog(
                                     idGiornata: model.partita.idGiornata,
                                     idTeamHome: model.partita.idTeamHome,
                                     idTeamAway: model.partita.idTeamAway,
+                                    idNazionaleHome:
+                                        model.partita.idNazionaleHome,
+                                    idNazionaleAway:
+                                        model.partita.idNazionaleAway,
                                     teamHome: model.partita.teamHome,
                                     teamAway: model.partita.teamAway,
                                     codHome: model.partita.codHome,

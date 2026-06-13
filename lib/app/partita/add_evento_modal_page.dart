@@ -1978,13 +1978,9 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
             ? giocatoreSelezionatoOut
             : null,
         codAzione: codAzione,
-        idTeam: eventoSelezionato!.cod == 'aut'
-            ? (team == 0
-                  ? widget.partita.idTeamAway
-                  : widget.partita.idTeamHome)
-            : (team == 0
-                  ? widget.partita.idTeamHome
-                  : widget.partita.idTeamAway),
+        // Determina team e nazionale in base al tipo di evento e squadra
+        idTeam: _getIdTeam(team, eventoSelezionato!.cod == 'aut'),
+        idNazionale: _getIdNazionale(team, eventoSelezionato!.cod == 'aut'),
         esitoRigore: esitoRigoreSelezionato == 'segnato' ? true : false,
       );
 
@@ -2089,6 +2085,49 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
         return Image.asset('assets/icon/rig.png', width: 20, height: 20);
       default:
         return Image.asset('assets/icon/gol.png', width: 20, height: 20);
+    }
+  }
+
+  bool _isPartitaNazionale() {
+    return (widget.partita.idNazionaleHome?.isNotEmpty ?? false) ||
+        (widget.partita.idNazionaleAway?.isNotEmpty ?? false);
+  }
+
+  /// Determina l'idTeam in base al tipo di partita (club o nazionale)
+  int? _getIdTeam(int team, bool isAutogol) {
+    // Se è una partita di nazionali, non valorizzare idTeam
+    if (_isPartitaNazionale()) {
+      return null;
+    }
+
+    // Per partite di club, valorizza idTeam normalmente
+    if (isAutogol) {
+      // Autogol: team opposto
+      return team == 0 ? widget.partita.idTeamAway : widget.partita.idTeamHome;
+    } else {
+      // Evento normale: team
+      return team == 0 ? widget.partita.idTeamHome : widget.partita.idTeamAway;
+    }
+  }
+
+  /// Determina l'idNazionale in base al tipo di partita
+  String? _getIdNazionale(int team, bool isAutogol) {
+    // Se è una partita di club, non valorizzare idNazionale
+    if (!_isPartitaNazionale()) {
+      return null;
+    }
+
+    // Per partite di nazionali, valorizza idNazionale
+    if (isAutogol) {
+      // Autogol: nazionale opposta
+      return team == 0
+          ? widget.partita.idNazionaleAway
+          : widget.partita.idNazionaleHome;
+    } else {
+      // Evento normale: nazionale del team
+      return team == 0
+          ? widget.partita.idNazionaleHome
+          : widget.partita.idNazionaleAway;
     }
   }
 }
