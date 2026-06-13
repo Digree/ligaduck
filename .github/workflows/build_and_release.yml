@@ -310,8 +310,13 @@ jobs:
           # Add to GitHub environment for subsequent steps
           Add-Content -Path $env:GITHUB_ENV -Value "CMAKE_GENERATOR=Visual Studio 17 2022"
 
+      - name: Build Windows app
+        run: |
+          flutter clean
+          flutter build windows --release
+
       - name: Build MSIX package
-        run: flutter pub run msix:create --release --install-certificate false
+        run: dart run msix:create --install-certificate false
 
       - name: Verify and rename MSIX
         run: |
