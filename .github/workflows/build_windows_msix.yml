@@ -82,9 +82,14 @@ jobs:
           
           Write-Host "✓ MSIX version updated to $msixVersion"
 
+      - name: Set CMAKE_GENERATOR for Windows build
+        run: |
+          $env:CMAKE_GENERATOR = 'Visual Studio 17 2022'
+          Write-Host "CMAKE_GENERATOR set to: $env:CMAKE_GENERATOR"
+          # Add to GitHub environment for subsequent steps
+          Add-Content -Path $env:GITHUB_ENV -Value "CMAKE_GENERATOR=Visual Studio 17 2022"
+
       - name: Build MSIX package
-        env:
-          CMAKE_GENERATOR: "Visual Studio 17 2022"
         run: flutter pub run msix:create --release --install-certificate false
 
       - name: Verify MSIX build
