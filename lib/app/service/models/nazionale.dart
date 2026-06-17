@@ -92,6 +92,7 @@ class Convocato {
   final String ruolo;
   final int numeroMaglia;
   final int idSquadra;
+  final bool capitano;
 
   Convocato({
     required this.idGiocatore,
@@ -99,6 +100,7 @@ class Convocato {
     required this.ruolo,
     required this.numeroMaglia,
     required this.idSquadra,
+    this.capitano = false,
   });
 
   factory Convocato.fromJson(Map<String, dynamic> json) {
@@ -108,6 +110,7 @@ class Convocato {
       ruolo: json['ruolo'],
       numeroMaglia: json['numeroMaglia'],
       idSquadra: json['idSquadra'],
+      capitano: json['capitano'] == true,
     );
   }
 
@@ -118,6 +121,7 @@ class Convocato {
       'ruolo': ruolo,
       'numeroMaglia': numeroMaglia,
       'idSquadra': idSquadra,
+      'capitano': capitano,
     };
   }
 }

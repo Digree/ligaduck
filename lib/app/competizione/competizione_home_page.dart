@@ -3169,15 +3169,25 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
           itemCount: squadre.length,
           itemBuilder: (context, index) {
             final squadra = squadre[index];
+            final isNazionale =
+                _nazionaleIdByFakeId.containsKey(squadra.id) ||
+                _isNazionaleSquadra(squadra);
             return Card(
               margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: ListTile(
-                leading: SquadraLogoWidget(
-                  codSquadra: squadra.cod,
-                  squadra: squadra,
-                  size: 40,
-                  nomeNazionale: _nomeNazionaleOrNull(squadra),
-                ),
+                leading: isNazionale
+                    ? CircleAvatar(
+                        radius: 20,
+                        backgroundImage: NetworkImage(
+                          CommonService.getFlagUrl(squadra.nome),
+                        ),
+                        onBackgroundImageError: (_, _) {},
+                      )
+                    : SquadraLogoWidget(
+                        codSquadra: squadra.cod,
+                        squadra: squadra,
+                        size: 40,
+                      ),
                 title: Text(
                   CommonService.decodePlayerName(squadra.nome),
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),

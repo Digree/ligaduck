@@ -697,14 +697,14 @@ class _NazionalePageState extends State<NazionalePage> {
     final squadraClub = _getSquadraById(giocatore.idSquadraAttuale);
     final nazionale = _nazionale ?? widget.nazionale;
 
-    // Verifica se il giocatore è capitano
-    bool isCapitano = false;
-    for (final titolare in nazionale.formazione.titolari) {
-      if (titolare.idGiocatore == giocatore.id && titolare.capitano == true) {
-        isCapitano = true;
-        break;
-      }
-    }
+    // Verifica se il giocatore è capitano (da convocati o formazione)
+    bool isCapitano =
+        nazionale.convocati.any(
+          (c) => c.idGiocatore == giocatore.id && c.capitano,
+        ) ||
+        nazionale.formazione.titolari.any(
+          (t) => t.idGiocatore == giocatore.id && t.capitano == true,
+        );
 
     return Container(
       key: ValueKey(giocatore.id),
@@ -782,7 +782,7 @@ class _NazionalePageState extends State<NazionalePage> {
             ),
           ),
           Padding(
-            padding: EdgeInsets.only(right: 16),
+            padding: EdgeInsets.symmetric(horizontal: 16),
             child: CircleAvatar(
               radius: 13,
               backgroundImage: NetworkImage(
