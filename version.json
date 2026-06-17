@@ -1,24 +1,24 @@
 {
-  "lastUpdate": "2026-06-13",
+  "lastUpdate": "2026-06-17",
   "android": {
-    "version": "44.00.01",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.00.01/ligaduck-v44.00.01.apk",
-    "releaseNotes": "- Mondiali e Nazionali"
+    "version": "44.01.01",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.01.01/ligaduck-v44.01.01.apk",
+    "releaseNotes": "- Bug Fix - Patch grafiche"
   },
   "ios": {
-    "version": "44.00.01",
+    "version": "44.01.01",
     "downloadUrl": "https://apps.apple.com/app/ligaduck",
-    "releaseNotes": "- Mondiali e Nazionali"
+    "releaseNotes": "- Bug Fix - Patch grafiche"
   },
   "macos": {
-    "version": "44.00.01",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.00.01/ligaduck-v44.00.01.dmg",
-    "releaseNotes": "- Mondiali e Nazionali"
+    "version": "44.01.01",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.01.01/ligaduck-v44.01.01.dmg",
+    "releaseNotes": "- Bug Fix - Patch grafiche"
   },
   "windows": {
-    "version": "44.00.01",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.00.01/ligaduck-v44.00.01-windows.zip",
-    "msixUrl": "https://github.com/Digree/ligaduck/releases/download/v44.00.01/LigaDuckManager-Windows-v44.00.01.msix",
-    "releaseNotes": "- Mondiali e Nazionali"
+    "version": "44.01.01",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.01.01/ligaduck-v44.01.01-windows.zip",
+    "msixUrl": "https://github.com/Digree/ligaduck/releases/download/v44.01.01/LigaDuckManager-Windows-v44.01.01.msix",
+    "releaseNotes": "- Bug Fix - Patch grafiche"
   }
 }
