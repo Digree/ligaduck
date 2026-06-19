@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:ligaduck/app/models/country.dart';
 import 'package:ligaduck/app/service/competizioni_provider.dart';
+import 'package:ligaduck/app/service/country_service.dart';
+import 'package:ligaduck/services/commonService.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
@@ -33,88 +36,14 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
   bool _isSaving = false;
   String _tipo = 'Club';
   String? _federazioneSelezionata;
+  bool _isLoadingCountries = false;
 
   final List<String> _campionati = ['Paperi', 'Europa', 'Resto del Mondo'];
 
   final List<String> _categorie = ['Serie A', 'Serie B', 'Serie C', 'Serie D'];
 
-  final List<String> _nazioniEuropa = [
-    'Austria',
-    'Belgio',
-    'Bulgaria',
-    'Cipro',
-    'Croazia',
-    'Danimarca',
-    'Estonia',
-    'Finlandia',
-    'Francia',
-    'Georgia',
-    'Germania',
-    'Grecia',
-    'Inghilterra',
-    'Irlanda',
-    'Islanda',
-    'Israele',
-    'Kosovo',
-    'Lussemburgo',
-    'Malta',
-    'Norvegia',
-    'Olanda',
-    'Polonia',
-    'Portogallo',
-    'Repubblica Ceca',
-    'Romania',
-    'Russia',
-    'Scozia',
-    'Serbia',
-    'Slovacchia',
-    'Slovenia',
-    'Spagna',
-    'Svezia',
-    'Svizzera',
-    'Turchia',
-    'Ucraina',
-    'Ungheria',
-  ];
-
-  final List<String> _nazioniRestoMondo = [
-    'Argentina',
-    'Australia',
-    'Brasile',
-    'Uruguay',
-    'Cile',
-    'Colombia',
-    'Perù',
-    'Venezuela',
-    'Ecuador',
-    'Paraguay',
-    'Bolivia',
-    'Costa Rica',
-    'Panama',
-    'Giamaica',
-    'Honduras',
-    'El Salvador',
-    'Nicaragua',
-    'Cuba',
-    'Repubblica Dominicana',
-    'Haiti',
-    'Giappone',
-    'Corea del Sud',
-    'Stati Uniti',
-    'Canada',
-    'Messico',
-    'Cina',
-    'India',
-    'Sudafrica',
-    'Nigeria',
-    'Egitto',
-    'Marocco',
-    'Tunisia',
-    'Arabia Saudita',
-    'Emirati Arabi Uniti',
-    'Filippine',
-    'Nuova Zelanda',
-  ];
+  List<String> _nazioniEuropa = [];
+  List<String> _nazioniRestoMondo = [];
 
   List<String> get _categorieCorrente {
     if (_campionatoSelezionato == 'Europa') {
@@ -174,6 +103,42 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
     }
     _categoriaSelezionata = _categorieCorrente.first;
     _caricaCompetizioni();
+    _caricaNazioni();
+  }
+
+  Future<void> _caricaNazioni() async {
+    setState(() => _isLoadingCountries = true);
+    try {
+      final List<Country> countries = await CountryService.getAllCountries();
+      if (!mounted) return;
+      final europa =
+          countries
+              .where((c) => c.region == 'Europe')
+              .map((c) => CommonService.decodePlayerName(c.commonName))
+              .toList()
+            ..sort();
+      final restoMondo =
+          countries
+              .where((c) => c.region != 'Europe')
+              .map((c) => CommonService.decodePlayerName(c.commonName))
+              .toList()
+            ..sort();
+      setState(() {
+        _nazioniEuropa = europa;
+        _nazioniRestoMondo = restoMondo;
+        if (_categoriaSelezionata == null ||
+            (!_categorie.contains(_categoriaSelezionata) &&
+                !_nazioniEuropa.contains(_categoriaSelezionata) &&
+                !_nazioniRestoMondo.contains(_categoriaSelezionata))) {
+          _categoriaSelezionata = _categorieCorrente.isNotEmpty
+              ? _categorieCorrente.first
+              : null;
+        }
+        _isLoadingCountries = false;
+      });
+    } catch (e) {
+      if (mounted) setState(() => _isLoadingCountries = false);
+    }
   }
 
   void _caricaCompetizioni() async {
@@ -1186,7 +1151,10 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
                       onChanged: (String? newValue) {
                         setState(() {
                           _campionatoSelezionato = newValue;
-                          _categoriaSelezionata = _categorieCorrente.first;
+                          final categorie = _categorieCorrente;
+                          _categoriaSelezionata = categorie.isNotEmpty
+                              ? categorie.first
+                              : null;
                         });
                       },
                       validator: (value) {
@@ -1197,41 +1165,87 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
                       },
                     ),
                     SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      initialValue: _categoriaSelezionata,
-                      decoration: InputDecoration(
-                        labelText: 'Categoria',
-                        labelStyle: TextStyle(color: Colors.blueAccent),
-                        prefixIcon: Icon(Icons.category),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: Colors.blueAccent,
-                            width: 2,
+                    _isLoadingCountries &&
+                            (_campionatoSelezionato == 'Europa' ||
+                                _campionatoSelezionato == 'Resto del Mondo')
+                        ? Container(
+                            height: 56,
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 12),
+                                  child: Icon(
+                                    Icons.category,
+                                    color: Colors.blueAccent,
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.blueAccent,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 12),
+                                Text(
+                                  'Caricamento nazioni...',
+                                  style: TextStyle(
+                                    color: Colors.grey[700],
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : DropdownButtonFormField<String>(
+                            initialValue:
+                                _categorieCorrente.contains(
+                                  _categoriaSelezionata,
+                                )
+                                ? _categoriaSelezionata
+                                : (_categorieCorrente.isNotEmpty
+                                      ? _categorieCorrente.first
+                                      : null),
+                            decoration: InputDecoration(
+                              labelText: 'Categoria',
+                              labelStyle: TextStyle(color: Colors.blueAccent),
+                              prefixIcon: Icon(Icons.category),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: Colors.blueAccent,
+                                  width: 2,
+                                ),
+                              ),
+                            ),
+                            items: _categorieCorrente.map((String categoria) {
+                              return DropdownMenuItem<String>(
+                                value: categoria,
+                                child: Text(categoria),
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                _categoriaSelezionata = newValue;
+                              });
+                            },
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Seleziona una categoria';
+                              }
+                              return null;
+                            },
                           ),
-                        ),
-                      ),
-                      items: _categorieCorrente.map((String categoria) {
-                        return DropdownMenuItem<String>(
-                          value: categoria,
-                          child: Text(categoria),
-                        );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          _categoriaSelezionata = newValue;
-                        });
-                      },
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Seleziona una categoria';
-                        }
-                        return null;
-                      },
-                    ),
                     SizedBox(height: 16),
                     _buildColoriField(),
                     SizedBox(height: 16),

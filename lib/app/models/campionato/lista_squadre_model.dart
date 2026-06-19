@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:glassmorphism/glassmorphism.dart';
 import 'package:ligaduck/app/config/models/global.dart';
 import 'package:ligaduck/app/models/campionato/lista_nazionali_model.dart';
+import 'package:ligaduck/app/service/country_service.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/nazionale.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
@@ -36,12 +37,38 @@ class _ListaSquadreStateWidget extends State<_ListaSquadreState>
     with SingleTickerProviderStateMixin {
   String _selectedCampionato = 'Paperi';
   late TabController _mainTabController;
+  List<String> _nazioniEuropa = [];
+  List<String> _nazioniRestoMondo = [];
 
   @override
   void initState() {
     super.initState();
     _mainTabController = TabController(length: 2, vsync: this);
     _mainTabController.addListener(() => setState(() {}));
+    _caricaNazioni();
+  }
+
+  Future<void> _caricaNazioni() async {
+    try {
+      final countries = await CountryService.getAllCountries();
+      if (!mounted) return;
+      final europa =
+          countries
+              .where((c) => c.region == 'Europe')
+              .map((c) => CommonService.decodePlayerName(c.commonName))
+              .toList()
+            ..sort();
+      final restoMondo =
+          countries
+              .where((c) => c.region != 'Europe')
+              .map((c) => CommonService.decodePlayerName(c.commonName))
+              .toList()
+            ..sort();
+      setState(() {
+        _nazioniEuropa = europa;
+        _nazioniRestoMondo = restoMondo;
+      });
+    } catch (_) {}
   }
 
   @override
@@ -248,7 +275,9 @@ class _ListaSquadreStateWidget extends State<_ListaSquadreState>
                         ? _PaperiContent(model: widget.model)
                         : _EsteroContent(
                             model: widget.model,
-                            nazioni: _nazioniPerCategoria(_selectedCampionato),
+                            nazioni: _selectedCampionato == 'Europa'
+                                ? _nazioniEuropa
+                                : _nazioniRestoMondo,
                           ),
                     // Tab Nazionali
                     ListaNazionaliWidget(
@@ -269,93 +298,6 @@ class _ListaSquadreStateWidget extends State<_ListaSquadreState>
 }
 
 // ─── helper top-level ────────────────────────────────────────────────────────
-
-List<String> _nazioniPerCategoria(String categoria) {
-  final List<String> nazioni;
-  if (categoria == 'Europa') {
-    nazioni = [
-      'Austria',
-      'Belgio',
-      'Bulgaria',
-      'Cipro',
-      'Croazia',
-      'Danimarca',
-      'Estonia',
-      'Finlandia',
-      'Francia',
-      'Georgia',
-      'Germania',
-      'Grecia',
-      'Inghilterra',
-      'Irlanda',
-      'Islanda',
-      'Israele',
-      'Kosovo',
-      'Lussemburgo',
-      'Malta',
-      'Norvegia',
-      'Olanda',
-      'Polonia',
-      'Portogallo',
-      'Repubblica Ceca',
-      'Romania',
-      'Russia',
-      'Scozia',
-      'Serbia',
-      'Slovacchia',
-      'Slovenia',
-      'Spagna',
-      'Svezia',
-      'Svizzera',
-      'Turchia',
-      'Ucraina',
-      'Ungheria',
-    ];
-  } else if (categoria == 'Resto del Mondo') {
-    nazioni = [
-      'Argentina',
-      'Australia',
-      'Brasile',
-      'Uruguay',
-      'Cile',
-      'Colombia',
-      'Perù',
-      'Venezuela',
-      'Ecuador',
-      'Paraguay',
-      'Bolivia',
-      'Costa Rica',
-      'Panama',
-      'Giamaica',
-      'Honduras',
-      'El Salvador',
-      'Nicaragua',
-      'Cuba',
-      'Repubblica Dominicana',
-      'Haiti',
-      'Giappone',
-      'Corea del Sud',
-      'Stati Uniti',
-      'Canada',
-      'Messico',
-      'Cina',
-      'India',
-      'Sudafrica',
-      'Nigeria',
-      'Egitto',
-      'Marocco',
-      'Tunisia',
-      'Arabia Saudita',
-      'Emirati Arabi Uniti',
-      'Filippine',
-      'Nuova Zelanda',
-    ];
-  } else {
-    nazioni = [];
-  }
-  nazioni.sort();
-  return nazioni;
-}
 
 Widget _buildCategoryChip({
   required String label,
@@ -448,19 +390,36 @@ class _EsteroContent extends StatefulWidget {
 }
 
 class _EsteroContentState extends State<_EsteroContent> {
-  late String _selected;
+  String _selected = '';
+  List<String> _nazioniConSquadre = [];
 
   @override
   void initState() {
     super.initState();
-    _selected = widget.nazioni.isNotEmpty ? widget.nazioni.first : '';
+    _aggiornaLista(widget.nazioni);
   }
 
   @override
   void didUpdateWidget(_EsteroContent oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.nazioni != oldWidget.nazioni) {
-      _selected = widget.nazioni.isNotEmpty ? widget.nazioni.first : '';
+      _aggiornaLista(widget.nazioni);
+    }
+  }
+
+  Future<void> _aggiornaLista(List<String> nazioni) async {
+    final squadre = await widget.model.squadreFuture;
+    final categoriePresenti = squadre.map((s) => s.categoria).toSet();
+    final filtrate = nazioni
+        .where((n) => categoriePresenti.contains(n))
+        .toList();
+    if (mounted) {
+      setState(() {
+        _nazioniConSquadre = filtrate;
+        if (!filtrate.contains(_selected)) {
+          _selected = filtrate.isNotEmpty ? filtrate.first : '';
+        }
+      });
     }
   }
 
@@ -482,7 +441,7 @@ class _EsteroContentState extends State<_EsteroContent> {
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: widget.nazioni.map((nazione) {
+                children: _nazioniConSquadre.map((nazione) {
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: _buildCategoryChip(
