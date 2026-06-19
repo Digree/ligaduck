@@ -1078,7 +1078,7 @@ class _NazionalePageState extends State<NazionalePage> {
 
     Widget campo = Container(
       width: isWide ? null : double.infinity,
-      height: isWide ? 600 : MediaQuery.of(context).size.height * 0.6,
+      height: isWide ? 400 : MediaQuery.of(context).size.height * 0.46,
       padding: EdgeInsets.all(isWide ? 12 : 24),
       decoration: BoxDecoration(
         image: DecorationImage(
@@ -1329,22 +1329,24 @@ class _NazionalePageState extends State<NazionalePage> {
         : null;
 
     if (isWide) {
-      return SingleChildScrollView(
+      return Padding(
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Column(
           children: [
             infoFormazioneHeader,
             SizedBox(height: 12),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.35,
-                  child: campo,
-                ),
-                SizedBox(width: 24),
-                Expanded(child: panchinaList),
-              ],
+            Expanded(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.35,
+                    child: campo,
+                  ),
+                  SizedBox(width: 24),
+                  Expanded(child: SingleChildScrollView(child: panchinaList)),
+                ],
+              ),
             ),
             if (adminButtons != null) ...[SizedBox(height: 12), adminButtons],
           ],
@@ -1382,7 +1384,6 @@ class _NazionalePageState extends State<NazionalePage> {
         attivo: false,
       ),
     );
-    final squadraClub = _getSquadraById(giocatore.idSquadraAttuale);
     return Container(
       height: 60,
       decoration: BoxDecoration(
@@ -1396,52 +1397,12 @@ class _NazionalePageState extends State<NazionalePage> {
           ),
           SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  CommonService.decodePlayerName(g.nome),
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (squadraClub != null) ...[
-                  SizedBox(height: 3),
-                  Row(
-                    children: [
-                      SquadraLogoWidget(
-                        codSquadra: squadraClub.cod,
-                        squadra: squadraClub,
-                        size: 16,
-                      ),
-                      SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          CommonService.decodePlayerName(squadraClub.nome),
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey[600],
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ],
+            child: Text(
+              CommonService.decodePlayerName(g.nome),
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          if (giocatore.nazione.isNotEmpty)
-            Padding(
-              padding: EdgeInsets.only(right: 16),
-              child: CircleAvatar(
-                radius: 12,
-                backgroundImage: NetworkImage(
-                  CommonService.getFlagUrl(giocatore.nazione),
-                ),
-                onBackgroundImageError: (_, _) {},
-              ),
-            ),
         ],
       ),
     );

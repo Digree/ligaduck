@@ -475,19 +475,24 @@ class _EsteroContentState extends State<_EsteroContent> {
             top: 8,
             bottom: 4,
           ),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: widget.nazioni.map((nazione) {
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: _buildCategoryChip(
-                    label: nazione,
-                    isSelected: _selected == nazione,
-                    onTap: () => setState(() => _selected = nazione),
-                  ),
-                );
-              }).toList(),
+          child: ScrollConfiguration(
+            behavior: ScrollConfiguration.of(context).copyWith(
+              dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
+            ),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: widget.nazioni.map((nazione) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: _buildCategoryChip(
+                      label: nazione,
+                      isSelected: _selected == nazione,
+                      onTap: () => setState(() => _selected = nazione),
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
           ),
         ),

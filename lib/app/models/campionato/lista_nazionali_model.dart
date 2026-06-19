@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:glassmorphism/glassmorphism.dart';
 import 'package:ligaduck/app/nazionali/nazionale_page.dart';
@@ -65,58 +66,83 @@ class _ListaNazionaliWidgetState extends State<ListaNazionaliWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Chips continente — larghezza uguale, occupano tutta la riga
+        // Chips continente
         Padding(
-          padding: const EdgeInsets.only(
-            left: 16.0,
-            right: 16.0,
-            top: 8.0,
-            bottom: 8.0,
-          ),
-          child: Row(
-            children: _continenti.map((continente) {
-              final isSelected = _selectedContinente == continente;
-              return Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 3),
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedContinente = continente;
-                      });
-                    },
-                    child: AnimatedContainer(
-                      duration: Duration(milliseconds: 200),
-                      padding: EdgeInsets.symmetric(horizontal: 4, vertical: 9),
-                      decoration: BoxDecoration(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth > 600;
+              Widget buildChip(String continente) {
+                final isSelected = _selectedContinente == continente;
+                return GestureDetector(
+                  onTap: () => setState(() => _selectedContinente = continente),
+                  child: AnimatedContainer(
+                    duration: Duration(milliseconds: 200),
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? Colors.blueAccent
+                          : Colors.blueAccent.withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
                         color: isSelected
                             ? Colors.blueAccent
-                            : Colors.blueAccent.withOpacity(0.06),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: isSelected
-                              ? Colors.blueAccent
-                              : Colors.blueAccent.withOpacity(0.35),
-                          width: isSelected ? 2 : 1,
-                        ),
-                      ),
-                      child: Text(
-                        continente,
-                        textAlign: TextAlign.center,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                          color: isSelected ? Colors.white : Colors.blueAccent,
-                        ),
+                            : Colors.blueAccent.withOpacity(0.35),
+                        width: isSelected ? 2 : 1,
                       ),
                     ),
+                    child: Text(
+                      continente,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                        color: isSelected ? Colors.white : Colors.blueAccent,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
-                ),
-              );
-            }).toList(),
+                );
+              }
+
+              if (isWide) {
+                return Row(
+                  children: _continenti
+                      .map(
+                        (c) => Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 3),
+                            child: buildChip(c),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                );
+              } else {
+                return ScrollConfiguration(
+                  behavior: ScrollConfiguration.of(context).copyWith(
+                    dragDevices: {
+                      PointerDeviceKind.touch,
+                      PointerDeviceKind.mouse,
+                    },
+                  ),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: _continenti
+                          .map(
+                            (c) => Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: buildChip(c),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                );
+              }
+            },
           ),
         ),
         // Lista nazionali filtrate per continente
@@ -156,88 +182,91 @@ class _ListaNazionaliWidgetState extends State<ListaNazionaliWidget> {
           );
         }
 
-        return SingleChildScrollView(
-          child: Column(
-            children: [
-              for (var nazionale in filtrate)
-                SizedBox(
-                  width: 1000,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 4.0,
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth > 600;
+            return SingleChildScrollView(
+              child: Column(
+                children: [
+                  for (var nazionale in filtrate)
+                    SizedBox(
+                      width: isWide ? constraints.maxWidth : 1000,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 4.0,
+                        ),
+                        child: GestureDetector(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => NazionalePage(
+                                nazionale: nazionale,
+                                campionato: widget.model.campionato,
+                              ),
+                            ),
+                          ),
+                          child: GlassmorphicContainer(
+                            width: double.infinity,
+                            height: 40,
+                            borderRadius: 30,
+                            blur: 15,
+                            alignment: Alignment.center,
+                            border: 2,
+                            linearGradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                mostraColori
+                                    ? _getNazionaleColor(
+                                        'primary',
+                                        nazionale.colori,
+                                      ).withOpacity(0.7)
+                                    : Colors.blueAccent.withOpacity(0.5),
+                                mostraColori
+                                    ? _getNazionaleColor(
+                                        'secondary',
+                                        nazionale.colori,
+                                      ).withOpacity(0.5)
+                                    : Colors.blueAccent.withOpacity(0.1),
+                              ],
+                            ),
+                            borderGradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                mostraColori
+                                    ? _getNazionaleColor(
+                                        'primary',
+                                        nazionale.colori,
+                                      ).withOpacity(0.5)
+                                    : Colors.white.withOpacity(0.1),
+                                mostraColori
+                                    ? _getNazionaleColor(
+                                        'secondary',
+                                        nazionale.colori,
+                                      ).withOpacity(0.1)
+                                    : Colors.white.withOpacity(0.2),
+                              ],
+                            ),
+                            child: Text(
+                              CommonService.decodePlayerName(nazionale.nome),
+                              style: TextStyle(
+                                color: mostraColori
+                                    ? Colors.black
+                                    : Colors.blue[900],
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ), // GestureDetector
+                      ),
                     ),
-                    child: GestureDetector(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => NazionalePage(
-                            nazionale: nazionale,
-                            campionato: widget.model.campionato,
-                          ),
-                        ),
-                      ),
-                      child: GlassmorphicContainer(
-                        width: double.infinity,
-                        height: 40,
-                        borderRadius: 30,
-                        blur: 15,
-                        alignment: Alignment.center,
-                        border: 2,
-                        linearGradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            mostraColori
-                                ? _getNazionaleColor(
-                                    'primary',
-                                    nazionale.colori,
-                                  ).withOpacity(0.7)
-                                : Colors.blueAccent.withOpacity(0.5),
-                            mostraColori
-                                ? _getNazionaleColor(
-                                    'secondary',
-                                    nazionale.colori,
-                                  ).withOpacity(0.5)
-                                : Colors.blueAccent.withOpacity(0.1),
-                          ],
-                        ),
-                        borderGradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            mostraColori
-                                ? _getNazionaleColor(
-                                    'primary',
-                                    nazionale.colori,
-                                  ).withOpacity(0.5)
-                                : Colors.white.withOpacity(0.1),
-                            mostraColori
-                                ? _getNazionaleColor(
-                                    'secondary',
-                                    nazionale.colori,
-                                  ).withOpacity(0.1)
-                                : Colors.white.withOpacity(0.2),
-                          ],
-                        ),
-                        child: Text(
-                          CommonService.decodePlayerName(nazionale.nome),
-                          style: TextStyle(
-                            color: mostraColori
-                                ? Colors.black
-                                : Colors.blue[900],
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                    ), // GestureDetector
-                  ),
-                ),
-              SizedBox(
-                height: MediaQuery.of(context).size.width > 600 ? 16 : 100,
+                  SizedBox(height: isWide ? 16 : 100),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );

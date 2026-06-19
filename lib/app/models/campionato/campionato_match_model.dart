@@ -242,7 +242,7 @@ Widget buildCampionatoMatch(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Padding(
-                padding: EdgeInsets.only(),
+                padding: EdgeInsets.only(left: 7.0),
                 child: SquadraLogoWidget(
                   codSquadra: model.partita.codHome,
                   squadra: model.squadraHome,
@@ -398,7 +398,7 @@ Widget buildCampionatoMatch(
                 ),
               ),
               Padding(
-                padding: EdgeInsets.only(),
+                padding: EdgeInsets.only(right: 7.0),
                 child: SquadraLogoWidget(
                   codSquadra: model.partita.codAway,
                   squadra: model.squadraAway,

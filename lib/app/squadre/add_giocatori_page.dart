@@ -705,7 +705,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
         nome: _nomeController.text,
         eta: etaCasuale,
         ruolo: _ruoloSelezionato,
-        nazione: _nazioneSelezionata.toLowerCase(),
+        nazione: _nazionePerBackend(_nazioneSelezionata),
         carriera: [nuovaCarriera],
         idSquadraAttuale: widget.idNazionale != null ? 0 : widget.squadra.id,
         ex: _isEx ? _idGiocatoreEx : null,
@@ -1041,7 +1041,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
       nome: nome,
       eta: etaCasuale,
       ruolo: ruolo,
-      nazione: nazione.toLowerCase(),
+      nazione: _nazionePerBackend(nazione),
       carriera: [nuovaCarriera],
       idSquadraAttuale: widget.idNazionale != null ? 0 : widget.squadra.id,
       attivo: true,
@@ -1050,6 +1050,12 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
     setState(() {
       giocatori.add(nuovoGiocatore);
     });
+  }
+
+  String _nazionePerBackend(String nazione) {
+    const Map<String, String> nazioneOverride = {'cile': 'chile'};
+    final lower = nazione.toLowerCase();
+    return nazioneOverride[lower] ?? lower;
   }
 
   void _showMessage(String message) {

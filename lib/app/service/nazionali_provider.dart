@@ -208,23 +208,32 @@ class NazionaliProvider with ChangeNotifier {
     String nazionaleId,
   ) async {
     try {
-      final response = await http.delete(
+      final formazioneVuota = {
+        'titolari': [],
+        'panchina': [],
+        'nonConvocati': [],
+        'indisponibili': [],
+        'allenatore': '',
+        'modulo': '4-3-3',
+      };
+      final response = await http.post(
         Uri.parse(
           '${Env.apiUrl}/$campionato/nazionali/$nazionaleId/formazione',
         ),
         headers: {'Content-Type': 'application/json'},
+        body: json.encode({'formazione': formazioneVuota}),
       );
-      if (response.statusCode == 200 || response.statusCode == 204) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         notifyListeners();
         return true;
       } else {
         print(
-          'Errore DELETE formazione nazionale: ${response.statusCode} - ${response.body}',
+          'Errore reset formazione nazionale: ${response.statusCode} - ${response.body}',
         );
         return false;
       }
     } catch (e) {
-      print('Errore DELETE formazione nazionale: $e');
+      print('Errore reset formazione nazionale: $e');
       return false;
     }
   }
