@@ -67,6 +67,33 @@ class Partita {
     );
   }
 
+  Partita copyWith({
+    Formazione? formazioneHome,
+    Formazione? formazioneAway,
+  }) {
+    return Partita(
+      id: id,
+      idGiornata: idGiornata,
+      idTeamHome: idTeamHome,
+      idTeamAway: idTeamAway,
+      idNazionaleHome: idNazionaleHome,
+      idNazionaleAway: idNazionaleAway,
+      teamHome: teamHome,
+      teamAway: teamAway,
+      codHome: codHome,
+      codAway: codAway,
+      risultatoHome: risultatoHome,
+      risultatoAway: risultatoAway,
+      formazioneHome: formazioneHome ?? this.formazioneHome,
+      formazioneAway: formazioneAway ?? this.formazioneAway,
+      divisaHome: divisaHome,
+      divisaAway: divisaAway,
+      tabellino: tabellino,
+      data: data,
+      salvata: salvata,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'idGiornata': idGiornata,
@@ -167,9 +194,9 @@ class GiocatoreFormazione {
 
   factory GiocatoreFormazione.fromJson(Map<String, dynamic> json) {
     return GiocatoreFormazione(
-      pos: json['pos'],
-      idGiocatore: json['idGiocatore'],
-      nome: json['nome'],
+      pos: json['pos'] ?? 0,
+      idGiocatore: json['idGiocatore'] ?? '',
+      nome: json['nome'] ?? '',
       inCampo: json['inCampo'] ?? true,
       ruolo: json['ruolo'],
       capitano: json['capitano'],
@@ -207,12 +234,12 @@ class GiocatoreNonDisponibile {
 
   factory GiocatoreNonDisponibile.fromJson(Map<String, dynamic> json) {
     return GiocatoreNonDisponibile(
-      idGiocatore: json['idGiocatore'],
-      nome: json['nome'],
-      pos: json['pos'],
-      motivo: json['motivo'],
-      durata: json['durata'],
-      idCompetizione: json['idCompetizione'],
+      idGiocatore: json['idGiocatore'] ?? '',
+      nome: json['nome'] ?? '',
+      pos: json['pos'] ?? 0,
+      motivo: json['motivo'] ?? '',
+      durata: json['durata'] ?? 0,
+      idCompetizione: json['idCompetizione'] ?? 0,
     );
   }
 

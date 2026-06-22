@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
+import 'package:ligaduck/app/service/models/nazionale.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
@@ -18,6 +19,7 @@ class SetInfoSquadraModalPage extends StatefulWidget {
   final Partita partita;
   final List<Giocatore> giocatori;
   final Squadra? squadra;
+  final List<Convocato>? convocati;
 
   SetInfoSquadraModalPage({
     super.key,
@@ -28,6 +30,7 @@ class SetInfoSquadraModalPage extends StatefulWidget {
     required this.partita,
     required this.giocatori,
     this.squadra,
+    this.convocati,
   });
 
   @override
@@ -70,34 +73,61 @@ class _SetInfoSquadraModalPageState extends State<SetInfoSquadraModalPage> {
       setState(() {
         _capitanoSelezionato = capitanoFormazione.idGiocatore;
       });
-    } else {
-      // Se non trova il capitano nella formazione, cerca nella carriera dei giocatori
-      final capitanoAttuale = widget.giocatori.firstWhere(
-        (g) => g.carriera.any(
-          (c) =>
-              c.idSquadra ==
-                  (widget.team == 0
-                      ? widget.partita.idTeamHome
-                      : widget.partita.idTeamAway) &&
-              c.campionato == widget.campionato &&
-              c.capitano == true,
-        ),
-        orElse: () => Giocatore(
-          id: '',
+      return;
+    }
+
+    // Nazionale: cerca il capitano tra i convocati
+    if (widget.convocati != null) {
+      final capitano = widget.convocati!.firstWhere(
+        (c) => c.capitano,
+        orElse: () => Convocato(
+          idGiocatore: '',
           nome: '',
-          eta: 0,
           ruolo: '',
-          nazione: '',
-          idSquadraAttuale: 0,
-          attivo: false,
+          numeroMaglia: 0,
+          idSquadra: 0,
         ),
       );
-
-      if (capitanoAttuale.id.isNotEmpty) {
+      if (capitano.idGiocatore.isNotEmpty) {
         setState(() {
-          _capitanoSelezionato = capitanoAttuale.id;
+          _capitanoSelezionato = capitano.idGiocatore;
         });
       }
+      return;
+    }
+
+    // Club: cerca nella carriera dei giocatori
+    final idNazionale = widget.team == 0
+        ? widget.partita.idNazionaleHome
+        : widget.partita.idNazionaleAway;
+    final isNazionale = idNazionale?.isNotEmpty ?? false;
+    final capitanoAttuale = widget.giocatori.firstWhere(
+      (g) => g.carriera.any(
+        (c) =>
+            (isNazionale
+                ? c.idNazionale == idNazionale
+                : c.idSquadra ==
+                      (widget.team == 0
+                          ? widget.partita.idTeamHome
+                          : widget.partita.idTeamAway)) &&
+            c.campionato == widget.campionato &&
+            c.capitano == true,
+      ),
+      orElse: () => Giocatore(
+        id: '',
+        nome: '',
+        eta: 0,
+        ruolo: '',
+        nazione: '',
+        idSquadraAttuale: 0,
+        attivo: false,
+      ),
+    );
+
+    if (capitanoAttuale.id.isNotEmpty) {
+      setState(() {
+        _capitanoSelezionato = capitanoAttuale.id;
+      });
     }
   }
 
@@ -125,9 +155,17 @@ class _SetInfoSquadraModalPageState extends State<SetInfoSquadraModalPage> {
     final idSquadra = widget.team == 0
         ? widget.partita.idTeamHome
         : widget.partita.idTeamAway;
+    final idNazionale = widget.team == 0
+        ? widget.partita.idNazionaleHome
+        : widget.partita.idNazionaleAway;
+    final isNazionale = idNazionale?.isNotEmpty ?? false;
 
     final carrieraAttuale = giocatore.carriera.firstWhere(
-      (c) => c.campionato == widget.campionato && c.idSquadra == idSquadra,
+      (c) =>
+          c.campionato == widget.campionato &&
+          (isNazionale
+              ? c.idNazionale == idNazionale
+              : c.idSquadra == idSquadra),
       orElse: () => Carriera(
         campionato: widget.campionato,
         idSquadra: idSquadra,
@@ -327,7 +365,9 @@ class _SetInfoSquadraModalPageState extends State<SetInfoSquadraModalPage> {
                     SizedBox(height: 20),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: _buildCapitanoDropdown(),
+                      child: widget.convocati != null
+                          ? _buildCapitanoDropdownNazionale()
+                          : _buildCapitanoDropdown(),
                     ),
                     SizedBox(height: 20),
                     Padding(
@@ -585,7 +625,104 @@ class _SetInfoSquadraModalPageState extends State<SetInfoSquadraModalPage> {
     );
   }
 
+  Widget _buildCapitanoDropdownNazionale() {
+    final formazione = widget.team == 0
+        ? widget.partita.formazioneHome
+        : widget.partita.formazioneAway;
+
+    final convocatiTitolari = widget.convocati!
+        .where(
+          (c) =>
+              c.ruolo != 'Allenatore' &&
+              formazione.titolari.any((t) => t.idGiocatore == c.idGiocatore),
+        )
+        .toList();
+
+    if (convocatiTitolari.isEmpty) {
+      return Center(
+        child: Text(
+          'Nessun titolare disponibile',
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
+    }
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: Color(
+            widget.competizione.colori.isNotEmpty
+                ? int.parse(
+                    widget.competizione.colori[0].replaceFirst('#', 'FF'),
+                    radix: 16,
+                  )
+                : 0xFF007AFF,
+          ),
+        ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String?>(
+          value: _capitanoSelezionato,
+          isExpanded: true,
+          hint: Text(
+            'Seleziona capitano',
+            style: TextStyle(color: Colors.grey),
+          ),
+          icon: Icon(
+            Icons.arrow_drop_down,
+            color: Color(
+              widget.competizione.colori.isNotEmpty
+                  ? int.parse(
+                      widget.competizione.colori[0].replaceFirst('#', 'FF'),
+                      radix: 16,
+                    )
+                  : 0xFF007AFF,
+            ),
+          ),
+          style: TextStyle(
+            color: Color(
+              widget.competizione.colori.isNotEmpty
+                  ? int.parse(
+                      widget.competizione.colori[0].replaceFirst('#', 'FF'),
+                      radix: 16,
+                    )
+                  : 0xFF007AFF,
+            ),
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+          items: convocatiTitolari.map((Convocato c) {
+            return DropdownMenuItem<String?>(
+              value: c.idGiocatore,
+              child: Row(
+                children: [
+                  Text('${c.numeroMaglia} - '),
+                  Expanded(
+                    child: Text(
+                      CommonService.decodePlayerName(c.nome),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+          onChanged: (String? newValue) {
+            setState(() {
+              _capitanoSelezionato = newValue;
+            });
+          },
+        ),
+      ),
+    );
+  }
+
   void modificaDatiSquadra() {
+    final idNazionale = widget.team == 0
+        ? widget.partita.idNazionaleHome
+        : widget.partita.idNazionaleAway;
     PartiteProvider provider = Provider.of<PartiteProvider>(
       context,
       listen: false,
@@ -596,7 +733,8 @@ class _SetInfoSquadraModalPageState extends State<SetInfoSquadraModalPage> {
       widget.selectedDivisaModal,
       _moduloSelezionato,
       widget.team == 0 ? widget.partita.idTeamHome : widget.partita.idTeamAway,
-      null,
+      _capitanoSelezionato,
+      idNazionale: idNazionale,
     );
   }
 }

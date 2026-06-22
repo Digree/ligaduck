@@ -1033,6 +1033,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
       width: isWide
           ? MediaQuery.of(context).size.width * 0.5
           : MediaQuery.of(context).size.width,
+      height: isWide ? null : MediaQuery.of(context).size.height * 0.49,
       child: Padding(
         padding: EdgeInsetsGeometry.only(right: 16.0),
         child: Column(
@@ -1051,108 +1052,109 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                 textAlign: TextAlign.left,
               ),
             ),
-            FutureBuilder(
-              future: Future.wait([_partiteFuture, _competizioniFuture]),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(
-                    child: CircularProgressIndicator(color: Colors.blueAccent),
-                  );
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Errore: ${snapshot.error}'));
-                } else {
-                  final partite = snapshot.data?[0] as List<Partita>? ?? [];
-                  final competizioni =
-                      snapshot.data?[1] as List<Competizione>? ?? [];
-
-                  if (partite.isEmpty) {
-                    return Padding(
-                      padding: EdgeInsetsGeometry.only(
-                        top: isWide ? 100 : 50,
-                        bottom: isWide ? 100 : 50,
-                      ),
-                      child: Center(
-                        child: Text('Nessuna partita in programma'),
+            Expanded(
+              child: FutureBuilder(
+                future: Future.wait([_partiteFuture, _competizioniFuture]),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.blueAccent,
                       ),
                     );
-                  }
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Errore: ${snapshot.error}'));
+                  } else {
+                    final partite = snapshot.data?[0] as List<Partita>? ?? [];
+                    final competizioni =
+                        snapshot.data?[1] as List<Competizione>? ?? [];
 
-                  partite.sort((a, b) => a.data.compareTo(b.data));
-
-                  // Raggruppa le partite per giornata/competizione
-                  Map<String, Map<String, dynamic>> partitePerCompetizione = {};
-                  Map<String, Map<String, dynamic>> partiteDataMap = {};
-
-                  for (var pc in partitaCompList) {
-                    partiteDataMap[pc['idPartita']] = pc;
-                  }
-
-                  for (var partita in partite) {
-                    String competizione = '';
-                    String cod = '';
-                    String idGiornata = '';
-                    String giornataLabel = '';
-                    var partitaData = partiteDataMap[partita.id];
-                    int idCompetizione = 0;
-                    if (partitaData != null) {
-                      competizione = partitaData['nome'];
-                      cod = partitaData['cod'];
-                      idGiornata = partitaData['idGiornata'] ?? '';
-                      giornataLabel = partitaData['giornataLabel'] ?? '';
-                      idCompetizione = partitaData['idCompetizione'] ?? 0;
-                    }
-
-                    final groupKey = '$competizione|$idGiornata';
-                    if (!partitePerCompetizione.containsKey(groupKey)) {
-                      partitePerCompetizione[groupKey] = {
-                        'cod': cod,
-                        'idCompetizione': idCompetizione,
-                        'competizione': competizione,
-                        'idGiornata': idGiornata,
-                        'giornataLabel': giornataLabel,
-                        'partite': <Partita>[],
-                      };
-                    }
-                    (partitePerCompetizione[groupKey]!['partite']
-                            as List<Partita>)
-                        .add(partita);
-                  }
-
-                  // Suddividi ogni giornata in pagine da max 5 partite
-                  final pages = <Map<String, dynamic>>[];
-                  partitePerCompetizione.forEach((groupKey, compData) {
-                    final List<Partita> partiteGiornata =
-                        compData['partite'] as List<Partita>;
-                    final String cod = compData['cod'] as String;
-                    final int idCompetizione =
-                        (compData['idCompetizione'] ?? 0) as int;
-                    final String competizione =
-                        compData['competizione'] as String;
-                    final String idGiornata = compData['idGiornata'] as String;
-                    final String giornataLabel =
-                        (compData['giornataLabel'] ?? '') as String;
-                    for (var i = 0; i < partiteGiornata.length; i += 5) {
-                      pages.add({
-                        'competizione': competizione,
-                        'cod': cod,
-                        'idCompetizione': idCompetizione,
-                        'idGiornata': idGiornata,
-                        'giornataLabel': giornataLabel,
-                        'partite': partiteGiornata.sublist(
-                          i,
-                          (i + 5 > partiteGiornata.length)
-                              ? partiteGiornata.length
-                              : i + 5,
+                    if (partite.isEmpty) {
+                      return Padding(
+                        padding: EdgeInsetsGeometry.only(
+                          top: isWide ? 100 : 50,
+                          bottom: isWide ? 100 : 50,
                         ),
-                      });
+                        child: Center(
+                          child: Text('Nessuna partita in programma'),
+                        ),
+                      );
                     }
-                  });
 
-                  return SizedBox(
-                    height: isWide
-                        ? MediaQuery.of(context).size.height * 0.6
-                        : MediaQuery.of(context).size.height * 0.49,
-                    child: Padding(
+                    partite.sort((a, b) => a.data.compareTo(b.data));
+
+                    // Raggruppa le partite per giornata/competizione
+                    Map<String, Map<String, dynamic>> partitePerCompetizione =
+                        {};
+                    Map<String, Map<String, dynamic>> partiteDataMap = {};
+
+                    for (var pc in partitaCompList) {
+                      partiteDataMap[pc['idPartita']] = pc;
+                    }
+
+                    for (var partita in partite) {
+                      String competizione = '';
+                      String cod = '';
+                      String idGiornata = '';
+                      String giornataLabel = '';
+                      var partitaData = partiteDataMap[partita.id];
+                      int idCompetizione = 0;
+                      if (partitaData != null) {
+                        competizione = partitaData['nome'];
+                        cod = partitaData['cod'];
+                        idGiornata = partitaData['idGiornata'] ?? '';
+                        giornataLabel = partitaData['giornataLabel'] ?? '';
+                        idCompetizione = partitaData['idCompetizione'] ?? 0;
+                      }
+
+                      final groupKey = '$competizione|$idGiornata';
+                      if (!partitePerCompetizione.containsKey(groupKey)) {
+                        partitePerCompetizione[groupKey] = {
+                          'cod': cod,
+                          'idCompetizione': idCompetizione,
+                          'competizione': competizione,
+                          'idGiornata': idGiornata,
+                          'giornataLabel': giornataLabel,
+                          'partite': <Partita>[],
+                        };
+                      }
+                      (partitePerCompetizione[groupKey]!['partite']
+                              as List<Partita>)
+                          .add(partita);
+                    }
+
+                    // Suddividi ogni giornata in pagine da max 5 partite
+                    final pages = <Map<String, dynamic>>[];
+                    partitePerCompetizione.forEach((groupKey, compData) {
+                      final List<Partita> partiteGiornata =
+                          compData['partite'] as List<Partita>;
+                      final String cod = compData['cod'] as String;
+                      final int idCompetizione =
+                          (compData['idCompetizione'] ?? 0) as int;
+                      final String competizione =
+                          compData['competizione'] as String;
+                      final String idGiornata =
+                          compData['idGiornata'] as String;
+                      final String giornataLabel =
+                          (compData['giornataLabel'] ?? '') as String;
+                      for (var i = 0; i < partiteGiornata.length; i += 5) {
+                        pages.add({
+                          'competizione': competizione,
+                          'cod': cod,
+                          'idCompetizione': idCompetizione,
+                          'idGiornata': idGiornata,
+                          'giornataLabel': giornataLabel,
+                          'partite': partiteGiornata.sublist(
+                            i,
+                            (i + 5 > partiteGiornata.length)
+                                ? partiteGiornata.length
+                                : i + 5,
+                          ),
+                        });
+                      }
+                    });
+
+                    return Padding(
                       padding: EdgeInsetsGeometry.only(left: 16),
                       child: Container(
                         decoration: BoxDecoration(
@@ -1404,10 +1406,10 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                           ),
                         ),
                       ),
-                    ),
-                  );
-                }
-              },
+                    );
+                  }
+                },
+              ),
             ),
           ],
         ),

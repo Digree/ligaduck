@@ -172,7 +172,25 @@ class _NostalgiaMatchCardState extends State<NostalgiaMatchCard> {
     ).putFormazione(widget.campionato, _partita.id, formazione, idSquadra);
     if (!silent && mounted) Navigator.of(context).pop();
     if (success) {
-      _reloadPartita();
+      try {
+        final updated = await Provider.of<PartiteProvider>(
+          context,
+          listen: false,
+        ).fetchPartitaById(widget.campionato, _partita.id, forceRefresh: true);
+        if (mounted) {
+          setState(() {
+            if (idSquadra == _partita.idTeamHome) {
+              _partita = _partita.copyWith(
+                formazioneHome: updated.formazioneHome,
+              );
+            } else {
+              _partita = _partita.copyWith(
+                formazioneAway: updated.formazioneAway,
+              );
+            }
+          });
+        }
+      } catch (_) {}
     } else if (!silent && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

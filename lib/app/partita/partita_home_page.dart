@@ -452,7 +452,11 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             ? partita!.formazioneHome
             : partita!.formazioneAway,
         selectedFormazione == 0 ? partita!.idTeamHome : partita!.idTeamAway,
+        idNazionale: selectedFormazione == 0
+            ? partita!.idNazionaleHome
+            : partita!.idNazionaleAway,
         showMessage: false,
+        refreshAfterSave: false,
       );
 
       // Mostra il messaggio di formazioni caricate
@@ -1716,14 +1720,15 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
 
                   // Se l'evento è stato salvato con successo, aggiorna la pagina
                   if (result != null) {
-                    // Aggiungi il nuovo evento al tabellino locale
                     setState(() {
                       partita!.tabellino.add(result);
-                      fetchPartita().then((fetchedPartita) {
+                    });
+                    fetchPartita().then((fetchedPartita) {
+                      if (mounted) {
                         setState(() {
                           partita = fetchedPartita;
                         });
-                      });
+                      }
                     });
                   }
 
@@ -4415,6 +4420,9 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                       selectedFormazione == 0
                                           ? partita!.idTeamHome
                                           : partita!.idTeamAway,
+                                      idNazionale: selectedFormazione == 0
+                                          ? partita!.idNazionaleHome
+                                          : partita!.idNazionaleAway,
                                     );
                                   },
                                   style: ElevatedButton.styleFrom(
@@ -4471,6 +4479,9 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                         selectedFormazione == 0
                                             ? partita!.idTeamHome
                                             : partita!.idTeamAway,
+                                        idNazionale: selectedFormazione == 0
+                                            ? partita!.idNazionaleHome
+                                            : partita!.idNazionaleAway,
                                       );
                                     }
                                     setState(() {
@@ -4570,6 +4581,9 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                 selectedFormazione == 0
                                     ? partita!.idTeamHome
                                     : partita!.idTeamAway,
+                                idNazionale: selectedFormazione == 0
+                                    ? partita!.idNazionaleHome
+                                    : partita!.idNazionaleAway,
                               );
                             },
                             style: ElevatedButton.styleFrom(
@@ -4617,6 +4631,9 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                   selectedFormazione == 0
                                       ? partita!.idTeamHome
                                       : partita!.idTeamAway,
+                                  idNazionale: selectedFormazione == 0
+                                      ? partita!.idNazionaleHome
+                                      : partita!.idNazionaleAway,
                                 );
                               }
                               setState(() {
@@ -6745,7 +6762,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     Partita partita = await Provider.of<PartiteProvider>(
       context,
       listen: false,
-    ).fetchPartitaById(widget.campionato, widget.partitaId);
+    ).fetchPartitaById(widget.campionato, widget.partitaId, forceRefresh: true);
 
     for (var giocatore in partita.formazioneHome.titolari) {
       giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
@@ -6777,9 +6794,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             ),
           );
           if (giocatore.id.isNotEmpty) {
+            final isNazionaleHome =
+                partita.idNazionaleHome?.isNotEmpty ?? false;
             gioFormazione.capitano = giocatore.carriera.any(
               (c) =>
-                  c.idSquadra == partita.idTeamHome &&
+                  (isNazionaleHome
+                      ? c.idNazionale == partita.idNazionaleHome
+                      : c.idSquadra == partita.idTeamHome) &&
                   c.campionato == widget.campionato &&
                   c.capitano == true,
             );
@@ -6804,9 +6825,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             ),
           );
           if (giocatore.id.isNotEmpty) {
+            final isNazionaleAway =
+                partita.idNazionaleAway?.isNotEmpty ?? false;
             gioFormazione.capitano = giocatore.carriera.any(
               (c) =>
-                  c.idSquadra == partita.idTeamAway &&
+                  (isNazionaleAway
+                      ? c.idNazionale == partita.idNazionaleAway
+                      : c.idSquadra == partita.idTeamAway) &&
                   c.campionato == widget.campionato &&
                   c.capitano == true,
             );
@@ -6841,7 +6866,9 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     idPartita,
     formazione,
     idSquadra, {
+    String? idNazionale,
     bool showMessage = true,
+    bool refreshAfterSave = true,
   }) async {
     // Mostra il loader
     showDialog(
@@ -6865,18 +6892,35 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       },
     );
 
-    bool success = await Provider.of<PartiteProvider>(
-      context,
-      listen: false,
-    ).putFormazione(campionato, idPartita, formazione, idSquadra);
+    bool success = await Provider.of<PartiteProvider>(context, listen: false)
+        .putFormazione(
+          campionato,
+          idPartita,
+          formazione,
+          idSquadra,
+          idNazionale: idNazionale,
+        );
 
     Navigator.of(context).pop();
 
     if (success) {
-      final updatedPartita = await fetchPartita();
-      setState(() {
-        partita = updatedPartita;
-      });
+      if (refreshAfterSave) {
+        final updatedPartita = await fetchPartita();
+        final bool isHome = idNazionale != null
+            ? idNazionale == partita!.idNazionaleHome
+            : idSquadra == partita!.idTeamHome;
+        setState(() {
+          if (isHome) {
+            partita = partita!.copyWith(
+              formazioneHome: updatedPartita.formazioneHome,
+            );
+          } else {
+            partita = partita!.copyWith(
+              formazioneAway: updatedPartita.formazioneAway,
+            );
+          }
+        });
+      }
 
       if (showMessage) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -6948,6 +6992,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                       (team == 0 ? partita!.codHome : partita!.codAway),
                   orElse: () => null,
                 ),
+                convocati:
+                    (team == 0
+                        ? (partita!.idNazionaleHome?.isNotEmpty ?? false)
+                        : (partita!.idNazionaleAway?.isNotEmpty ?? false))
+                    ? (team == 0
+                          ? _convocatiNazionaleHome
+                          : _convocatiNazionaleAway)
+                    : null,
               );
             },
           );
@@ -6994,6 +7046,9 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     nuovoModulo,
                     idSquadra,
                     nuovoCapitano,
+                    idNazionale: team == 0
+                        ? partita!.idNazionaleHome
+                        : partita!.idNazionaleAway,
                   );
 
               // Chiudi loader
@@ -7338,57 +7393,77 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     );
   }
 
-  void resetFormazione(String campionato, String partitaId, int teamId) {
-    Provider.of<PartiteProvider>(
-      context,
-      listen: false,
-    ).deleteFormazioneById(campionato, partitaId, teamId).then((success) async {
-      if (success) {
-        // Ricarica la partita
-        final updatedPartita = await fetchPartita();
-        setState(() {
-          partita = updatedPartita;
-        });
+  void resetFormazione(
+    String campionato,
+    String partitaId,
+    int teamId, {
+    String? idNazionale,
+  }) {
+    Provider.of<PartiteProvider>(context, listen: false)
+        .deleteFormazioneById(
+          campionato,
+          partitaId,
+          teamId,
+          idNazionale: idNazionale,
+        )
+        .then((success) async {
+          if (success) {
+            // Ricarica la partita
+            final updatedPartita = await fetchPartita();
+            final bool isHome = idNazionale != null
+                ? idNazionale == partita!.idNazionaleHome
+                : teamId == partita!.idTeamHome;
+            setState(() {
+              if (isHome) {
+                partita = partita!.copyWith(
+                  formazioneHome: updatedPartita.formazioneHome,
+                );
+              } else {
+                partita = partita!.copyWith(
+                  formazioneAway: updatedPartita.formazioneAway,
+                );
+              }
+            });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Formazione resettata con successo',
-              style: TextStyle(
-                fontFamily: competizione?.id == 5
-                    ? 'champions'
-                    : competizione?.id == 6 || competizione?.id == 7
-                    ? 'europa'
-                    : competizione?.id == 8
-                    ? 'supercup'
-                    : null,
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Formazione resettata con successo',
+                  style: TextStyle(
+                    fontFamily: competizione?.id == 5
+                        ? 'champions'
+                        : competizione?.id == 6 || competizione?.id == 7
+                        ? 'europa'
+                        : competizione?.id == 8
+                        ? 'supercup'
+                        : null,
+                  ),
+                ),
+                duration: Duration(seconds: 2),
+                backgroundColor: Colors.green,
               ),
-            ),
-            duration: Duration(seconds: 2),
-            backgroundColor: Colors.green,
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Errore nel reset della formazione',
-              style: TextStyle(
-                fontFamily: competizione?.id == 5
-                    ? 'champions'
-                    : competizione?.id == 6 || competizione?.id == 7
-                    ? 'europa'
-                    : competizione?.id == 8
-                    ? 'supercup'
-                    : null,
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Errore nel reset della formazione',
+                  style: TextStyle(
+                    fontFamily: competizione?.id == 5
+                        ? 'champions'
+                        : competizione?.id == 6 || competizione?.id == 7
+                        ? 'europa'
+                        : competizione?.id == 8
+                        ? 'supercup'
+                        : null,
+                  ),
+                ),
+                duration: Duration(seconds: 2),
+                backgroundColor: Colors.red,
               ),
-            ),
-            duration: Duration(seconds: 2),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    });
+            );
+          }
+        });
   }
 
   void salvaPartita() {

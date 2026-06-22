@@ -232,13 +232,15 @@ class PartiteProvider with ChangeNotifier {
     String campionato,
     String idPartita,
     Formazione formazione,
-    int idSquadra,
-  ) async {
+    int idSquadra, {
+    String? idNazionale,
+  }) async {
     try {
+      final url = idNazionale != null
+          ? '${Env.apiUrl}/$campionato/partita/$idPartita/formazione/nazionale/$idNazionale'
+          : '${Env.apiUrl}/$campionato/partita/$idPartita/formazione/$idSquadra';
       final response = await http.post(
-        Uri.parse(
-          '${Env.apiUrl}/$campionato/partita/$idPartita/formazione/$idSquadra',
-        ),
+        Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(formazione.toJson()),
       );
@@ -264,18 +266,16 @@ class PartiteProvider with ChangeNotifier {
     int divisa,
     String modulo,
     int idSquadra,
-    String? capitano,
-  ) async {
-    final body = {
-      'divisa': divisa,
-      'modulo': modulo,
-      'capitano': ?capitano,
-    };
+    String? capitano, {
+    String? idNazionale,
+  }) async {
+    final body = <String, dynamic>{'divisa': divisa, 'modulo': modulo, 'capitano': capitano};
     try {
+      final url = idNazionale != null
+          ? '${Env.apiUrl}/$campionato/partita/$idPartita/modifica/nazionale/$idNazionale'
+          : '${Env.apiUrl}/$campionato/partita/$idPartita/modifica/$idSquadra';
       final response = await http.post(
-        Uri.parse(
-          '${Env.apiUrl}/$campionato/partita/$idPartita/modifica/$idSquadra',
-        ),
+        Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(body),
       );
@@ -298,11 +298,13 @@ class PartiteProvider with ChangeNotifier {
   Future<bool> deleteFormazioneById(
     String campionato,
     String idPartita,
-    int teamId,
-  ) async {
+    int teamId, {
+    String? idNazionale,
+  }) async {
     try {
-      final url =
-          '${Env.apiUrl}/$campionato/partita/$idPartita/formazione/$teamId';
+      final url = idNazionale != null
+          ? '${Env.apiUrl}/$campionato/partita/$idPartita/formazione/nazionale/$idNazionale'
+          : '${Env.apiUrl}/$campionato/partita/$idPartita/formazione/$teamId';
 
       final response = await http.delete(Uri.parse(url));
 

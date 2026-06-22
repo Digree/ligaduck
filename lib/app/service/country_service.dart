@@ -13,7 +13,14 @@ class CountryService {
       final response = await http.get(Uri.parse(apiUrl));
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body) as List;
+        final decoded = json.decode(response.body);
+        if (decoded is! List) {
+          print(
+            'Risposta API non valida: attesa List, ricevuto ${decoded.runtimeType}',
+          );
+          return _getStaticCountries();
+        }
+        final data = decoded;
         List<Country> countries = data
             .map((json) => Country.fromJsonWithItalian(json))
             .toList();

@@ -34,6 +34,7 @@ import 'package:provider/provider.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
 import 'package:ligaduck/app/widgets/settings_icon.dart';
 import 'package:ligaduck/app/widgets/fireworks.dart';
+import 'package:ligaduck/app/competizione/elimination_bracket.dart';
 import 'package:ligaduck/main.dart' show routeObserver;
 
 class CompetizioneHomePage extends StatefulWidget {
@@ -316,6 +317,14 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
   Widget build(BuildContext context) {
     bool isWide = MediaQuery.of(context).size.width > 600;
 
+    final bool hasEliminazione = const [
+      3,
+      5,
+      6,
+      7,
+      17,
+    ].contains(widget.competizione.id);
+
     giornataChiusa = giornate_.where((g) => g.id == selectedGiornata).isNotEmpty
         ? giornate_.firstWhere((g) => g.id == selectedGiornata).conclusa
         : false;
@@ -333,6 +342,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       }
     }
 
+    final int tabCount = (mostraClassifica ? 4 : 3) + (hasEliminazione ? 1 : 0);
+
     return Theme(
       data: Theme.of(context).copyWith(
         textTheme: Theme.of(context).textTheme.apply(
@@ -348,8 +359,10 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       child: Stack(
         children: [
           DefaultTabController(
-            key: ValueKey('tabs_${isWide}_$mostraClassifica'),
-            length: mostraClassifica ? 4 : 3,
+            key: ValueKey(
+              'tabs_${isWide}_${mostraClassifica}_$hasEliminazione',
+            ),
+            length: tabCount,
             child: Scaffold(
               appBar: PreferredSize(
                 preferredSize: Size.fromHeight(200),
@@ -556,6 +569,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                     Tab(text: 'Partite'),
                                     if (mostraClassifica)
                                       Tab(text: 'Classifica'),
+                                    if (hasEliminazione)
+                                      Tab(text: 'Eliminazione'),
                                     Tab(text: 'Statistiche'),
                                     Tab(text: 'Squadre'),
                                   ],
@@ -583,6 +598,37 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                                 'Nessuna classifica disponibile',
                                               ),
                                             ),
+                                    if (hasEliminazione)
+                                      FutureBuilder<List<Squadra>>(
+                                        future: _squadreCompetizioneFuture,
+                                        builder: (context, snapshot) {
+                                          final squadre = snapshot.data ?? [];
+                                          return EliminazioneBracket(
+                                            squadre: squadre,
+                                            isAdmin: globals.admin,
+                                            primaryColor: Color(
+                                              widget
+                                                      .competizione
+                                                      .colori
+                                                      .isNotEmpty
+                                                  ? int.parse(
+                                                      widget
+                                                          .competizione
+                                                          .colori[0]
+                                                          .replaceFirst(
+                                                            '#',
+                                                            'FF',
+                                                          ),
+                                                      radix: 16,
+                                                    )
+                                                  : 0xFF1565C0,
+                                            ),
+                                            campionato: widget.campionato,
+                                            competizioneId:
+                                                widget.competizione.id,
+                                          );
+                                        },
+                                      ),
                                     selectedGiornata != null
                                         ? buildStatistiche()
                                         : Center(
@@ -612,64 +658,69 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                               padding: EdgeInsets.all(16),
                               child:
                                   mostraClassifica && !globals.effettoNostalgia
-                                  ? Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                'Partite:',
-                                                style: TextStyle(
-                                                  fontSize: 22,
-                                                  fontWeight: FontWeight.bold,
+                                  ? SizedBox(
+                                      height:
+                                          MediaQuery.of(context).size.height *
+                                          0.7,
+                                      child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Partite:',
+                                                  style: TextStyle(
+                                                    fontSize: 22,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                  textAlign: TextAlign.left,
                                                 ),
-                                                textAlign: TextAlign.left,
-                                              ),
-                                              Padding(
-                                                padding: EdgeInsets.only(
-                                                  top: 16,
+                                                SizedBox(height: 16),
+                                                Expanded(
+                                                  child: SingleChildScrollView(
+                                                    child: buildPartiteList(
+                                                      selectedGiornata!,
+                                                      shrinkWrap: true,
+                                                    ),
+                                                  ),
                                                 ),
-                                                child: buildPartiteList(
-                                                  selectedGiornata!,
-                                                  shrinkWrap: true,
-                                                ),
-                                              ),
-                                            ],
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                        SizedBox(width: 32),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                'Classifica:',
-                                                style: TextStyle(
-                                                  fontSize: 22,
-                                                  fontWeight: FontWeight.bold,
+                                          SizedBox(width: 32),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Classifica:',
+                                                  style: TextStyle(
+                                                    fontSize: 22,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                  textAlign: TextAlign.left,
                                                 ),
-                                                textAlign: TextAlign.left,
-                                              ),
-                                              Padding(
-                                                padding: EdgeInsets.only(
-                                                  top: 16,
+                                                SizedBox(height: 16),
+                                                Expanded(
+                                                  child: SingleChildScrollView(
+                                                    child: buildClassifica(
+                                                      context,
+                                                      selectedGiornata!,
+                                                      mostraClassifica,
+                                                      shrinkWrap: true,
+                                                    ),
+                                                  ),
                                                 ),
-                                                child: buildClassifica(
-                                                  context,
-                                                  selectedGiornata!,
-                                                  mostraClassifica,
-                                                  shrinkWrap: true,
-                                                ),
-                                              ),
-                                            ],
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     )
                                   : Column(
                                       crossAxisAlignment:
@@ -746,6 +797,58 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                         ],
                                       ],
                                     ),
+                            ),
+                          if (hasEliminazione)
+                            Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Padding(
+                                    padding: EdgeInsets.only(bottom: 8),
+                                    child: Text(
+                                      'Tabellone Eliminazione:',
+                                      style: TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    height: 620,
+                                    child: FutureBuilder<List<Squadra>>(
+                                      future: _squadreCompetizioneFuture,
+                                      builder: (context, snapshot) {
+                                        final squadre = snapshot.data ?? [];
+                                        return EliminazioneBracket(
+                                          squadre: squadre,
+                                          isAdmin: globals.admin,
+                                          primaryColor: Color(
+                                            widget
+                                                    .competizione
+                                                    .colori
+                                                    .isNotEmpty
+                                                ? int.parse(
+                                                    widget
+                                                        .competizione
+                                                        .colori[0]
+                                                        .replaceFirst(
+                                                          '#',
+                                                          'FF',
+                                                        ),
+                                                    radix: 16,
+                                                  )
+                                                : 0xFF1565C0,
+                                          ),
+                                          campionato: widget.campionato,
+                                          competizioneId:
+                                              widget.competizione.id,
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           if (selectedGiornata != null)
                             Padding(
@@ -2826,6 +2929,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                   final squadreList = snapshot.data ?? [];
                   return ListView(
                     shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
                     children: [
                       for (var i = 0; i < (classifica?.length ?? 0); i++)
                         teamListClassifica(
