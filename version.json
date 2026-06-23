@@ -1,24 +1,24 @@
 {
-  "lastUpdate": "2026-06-22",
+  "lastUpdate": "2026-06-23",
   "android": {
-    "version": "44.01.03",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.01.03/ligaduck-v44.01.03.apk",
-    "releaseNotes": "- Tabellone tennistico - Bug fix"
+    "version": "44.01.04",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.01.04/ligaduck-v44.01.04.apk",
+    "releaseNotes": "- Bug Fix"
   },
   "ios": {
-    "version": "44.01.03",
+    "version": "44.01.04",
     "downloadUrl": "https://apps.apple.com/app/ligaduck",
-    "releaseNotes": "- Tabellone tennistico - Bug fix"
+    "releaseNotes": "- Bug Fix"
   },
   "macos": {
-    "version": "44.01.03",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.01.03/ligaduck-v44.01.03.dmg",
-    "releaseNotes": "- Tabellone tennistico - Bug fix"
+    "version": "44.01.04",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.01.04/ligaduck-v44.01.04.dmg",
+    "releaseNotes": "- Bug Fix"
   },
   "windows": {
-    "version": "44.01.03",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.01.03/ligaduck-v44.01.03-windows.zip",
-    "msixUrl": "https://github.com/Digree/ligaduck/releases/download/v44.01.03/LigaDuckManager-Windows-v44.01.03.msix",
-    "releaseNotes": "- Tabellone tennistico - Bug fix"
+    "version": "44.01.04",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.01.04/ligaduck-v44.01.04-windows.zip",
+    "msixUrl": "https://github.com/Digree/ligaduck/releases/download/v44.01.04/LigaDuckManager-Windows-v44.01.04.msix",
+    "releaseNotes": "- Bug Fix"
   }
 }
