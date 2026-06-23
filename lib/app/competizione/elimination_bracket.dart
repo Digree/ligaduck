@@ -1,10 +1,10 @@
-import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:ligaduck/app/service/competizioni_provider.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/widgets/squadra_logo_widget.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 
 // ─── Model classes ─────────────────────────────────────────────────────────
 
@@ -143,6 +143,7 @@ class EliminazioneBracket extends StatefulWidget {
   final Color primaryColor;
   final String campionato;
   final int competizioneId;
+  final Map<String, dynamic>? tabellone;
 
   const EliminazioneBracket({
     super.key,
@@ -151,6 +152,7 @@ class EliminazioneBracket extends StatefulWidget {
     required this.primaryColor,
     required this.campionato,
     required this.competizioneId,
+    this.tabellone,
   });
 
   @override
@@ -180,56 +182,51 @@ class _EliminazioneBracketState extends State<EliminazioneBracket> {
   String _startPhase = 'Quarti';
   bool _loaded = false;
 
-  String get _key => 'bracket_${widget.campionato}_${widget.competizioneId}';
-
   @override
   void initState() {
     super.initState();
-    _load();
+    _loadFromTabellone(widget.tabellone);
   }
 
-  Future<void> _load() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_key);
-      if (raw != null) {
-        final data = jsonDecode(raw) as Map<String, dynamic>;
-        final phase = data['startingPhase'] as String? ?? 'Quarti';
-        if (_phases.contains(phase)) {
-          final roundsRaw = data['rounds'] as List?;
-          if (roundsRaw != null) {
-            final rounds = roundsRaw
-                .map(
-                  (r) => (r as List)
-                      .map(
-                        (m) => BracketMatch.fromJson(m as Map<String, dynamic>),
-                      )
-                      .toList(),
-                )
-                .toList();
-            if (mounted) {
-              setState(() {
-                _startPhase = phase;
-                _rounds = rounds;
-              });
-            }
-          }
+  void _loadFromTabellone(Map<String, dynamic>? data) {
+    if (data != null) {
+      final phase = data['startingPhase'] as String? ?? 'Quarti';
+      if (_phases.contains(phase)) {
+        final roundsRaw = data['rounds'] as List?;
+        if (roundsRaw != null) {
+          _startPhase = phase;
+          _rounds = roundsRaw
+              .map(
+                (r) => (r as List)
+                    .map(
+                      (m) => BracketMatch.fromJson(m as Map<String, dynamic>),
+                    )
+                    .toList(),
+              )
+              .toList();
         }
       }
-    } catch (_) {}
-    if (mounted) setState(() => _loaded = true);
+    }
+    _loaded = true;
   }
 
   Future<void> _save() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final provider = Provider.of<CompetizioniProvider>(
+        context,
+        listen: false,
+      );
       final data = {
         'startingPhase': _startPhase,
         'rounds': _rounds
             .map((r) => r.map((m) => m.toJson()).toList())
             .toList(),
       };
-      await prefs.setString(_key, jsonEncode(data));
+      await provider.salvaTabellone(
+        widget.campionato,
+        widget.competizioneId,
+        data,
+      );
     } catch (_) {}
   }
 
@@ -400,7 +397,7 @@ class _EliminazioneBracketState extends State<EliminazioneBracket> {
   Widget _bracket() {
     final int firstN = _rounds[0].length;
     final double unit = _cardHeight + _matchGap;
-    final double totalH = _headerH + firstN * unit + _cardHeight / 2;
+    final double totalH = _headerH + firstN * unit + 8.0;
     final double totalW = _rounds.length * _roundColWidth + 140;
 
     final List<Widget> children = [];
@@ -532,18 +529,30 @@ class _EliminazioneBracketState extends State<EliminazioneBracket> {
           ),
         Expanded(
           child: Container(
+            width: double.infinity,
             color: widget.primaryColor.withOpacity(0.03),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.all(16),
-                child: SizedBox(
-                  width: totalW,
-                  height: totalH,
-                  child: Stack(children: children),
-                ),
-              ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final hPad = ((constraints.maxWidth - totalW) / 2).clamp(
+                  16.0,
+                  double.infinity,
+                );
+                return SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: hPad,
+                      vertical: 16,
+                    ),
+                    child: SizedBox(
+                      width: totalW,
+                      height: totalH,
+                      child: Stack(children: children),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ),
@@ -556,9 +565,7 @@ class _EliminazioneBracketState extends State<EliminazioneBracket> {
   Widget _matchCard(int round, int matchIdx) {
     final match = _rounds[round][matchIdx];
     final canPickTeams =
-        widget.isAdmin &&
-        round > 0 &&
-        (match.team1 == null || match.team2 == null);
+        widget.isAdmin && (match.team1 == null || match.team2 == null);
     final canEnterResult =
         widget.isAdmin && match.team1 != null && match.team2 != null;
     final canTap = canPickTeams || canEnterResult;
@@ -905,6 +912,14 @@ class _EliminazioneBracketState extends State<EliminazioneBracket> {
                   ),
                 ),
               TextButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _showPickTeamsDialog(round, matchIdx);
+                },
+                style: TextButton.styleFrom(foregroundColor: Colors.grey[700]),
+                child: const Text('Cambia squadre'),
+              ),
+              TextButton(
                 onPressed: () => Navigator.pop(ctx),
                 style: TextButton.styleFrom(
                   foregroundColor: widget.primaryColor,
@@ -1196,9 +1211,19 @@ class _EliminazioneBracketState extends State<EliminazioneBracket> {
               ),
               ElevatedButton(
                 onPressed: () {
+                  final teamsChanged = t1 != match.team1 || t2 != match.team2;
                   setState(() {
                     _rounds[round][matchIdx].team1 = t1;
                     _rounds[round][matchIdx].team2 = t2;
+                    // Se le squadre sono cambiate, azzera il risultato
+                    if (teamsChanged) {
+                      _clearDownstream(round, matchIdx);
+                      _rounds[round][matchIdx].score1 = null;
+                      _rounds[round][matchIdx].score2 = null;
+                      _rounds[round][matchIdx].winner = null;
+                      _rounds[round][matchIdx].extraTime = false;
+                      _rounds[round][matchIdx].penalties = false;
+                    }
                   });
                   _save();
                   Navigator.pop(ctx);
@@ -1221,8 +1246,11 @@ class _EliminazioneBracketState extends State<EliminazioneBracket> {
     Set<int?> usedIds,
     void Function(BracketTeam?) onChange,
   ) {
+    // Deduplica per id per evitare DropdownMenuItem duplicati
+    final seen = <int>{};
     final available = widget.squadre
         .where((s) => current?.id == s.id || !usedIds.contains(s.id))
+        .where((s) => seen.add(s.id))
         .toList();
 
     return DropdownButtonFormField<int?>(

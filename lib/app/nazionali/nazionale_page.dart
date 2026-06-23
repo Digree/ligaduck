@@ -110,31 +110,35 @@ class _NazionalePageState extends State<NazionalePage> {
   }
 
   Future<void> _fetchGiocatori() async {
-    final giocatoriProvider = GiocatoriProvider();
+    final giocatoriProvider = Provider.of<GiocatoriProvider>(
+      context,
+      listen: false,
+    );
     final nazionaliProvider = Provider.of<NazionaliProvider>(
       context,
       listen: false,
     );
     try {
       final nazionale = _nazionale ?? widget.nazionale;
-      final List<Giocatore> loaded = [];
+      final convocatiDaFetch = nazionale.convocati
+          .where((c) => c.ruolo != 'Allenatore')
+          .toList();
 
-      // Allenatore: endpoint dedicato
-      final allenatore = await nazionaliProvider.fetchAllenatoreNazionale(
-        widget.campionato,
-        nazionale.id,
-      );
-      if (allenatore != null) loaded.add(allenatore);
-
-      // Tutti gli altri convocati (non allenatori)
-      for (final convocato in nazionale.convocati) {
-        if (convocato.ruolo == 'Allenatore') continue;
-        final g = await giocatoriProvider.fetchGiocatoreById(
+      // Tutte le chiamate in parallelo
+      final results = await Future.wait([
+        nazionaliProvider.fetchAllenatoreNazionale(
           widget.campionato,
-          convocato.idGiocatore,
-        );
-        if (g != null) loaded.add(g);
-      }
+          nazionale.id,
+        ),
+        ...convocatiDaFetch.map(
+          (c) => giocatoriProvider.getGiocatoreById(
+            widget.campionato,
+            c.idGiocatore,
+          ),
+        ),
+      ]);
+
+      final loaded = results.whereType<Giocatore>().toList();
       if (mounted) setState(() => giocatori = loaded);
     } catch (e) {
       if (mounted) setState(() => giocatori = []);

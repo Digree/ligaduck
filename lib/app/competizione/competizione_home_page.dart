@@ -546,6 +546,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                   maxWidth: MediaQuery.of(context).size.width,
                                 ),
                                 child: TabBar(
+                                  isScrollable: true,
+                                  tabAlignment: TabAlignment.center,
                                   labelColor: Color(
                                     widget.competizione.colori.isNotEmpty
                                         ? int.parse(
@@ -626,6 +628,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                             campionato: widget.campionato,
                                             competizioneId:
                                                 widget.competizione.id,
+                                            tabellone: widget.competizione.fasi,
                                           );
                                         },
                                       ),
@@ -843,6 +846,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                           campionato: widget.campionato,
                                           competizioneId:
                                               widget.competizione.id,
+                                          tabellone: widget.competizione.fasi,
                                         );
                                       },
                                     ),

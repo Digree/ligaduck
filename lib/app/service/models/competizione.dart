@@ -8,6 +8,7 @@ class Competizione {
   final int idCampione;
   final bool conclusa;
   final List<Girone>? gironi;
+  final Map<String, dynamic>? fasi;
 
   Competizione({
     required this.id,
@@ -19,6 +20,7 @@ class Competizione {
     this.idCampione = 0,
     this.conclusa = false,
     this.gironi,
+    this.fasi,
   });
 
   factory Competizione.fromJson(Map<String, dynamic> json) {
@@ -36,6 +38,9 @@ class Competizione {
                 .map((e) => Girone.fromJson(e as Map<String, dynamic>))
                 .toList()
           : null,
+      fasi: json['fasi'] != null
+          ? Map<String, dynamic>.from(json['fasi'] as Map)
+          : null,
     );
   }
 
@@ -50,6 +55,7 @@ class Competizione {
       'idCampione': idCampione,
       'conclusa': conclusa,
       'gironi': gironi?.map((g) => g.toJson()).toList(),
+      'fasi': fasi,
     };
   }
 }

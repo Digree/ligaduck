@@ -219,4 +219,33 @@ class CompetizioniProvider with ChangeNotifier {
       return false;
     }
   }
+
+  /// Salva il tabellone eliminazione sul server.
+  Future<bool> salvaTabellone(
+    String campionato,
+    int idCompetizione,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse(
+          '${Env.apiUrl}/$campionato/competizioni/$idCompetizione/tabellone',
+        ),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(data),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else {
+        print(
+          'Errore POST tabellone: ${response.statusCode} - ${response.body}',
+        );
+        return false;
+      }
+    } catch (e) {
+      print('Errore POST tabellone: $e');
+      return false;
+    }
+  }
 }
