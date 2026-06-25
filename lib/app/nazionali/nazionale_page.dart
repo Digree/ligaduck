@@ -500,45 +500,62 @@ class _NazionalePageState extends State<NazionalePage> {
                 (a, b) =>
                     _getNumeroConvocato(a).compareTo(_getNumeroConvocato(b)),
               ))
-            globals.admin
-                ? Dismissible(
-                    key: ValueKey(g.id),
-                    direction: DismissDirection.endToStart,
-                    background: Container(
-                      color: Colors.red[400],
-                      alignment: Alignment.centerRight,
-                      padding: EdgeInsets.only(right: 20),
-                      child: Icon(Icons.person_remove, color: Colors.white),
-                    ),
-                    confirmDismiss: (_) async {
-                      return await showDialog<bool>(
-                            context: context,
-                            builder: (ctx) => AlertDialog(
-                              title: Text('Rimuovi convocato'),
-                              content: Text(
-                                'Rimuovere ${CommonService.decodePlayerName(g.nome)} dalla nazionale?',
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.of(ctx).pop(false),
-                                  child: Text('Annulla'),
-                                ),
-                                TextButton(
-                                  onPressed: () => Navigator.of(ctx).pop(true),
-                                  child: Text(
-                                    'Rimuovi',
-                                    style: TextStyle(color: Colors.red),
+            Builder(
+              builder: (context) {
+                final convocato = (_nazionale ?? widget.nazionale).convocati
+                    .firstWhere(
+                      (c) => c.idGiocatore == g.id,
+                      orElse: () => Convocato(
+                        idGiocatore: g.id,
+                        nome: g.nome,
+                        ruolo: g.ruolo,
+                        numeroMaglia: 0,
+                        idSquadra: g.idSquadraAttuale,
+                      ),
+                    );
+                return globals.admin
+                    ? Dismissible(
+                        key: ValueKey(g.id),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          color: Colors.red[400],
+                          alignment: Alignment.centerRight,
+                          padding: EdgeInsets.only(right: 20),
+                          child: Icon(Icons.person_remove, color: Colors.white),
+                        ),
+                        confirmDismiss: (_) async {
+                          return await showDialog<bool>(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: Text('Rimuovi convocato'),
+                                  content: Text(
+                                    'Rimuovere ${CommonService.decodePlayerName(g.nome)} dalla nazionale?',
                                   ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(ctx).pop(false),
+                                      child: Text('Annulla'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(ctx).pop(true),
+                                      child: Text(
+                                        'Rimuovi',
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          ) ??
-                          false;
-                    },
-                    onDismissed: (_) => _rimuoviConvocato(g),
-                    child: _buildRosaRow(g, screenWidth),
-                  )
-                : _buildRosaRow(g, screenWidth),
+                              ) ??
+                              false;
+                        },
+                        onDismissed: (_) => _rimuoviConvocato(g),
+                        child: _buildRosaRow(convocato, screenWidth, g),
+                      )
+                    : _buildRosaRow(convocato, screenWidth, g);
+              },
+            ),
         ],
       ],
     );
@@ -697,21 +714,25 @@ class _NazionalePageState extends State<NazionalePage> {
     return _buildJerseyColorPlaceholder(numero, widget.nazionale.colori);
   }
 
-  Widget _buildRosaRow(Giocatore giocatore, double screenWidth) {
-    final squadraClub = _getSquadraById(giocatore.idSquadraAttuale);
+  Widget _buildRosaRow(
+    Convocato convocato,
+    double screenWidth,
+    Giocatore giocatore,
+  ) {
+    final squadraClub = _getSquadraById(convocato.idSquadra);
     final nazionale = _nazionale ?? widget.nazionale;
 
     // Verifica se il giocatore è capitano (da convocati o formazione)
     bool isCapitano =
         nazionale.convocati.any(
-          (c) => c.idGiocatore == giocatore.id && c.capitano,
+          (c) => c.idGiocatore == convocato.idGiocatore && c.capitano,
         ) ||
         nazionale.formazione.titolari.any(
-          (t) => t.idGiocatore == giocatore.id && t.capitano == true,
+          (t) => t.idGiocatore == convocato.idGiocatore && t.capitano == true,
         );
 
     return Container(
-      key: ValueKey(giocatore.id),
+      key: ValueKey(convocato.idGiocatore),
       height: 72,
       decoration: BoxDecoration(
         color: Colors.transparent,
@@ -719,7 +740,7 @@ class _NazionalePageState extends State<NazionalePage> {
       ),
       child: Row(
         children: [
-          if (giocatore.ruolo == 'Allenatore')
+          if (convocato.ruolo == 'Allenatore')
             Padding(
               padding: EdgeInsets.only(left: 28, right: 21),
               child: Icon(Icons.person_4, color: getColor('primary')),
@@ -738,7 +759,7 @@ class _NazionalePageState extends State<NazionalePage> {
                 Row(
                   children: [
                     // Icona capitano
-                    if (giocatore.ruolo != 'Allenatore' && isCapitano)
+                    if (convocato.ruolo != 'Allenatore' && isCapitano)
                       Padding(
                         padding: EdgeInsets.only(right: 6),
                         child: Image.asset(
@@ -749,7 +770,7 @@ class _NazionalePageState extends State<NazionalePage> {
                       ),
                     Expanded(
                       child: Text(
-                        CommonService.decodePlayerName(giocatore.nome),
+                        CommonService.decodePlayerName(convocato.nome),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -759,7 +780,7 @@ class _NazionalePageState extends State<NazionalePage> {
                     ),
                   ],
                 ),
-                if (giocatore.ruolo != 'Allenatore' && squadraClub != null) ...[
+                if (convocato.ruolo != 'Allenatore' && squadraClub != null) ...[
                   SizedBox(height: 3),
                   Row(
                     children: [

@@ -540,43 +540,48 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                         Expanded(
                           child: Column(
                             children: [
-                              Container(
-                                constraints: BoxConstraints(
-                                  maxHeight: 50,
-                                  maxWidth: MediaQuery.of(context).size.width,
-                                ),
-                                child: TabBar(
-                                  isScrollable: true,
-                                  tabAlignment: TabAlignment.center,
-                                  labelColor: Color(
-                                    widget.competizione.colori.isNotEmpty
-                                        ? int.parse(
-                                            widget.competizione.colori[0]
-                                                .replaceFirst('#', 'FF'),
-                                            radix: 16,
-                                          )
-                                        : 0xFF000000,
-                                  ),
-                                  unselectedLabelColor: Colors.grey,
-                                  indicatorColor: Color(
-                                    widget.competizione.colori.isNotEmpty
-                                        ? int.parse(
-                                            widget.competizione.colori[0]
-                                                .replaceFirst('#', 'FF'),
-                                            radix: 16,
-                                          )
-                                        : 0xFF000000,
-                                  ),
-                                  tabs: [
-                                    Tab(text: 'Partite'),
-                                    if (mostraClassifica)
-                                      Tab(text: 'Classifica'),
-                                    if (hasEliminazione)
-                                      Tab(text: 'Eliminazione'),
-                                    Tab(text: 'Statistiche'),
-                                    Tab(text: 'Squadre'),
-                                  ],
-                                ),
+                              LayoutBuilder(
+                                builder: (context, constraints) {
+                                  // Larghezza realistica per tab con etichette come "Eliminazione"
+                                  const minTabWidth = 90.0;
+                                  final shouldScroll =
+                                      tabCount * minTabWidth >
+                                      constraints.maxWidth;
+                                  return TabBar(
+                                    isScrollable: shouldScroll,
+                                    tabAlignment: shouldScroll
+                                        ? TabAlignment.center
+                                        : TabAlignment.fill,
+                                    labelColor: Color(
+                                      widget.competizione.colori.isNotEmpty
+                                          ? int.parse(
+                                              widget.competizione.colori[0]
+                                                  .replaceFirst('#', 'FF'),
+                                              radix: 16,
+                                            )
+                                          : 0xFF000000,
+                                    ),
+                                    unselectedLabelColor: Colors.grey,
+                                    indicatorColor: Color(
+                                      widget.competizione.colori.isNotEmpty
+                                          ? int.parse(
+                                              widget.competizione.colori[0]
+                                                  .replaceFirst('#', 'FF'),
+                                              radix: 16,
+                                            )
+                                          : 0xFF000000,
+                                    ),
+                                    tabs: [
+                                      Tab(text: 'Partite'),
+                                      if (mostraClassifica)
+                                        Tab(text: 'Classifica'),
+                                      if (hasEliminazione)
+                                        Tab(text: 'Eliminazione'),
+                                      Tab(text: 'Statistiche'),
+                                      Tab(text: 'Squadre'),
+                                    ],
+                                  );
+                                },
                               ),
                               Expanded(
                                 child: TabBarView(
@@ -2834,7 +2839,17 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                 );
               },
             )
-          : cardClassifica(giornata, isWide, screenWidth, screenHeight, 0),
+          : shrinkWrap
+          ? cardClassifica(giornata, isWide, screenWidth, screenHeight, 0)
+          : SingleChildScrollView(
+              child: cardClassifica(
+                giornata,
+                isWide,
+                screenWidth,
+                screenHeight,
+                0,
+              ),
+            ),
     );
   }
 
