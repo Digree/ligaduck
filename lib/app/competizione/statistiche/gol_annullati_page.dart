@@ -268,9 +268,13 @@ class _GolAnnullatiPageState extends State<GolAnnullatiPage> {
                                             squadra: snapshot.data!,
                                             size: 30,
                                             nomeNazionale:
-                                                snapshot.data!.categoria
-                                                    .toLowerCase()
-                                                    .contains('naz')
+                                                (snapshot.data!.categoria
+                                                        .toLowerCase()
+                                                        .contains('naz') ||
+                                                    (golAnnullato
+                                                            .idNazionale
+                                                            ?.isNotEmpty ??
+                                                        false))
                                                 ? snapshot.data!.nome
                                                 : null,
                                           ),

@@ -3,11 +3,13 @@ import 'package:ligaduck/app/models/partita/partita_formazione_model.dart';
 import 'package:ligaduck/app/service/giocatori_provider.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
+import 'package:ligaduck/app/service/models/nazionale.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
 import 'package:ligaduck/app/partita/add_evento_modal_page.dart';
 import 'package:ligaduck/app/partita/set_info_squadra_modal_page.dart';
+import 'package:ligaduck/app/service/nazionali_provider.dart';
 import 'package:ligaduck/app/service/partite_provider.dart';
 import 'package:ligaduck/app/service/squadre_provider.dart';
 import 'package:ligaduck/app/widgets/squadra_logo_widget.dart';
@@ -37,6 +39,10 @@ class NostalgiaMatchCard extends StatefulWidget {
 class _NostalgiaMatchCardState extends State<NostalgiaMatchCard> {
   List<Giocatore> giocatoriHome = [];
   List<Giocatore> giocatoriAway = [];
+  List<String> _coloriNazionaleHome = [];
+  List<String> _coloriNazionaleAway = [];
+  List<Convocato> _convocatiHome = [];
+  List<Convocato> _convocatiAway = [];
   late Partita _partita;
   int _tabHome = 0; // 0 = Panchina, 1 = Non convocati
   int _tabAway = 0;
@@ -57,22 +63,58 @@ class _NostalgiaMatchCardState extends State<NostalgiaMatchCard> {
   }
 
   Future<void> _fetchGiocatori() async {
-    final provider = GiocatoriProvider();
+    final giocatoriProv = GiocatoriProvider();
+    List<Giocatore> home = [];
+    List<Giocatore> away = [];
+    List<String> coloriHome = [];
+    List<String> coloriAway = [];
+    List<Convocato> convHome = [];
+    List<Convocato> convAway = [];
     try {
-      final home = await provider.fetchGiocatori(
-        widget.campionato,
-        _partita.idTeamHome,
-        'nostalgia',
-      );
-      final away = await provider.fetchGiocatori(
-        widget.campionato,
-        _partita.idTeamAway,
-        'nostalgia',
-      );
+      final isNazHome = _partita.idNazionaleHome?.isNotEmpty ?? false;
+      final isNazAway = _partita.idNazionaleAway?.isNotEmpty ?? false;
+      if (isNazHome || isNazAway) {
+        final nazProv = Provider.of<NazionaliProvider>(context, listen: false);
+        final nazionali = await nazProv.fetchNazionali(widget.campionato);
+        if (isNazHome) {
+          final naz = nazionali.firstWhere(
+            (n) => n.id == _partita.idNazionaleHome,
+            orElse: () => nazionali.first,
+          );
+          coloriHome = naz.colori;
+          convHome = naz.convocati;
+        }
+        if (isNazAway) {
+          final naz = nazionali.firstWhere(
+            (n) => n.id == _partita.idNazionaleAway,
+            orElse: () => nazionali.first,
+          );
+          coloriAway = naz.colori;
+          convAway = naz.convocati;
+        }
+      }
+      if (!isNazHome) {
+        home = await giocatoriProv.fetchGiocatori(
+          widget.campionato,
+          _partita.idTeamHome,
+          'nostalgia',
+        );
+      }
+      if (!isNazAway) {
+        away = await giocatoriProv.fetchGiocatori(
+          widget.campionato,
+          _partita.idTeamAway,
+          'nostalgia',
+        );
+      }
       if (mounted) {
         setState(() {
           giocatoriHome = home;
           giocatoriAway = away;
+          _coloriNazionaleHome = coloriHome;
+          _coloriNazionaleAway = coloriAway;
+          _convocatiHome = convHome;
+          _convocatiAway = convAway;
         });
       }
     } catch (_) {
@@ -512,9 +554,30 @@ class _NostalgiaMatchCardState extends State<NostalgiaMatchCard> {
         )
       : Colors.blueAccent;
 
+  bool _isEventoDelTeam(Evento e, bool isHome) {
+    final idNazionale = isHome
+        ? _partita.idNazionaleHome
+        : _partita.idNazionaleAway;
+    if (idNazionale?.isNotEmpty ?? false) {
+      if (e.idNazionale == idNazionale) return true;
+      if (e.idNazionale == null) {
+        final formazione = isHome
+            ? _partita.formazioneHome
+            : _partita.formazioneAway;
+        return [
+          ...formazione.titolari,
+          ...formazione.panchina,
+        ].any((g) => g.idGiocatore == e.idGiocatore);
+      }
+      return false;
+    }
+    final idTeam = isHome ? _partita.idTeamHome : _partita.idTeamAway;
+    return e.idTeam == idTeam;
+  }
+
   List<Evento> get _eventiHome => _partita.tabellino.where((e) {
     if (e.minuto == 121) return false;
-    if (e.idTeam != _partita.idTeamHome) return false;
+    if (!_isEventoDelTeam(e, true)) return false;
     return const {
       'gol',
       'pun',
@@ -529,7 +592,7 @@ class _NostalgiaMatchCardState extends State<NostalgiaMatchCard> {
 
   List<Evento> get _eventiAway => _partita.tabellino.where((e) {
     if (e.minuto == 121) return false;
-    if (e.idTeam != _partita.idTeamAway) return false;
+    if (!_isEventoDelTeam(e, false)) return false;
     return const {
       'gol',
       'pun',
@@ -757,6 +820,7 @@ class _NostalgiaMatchCardState extends State<NostalgiaMatchCard> {
     Formazione formazione,
     bool isLeft, {
     VoidCallback? onTap,
+    String? nomeNazionale,
   }) {
     final nome = CommonService.decodePlayerName(squadra.nome);
     final modulo = formazione.modulo;
@@ -783,6 +847,7 @@ class _NostalgiaMatchCardState extends State<NostalgiaMatchCard> {
                     codSquadra: squadra.cod,
                     squadra: squadra,
                     size: 36,
+                    nomeNazionale: nomeNazionale,
                   ),
                   const SizedBox(width: 8),
                   Flexible(
@@ -813,6 +878,7 @@ class _NostalgiaMatchCardState extends State<NostalgiaMatchCard> {
                     codSquadra: squadra.cod,
                     squadra: squadra,
                     size: 36,
+                    nomeNazionale: nomeNazionale,
                   ),
                 ],
         ),
@@ -846,6 +912,7 @@ class _NostalgiaMatchCardState extends State<NostalgiaMatchCard> {
     List<String> sostituzioni = const [],
     List<String> coloriSquadra = const [],
     List<GiocatoreNonDisponibile> indisponibili = const [],
+    List<Convocato> convocati = const [],
     bool isNonConvocati = false,
     int? team,
   }) {
@@ -857,19 +924,37 @@ class _NostalgiaMatchCardState extends State<NostalgiaMatchCard> {
 
     for (var g in panchina) {
       if (idIndisp.contains(g.idGiocatore)) continue;
-      final full = giocatoriCompleti.firstWhere(
-        (x) => x.id == g.idGiocatore,
-        orElse: () => Giocatore(
-          id: '',
-          nome: '',
-          eta: 0,
-          ruolo: 'Attaccante',
-          nazione: '',
-          idSquadraAttuale: 0,
-          attivo: true,
-        ),
-      );
-      switch (full.ruolo) {
+      final String ruolo;
+      if (convocati.isNotEmpty) {
+        ruolo = convocati
+            .firstWhere(
+              (c) => c.idGiocatore == g.idGiocatore,
+              orElse: () => Convocato(
+                idGiocatore: '',
+                nome: '',
+                ruolo: 'Attaccante',
+                numeroMaglia: 0,
+                idSquadra: 0,
+              ),
+            )
+            .ruolo;
+      } else {
+        ruolo = giocatoriCompleti
+            .firstWhere(
+              (x) => x.id == g.idGiocatore,
+              orElse: () => Giocatore(
+                id: '',
+                nome: '',
+                eta: 0,
+                ruolo: 'Attaccante',
+                nazione: '',
+                idSquadraAttuale: 0,
+                attivo: true,
+              ),
+            )
+            .ruolo;
+      }
+      switch (ruolo) {
         case 'Portiere':
           portieri.add(g);
           break;
@@ -1196,11 +1281,12 @@ class _NostalgiaMatchCardState extends State<NostalgiaMatchCard> {
         : _partita.formazioneAway;
     final cod = isHome ? _partita.codHome : _partita.codAway;
     final divisa = isHome ? _partita.divisaHome : _partita.divisaAway;
-    final idTeam = isHome ? _partita.idTeamHome : _partita.idTeamAway;
-    final idOppositeTeam = isHome ? _partita.idTeamAway : _partita.idTeamHome;
-    final colori = isHome
-        ? widget.squadraHome.colori
-        : widget.squadraAway.colori;
+    final colori =
+        (isHome
+            ? (_partita.idNazionaleHome?.isNotEmpty ?? false)
+            : (_partita.idNazionaleAway?.isNotEmpty ?? false))
+        ? (isHome ? _coloriNazionaleHome : _coloriNazionaleAway)
+        : (isHome ? widget.squadraHome.colori : widget.squadraAway.colori);
 
     final marcatori = _partita.tabellino
         .where(
@@ -1208,24 +1294,24 @@ class _NostalgiaMatchCardState extends State<NostalgiaMatchCard> {
               (e.codAzione == 'gol' ||
                   e.codAzione == 'rig' ||
                   e.codAzione == 'pun') &&
-              e.idTeam == idTeam &&
+              _isEventoDelTeam(e, isHome) &&
               e.minuto != 121,
         )
         .map((e) => e.idGiocatore)
         .toList();
 
     final autogolList = _partita.tabellino
-        .where((e) => e.codAzione == 'aut' && e.idTeam == idOppositeTeam)
+        .where((e) => e.codAzione == 'aut' && _isEventoDelTeam(e, !isHome))
         .map((e) => e.idGiocatore)
         .toList();
 
     final espulsi = _partita.tabellino
-        .where((e) => e.codAzione == 'esp' && e.idTeam == idTeam)
+        .where((e) => e.codAzione == 'esp' && _isEventoDelTeam(e, isHome))
         .map((e) => e.idGiocatore)
         .toList();
 
     final sostituzioni = _partita.tabellino
-        .where((e) => e.codAzione == 'sos' && e.idTeam == idTeam)
+        .where((e) => e.codAzione == 'sos' && _isEventoDelTeam(e, isHome))
         .expand(
           (e) => [
             e.idGiocatore,
@@ -1331,8 +1417,8 @@ class _NostalgiaMatchCardState extends State<NostalgiaMatchCard> {
         ? eventiH.length
         : eventiA.length;
 
-    List<String> sostituzioni(int idTeam) => partita.tabellino
-        .where((e) => e.codAzione == 'sos' && e.idTeam == idTeam)
+    List<String> sostituzioni(bool isHome) => partita.tabellino
+        .where((e) => e.codAzione == 'sos' && _isEventoDelTeam(e, isHome))
         .expand(
           (e) => [
             e.idGiocatore,
@@ -1341,20 +1427,16 @@ class _NostalgiaMatchCardState extends State<NostalgiaMatchCard> {
         )
         .toList();
 
-    final sostHome = sostituzioni(partita.idTeamHome);
-    final sostAway = sostituzioni(partita.idTeamAway);
+    final sostHome = sostituzioni(true);
+    final sostAway = sostituzioni(false);
     final sosEventiHome =
         (partita.tabellino
-            .where(
-              (e) => e.codAzione == 'sos' && e.idTeam == partita.idTeamHome,
-            )
+            .where((e) => e.codAzione == 'sos' && _isEventoDelTeam(e, true))
             .toList()
           ..sort((a, b) => a.minuto.compareTo(b.minuto)));
     final sosEventiAway =
         (partita.tabellino
-            .where(
-              (e) => e.codAzione == 'sos' && e.idTeam == partita.idTeamAway,
-            )
+            .where((e) => e.codAzione == 'sos' && _isEventoDelTeam(e, false))
             .toList()
           ..sort((a, b) => a.minuto.compareTo(b.minuto)));
 
@@ -1368,7 +1450,7 @@ class _NostalgiaMatchCardState extends State<NostalgiaMatchCard> {
               e.minuto == 121 &&
               e.codAzione == 'rig' &&
               e.esitoRigore == true &&
-              e.idTeam == partita.idTeamHome,
+              _isEventoDelTeam(e, true),
         )
         .length;
     final rigoriAway = partita.tabellino
@@ -1377,7 +1459,7 @@ class _NostalgiaMatchCardState extends State<NostalgiaMatchCard> {
               e.minuto == 121 &&
               e.codAzione == 'rig' &&
               e.esitoRigore == true &&
-              e.idTeam == partita.idTeamAway,
+              _isEventoDelTeam(e, false),
         )
         .length;
     final isRitorno = partita.id.contains('_rit');
@@ -1507,6 +1589,10 @@ class _NostalgiaMatchCardState extends State<NostalgiaMatchCard> {
                         partita.formazioneHome,
                         true,
                         onTap: globals.admin ? () => _openInfoSquadra(0) : null,
+                        nomeNazionale:
+                            (partita.idNazionaleHome?.isNotEmpty ?? false)
+                            ? widget.squadraHome.nome
+                            : null,
                       ),
                     ),
                     Padding(
@@ -1576,6 +1662,10 @@ class _NostalgiaMatchCardState extends State<NostalgiaMatchCard> {
                         partita.formazioneAway,
                         false,
                         onTap: globals.admin ? () => _openInfoSquadra(1) : null,
+                        nomeNazionale:
+                            (partita.idNazionaleAway?.isNotEmpty ?? false)
+                            ? widget.squadraAway.nome
+                            : null,
                       ),
                     ),
                   ],
@@ -1620,7 +1710,11 @@ class _NostalgiaMatchCardState extends State<NostalgiaMatchCard> {
                               partita.codHome,
                               partita.divisaHome,
                               sostituzioni: sostHome,
-                              coloriSquadra: widget.squadraHome.colori,
+                              coloriSquadra:
+                                  (partita.idNazionaleHome?.isNotEmpty ?? false)
+                                  ? _coloriNazionaleHome
+                                  : widget.squadraHome.colori,
+                              convocati: _convocatiHome,
                               indisponibili:
                                   partita.formazioneHome.indisponibili,
                               team: 0,
@@ -1631,7 +1725,11 @@ class _NostalgiaMatchCardState extends State<NostalgiaMatchCard> {
                               giocatoriHome,
                               partita.codHome,
                               partita.divisaHome,
-                              coloriSquadra: widget.squadraHome.colori,
+                              coloriSquadra:
+                                  (partita.idNazionaleHome?.isNotEmpty ?? false)
+                                  ? _coloriNazionaleHome
+                                  : widget.squadraHome.colori,
+                              convocati: _convocatiHome,
                               indisponibili:
                                   partita.formazioneHome.indisponibili,
                               isNonConvocati: true,
@@ -1748,8 +1846,10 @@ class _NostalgiaMatchCardState extends State<NostalgiaMatchCard> {
                                             e.codAzione == 'rig',
                                       )
                                       .map((evento) {
-                                        final isHome =
-                                            evento.idTeam == partita.idTeamHome;
+                                        final isHome = _isEventoDelTeam(
+                                          evento,
+                                          true,
+                                        );
                                         return IntrinsicHeight(
                                           child: Row(
                                             crossAxisAlignment:
@@ -1887,7 +1987,11 @@ class _NostalgiaMatchCardState extends State<NostalgiaMatchCard> {
                               partita.divisaAway,
                               alignRight: true,
                               sostituzioni: sostAway,
-                              coloriSquadra: widget.squadraAway.colori,
+                              coloriSquadra:
+                                  (partita.idNazionaleAway?.isNotEmpty ?? false)
+                                  ? _coloriNazionaleAway
+                                  : widget.squadraAway.colori,
+                              convocati: _convocatiAway,
                               indisponibili:
                                   partita.formazioneAway.indisponibili,
                               team: 1,
@@ -1899,7 +2003,11 @@ class _NostalgiaMatchCardState extends State<NostalgiaMatchCard> {
                               partita.codAway,
                               partita.divisaAway,
                               alignRight: true,
-                              coloriSquadra: widget.squadraAway.colori,
+                              coloriSquadra:
+                                  (partita.idNazionaleAway?.isNotEmpty ?? false)
+                                  ? _coloriNazionaleAway
+                                  : widget.squadraAway.colori,
+                              convocati: _convocatiAway,
                               indisponibili:
                                   partita.formazioneAway.indisponibili,
                               isNonConvocati: true,

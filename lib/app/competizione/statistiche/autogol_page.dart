@@ -204,9 +204,13 @@ class _AutogolPageState extends State<AutogolPage> {
                                               squadra: snapshot.data!,
                                               size: 30,
                                               nomeNazionale:
-                                                  snapshot.data!.categoria
-                                                      .toLowerCase()
-                                                      .contains('naz')
+                                                  (snapshot.data!.categoria
+                                                          .toLowerCase()
+                                                          .contains('naz') ||
+                                                      (autogolItem
+                                                              .idNazionalePro
+                                                              ?.isNotEmpty ??
+                                                          false))
                                                   ? snapshot.data!.nome
                                                   : null,
                                             ),
@@ -341,9 +345,13 @@ class _AutogolPageState extends State<AutogolPage> {
                                             squadra: proSnapshot.data!,
                                             size: 30,
                                             nomeNazionale:
-                                                proSnapshot.data!.categoria
-                                                    .toLowerCase()
-                                                    .contains('naz')
+                                                (proSnapshot.data!.categoria
+                                                        .toLowerCase()
+                                                        .contains('naz') ||
+                                                    (autogolItem
+                                                            .idNazionale
+                                                            ?.isNotEmpty ??
+                                                        false))
                                                 ? proSnapshot.data!.nome
                                                 : null,
                                           );

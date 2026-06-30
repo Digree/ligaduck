@@ -268,9 +268,13 @@ class _EspulsiPageState extends State<EspulsiPage> {
                                             squadra: snapshot.data!,
                                             size: 30,
                                             nomeNazionale:
-                                                snapshot.data!.categoria
-                                                    .toLowerCase()
-                                                    .contains('naz')
+                                                (snapshot.data!.categoria
+                                                        .toLowerCase()
+                                                        .contains('naz') ||
+                                                    (espulso
+                                                            .idNazionale
+                                                            ?.isNotEmpty ??
+                                                        false))
                                                 ? snapshot.data!.nome
                                                 : null,
                                           ),

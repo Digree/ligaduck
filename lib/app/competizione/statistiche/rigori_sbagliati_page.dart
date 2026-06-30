@@ -268,9 +268,13 @@ class _RigoriSbagliatiPageState extends State<RigoriSbagliatiPage> {
                                             squadra: snapshot.data!,
                                             size: 30,
                                             nomeNazionale:
-                                                snapshot.data!.categoria
-                                                    .toLowerCase()
-                                                    .contains('naz')
+                                                (snapshot.data!.categoria
+                                                        .toLowerCase()
+                                                        .contains('naz') ||
+                                                    (rigoreSbagliato
+                                                            .idNazionale
+                                                            ?.isNotEmpty ??
+                                                        false))
                                                 ? snapshot.data!.nome
                                                 : null,
                                           ),

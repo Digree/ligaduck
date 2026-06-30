@@ -43,34 +43,49 @@ class Partita {
 
   factory Partita.fromJson(Map<String, dynamic> json) {
     return Partita(
-      idGiornata: json['idGiornata'],
-      idTeamHome: json['idTeamHome'],
-      idTeamAway: json['idTeamAway'],
+      idGiornata: json['idGiornata'] ?? '',
+      idTeamHome: json['idTeamHome'] ?? 0,
+      idTeamAway: json['idTeamAway'] ?? 0,
       idNazionaleHome: json['idNazionaleHome'],
       idNazionaleAway: json['idNazionaleAway'],
-      id: json['id'],
-      teamHome: json['teamHome'],
-      teamAway: json['teamAway'],
-      codHome: json['codHome'],
-      codAway: json['codAway'],
-      risultatoHome: json['risultatoHome'],
-      risultatoAway: json['risultatoAway'],
-      formazioneHome: Formazione.fromJson(json['formazioneHome']),
-      formazioneAway: Formazione.fromJson(json['formazioneAway']),
-      divisaHome: json['divisaHome'],
-      divisaAway: json['divisaAway'],
-      tabellino: (json['tabellino'] as List)
-          .map((e) => Evento.fromJson(e))
-          .toList(),
+      id: json['id'] ?? '',
+      teamHome: json['teamHome'] ?? '',
+      teamAway: json['teamAway'] ?? '',
+      codHome: json['codHome'] ?? '',
+      codAway: json['codAway'] ?? '',
+      risultatoHome: json['risultatoHome'] ?? 0,
+      risultatoAway: json['risultatoAway'] ?? 0,
+      formazioneHome: json['formazioneHome'] != null
+          ? Formazione.fromJson(json['formazioneHome'])
+          : Formazione(
+              titolari: [],
+              panchina: [],
+              indisponibili: [],
+              nonConvocati: [],
+              allenatore: '',
+              modulo: '',
+            ),
+      formazioneAway: json['formazioneAway'] != null
+          ? Formazione.fromJson(json['formazioneAway'])
+          : Formazione(
+              titolari: [],
+              panchina: [],
+              indisponibili: [],
+              nonConvocati: [],
+              allenatore: '',
+              modulo: '',
+            ),
+      divisaHome: json['divisaHome'] ?? 0,
+      divisaAway: json['divisaAway'] ?? 0,
+      tabellino: json['tabellino'] != null
+          ? (json['tabellino'] as List).map((e) => Evento.fromJson(e)).toList()
+          : [],
       data: DateTime.parse(json['data']),
       salvata: json['salvata'] ?? false,
     );
   }
 
-  Partita copyWith({
-    Formazione? formazioneHome,
-    Formazione? formazioneAway,
-  }) {
+  Partita copyWith({Formazione? formazioneHome, Formazione? formazioneAway}) {
     return Partita(
       id: id,
       idGiornata: idGiornata,
@@ -280,12 +295,12 @@ class Evento {
 
   factory Evento.fromJson(Map<String, dynamic> json) {
     return Evento(
-      id: json['id'],
-      idGiocatore: json['idGiocatore'],
+      id: json['id'] ?? '',
+      idGiocatore: json['idGiocatore'] ?? '',
       idGiocatoreOut: json['idGiocatoreOut'],
-      minuto: json['minuto'],
+      minuto: json['minuto'] ?? 0,
       recupero: json['recupero'] ?? 0,
-      codAzione: json['codAzione'],
+      codAzione: json['codAzione'] ?? '',
       idTeam: json['idTeam'],
       idNazionale: json['idNazionale'],
       esitoRigore: json['esitoRigore'],
@@ -315,7 +330,11 @@ class TipoEvento {
   TipoEvento({required this.id, required this.cod, required this.nome});
 
   factory TipoEvento.fromJson(Map<String, dynamic> json) {
-    return TipoEvento(id: json['id'], cod: json['cod'], nome: json['nome']);
+    return TipoEvento(
+      id: json['id'] ?? 0,
+      cod: json['cod'] ?? '',
+      nome: json['nome'] ?? '',
+    );
   }
 
   Map<String, dynamic> toJson() {

@@ -54,6 +54,40 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   List<Convocato> _convocatiNazionaleHome = [];
   List<Convocato> _convocatiNazionaleAway = [];
 
+  // Fasce di gioco (6 × 15 min): 0-15, 15-30, 30-45, 45-60, 60-75, 75-90
+  final List<bool> _periodiGioco = List.filled(6, false);
+  int _periodoCorrente = -1; // -1 = nessun periodo selezionato
+
+  static const List<String> _labelFasce = [
+    '0-15',
+    '15-30',
+    '30-45',
+    '45-60',
+    '60-75',
+    '75-90',
+  ];
+  static const List<int> _minutiInizioFasce = [1, 16, 31, 46, 61, 76];
+
+  /// Minuto iniziale da pre-compilare nel dialog eventi.
+  /// null = nessun vincolo (tutti i periodi attivi o nessuno selezionato).
+  int? get _minutaIniziale {
+    if (_periodoCorrente == -1) return null;
+    if (_periodiGioco.every((v) => v)) return null;
+    return _minutiInizioFasce[_periodoCorrente];
+  }
+
+  /// Minuti disponibili per il dropdown eventi: solo il range dell'ultimo
+  /// periodo attivo. null = nessun periodo selezionato o tutti selezionati.
+  List<int>? get _minutiDisponibili {
+    if (_periodoCorrente == -1) return null;
+    if (_periodiGioco.every((v) => v)) return null;
+    final start = _minutiInizioFasce[_periodoCorrente];
+    final end = _periodoCorrente < _periodiGioco.length - 1
+        ? _minutiInizioFasce[_periodoCorrente + 1] - 1
+        : 90;
+    return List.generate(end - start + 1, (j) => start + j);
+  }
+
   void _handleGiocatoreChanged(
     int team,
     int pos,
@@ -1201,6 +1235,75 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                         return SizedBox.shrink();
                                       },
                                     ),
+                                  // Pallini fasce di gioco (solo admin)
+                                  if (admin && !partita!.salvata)
+                                    Padding(
+                                      padding: EdgeInsets.only(top: 6),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: List.generate(6, (i) {
+                                          final isActive = _periodiGioco[i];
+                                          final isCurrent =
+                                              _periodoCorrente == i;
+                                          final lastActive = _periodoCorrente;
+                                          final isNext =
+                                              !isActive && i == lastActive + 1;
+                                          final isLocked = !isActive && !isNext;
+                                          return Tooltip(
+                                            message: _labelFasce[i],
+                                            child: GestureDetector(
+                                              onTap: () {
+                                                // Attiva solo il prossimo slot,
+                                                // disattiva solo l'ultimo attivo
+                                                if (isNext) {
+                                                  setState(() {
+                                                    _periodiGioco[i] = true;
+                                                    _periodoCorrente = i;
+                                                  });
+                                                } else if (isActive &&
+                                                    i == lastActive) {
+                                                  setState(() {
+                                                    _periodiGioco[i] = false;
+                                                    _periodoCorrente =
+                                                        _periodiGioco
+                                                            .lastIndexWhere(
+                                                              (v) => v,
+                                                            );
+                                                  });
+                                                }
+                                              },
+                                              child: Container(
+                                                margin: EdgeInsets.symmetric(
+                                                  horizontal: 1,
+                                                ),
+                                                width: 10,
+                                                height: 10,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  color: isActive
+                                                      ? Colors.white
+                                                      : isNext
+                                                      ? Colors.white
+                                                            .withOpacity(0.25)
+                                                      : Colors.white
+                                                            .withOpacity(0.08),
+                                                  border: Border.all(
+                                                    color: isCurrent
+                                                        ? Colors.yellowAccent
+                                                        : isLocked
+                                                        ? Colors.white
+                                                              .withOpacity(0.2)
+                                                        : Colors.white,
+                                                    width: isCurrent ? 2 : 1,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        }),
+                                      ),
+                                    ),
                                 ],
                               ),
                             ),
@@ -1620,6 +1723,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                       partita: partita!,
                                       dialogState: setDialogState,
                                       campionato: widget.campionato,
+                                      initialMinuto: _minutaIniziale,
+                                      minutiDisponibili: _minutiDisponibili,
                                     ),
                                   );
                                 },
@@ -1711,6 +1816,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                   partita: partita!,
                                   dialogState: setDialogState,
                                   campionato: widget.campionato,
+                                  initialMinuto: _minutaIniziale,
+                                  minutiDisponibili: _minutiDisponibili,
                                 ),
                               );
                             },
@@ -2948,6 +3055,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                       widget.campionato,
                       partita!.idTeamHome,
                       partita!.id,
+                      idNazionale: partita!.idNazionaleHome,
                     ),
                     builder: (context, partiteSnapshot) {
                       if (partiteSnapshot.connectionState ==
@@ -2994,13 +3102,22 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: partiteSnapshot.data!.map((p) {
-                            bool isHome = p.idTeamHome == partita!.idTeamHome;
+                            bool isHome =
+                                (partita!.idNazionaleHome?.isNotEmpty ?? false)
+                                ? p.idNazionaleHome == partita!.idNazionaleHome
+                                : p.idTeamHome == partita!.idTeamHome;
                             String risultato = isHome
                                 ? '${p.risultatoHome} - ${p.risultatoAway}'
                                 : '${p.risultatoAway} - ${p.risultatoHome}';
                             String codAvversario = isHome
                                 ? p.codAway
                                 : p.codHome;
+                            final isNazionaleAvversario = isHome
+                                ? (p.idNazionaleAway?.isNotEmpty ?? false)
+                                : (p.idNazionaleHome?.isNotEmpty ?? false);
+                            final nomeAvversario = isHome
+                                ? p.teamAway
+                                : p.teamHome;
 
                             // Determina l'esito
                             String esito;
@@ -3070,42 +3187,59 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                           ),
                                         ),
                                         SizedBox(height: 2),
-                                        FutureBuilder<Squadra?>(
-                                          future: _squadreFuture.then((
-                                            squadre,
-                                          ) {
-                                            try {
-                                              return squadre.firstWhere(
-                                                (s) => s.cod == codAvversario,
-                                              );
-                                            } catch (e) {
-                                              return null;
-                                            }
-                                          }),
-                                          builder: (context, snapshot) {
-                                            if (!snapshot.hasData ||
-                                                snapshot.data == null) {
-                                              return Icon(
-                                                Icons.shield,
-                                                size: 20,
-                                                color: Colors.grey,
-                                              );
-                                            }
-
-                                            return Image.asset(
-                                              'assets/squadre/$codAvversario.png',
-                                              height: 20,
-                                              width: 20,
-                                              errorBuilder:
-                                                  (context, error, stackTrace) {
-                                                    return _buildTeamLogoPlaceholder(
-                                                      snapshot.data!,
-                                                      size: 20,
+                                        isNazionaleAvversario
+                                            ? CircleAvatar(
+                                                radius: 10,
+                                                backgroundImage: NetworkImage(
+                                                  CommonService.getFlagUrl(
+                                                    nomeAvversario,
+                                                  ),
+                                                ),
+                                                onBackgroundImageError:
+                                                    (_, _) {},
+                                              )
+                                            : FutureBuilder<Squadra?>(
+                                                future: _squadreFuture.then((
+                                                  squadre,
+                                                ) {
+                                                  try {
+                                                    return squadre.firstWhere(
+                                                      (s) =>
+                                                          s.cod ==
+                                                          codAvversario,
                                                     );
-                                                  },
-                                            );
-                                          },
-                                        ),
+                                                  } catch (e) {
+                                                    return null;
+                                                  }
+                                                }),
+                                                builder: (context, snapshot) {
+                                                  if (!snapshot.hasData ||
+                                                      snapshot.data == null) {
+                                                    return Icon(
+                                                      Icons.shield,
+                                                      size: 20,
+                                                      color: Colors.grey,
+                                                    );
+                                                  }
+
+                                                  return Image.asset(
+                                                    'assets/squadre/$codAvversario.png',
+                                                    height: 20,
+                                                    width: 20,
+                                                    errorBuilder:
+                                                        (
+                                                          context,
+                                                          error,
+                                                          stackTrace,
+                                                        ) {
+                                                          return _buildTeamLogoPlaceholder(
+                                                            snapshot.data!,
+                                                            size: 20,
+                                                          );
+                                                        },
+                                                  );
+                                                },
+                                              ),
                                       ],
                                     ),
                                     Text(
@@ -3209,6 +3343,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                       widget.campionato,
                       partita!.idTeamAway,
                       partita!.id,
+                      idNazionale: partita!.idNazionaleAway,
                     ),
                     builder: (context, partiteSnapshot) {
                       if (partiteSnapshot.connectionState ==
@@ -3255,13 +3390,22 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: partiteSnapshot.data!.map((p) {
-                            bool isHome = p.idTeamHome == partita!.idTeamAway;
+                            bool isHome =
+                                (partita!.idNazionaleAway?.isNotEmpty ?? false)
+                                ? p.idNazionaleHome == partita!.idNazionaleAway
+                                : p.idTeamHome == partita!.idTeamAway;
                             String risultato = isHome
                                 ? '${p.risultatoHome} - ${p.risultatoAway}'
                                 : '${p.risultatoAway} - ${p.risultatoHome}';
                             String codAvversario = isHome
                                 ? p.codAway
                                 : p.codHome;
+                            final isNazionaleAvversario = isHome
+                                ? (p.idNazionaleAway?.isNotEmpty ?? false)
+                                : (p.idNazionaleHome?.isNotEmpty ?? false);
+                            final nomeAvversario = isHome
+                                ? p.teamAway
+                                : p.teamHome;
 
                             // Determina l'esito
                             String esito;
@@ -3331,42 +3475,59 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                           ),
                                         ),
                                         SizedBox(height: 2),
-                                        FutureBuilder<Squadra?>(
-                                          future: _squadreFuture.then((
-                                            squadre,
-                                          ) {
-                                            try {
-                                              return squadre.firstWhere(
-                                                (s) => s.cod == codAvversario,
-                                              );
-                                            } catch (e) {
-                                              return null;
-                                            }
-                                          }),
-                                          builder: (context, snapshot) {
-                                            if (!snapshot.hasData ||
-                                                snapshot.data == null) {
-                                              return Icon(
-                                                Icons.shield,
-                                                size: 20,
-                                                color: Colors.grey,
-                                              );
-                                            }
-
-                                            return Image.asset(
-                                              'assets/squadre/$codAvversario.png',
-                                              height: 20,
-                                              width: 20,
-                                              errorBuilder:
-                                                  (context, error, stackTrace) {
-                                                    return _buildTeamLogoPlaceholder(
-                                                      snapshot.data!,
-                                                      size: 20,
+                                        isNazionaleAvversario
+                                            ? CircleAvatar(
+                                                radius: 10,
+                                                backgroundImage: NetworkImage(
+                                                  CommonService.getFlagUrl(
+                                                    nomeAvversario,
+                                                  ),
+                                                ),
+                                                onBackgroundImageError:
+                                                    (_, _) {},
+                                              )
+                                            : FutureBuilder<Squadra?>(
+                                                future: _squadreFuture.then((
+                                                  squadre,
+                                                ) {
+                                                  try {
+                                                    return squadre.firstWhere(
+                                                      (s) =>
+                                                          s.cod ==
+                                                          codAvversario,
                                                     );
-                                                  },
-                                            );
-                                          },
-                                        ),
+                                                  } catch (e) {
+                                                    return null;
+                                                  }
+                                                }),
+                                                builder: (context, snapshot) {
+                                                  if (!snapshot.hasData ||
+                                                      snapshot.data == null) {
+                                                    return Icon(
+                                                      Icons.shield,
+                                                      size: 20,
+                                                      color: Colors.grey,
+                                                    );
+                                                  }
+
+                                                  return Image.asset(
+                                                    'assets/squadre/$codAvversario.png',
+                                                    height: 20,
+                                                    width: 20,
+                                                    errorBuilder:
+                                                        (
+                                                          context,
+                                                          error,
+                                                          stackTrace,
+                                                        ) {
+                                                          return _buildTeamLogoPlaceholder(
+                                                            snapshot.data!,
+                                                            size: 20,
+                                                          );
+                                                        },
+                                                  );
+                                                },
+                                              ),
                                       ],
                                     ),
                                     Text(
@@ -3982,6 +4143,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     widget.campionato,
                     partita!.idTeamHome,
                     partita!.id,
+                    idNazionale: partita!.idNazionaleHome,
                   ),
                   builder: (context, partiteSnapshot) {
                     if (partiteSnapshot.connectionState ==
@@ -4016,11 +4178,20 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: partiteSnapshot.data!.map((p) {
-                          bool isHome = p.idTeamHome == partita!.idTeamHome;
+                          bool isHome =
+                              (partita!.idNazionaleHome?.isNotEmpty ?? false)
+                              ? p.idNazionaleHome == partita!.idNazionaleHome
+                              : p.idTeamHome == partita!.idTeamHome;
                           String risultato = isHome
                               ? '${p.risultatoHome} - ${p.risultatoAway}'
                               : '${p.risultatoAway} - ${p.risultatoHome}';
                           String codAvversario = isHome ? p.codAway : p.codHome;
+                          final isNazionaleAvversario = isHome
+                              ? (p.idNazionaleAway?.isNotEmpty ?? false)
+                              : (p.idNazionaleHome?.isNotEmpty ?? false);
+                          final nomeAvversario = isHome
+                              ? p.teamAway
+                              : p.teamHome;
 
                           // Determina l'esito
                           String esito;
@@ -4089,46 +4260,57 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                         ),
                                       ),
                                       SizedBox(height: 1),
-                                      FutureBuilder<Squadra?>(
-                                        future: _squadreFuture.then((squadre) {
-                                          try {
-                                            return squadre.firstWhere(
-                                              (s) => s.cod == codAvversario,
-                                            );
-                                          } catch (e) {
-                                            print(
-                                              'Squadra casa non trovata: $codAvversario',
-                                            );
-                                            return null;
-                                          }
-                                        }),
-                                        builder: (context, snapshot) {
-                                          if (!snapshot.hasData ||
-                                              snapshot.data == null) {
-                                            return Icon(
-                                              Icons.shield,
-                                              size: 14,
-                                              color: Colors.grey,
-                                            );
-                                          }
-
-                                          return Image.asset(
-                                            'assets/squadre/$codAvversario.png',
-                                            height: 14,
-                                            width: 14,
-                                            errorBuilder:
-                                                (context, error, stackTrace) {
-                                                  print(
-                                                    'Errore caricamento immagine $codAvversario, uso placeholder colorato',
+                                      isNazionaleAvversario
+                                          ? CircleAvatar(
+                                              radius: 7,
+                                              backgroundImage: NetworkImage(
+                                                CommonService.getFlagUrl(
+                                                  nomeAvversario,
+                                                ),
+                                              ),
+                                              onBackgroundImageError: (_, _) {},
+                                            )
+                                          : FutureBuilder<Squadra?>(
+                                              future: _squadreFuture.then((
+                                                squadre,
+                                              ) {
+                                                try {
+                                                  return squadre.firstWhere(
+                                                    (s) =>
+                                                        s.cod == codAvversario,
                                                   );
-                                                  return _buildTeamLogoPlaceholder(
-                                                    snapshot.data!,
+                                                } catch (e) {
+                                                  return null;
+                                                }
+                                              }),
+                                              builder: (context, snapshot) {
+                                                if (!snapshot.hasData ||
+                                                    snapshot.data == null) {
+                                                  return Icon(
+                                                    Icons.shield,
                                                     size: 14,
+                                                    color: Colors.grey,
                                                   );
-                                                },
-                                          );
-                                        },
-                                      ),
+                                                }
+
+                                                return Image.asset(
+                                                  'assets/squadre/$codAvversario.png',
+                                                  height: 14,
+                                                  width: 14,
+                                                  errorBuilder:
+                                                      (
+                                                        context,
+                                                        error,
+                                                        stackTrace,
+                                                      ) {
+                                                        return _buildTeamLogoPlaceholder(
+                                                          snapshot.data!,
+                                                          size: 14,
+                                                        );
+                                                      },
+                                                );
+                                              },
+                                            ),
                                     ],
                                   ),
                                   Text(
@@ -4156,6 +4338,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     widget.campionato,
                     partita!.idTeamAway,
                     partita!.id,
+                    idNazionale: partita!.idNazionaleAway,
                   ),
                   builder: (context, partiteSnapshot) {
                     if (partiteSnapshot.connectionState ==
@@ -4190,11 +4373,20 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: partiteSnapshot.data!.map((p) {
-                          bool isHome = p.idTeamHome == partita!.idTeamAway;
+                          bool isHome =
+                              (partita!.idNazionaleAway?.isNotEmpty ?? false)
+                              ? p.idNazionaleHome == partita!.idNazionaleAway
+                              : p.idTeamHome == partita!.idTeamAway;
                           String risultato = isHome
                               ? '${p.risultatoHome} - ${p.risultatoAway}'
                               : '${p.risultatoAway} - ${p.risultatoHome}';
                           String codAvversario = isHome ? p.codAway : p.codHome;
+                          final isNazionaleAvversario = isHome
+                              ? (p.idNazionaleAway?.isNotEmpty ?? false)
+                              : (p.idNazionaleHome?.isNotEmpty ?? false);
+                          final nomeAvversario = isHome
+                              ? p.teamAway
+                              : p.teamHome;
 
                           // Determina l'esito
                           String esito;
@@ -4263,46 +4455,57 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                         ),
                                       ),
                                       SizedBox(height: 1),
-                                      FutureBuilder<Squadra?>(
-                                        future: _squadreFuture.then((squadre) {
-                                          try {
-                                            return squadre.firstWhere(
-                                              (s) => s.cod == codAvversario,
-                                            );
-                                          } catch (e) {
-                                            print(
-                                              'Squadra trasferta non trovata: $codAvversario',
-                                            );
-                                            return null;
-                                          }
-                                        }),
-                                        builder: (context, snapshot) {
-                                          if (!snapshot.hasData ||
-                                              snapshot.data == null) {
-                                            return Icon(
-                                              Icons.shield,
-                                              size: 14,
-                                              color: Colors.grey,
-                                            );
-                                          }
-
-                                          return Image.asset(
-                                            'assets/squadre/$codAvversario.png',
-                                            height: 14,
-                                            width: 14,
-                                            errorBuilder:
-                                                (context, error, stackTrace) {
-                                                  print(
-                                                    'Errore caricamento immagine $codAvversario, uso placeholder colorato',
+                                      isNazionaleAvversario
+                                          ? CircleAvatar(
+                                              radius: 7,
+                                              backgroundImage: NetworkImage(
+                                                CommonService.getFlagUrl(
+                                                  nomeAvversario,
+                                                ),
+                                              ),
+                                              onBackgroundImageError: (_, _) {},
+                                            )
+                                          : FutureBuilder<Squadra?>(
+                                              future: _squadreFuture.then((
+                                                squadre,
+                                              ) {
+                                                try {
+                                                  return squadre.firstWhere(
+                                                    (s) =>
+                                                        s.cod == codAvversario,
                                                   );
-                                                  return _buildTeamLogoPlaceholder(
-                                                    snapshot.data!,
+                                                } catch (e) {
+                                                  return null;
+                                                }
+                                              }),
+                                              builder: (context, snapshot) {
+                                                if (!snapshot.hasData ||
+                                                    snapshot.data == null) {
+                                                  return Icon(
+                                                    Icons.shield,
                                                     size: 14,
+                                                    color: Colors.grey,
                                                   );
-                                                },
-                                          );
-                                        },
-                                      ),
+                                                }
+
+                                                return Image.asset(
+                                                  'assets/squadre/$codAvversario.png',
+                                                  height: 14,
+                                                  width: 14,
+                                                  errorBuilder:
+                                                      (
+                                                        context,
+                                                        error,
+                                                        stackTrace,
+                                                      ) {
+                                                        return _buildTeamLogoPlaceholder(
+                                                          snapshot.data!,
+                                                          size: 14,
+                                                        );
+                                                      },
+                                                );
+                                              },
+                                            ),
                                     ],
                                   ),
                                   Text(
@@ -6472,20 +6675,20 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     List<String> colori, {
     bool showNumber = true,
   }) {
-    Map<String, Color> colorMap = {
+    const Map<String, Color> colorMap = {
       'rosso': Colors.red,
       'verde': Colors.green,
       'blu': Colors.blueAccent,
-      'blu scuro': Colors.blue[900]!,
-      'giallo': Colors.yellow[600]!,
-      'arancione': Colors.orange[900]!,
-      'viola': Colors.purple[800]!,
+      'blu scuro': Color(0xFF0D47A1),
+      'giallo': Color(0xFFFDD835),
+      'arancione': Color(0xFFE65100),
+      'viola': Color(0xFF6A1B9A),
       'nero': Colors.black,
       'bianco': Colors.white,
       'grigio': Colors.grey,
-      'fucsia': Colors.pink[700]!,
+      'fucsia': Color(0xFFAD1457),
       'rosa': Color.fromARGB(255, 255, 147, 183),
-      'ciano': Colors.lightBlue[300]!,
+      'ciano': Color(0xFF4FC3F7),
       'marrone': Color.fromARGB(255, 122, 54, 34),
     };
 
@@ -6499,20 +6702,10 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     if (colorList.length == 1) {
       solidColor = colorList[0];
     } else {
-      final step = 1.0 / colorList.length;
-      final stops = <double>[];
-      final colors = <Color>[];
-      for (int i = 0; i < colorList.length; i++) {
-        stops.add(i * step);
-        stops.add((i + 1) * step);
-        colors.add(colorList[i]);
-        colors.add(colorList[i]);
-      }
       gradient = LinearGradient(
         begin: Alignment.centerLeft,
         end: Alignment.centerRight,
-        colors: colors,
-        stops: stops,
+        colors: colorList,
       );
     }
 
@@ -6538,32 +6731,51 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                   gradient: gradient,
                   color: solidColor,
                 ),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: Container(
+                    height: 14,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.white.withOpacity(0.18),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
           if (showNumber)
-            Text(
-              '$numero',
-              style: TextStyle(
-                color: textColor,
-                fontWeight: FontWeight.bold,
-                fontSize: 11,
-                shadows: [
-                  Shadow(
-                    offset: Offset(-0.8, -0.8),
-                    blurRadius: 1.5,
-                    color: textColor == Colors.white
-                        ? Colors.black
-                        : Colors.white54,
-                  ),
-                  Shadow(
-                    offset: Offset(0.8, 0.8),
-                    blurRadius: 1.5,
-                    color: textColor == Colors.white
-                        ? Colors.black
-                        : Colors.white54,
-                  ),
-                ],
+            Align(
+              alignment: const Alignment(0, 0.15),
+              child: Text(
+                '$numero',
+                style: TextStyle(
+                  color: textColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                  shadows: [
+                    Shadow(
+                      offset: Offset(-0.8, -0.8),
+                      blurRadius: 1.5,
+                      color: textColor == Colors.white
+                          ? Colors.black
+                          : Colors.white54,
+                    ),
+                    Shadow(
+                      offset: Offset(0.8, 0.8),
+                      blurRadius: 1.5,
+                      color: textColor == Colors.white
+                          ? Colors.black
+                          : Colors.white54,
+                    ),
+                  ],
+                ),
               ),
             ),
         ],
@@ -7293,6 +7505,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                       team == 0 ? partita!.codHome : partita!.codAway,
                     ),
                     builder: (context, snapshot) {
+                      final colors = snapshot.data ?? [];
+                      final isWide = MediaQuery.of(context).size.width > 600;
                       return Image.asset(
                         team == 0
                             ? _getDivisaPath(
@@ -7303,81 +7517,20 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                 partita!.codAway,
                                 partita!.divisaAway,
                               ),
-                        fit: BoxFit.fill,
+                        fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) {
-                          if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                            List<Color> colorList = [];
-                            const Map<String, Color> colorMap = {
-                              'rosso': Colors.red,
-                              'verde': Colors.green,
-                              'blu': Colors.blueAccent,
-                              'blu scuro': Color(0xFF0D47A1),
-                              'giallo': Color(0xFFFFCC00),
-                              'arancione': Color(0xFFE65100),
-                              'viola': Color(0xFF6A0888),
-                              'nero': Colors.black,
-                              'bianco': Colors.white,
-                              'grigio': Colors.grey,
-                              'fucsia': Color(0xFFAD1457),
-                              'rosa': Color(0xFFFF93B7),
-                              'ciano': Color(0xFF4FC3F7),
-                              'marrone': Color(0xFF7A3622),
-                            };
-
-                            for (var c in snapshot.data!) {
-                              colorList.add(
-                                colorMap[c.toLowerCase()] ?? Colors.grey,
-                              );
-                            }
-
-                            return SizedBox(
-                              height: MediaQuery.of(context).size.width > 600
-                                  ? 100
-                                  : 80,
-                              width: MediaQuery.of(context).size.width > 600
-                                  ? 100
-                                  : 70,
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  ClipPath(
-                                    clipper: JerseyClipper(),
-                                    child: Container(color: Colors.black),
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsets.all(2.5),
-                                    child: ClipPath(
-                                      clipper: JerseyClipper(),
-                                      child: colorList.length > 1
-                                          ? ShaderMask(
-                                              shaderCallback: (bounds) =>
-                                                  LinearGradient(
-                                                    colors: colorList,
-                                                    begin: Alignment.topCenter,
-                                                    end: Alignment.bottomCenter,
-                                                  ).createShader(bounds),
-                                              child: Container(
-                                                color: Colors.white,
-                                              ),
-                                            )
-                                          : Container(color: colorList[0]),
-                                    ),
-                                  ),
-                                ],
+                          return Center(
+                            child: SizedBox(
+                              width: isWide ? 80 : 60,
+                              height: isWide ? 100 : 75,
+                              child: FittedBox(
+                                fit: BoxFit.contain,
+                                child: _buildJerseyFromStringColors(
+                                  0,
+                                  colors,
+                                  showNumber: false,
+                                ),
                               ),
-                            );
-                          }
-                          return Container(
-                            height: 70,
-                            width: 50,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[300],
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Icon(
-                              Icons.sports_soccer,
-                              color: Colors.grey[500],
-                              size: 32,
                             ),
                           );
                         },
@@ -7609,57 +7762,24 @@ class DashedBorderPainter extends CustomPainter {
 class JerseyClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
-    Path path = Path();
+    final w = size.width;
+    final h = size.height;
+    final path = Path();
 
-    double width = size.width;
-    double height = size.height;
-
-    // Inizia dall'angolo in alto a sinistra (manica)
-    path.moveTo(0, height * 0.15);
-
-    // Curva della manica sinistra
-    path.quadraticBezierTo(
-      width * 0.05,
-      height * 0.1,
-      width * 0.15,
-      height * 0.05,
-    );
-
-    // Spalla sinistra verso il collo
-    path.lineTo(width * 0.35, 0);
-
-    // Piccola curva per il collo
-    path.quadraticBezierTo(width * 0.5, height * 0.02, width * 0.65, 0);
-
-    // Spalla destra
-    path.lineTo(width * 0.85, height * 0.05);
-
-    // Curva della manica destra
-    path.quadraticBezierTo(width * 0.95, height * 0.1, width, height * 0.15);
-
-    // Lato destro (manica corta)
-    path.lineTo(width, height * 0.3);
-    path.quadraticBezierTo(
-      width * 0.95,
-      height * 0.32,
-      width * 0.9,
-      height * 0.35,
-    );
-
-    // Corpo destro
-    path.lineTo(width * 0.9, height);
-
-    // Fondo
-    path.lineTo(width * 0.1, height);
-
-    // Corpo sinistro
-    path.lineTo(width * 0.1, height * 0.35);
-
-    // Lato sinistro (manica corta)
-    path.quadraticBezierTo(width * 0.05, height * 0.32, 0, height * 0.3);
+    path.moveTo(0, h * 0.30);
+    path.quadraticBezierTo(0, h * 0.08, w * 0.18, h * 0.04);
+    path.lineTo(w * 0.34, 0);
+    path.cubicTo(w * 0.40, h * 0.02, w * 0.46, h * 0.13, w * 0.50, h * 0.13);
+    path.cubicTo(w * 0.54, h * 0.13, w * 0.60, h * 0.02, w * 0.66, 0);
+    path.lineTo(w * 0.82, h * 0.04);
+    path.quadraticBezierTo(w, h * 0.08, w, h * 0.30);
+    path.quadraticBezierTo(w, h * 0.40, w * 0.88, h * 0.42);
+    path.lineTo(w * 0.88, h * 0.97);
+    path.quadraticBezierTo(w * 0.50, h * 1.02, w * 0.12, h * 0.97);
+    path.lineTo(w * 0.12, h * 0.42);
+    path.quadraticBezierTo(0, h * 0.40, 0, h * 0.30);
 
     path.close();
-
     return path;
   }
 

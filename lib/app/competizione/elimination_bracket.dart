@@ -398,7 +398,7 @@ class _EliminazioneBracketState extends State<EliminazioneBracket> {
     final int firstN = _rounds[0].length;
     final double unit = _cardHeight + _matchGap;
     final double totalH = _headerH + firstN * unit + 8.0;
-    final double totalW = _rounds.length * _roundColWidth + 140;
+    final double totalW = _rounds.length * _roundColWidth + 220;
 
     final List<Widget> children = [];
 

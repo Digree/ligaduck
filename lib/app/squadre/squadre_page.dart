@@ -4950,89 +4950,110 @@ class _SquadrePageState extends State<SquadrePage> {
   }
 
   Widget _buildJerseyPlaceholder(int numero) {
-    List<String> colori = widget.squadra.colori;
-
-    // Crea la lista dei colori usando getColor
-    List<Color> colorList = [];
-    final Map<String, Color> colorMap = {
+    final List<String> colori = widget.squadra.colori;
+    const Map<String, Color> colorMap = {
       'rosso': Colors.red,
       'verde': Colors.green,
       'blu': Colors.blueAccent,
-      'blu scuro': Colors.blue[900]!,
-      'giallo': Colors.yellow[600]!,
-      'arancione': Colors.orange[900]!,
-      'viola': Colors.purple[800]!,
+      'blu scuro': Color(0xFF0D47A1),
+      'giallo': Color(0xFFFDD835),
+      'arancione': Color(0xFFE65100),
+      'viola': Color(0xFF6A1B9A),
       'nero': Colors.black,
       'bianco': Colors.white,
       'grigio': Colors.grey,
-      'fucsia': Colors.pink[700]!,
+      'fucsia': Color(0xFFAD1457),
       'rosa': Color.fromARGB(255, 255, 147, 183),
-      'ciano': Colors.lightBlue[300]!,
+      'ciano': Color(0xFF4FC3F7),
       'marrone': Color.fromARGB(255, 122, 54, 34),
     };
 
-    for (var c in colori) {
-      colorList.add(colorMap[c.toLowerCase()] ?? Colors.grey);
+    final List<Color> colorList = [
+      for (final c in colori) colorMap[c.toLowerCase()] ?? Colors.grey,
+    ];
+    if (colorList.isEmpty) colorList.add(Colors.grey);
+
+    // Gradiente fluido da sinistra a destra con tutti i colori
+    LinearGradient? gradient;
+    Color? solidColor;
+    if (colorList.length == 1) {
+      solidColor = colorList[0];
+    } else {
+      gradient = LinearGradient(
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: colorList,
+      );
     }
+
+    final lum = colorList[0].computeLuminance();
+    final textColor = lum > 0.4 ? Colors.black87 : Colors.white;
 
     return SizedBox(
       width: 35,
       height: 45,
       child: Stack(
+        alignment: Alignment.center,
         children: [
-          // Bordo nero
+          // Ombra/bordo
           ClipPath(
             clipper: JerseyClipper(),
-            child: Container(decoration: BoxDecoration(color: Colors.black)),
+            child: Container(color: Colors.black.withOpacity(0.35)),
           ),
-          // Maglia con colori (più piccola per mostrare il bordo)
+          // Corpo maglia
           Padding(
             padding: EdgeInsets.all(1.5),
             child: ClipPath(
               clipper: JerseyClipper(),
               child: Container(
                 decoration: BoxDecoration(
-                  gradient: colorList.length > 1
-                      ? LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: colorList,
-                        )
-                      : null,
-                  color: colorList.length == 1 ? colorList[0] : null,
+                  gradient: gradient,
+                  color: solidColor,
                 ),
-                child: Center(
-                  child: Text(
-                    '$numero',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                      shadows: [
-                        Shadow(
-                          offset: Offset(-1.0, -1.0),
-                          blurRadius: 1.0,
-                          color: Colors.black,
-                        ),
-                        Shadow(
-                          offset: Offset(1.0, -1.0),
-                          blurRadius: 1.0,
-                          color: Colors.black,
-                        ),
-                        Shadow(
-                          offset: Offset(1.0, 1.0),
-                          blurRadius: 1.0,
-                          color: Colors.black,
-                        ),
-                        Shadow(
-                          offset: Offset(-1.0, 1.0),
-                          blurRadius: 1.0,
-                          color: Colors.black,
-                        ),
-                      ],
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: Container(
+                    height: 16,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.white.withOpacity(0.18),
+                          Colors.transparent,
+                        ],
+                      ),
                     ),
                   ),
                 ),
+              ),
+            ),
+          ),
+          // Numero
+          Align(
+            alignment: const Alignment(0, 0.0),
+            child: Text(
+              '$numero',
+              style: TextStyle(
+                color: textColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+                shadows: [
+                  Shadow(
+                    offset: Offset(-0.8, -0.8),
+                    blurRadius: 1.5,
+                    color: textColor == Colors.white
+                        ? Colors.black
+                        : Colors.white54,
+                  ),
+                  Shadow(
+                    offset: Offset(0.8, 0.8),
+                    blurRadius: 1.5,
+                    color: textColor == Colors.white
+                        ? Colors.black
+                        : Colors.white54,
+                  ),
+                ],
               ),
             ),
           ),
@@ -5045,57 +5066,34 @@ class _SquadrePageState extends State<SquadrePage> {
 class JerseyClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
-    Path path = Path();
+    final w = size.width;
+    final h = size.height;
+    final path = Path();
 
-    double width = size.width;
-    double height = size.height;
-
-    // Inizia dall'angolo in alto a sinistra (manica)
-    path.moveTo(0, height * 0.15);
-
-    // Curva della manica sinistra
-    path.quadraticBezierTo(
-      width * 0.05,
-      height * 0.1,
-      width * 0.15,
-      height * 0.05,
-    );
-
-    // Spalla sinistra verso il collo
-    path.lineTo(width * 0.35, 0);
-
-    // Piccola curva per il collo
-    path.quadraticBezierTo(width * 0.5, height * 0.02, width * 0.65, 0);
-
+    // Fondo-sinistra manica → angolo alto-sinistra manica
+    path.moveTo(0, h * 0.30);
+    path.quadraticBezierTo(0, h * 0.08, w * 0.18, h * 0.04);
+    // Spalla sinistra verso colletto
+    path.lineTo(w * 0.34, 0);
+    // Colletto a V
+    path.cubicTo(w * 0.40, h * 0.02, w * 0.46, h * 0.13, w * 0.50, h * 0.13);
+    path.cubicTo(w * 0.54, h * 0.13, w * 0.60, h * 0.02, w * 0.66, 0);
     // Spalla destra
-    path.lineTo(width * 0.85, height * 0.05);
-
-    // Curva della manica destra
-    path.quadraticBezierTo(width * 0.95, height * 0.1, width, height * 0.15);
-
-    // Lato destro (manica corta)
-    path.lineTo(width, height * 0.3);
-    path.quadraticBezierTo(
-      width * 0.95,
-      height * 0.32,
-      width * 0.9,
-      height * 0.35,
-    );
-
-    // Corpo destro
-    path.lineTo(width * 0.9, height);
-
-    // Fondo
-    path.lineTo(width * 0.1, height);
-
-    // Corpo sinistro
-    path.lineTo(width * 0.1, height * 0.35);
-
-    // Lato sinistro (manica corta)
-    path.quadraticBezierTo(width * 0.05, height * 0.32, 0, height * 0.3);
+    path.lineTo(w * 0.82, h * 0.04);
+    // Angolo alto-destra manica
+    path.quadraticBezierTo(w, h * 0.08, w, h * 0.30);
+    // Fondo manica destra con curva
+    path.quadraticBezierTo(w, h * 0.40, w * 0.88, h * 0.42);
+    // Lato destro corpo
+    path.lineTo(w * 0.88, h * 0.97);
+    // Fondo con leggera curva
+    path.quadraticBezierTo(w * 0.50, h * 1.02, w * 0.12, h * 0.97);
+    // Lato sinistro corpo
+    path.lineTo(w * 0.12, h * 0.42);
+    // Fondo manica sinistra
+    path.quadraticBezierTo(0, h * 0.40, 0, h * 0.30);
 
     path.close();
-
     return path;
   }
 

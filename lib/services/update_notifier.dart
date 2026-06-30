@@ -23,9 +23,8 @@ class UpdateNotifier extends ChangeNotifier {
 
     try {
       final updateInfo = await UpdateService.checkForUpdates();
-      
+
       if (updateInfo == null) {
-        // Servizio ha ritornato null - errore di rete o piattaforma non supportata
         _error = 'Impossibile controllare gli aggiornamenti';
         _isUpdateAvailable = false;
         _updateInfo = null;
@@ -34,13 +33,14 @@ class UpdateNotifier extends ChangeNotifier {
         _isUpdateAvailable = updateInfo.isUpdateAvailable;
         _error = null;
       }
-      
+
       notifyListeners();
     } catch (e) {
-      _error = e.toString();
+      // Mostra il messaggio reale (es: rate limit, SSL, proxy)
+      _error = e.toString().replaceFirst('Exception: ', '');
       _isUpdateAvailable = false;
       _updateInfo = null;
-      
+
       if (!silent) notifyListeners();
     } finally {
       _isChecking = false;

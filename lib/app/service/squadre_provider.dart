@@ -359,14 +359,14 @@ class SquadreProvider with ChangeNotifier {
   Future<List<Partita>> fetchUltime5Partite(
     String campionato,
     int idSquadra,
-    String idPartita,
-  ) async {
+    String idPartita, {
+    String? idNazionale,
+  }) async {
     try {
-      final response = await http.get(
-        Uri.parse(
-          '${Env.apiUrl}/$campionato/squadra/$idSquadra/$idPartita/ultime5',
-        ),
-      );
+      final url = idNazionale != null
+          ? '${Env.apiUrl}/$campionato/nazionali/$idNazionale/$idPartita/ultime5'
+          : '${Env.apiUrl}/$campionato/squadra/$idSquadra/$idPartita/ultime5';
+      final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);

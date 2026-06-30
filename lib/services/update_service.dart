@@ -67,12 +67,21 @@ class UpdateService {
 
       // Scarica le informazioni sull'ultima release da GitHub API
       final response = await http
-          .get(Uri.parse(githubApiUrl))
-          .timeout(Duration(seconds: 10));
+          .get(Uri.parse(githubApiUrl), headers: {'User-Agent': 'ligaduck-app'})
+          .timeout(Duration(seconds: 15));
 
-      if (response.statusCode == 200) {
-        final releaseData = json.decode(response.body);
+      if (response.statusCode == 403) {
+        throw Exception(
+          'Limite richieste GitHub superato (rate limit). Riprova tra un\'ora.',
+        );
+      } else if (response.statusCode == 404) {
+        throw Exception('Nessuna release trovata su GitHub.');
+      } else if (response.statusCode != 200) {
+        throw Exception('Errore server GitHub: HTTP ${response.statusCode}');
+      }
 
+      final releaseData = json.decode(response.body);
+      {
         // Ottieni il tag della release (es: v43.01.00)
         final tagName = releaseData['tag_name'] ?? '';
         // Rimuovi la 'v' iniziale per ottenere la versione (es: 43.01.00)
@@ -130,13 +139,11 @@ class UpdateService {
           releaseNotes: releaseNotes,
           isUpdateAvailable: isUpdateAvailable,
         );
-      } else {
-        print('Errore nel check degli aggiornamenti: ${response.statusCode}');
-        return null;
       }
+    } on Exception {
+      rethrow;
     } catch (e) {
-      print('Errore nel check degli aggiornamenti: $e');
-      return null;
+      throw Exception('Errore di rete: $e');
     }
   }
 

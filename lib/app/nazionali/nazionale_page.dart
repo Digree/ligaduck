@@ -616,20 +616,10 @@ class _NazionalePageState extends State<NazionalePage> {
     if (colorList.length == 1) {
       solidColor = colorList[0];
     } else {
-      final step = 1.0 / colorList.length;
-      final stops = <double>[];
-      final colors = <Color>[];
-      for (int i = 0; i < colorList.length; i++) {
-        stops.add(i * step);
-        stops.add((i + 1) * step);
-        colors.add(colorList[i]);
-        colors.add(colorList[i]);
-      }
       gradient = LinearGradient(
         begin: Alignment.centerLeft,
         end: Alignment.centerRight,
-        colors: colors,
-        stops: stops,
+        colors: colorList,
       );
     }
 

@@ -3315,16 +3315,42 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                   CommonService.decodePlayerName(squadra.nome),
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => SquadrePage(
-                        campionato: widget.campionato,
-                        squadra: squadra,
+                onTap: () async {
+                  if (isNazionale) {
+                    final idNazionale = _nazionaleIdByFakeId[squadra.id];
+                    final nazionaliProvider = Provider.of<NazionaliProvider>(
+                      context,
+                      listen: false,
+                    );
+                    final nazionali = await nazionaliProvider.fetchNazionali(
+                      widget.campionato,
+                    );
+                    final nazionale = nazionali.firstWhere(
+                      (n) => idNazionale != null
+                          ? n.id == idNazionale
+                          : n.nome == squadra.nome,
+                      orElse: () => nazionali.first,
+                    );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => NazionalePage(
+                          nazionale: nazionale,
+                          campionato: widget.campionato,
+                        ),
                       ),
-                    ),
-                  );
+                    );
+                  } else {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SquadrePage(
+                          campionato: widget.campionato,
+                          squadra: squadra,
+                        ),
+                      ),
+                    );
+                  }
                 },
               ),
             );

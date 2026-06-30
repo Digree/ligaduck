@@ -13,6 +13,8 @@ class AddEventoModalPage extends StatefulWidget {
   final Partita partita;
   final StateSetter dialogState;
   final String campionato;
+  final int? initialMinuto;
+  final List<int>? minutiDisponibili;
 
   const AddEventoModalPage({
     super.key,
@@ -20,6 +22,8 @@ class AddEventoModalPage extends StatefulWidget {
     required this.partita,
     required this.dialogState,
     required this.campionato,
+    this.initialMinuto,
+    this.minutiDisponibili,
   });
 
   @override
@@ -42,6 +46,8 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
   final _formKeyAway = GlobalKey<FormState>();
   final _minutoControllerHome = TextEditingController();
   final _minutoControllerAway = TextEditingController();
+  int? _minutoDropdownHome;
+  int? _minutoDropdownAway;
   final _recuperoControllerHome = TextEditingController();
   final _recuperoControllerAway = TextEditingController();
   final _squalificaControllerHome = TextEditingController();
@@ -56,6 +62,16 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(_onTabChanged);
+    if (widget.initialMinuto != null) {
+      _minutoControllerHome.text = widget.initialMinuto.toString();
+      _minutoControllerAway.text = widget.initialMinuto.toString();
+    }
+    if (widget.minutiDisponibili != null &&
+        widget.initialMinuto != null &&
+        widget.minutiDisponibili!.contains(widget.initialMinuto)) {
+      _minutoDropdownHome = widget.initialMinuto;
+      _minutoDropdownAway = widget.initialMinuto;
+    }
     fetchEventi();
   }
 
@@ -505,86 +521,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
         children: [
           Row(
             children: [
-              Expanded(
-                child: TextFormField(
-                  controller: team == 0
-                      ? _minutoControllerHome
-                      : _minutoControllerAway,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(3),
-                  ],
-                  decoration: InputDecoration(
-                    labelText: 'Minuto',
-                    labelStyle: TextStyle(
-                      fontFamily: widget.competizione?.id == 5
-                          ? 'champions'
-                          : widget.competizione?.id == 6 ||
-                                widget.competizione?.id == 7
-                          ? 'europa'
-                          : widget.competizione?.id == 8
-                          ? 'supercup'
-                          : null,
-                      color: Color(
-                        widget.competizione!.colori.isNotEmpty
-                            ? int.parse(
-                                widget.competizione!.colori[0].replaceFirst(
-                                  '#',
-                                  'FF',
-                                ),
-                                radix: 16,
-                              )
-                            : 0xFF000000,
-                      ),
-                    ),
-                    prefixIcon: Icon(
-                      Icons.timer,
-                      color: Color(
-                        widget.competizione!.colori.isNotEmpty
-                            ? int.parse(
-                                widget.competizione!.colori[0].replaceFirst(
-                                  '#',
-                                  'FF',
-                                ),
-                                radix: 16,
-                              )
-                            : 0xFF000000,
-                      ),
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: Color(
-                          widget.competizione!.colori.isNotEmpty
-                              ? int.parse(
-                                  widget.competizione!.colori[0].replaceFirst(
-                                    '#',
-                                    'FF',
-                                  ),
-                                  radix: 16,
-                                )
-                              : 0xFF000000,
-                        ),
-                      ),
-                    ),
-                  ),
-                  validator: (value) {
-                    int minuto = int.tryParse(value ?? '') ?? 0;
-                    if (value == null || value.isEmpty) {
-                      if (minuto <= 0 || minuto > 120) {
-                        return 'Inserisci un minuto valido (1-120).';
-                      } else {
-                        return 'Inserisci il minuto';
-                      }
-                    }
-                    return null;
-                  },
-                ),
-              ),
+              Expanded(child: _buildMinutoField(team)),
               SizedBox(width: 16),
               Expanded(
                 child: TextFormField(
@@ -768,86 +705,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
         children: [
           Row(
             children: [
-              Expanded(
-                child: TextFormField(
-                  controller: team == 0
-                      ? _minutoControllerHome
-                      : _minutoControllerAway,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(3),
-                  ],
-                  decoration: InputDecoration(
-                    labelText: 'Minuto',
-                    labelStyle: TextStyle(
-                      fontFamily: widget.competizione?.id == 5
-                          ? 'champions'
-                          : widget.competizione?.id == 6 ||
-                                widget.competizione?.id == 7
-                          ? 'europa'
-                          : widget.competizione?.id == 8
-                          ? 'supercup'
-                          : null,
-                      color: Color(
-                        widget.competizione!.colori.isNotEmpty
-                            ? int.parse(
-                                widget.competizione!.colori[0].replaceFirst(
-                                  '#',
-                                  'FF',
-                                ),
-                                radix: 16,
-                              )
-                            : 0xFF000000,
-                      ),
-                    ),
-                    prefixIcon: Icon(
-                      Icons.timer,
-                      color: Color(
-                        widget.competizione!.colori.isNotEmpty
-                            ? int.parse(
-                                widget.competizione!.colori[0].replaceFirst(
-                                  '#',
-                                  'FF',
-                                ),
-                                radix: 16,
-                              )
-                            : 0xFF000000,
-                      ),
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: Color(
-                          widget.competizione!.colori.isNotEmpty
-                              ? int.parse(
-                                  widget.competizione!.colori[0].replaceFirst(
-                                    '#',
-                                    'FF',
-                                  ),
-                                  radix: 16,
-                                )
-                              : 0xFF000000,
-                        ),
-                      ),
-                    ),
-                  ),
-                  validator: (value) {
-                    int minuto = int.tryParse(value ?? '') ?? 0;
-                    if (value == null || value.isEmpty) {
-                      if (minuto <= 0 || minuto > 120) {
-                        return 'Inserisci un minuto valido (1-120).';
-                      } else {
-                        return 'Inserisci il minuto';
-                      }
-                    }
-                    return null;
-                  },
-                ),
-              ),
+              Expanded(child: _buildMinutoField(team)),
               SizedBox(width: 16),
               Expanded(
                 child: TextFormField(
@@ -2024,6 +1882,86 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
     }
   }
 
+  static String _minuteLabel(int m) => "$m'";
+
+  Widget _buildMinutoField(int team) {
+    final accentColor = Color(
+      widget.competizione!.colori.isNotEmpty
+          ? int.parse(
+              widget.competizione!.colori[0].replaceFirst('#', 'FF'),
+              radix: 16,
+            )
+          : 0xFF000000,
+    );
+    final labelStyle = TextStyle(
+      fontFamily: widget.competizione?.id == 5
+          ? 'champions'
+          : widget.competizione?.id == 6 || widget.competizione?.id == 7
+          ? 'europa'
+          : widget.competizione?.id == 8
+          ? 'supercup'
+          : null,
+      color: accentColor,
+    );
+    final decoration = InputDecoration(
+      labelText: 'Minuto',
+      labelStyle: labelStyle,
+      prefixIcon: Icon(Icons.timer, color: accentColor),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: accentColor),
+      ),
+    );
+
+    if (widget.minutiDisponibili != null) {
+      return DropdownButtonFormField<int>(
+        initialValue: team == 0 ? _minutoDropdownHome : _minutoDropdownAway,
+        decoration: decoration,
+        items: widget.minutiDisponibili!
+            .map(
+              (m) =>
+                  DropdownMenuItem<int>(value: m, child: Text(_minuteLabel(m))),
+            )
+            .toList(),
+        onChanged: (int? val) {
+          if (val == null) return;
+          setState(() {
+            if (team == 0) {
+              _minutoDropdownHome = val;
+              _minutoControllerHome.text = val.toString();
+            } else {
+              _minutoDropdownAway = val;
+              _minutoControllerAway.text = val.toString();
+            }
+          });
+        },
+        validator: (val) => val == null ? 'Seleziona il minuto' : null,
+      );
+    }
+
+    return TextFormField(
+      controller: team == 0 ? _minutoControllerHome : _minutoControllerAway,
+      keyboardType: TextInputType.number,
+      inputFormatters: [
+        FilteringTextInputFormatter.digitsOnly,
+        LengthLimitingTextInputFormatter(3),
+      ],
+      decoration: decoration,
+      validator: (value) {
+        int minuto = int.tryParse(value ?? '') ?? 0;
+        if (value == null || value.isEmpty) {
+          if (minuto <= 0 || minuto > 120) {
+            return 'Inserisci un minuto valido (1-120).';
+          } else {
+            return 'Inserisci il minuto';
+          }
+        }
+        return null;
+      },
+    );
+  }
+
   void _clearForm() {
     _minutoControllerHome.clear();
     _minutoControllerAway.clear();
@@ -2041,6 +1979,8 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
       giocatoreSelezionatoOut = '';
       esitoRigoreSelezionato = 'segnato';
       infortunioSelezionato = 'no';
+      _minutoDropdownHome = null;
+      _minutoDropdownAway = null;
     });
   }
 
