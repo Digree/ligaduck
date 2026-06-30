@@ -1,24 +1,24 @@
 {
-  "lastUpdate": "2026-06-25",
+  "lastUpdate": "2026-06-30",
   "android": {
-    "version": "44.01.05",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.01.05/ligaduck-v44.01.05.apk",
-    "releaseNotes": "Release"
+    "version": "44.01.06",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.01.06/ligaduck-v44.01.06.apk",
+    "releaseNotes": "- Aggiunto conta mani - Bug Fix"
   },
   "ios": {
-    "version": "44.01.05",
+    "version": "44.01.06",
     "downloadUrl": "https://apps.apple.com/app/ligaduck",
-    "releaseNotes": "Release"
+    "releaseNotes": "- Aggiunto conta mani - Bug Fix"
   },
   "macos": {
-    "version": "44.01.05",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.01.05/ligaduck-v44.01.05.dmg",
-    "releaseNotes": "Release"
+    "version": "44.01.06",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.01.06/ligaduck-v44.01.06.dmg",
+    "releaseNotes": "- Aggiunto conta mani - Bug Fix"
   },
   "windows": {
-    "version": "44.01.05",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.01.05/ligaduck-v44.01.05-windows.zip",
-    "msixUrl": "https://github.com/Digree/ligaduck/releases/download/v44.01.05/LigaDuckManager-Windows-v44.01.05.msix",
-    "releaseNotes": "Release"
+    "version": "44.01.06",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.01.06/ligaduck-v44.01.06-windows.zip",
+    "msixUrl": "https://github.com/Digree/ligaduck/releases/download/v44.01.06/LigaDuckManager-Windows-v44.01.06.msix",
+    "releaseNotes": "- Aggiunto conta mani - Bug Fix"
   }
 }
