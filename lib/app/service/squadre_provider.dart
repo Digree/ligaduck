@@ -182,13 +182,15 @@ class SquadreProvider with ChangeNotifier {
     String campionato,
     int idSquadra,
     GiocatoreNonDisponibile indisponibile,
-    String statoGiocatore,
-  ) async {
+    String statoGiocatore, {
+    String? idNazionale,
+  }) async {
     try {
+      final url = idNazionale != null
+          ? '${Env.apiUrl}/$campionato/nazionali/$idNazionale/$statoGiocatore'
+          : '${Env.apiUrl}/$campionato/squadra/$idSquadra/$statoGiocatore';
       final response = await http.post(
-        Uri.parse(
-          '${Env.apiUrl}/$campionato/squadra/$idSquadra/$statoGiocatore',
-        ),
+        Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(indisponibile.toJson()),
       );
@@ -211,13 +213,15 @@ class SquadreProvider with ChangeNotifier {
     String campionato,
     String idGiocatore,
     int idSquadra,
-    String statoGiocatore,
-  ) async {
+    String statoGiocatore, {
+    String? idNazionale,
+  }) async {
     try {
+      final url = idNazionale != null
+          ? '${Env.apiUrl}/$campionato/nazionali/$idNazionale/delete/$idGiocatore/$statoGiocatore'
+          : '${Env.apiUrl}/$campionato/squadra/$idSquadra/delete/$idGiocatore/$statoGiocatore';
       final response = await http.delete(
-        Uri.parse(
-          '${Env.apiUrl}/$campionato/squadra/$idSquadra/delete/$idGiocatore/$statoGiocatore',
-        ),
+        Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
       );
 

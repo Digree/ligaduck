@@ -3122,8 +3122,8 @@ class _SquadrePageState extends State<SquadrePage> {
           builder: (context, setSheetState) {
             return Container(
               padding: EdgeInsets.all(16),
-              height: MediaQuery.of(context).size.height * 0.25,
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Padding(
                     padding: EdgeInsets.only(top: 20, bottom: 16),
@@ -3136,72 +3136,63 @@ class _SquadrePageState extends State<SquadrePage> {
                       ),
                     ),
                   ),
-                  Expanded(
-                    child: GlassmorphicContainer(
-                      width: double.infinity,
-                      height: double.infinity,
-                      borderRadius: 12,
-                      blur: 15,
-                      alignment: Alignment.center,
-                      border: 2,
-                      linearGradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Colors.white.withOpacity(0.3),
-                          Colors.white.withOpacity(0.1),
-                        ],
-                      ),
-                      borderGradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Colors.white.withOpacity(0.1),
-                          Colors.white.withOpacity(0.1),
-                        ],
-                      ),
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        child: DropdownButtonFormField<String>(
-                          initialValue: categoriaSelezionata,
-                          dropdownColor: getColor('primary'),
-                          style: TextStyle(
-                            color: getIconColor('primary'),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                  ...categorie.map((cat) {
+                    final isSelected = cat == categoriaSelezionata;
+                    return GestureDetector(
+                      onTap: () {
+                        setSheetState(() {
+                          categoriaSelezionata = cat;
+                        });
+                      },
+                      child: Container(
+                        margin: EdgeInsets.symmetric(vertical: 4),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? getColor('secondary').withOpacity(0.3)
+                              : Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isSelected
+                                ? getColor('secondary')
+                                : Colors.white.withOpacity(0.2),
+                            width: isSelected ? 1.5 : 1,
                           ),
-                          icon: Icon(
-                            Icons.arrow_drop_down,
-                            color: getIconColor('primary'),
-                          ),
-                          decoration: InputDecoration(
-                            labelText: 'Categoria',
-                            labelStyle: TextStyle(
-                              color: getIconColor('primary').withOpacity(0.7),
-                            ),
-                            prefixIcon: Icon(
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
                               Icons.category,
                               color: getIconColor('primary'),
+                              size: 20,
                             ),
-                            border: InputBorder.none,
-                          ),
-                          items: categorie.map((String cat) {
-                            return DropdownMenuItem<String>(
-                              value: cat,
-                              child: Text(cat),
-                            );
-                          }).toList(),
-                          onChanged: (String? newValue) {
-                            if (newValue != null) {
-                              setSheetState(() {
-                                categoriaSelezionata = newValue;
-                              });
-                            }
-                          },
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                cat,
+                                style: TextStyle(
+                                  color: getIconColor('primary'),
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                            if (isSelected)
+                              Icon(
+                                Icons.check_circle,
+                                color: getColor('secondary'),
+                                size: 20,
+                              ),
+                          ],
                         ),
                       ),
-                    ),
-                  ),
+                    );
+                  }),
                   SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -3456,9 +3447,8 @@ class _SquadrePageState extends State<SquadrePage> {
     );
 
     // Lista dei giocatori (escludendo Allenatore)
-    List<Giocatore> giocatoriNonAllenatori =
+    final giocatoriNonAllenatori =
         giocatori.where((g) => g.ruolo != 'Allenatore').toList()..sort((a, b) {
-          // Ottieni il numero dalla carriera per il campionato corrente
           final numeroA = a.carriera
               .firstWhere(
                 (c) =>
@@ -3494,220 +3484,77 @@ class _SquadrePageState extends State<SquadrePage> {
           return numeroA.compareTo(numeroB);
         });
 
-    // Crea una mappa dei controller per ogni giocatore
-    Map<String, TextEditingController> controllers = {};
+    final bool useSecondaryForeground =
+        widget.squadra.colori.isNotEmpty &&
+        (widget.squadra.colori[0].toLowerCase() == 'bianco' ||
+            widget.squadra.colori[0].toLowerCase() == 'giallo') &&
+        widget.squadra.colori.length > 1;
 
-    // Inizializza i controller con i valori dal database
-    for (var giocatore in giocatoriNonAllenatori) {
-      final carrieraAttuale = giocatore.carriera.firstWhere(
-        (c) =>
-            c.campionato == widget.campionato &&
-            c.idSquadra == widget.squadra.id,
-        orElse: () => Carriera(
-          campionato: widget.campionato,
-          idSquadra: widget.squadra.id,
-          numero: 0,
-          gol: 0,
-          presenze: 0,
-          espulsioni: 0,
-          attivo: true,
+    // Il dialog gestisce internamente i controller — nessun rischio di dispose
+    // prematuro durante l'animazione di chiusura.
+    final Map<String, int>? result = await showDialog<Map<String, int>>(
+      context: context,
+      builder: (context) => _AssegnaNumeriDialog(
+        giocatori: giocatoriNonAllenatori,
+        campionato: widget.campionato,
+        idSquadra: widget.squadra.id,
+        primaryColor: getColor('primary'),
+        primaryTextColor: getColor('primary', forText: true),
+        buttonForegroundColor: useSecondaryForeground
+            ? getColor('secondary')
+            : Colors.white,
+      ),
+    );
+
+    if (!mounted) return;
+
+    // null = dialog annullato
+    if (result == null) return;
+
+    // Mappa vuota = nessuna modifica
+    if (result.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Nessuna modifica da salvare'),
+          backgroundColor: Colors.grey[700],
+          duration: Duration(seconds: 2),
         ),
       );
-      controllers[giocatore.id] = TextEditingController(
-        text: carrieraAttuale.numero.toString(),
-      );
+      return;
     }
 
-    await showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: Text(
-                'Assegna numeri',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-              ),
-              content: SizedBox(
-                width: double.maxFinite,
-                height: 500,
-                child: giocatoriNonAllenatori.isEmpty
-                    ? Center(
-                        child: Text(
-                          'Nessun giocatore disponibile.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 14, color: Colors.grey),
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: giocatoriNonAllenatori.length,
-                        itemBuilder: (context, index) {
-                          final giocatore = giocatoriNonAllenatori[index];
-                          final controller = controllers[giocatore.id]!;
+    bool allSuccess = true;
+    for (var entry in result.entries) {
+      final success = await giocatoriProvider.aggiornaNumeroGiocatore(
+        widget.campionato,
+        entry.key,
+        widget.squadra.id,
+        entry.value,
+      );
+      if (!success) allSuccess = false;
+    }
 
-                          return Card(
-                            margin: EdgeInsets.symmetric(
-                              vertical: 4,
-                              horizontal: 8,
-                            ),
-                            child: ListTile(
-                              leading: SizedBox(
-                                width: 60,
-                                child: TextFormField(
-                                  controller: controller,
-                                  keyboardType: TextInputType.number,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: getColor('primary', forText: true),
-                                    fontSize: 16,
-                                  ),
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(),
-                                    contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 8,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              title: Text(
-                                CommonService.decodePlayerName(giocatore.nome),
-                                style: TextStyle(fontSize: 14),
-                              ),
-                              subtitle: Text(
-                                giocatore.ruolo,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    // Dispose dei controller prima di chiudere
-                    for (var controller in controllers.values) {
-                      controller.dispose();
-                    }
-                    Navigator.of(context).pop();
-                  },
-                  child: Text('Annulla', style: TextStyle(color: Colors.grey)),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: getColor('primary'),
-                    foregroundColor:
-                        widget.squadra.colori.isNotEmpty &&
-                            (widget.squadra.colori[0].toLowerCase() ==
-                                    'bianco' ||
-                                widget.squadra.colori[0].toLowerCase() ==
-                                    'giallo') &&
-                            widget.squadra.colori.length > 1
-                        ? getColor('secondary')
-                        : Colors.white,
-                  ),
-                  onPressed: () async {
-                    // Raccogli tutti i numeri dai controller
-                    Map<String, int> numeriDaSalvare = {};
+    if (!mounted) return;
 
-                    for (var giocatore in giocatoriNonAllenatori) {
-                      final controller = controllers[giocatore.id]!;
-                      final numeroInserito = int.tryParse(controller.text);
-
-                      if (numeroInserito != null && numeroInserito > 0) {
-                        // Ottieni il numero attuale dal database
-                        final carrieraAttuale = giocatore.carriera.firstWhere(
-                          (c) =>
-                              c.campionato == widget.campionato &&
-                              c.idSquadra == widget.squadra.id,
-                          orElse: () => Carriera(
-                            campionato: widget.campionato,
-                            idSquadra: widget.squadra.id,
-                            numero: 0,
-                            gol: 0,
-                            presenze: 0,
-                            espulsioni: 0,
-                            attivo: true,
-                          ),
-                        );
-
-                        // Salva solo se il numero è cambiato
-                        if (numeroInserito != carrieraAttuale.numero) {
-                          numeriDaSalvare[giocatore.id] = numeroInserito;
-                        }
-                      }
-                    }
-
-                    // Dispose dei controller
-                    for (var controller in controllers.values) {
-                      controller.dispose();
-                    }
-
-                    if (numeriDaSalvare.isNotEmpty) {
-                      bool allSuccess = true;
-
-                      // Aggiorna tutti i numeri modificati
-                      for (var entry in numeriDaSalvare.entries) {
-                        bool success = await giocatoriProvider
-                            .aggiornaNumeroGiocatore(
-                              widget.campionato,
-                              entry.key,
-                              widget.squadra.id,
-                              entry.value,
-                            );
-                        if (!success) {
-                          allSuccess = false;
-                        }
-                      }
-
-                      Navigator.of(context).pop();
-
-                      if (!mounted) return;
-
-                      if (allSuccess) {
-                        await _loadGiocatori();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Numeri aggiornati con successo'),
-                            backgroundColor: Colors.green,
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Errore nell\'aggiornamento di alcuni numeri',
-                            ),
-                            backgroundColor: Colors.red,
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      }
-                    } else {
-                      Navigator.of(context).pop();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Nessuna modifica da salvare'),
-                          backgroundColor: Colors.grey[700],
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    }
-                  },
-                  child: Text('Salva'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
+    if (allSuccess) {
+      await _loadGiocatori();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Numeri aggiornati con successo'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Errore nell\'aggiornamento di alcuni numeri'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   Future<void> _mostraDialogSceltaMercato(String tipoMercato) async {
@@ -5099,4 +4946,178 @@ class JerseyClipper extends CustomClipper<Path> {
 
   @override
   bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+}
+
+// ---------------------------------------------------------------------------
+// Dialog dedicato per "Assegna numeri" — gestisce i controller internamente
+// in modo che Flutter li disponga solo dopo la fine dell'animazione di uscita.
+// ---------------------------------------------------------------------------
+class _AssegnaNumeriDialog extends StatefulWidget {
+  final List<Giocatore> giocatori;
+  final String campionato;
+  final int idSquadra;
+  final Color primaryColor;
+  final Color primaryTextColor;
+  final Color buttonForegroundColor;
+
+  const _AssegnaNumeriDialog({
+    required this.giocatori,
+    required this.campionato,
+    required this.idSquadra,
+    required this.primaryColor,
+    required this.primaryTextColor,
+    required this.buttonForegroundColor,
+  });
+
+  @override
+  State<_AssegnaNumeriDialog> createState() => _AssegnaNumeriDialogState();
+}
+
+class _AssegnaNumeriDialogState extends State<_AssegnaNumeriDialog> {
+  final Map<String, TextEditingController> _controllers = {};
+
+  @override
+  void initState() {
+    super.initState();
+    for (var giocatore in widget.giocatori) {
+      final carrieraAttuale = giocatore.carriera.firstWhere(
+        (c) =>
+            c.campionato == widget.campionato &&
+            c.idSquadra == widget.idSquadra,
+        orElse: () => Carriera(
+          campionato: widget.campionato,
+          idSquadra: widget.idSquadra,
+          numero: 0,
+          gol: 0,
+          presenze: 0,
+          espulsioni: 0,
+          attivo: true,
+        ),
+      );
+      _controllers[giocatore.id] = TextEditingController(
+        text: carrieraAttuale.numero.toString(),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    for (var c in _controllers.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(
+        'Assegna numeri',
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+      ),
+      content: SizedBox(
+        width: double.maxFinite,
+        height: 500,
+        child: widget.giocatori.isEmpty
+            ? Center(
+                child: Text(
+                  'Nessun giocatore disponibile.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+              )
+            : ListView.builder(
+                itemCount: widget.giocatori.length,
+                itemBuilder: (context, index) {
+                  final giocatore = widget.giocatori[index];
+                  final controller = _controllers[giocatore.id]!;
+                  return Card(
+                    margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                    child: ListTile(
+                      leading: SizedBox(
+                        width: 60,
+                        child: TextFormField(
+                          controller: controller,
+                          keyboardType: TextInputType.number,
+                          textAlign: TextAlign.center,
+                          cursorColor: widget.primaryColor,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: widget.primaryTextColor,
+                            fontSize: 16,
+                          ),
+                          decoration: InputDecoration(
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: widget.primaryColor.withOpacity(0.5),
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: widget.primaryColor,
+                                width: 2,
+                              ),
+                            ),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 8,
+                            ),
+                          ),
+                        ),
+                      ),
+                      title: Text(
+                        CommonService.decodePlayerName(giocatore.nome),
+                        style: TextStyle(fontSize: 14),
+                      ),
+                      subtitle: Text(
+                        giocatore.ruolo,
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      ),
+                    ),
+                  );
+                },
+              ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(null),
+          child: Text('Annulla', style: TextStyle(color: Colors.grey)),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: widget.primaryColor,
+            foregroundColor: widget.buttonForegroundColor,
+          ),
+          onPressed: () {
+            final Map<String, int> numeriDaSalvare = {};
+            for (var giocatore in widget.giocatori) {
+              final controller = _controllers[giocatore.id]!;
+              final numeroInserito = int.tryParse(controller.text);
+              if (numeroInserito != null && numeroInserito > 0) {
+                final carrieraAttuale = giocatore.carriera.firstWhere(
+                  (c) =>
+                      c.campionato == widget.campionato &&
+                      c.idSquadra == widget.idSquadra,
+                  orElse: () => Carriera(
+                    campionato: widget.campionato,
+                    idSquadra: widget.idSquadra,
+                    numero: 0,
+                    gol: 0,
+                    presenze: 0,
+                    espulsioni: 0,
+                    attivo: true,
+                  ),
+                );
+                if (numeroInserito != carrieraAttuale.numero) {
+                  numeriDaSalvare[giocatore.id] = numeroInserito;
+                }
+              }
+            }
+            Navigator.of(context).pop(numeriDaSalvare);
+          },
+          child: Text('Salva'),
+        ),
+      ],
+    );
+  }
 }

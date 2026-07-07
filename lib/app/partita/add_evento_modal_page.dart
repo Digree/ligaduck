@@ -1752,6 +1752,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
           espulsione,
           team == 0 ? widget.partita.idTeamHome : widget.partita.idTeamAway,
           'espulsione',
+          idNazionale: _getIdNazionale(team, false),
         );
 
         if (!squalificaSuccess) {
@@ -1808,6 +1809,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
             espulsione,
             team == 0 ? widget.partita.idTeamHome : widget.partita.idTeamAway,
             'infortunio',
+            idNazionale: _getIdNazionale(team, false),
           );
 
           if (!squalificaSuccess) {
@@ -1994,8 +1996,9 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
   Future<bool> putIndisponibile(
     GiocatoreNonDisponibile indisponibile,
     int idSquadra,
-    String statoGiocatore,
-  ) async {
+    String statoGiocatore, {
+    String? idNazionale,
+  }) async {
     return await Provider.of<SquadreProvider>(
       context,
       listen: false,
@@ -2004,6 +2007,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
       idSquadra,
       indisponibile,
       statoGiocatore,
+      idNazionale: idNazionale,
     );
   }
 

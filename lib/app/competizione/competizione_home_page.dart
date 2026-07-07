@@ -5809,8 +5809,12 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
         return;
       }
 
-      List<List<dynamic>> csvData = const CsvToListConverter(
-        fieldDelimiter: ';',
+      // Auto-rileva il delimitatore dalla prima riga (supporta ';' e ',')
+      final String delimiter = input.split('\n').first.contains(';')
+          ? ';'
+          : ',';
+      List<List<dynamic>> csvData = CsvToListConverter(
+        fieldDelimiter: delimiter,
       ).convert(input);
 
       if (csvData.length < 2) {

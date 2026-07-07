@@ -2640,10 +2640,18 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
         (partita!.idNazionaleAway?.isNotEmpty ?? false);
     final bool isNazionale = isNazionaleHome || isNazionaleAway;
 
-    // Per gli eventi, gestisci indisponibili solo per partite di squadre
-    if (!isNazionale && evento.idTeam != null) {
-      if (evento.codAzione == 'esp') {
-        final provider = Provider.of<SquadreProvider>(context, listen: false);
+    // Gestisci indisponibili sia per club che per nazionali
+    if (evento.codAzione == 'esp') {
+      final provider = Provider.of<SquadreProvider>(context, listen: false);
+      if (isNazionale && (evento.idNazionale?.isNotEmpty ?? false)) {
+        provider.deleteIndisponibile(
+          widget.campionato,
+          evento.idGiocatore,
+          0,
+          'squalifica',
+          idNazionale: evento.idNazionale,
+        );
+      } else if (!isNazionale && evento.idTeam != null) {
         var squadra = await getSquadra(provider, evento.idTeam!);
         provider.deleteIndisponibile(
           widget.campionato,
@@ -2652,9 +2660,19 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
           'squalifica',
         );
       }
+    }
 
-      if (evento.codAzione == 'sos') {
-        final provider = Provider.of<SquadreProvider>(context, listen: false);
+    if (evento.codAzione == 'sos' && evento.idGiocatoreOut != null) {
+      final provider = Provider.of<SquadreProvider>(context, listen: false);
+      if (isNazionale && (evento.idNazionale?.isNotEmpty ?? false)) {
+        provider.deleteIndisponibile(
+          widget.campionato,
+          evento.idGiocatoreOut!,
+          0,
+          'infortunio',
+          idNazionale: evento.idNazionale,
+        );
+      } else if (!isNazionale && evento.idTeam != null) {
         var squadra = await getSquadra(provider, evento.idTeam!);
         provider.deleteIndisponibile(
           widget.campionato,
@@ -6378,70 +6396,83 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     child: SizedBox(
                       width: 40,
                       height: 40,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Image.asset(
-                            team == 0
-                                ? _getDivisaPath(
-                                    partita!.codHome,
-                                    partita!.divisaHome,
-                                  )
-                                : _getDivisaPath(
-                                    partita!.codAway,
-                                    partita!.divisaAway,
-                                  ),
-                            width: 40,
-                            height: 40,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                _buildJerseyPlaceholderWithTeamColors(
-                                  giocatore.pos,
+                      child:
+                          (team == 0 &&
+                              (partita!.idNazionaleHome?.isNotEmpty ?? false))
+                          ? _buildJerseyFromStringColors(
+                              giocatore.pos,
+                              _coloriNazionaleHome,
+                            )
+                          : (team == 1 &&
+                                (partita!.idNazionaleAway?.isNotEmpty ?? false))
+                          ? _buildJerseyFromStringColors(
+                              giocatore.pos,
+                              _coloriNazionaleAway,
+                            )
+                          : Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Image.asset(
                                   team == 0
-                                      ? partita!.codHome
-                                      : partita!.codAway,
+                                      ? _getDivisaPath(
+                                          partita!.codHome,
+                                          partita!.divisaHome,
+                                        )
+                                      : _getDivisaPath(
+                                          partita!.codAway,
+                                          partita!.divisaAway,
+                                        ),
+                                  width: 40,
+                                  height: 40,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      _buildJerseyPlaceholderWithTeamColors(
+                                        giocatore.pos,
+                                        team == 0
+                                            ? partita!.codHome
+                                            : partita!.codAway,
+                                      ),
                                 ),
-                          ),
-                          Text(
-                            '${giocatore.pos}',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 16,
-                              fontFamily: competizione?.id == 5
-                                  ? 'champions'
-                                  : competizione?.id == 6 ||
-                                        competizione?.id == 7
-                                  ? 'europa'
-                                  : competizione?.id == 8
-                                  ? 'supercup'
-                                  : null,
-                              shadows: [
-                                Shadow(
-                                  offset: Offset(-1.0, -1.0),
-                                  blurRadius: 0.0,
-                                  color: Colors.black,
-                                ),
-                                Shadow(
-                                  offset: Offset(1.0, -1.0),
-                                  blurRadius: 0.0,
-                                  color: Colors.black,
-                                ),
-                                Shadow(
-                                  offset: Offset(1.0, 1.0),
-                                  blurRadius: 0.0,
-                                  color: Colors.black,
-                                ),
-                                Shadow(
-                                  offset: Offset(-1.0, 1.0),
-                                  blurRadius: 0.0,
-                                  color: Colors.black,
+                                Text(
+                                  '${giocatore.pos}',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 16,
+                                    fontFamily: competizione?.id == 5
+                                        ? 'champions'
+                                        : competizione?.id == 6 ||
+                                              competizione?.id == 7
+                                        ? 'europa'
+                                        : competizione?.id == 8
+                                        ? 'supercup'
+                                        : null,
+                                    shadows: [
+                                      Shadow(
+                                        offset: Offset(-1.0, -1.0),
+                                        blurRadius: 0.0,
+                                        color: Colors.black,
+                                      ),
+                                      Shadow(
+                                        offset: Offset(1.0, -1.0),
+                                        blurRadius: 0.0,
+                                        color: Colors.black,
+                                      ),
+                                      Shadow(
+                                        offset: Offset(1.0, 1.0),
+                                        blurRadius: 0.0,
+                                        color: Colors.black,
+                                      ),
+                                      Shadow(
+                                        offset: Offset(-1.0, 1.0),
+                                        blurRadius: 0.0,
+                                        color: Colors.black,
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
-                          ),
-                        ],
-                      ),
                     ),
                   ),
                   Padding(

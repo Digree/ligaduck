@@ -2095,6 +2095,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                   final isCessione = squadre.any(
                     (s) => s.id == trasferimento.idSquadraCessione,
                   );
+                  final isFineCarriera = trasferimento.idSquadraAcquisto == 0;
 
                   // Determina il tipo di trasferimento
                   String tipoTrasferimento;
@@ -2103,7 +2104,13 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                   Color textColor;
                   Color arrowColor;
 
-                  if (!trasferimento.definitivo) {
+                  if (isFineCarriera) {
+                    tipoTrasferimento = 'FINE CARRIERA';
+                    backgroundColor = Colors.grey[100]!;
+                    borderColor = Colors.grey[400]!;
+                    textColor = Colors.grey[700]!;
+                    arrowColor = Colors.grey;
+                  } else if (!trasferimento.definitivo) {
                     tipoTrasferimento = 'PRESTITO';
                     backgroundColor = Colors.orange[50]!;
                     borderColor = Colors.orange[300]!;
@@ -2151,7 +2158,13 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                         ),
                       ),
                       SizedBox(height: 4),
-                      Icon(Icons.arrow_forward, color: arrowColor, size: 32),
+                      Icon(
+                        isFineCarriera
+                            ? Icons.sports_score
+                            : Icons.arrow_forward,
+                        color: arrowColor,
+                        size: 32,
+                      ),
                       SizedBox(height: 8),
                       Text(
                         nomeGiocatore,
@@ -2171,23 +2184,46 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
             // Squadra acquirente (destra)
             Expanded(
               flex: 2,
-              child: Column(
-                children: [
-                  SquadraLogoWidget(
-                    codSquadra: squadraAcquisto.cod,
-                    squadra: squadraAcquisto,
-                    size: 50,
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    squadraAcquisto.nome,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
+              child: trasferimento.idSquadraAcquisto == 0
+                  ? Column(
+                      children: [
+                        Icon(
+                          Icons.sports_score,
+                          size: 50,
+                          color: Colors.grey[400],
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Ritirato',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                      ],
+                    )
+                  : Column(
+                      children: [
+                        SquadraLogoWidget(
+                          codSquadra: squadraAcquisto.cod,
+                          squadra: squadraAcquisto,
+                          size: 50,
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          squadraAcquisto.nome,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
             ),
           ],
         ),
