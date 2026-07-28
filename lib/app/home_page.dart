@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ligaduck/app/utils/version_helper.dart';
+import 'package:ligaduck/app/statistiche/statistiche_squadre_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -48,6 +49,18 @@ class _HomePage extends State<HomePage> {
         backgroundColor: Colors.blueAccent,
         title: const Text('Liga Duck', style: TextStyle(color: Colors.white)),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.leaderboard, color: Colors.white),
+            tooltip: 'Statistiche Squadre',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const StatisticheSquadrePage(),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: Icon(Icons.settings, color: Colors.white),
             onPressed: () {

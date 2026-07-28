@@ -12,6 +12,9 @@ import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/squadre_provider.dart';
 import 'package:ligaduck/app/service/mercato_provider.dart';
 import 'package:ligaduck/app/service/models/trasferimento.dart';
+import 'package:ligaduck/app/service/giornate_provider.dart';
+import 'package:ligaduck/app/service/partite_provider.dart';
+import 'package:ligaduck/app/models/campionato/campionato_match_model.dart';
 import 'package:ligaduck/app/campionato/mercato/models/esonero.dart';
 import 'package:provider/provider.dart';
 import 'package:ligaduck/app/squadre/add_formazione_page.dart';
@@ -23,6 +26,48 @@ import 'package:ligaduck/app/widgets/squadra_logo_widget.dart';
 import 'package:oktoast/oktoast.dart';
 import '../../services/commonService.dart';
 import 'package:ligaduck/app/widgets/settings_icon.dart';
+
+class _StatRowSquadra {
+  final Giocatore giocatore;
+  final int numero;
+  final String ruolo;
+  final bool capitano;
+  final int presenze;
+  final int gol;
+  final int espulsioni;
+  final int autogol;
+  final int rigoriSbagliati;
+  final int golAnnullati;
+  final int cleanSheet;
+
+  _StatRowSquadra({
+    required this.giocatore,
+    required this.numero,
+    required this.ruolo,
+    required this.capitano,
+    required this.presenze,
+    required this.gol,
+    required this.espulsioni,
+    required this.autogol,
+    required this.rigoriSbagliati,
+    required this.golAnnullati,
+    required this.cleanSheet,
+  });
+}
+
+class _PartitaConCompetizioneSquadra {
+  final Partita partita;
+  final Competizione competizione;
+  final Squadra? squadraHome;
+  final Squadra? squadraAway;
+
+  _PartitaConCompetizioneSquadra({
+    required this.partita,
+    required this.competizione,
+    this.squadraHome,
+    this.squadraAway,
+  });
+}
 
 class SquadrePage extends StatefulWidget {
   final Squadra squadra;
@@ -50,6 +95,9 @@ class _SquadrePageState extends State<SquadrePage> {
   String _selectedMercatoView =
       'Esoneri'; // Esoneri, Mercato Estivo, Mercato Invernale
   bool _showAltDivise = false;
+  int _statSortColumnIndex = 0;
+  bool _statSortAscending = true;
+  Future<List<_PartitaConCompetizioneSquadra>>? _partiteFuture;
 
   @override
   void initState() {
@@ -58,6 +106,7 @@ class _SquadrePageState extends State<SquadrePage> {
     _loadGiocatori();
     _populateTrofeiCod();
     _loadEsoneri();
+    _loadPartiteSquadra();
   }
 
   void _loadEsoneri() {
@@ -68,6 +117,216 @@ class _SquadrePageState extends State<SquadrePage> {
     _esoneriFuture = squadreProvider.getEsoneri(
       widget.campionato,
       widget.squadra.id,
+    );
+  }
+
+  void _loadPartiteSquadra() {
+    _partiteFuture = _fetchPartiteSquadra();
+  }
+
+  Future<List<_PartitaConCompetizioneSquadra>> _fetchPartiteSquadra() async {
+    final competizioniProvider = Provider.of<CompetizioniProvider>(
+      context,
+      listen: false,
+    );
+    final giornateProvider = Provider.of<GiornateProvider>(
+      context,
+      listen: false,
+    );
+    final partiteProvider = Provider.of<PartiteProvider>(
+      context,
+      listen: false,
+    );
+    final squadreProvider = Provider.of<SquadreProvider>(
+      context,
+      listen: false,
+    );
+
+    final tutteLeCompetizioni = await competizioniProvider.fetchCompetizioni(
+      widget.campionato,
+    );
+    final tutteLeSquadre = await squadreProvider.fetchSquadre(
+      widget.campionato,
+    );
+
+    Squadra? squadraByCod(String cod) {
+      try {
+        return tutteLeSquadre.firstWhere((s) => s.cod == cod);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    // Esclude le competizioni riservate alle nazionali (Mondiale/Europei):
+    // questa pagina mostra solo le partite di club della squadra.
+    final competizioniAbilitate = tutteLeCompetizioni.where(
+      (c) =>
+          c.attiva == true &&
+          c.id != 17 &&
+          c.id != 18 &&
+          widget.squadra.competizioni.contains(c.id),
+    );
+
+    final tuttePartite = <_PartitaConCompetizioneSquadra>[];
+    for (final competizione in competizioniAbilitate) {
+      try {
+        final giornate = await giornateProvider.fetchGiornate(
+          widget.campionato,
+          competizione.id,
+        );
+        for (final giornata in giornate) {
+          try {
+            final partite = await partiteProvider.fetchPartite(
+              widget.campionato,
+              giornata.id,
+            );
+            tuttePartite.addAll(
+              partite
+                  .where(
+                    (p) =>
+                        p.codHome == widget.squadra.cod ||
+                        p.codAway == widget.squadra.cod,
+                  )
+                  .map(
+                    (p) => _PartitaConCompetizioneSquadra(
+                      partita: p,
+                      competizione: competizione,
+                      squadraHome: squadraByCod(p.codHome),
+                      squadraAway: squadraByCod(p.codAway),
+                    ),
+                  ),
+            );
+          } catch (_) {}
+        }
+      } catch (_) {}
+    }
+    // Dalla più vecchia alla più recente.
+    tuttePartite.sort((a, b) => a.partita.data.compareTo(b.partita.data));
+    return tuttePartite;
+  }
+
+  /// Le partite di questa pagina sono sempre tra squadre di club: azzera gli
+  /// eventuali id nazionale per evitare che il widget condiviso provi a
+  /// caricare bandiere/dati delle nazionali (non pertinenti qui).
+  Partita _partitaClub(Partita partita) {
+    return Partita(
+      id: partita.id,
+      idGiornata: partita.idGiornata,
+      idTeamHome: partita.idTeamHome,
+      idTeamAway: partita.idTeamAway,
+      teamHome: partita.teamHome,
+      teamAway: partita.teamAway,
+      codHome: partita.codHome,
+      codAway: partita.codAway,
+      risultatoHome: partita.risultatoHome,
+      risultatoAway: partita.risultatoAway,
+      formazioneHome: partita.formazioneHome,
+      formazioneAway: partita.formazioneAway,
+      divisaHome: partita.divisaHome,
+      divisaAway: partita.divisaAway,
+      tabellino: partita.tabellino,
+      data: partita.data,
+      salvata: partita.salvata,
+    );
+  }
+
+  Widget buildPartiteSquadra(BuildContext context, bool isWide) {
+    return FutureBuilder<List<_PartitaConCompetizioneSquadra>>(
+      future: _partiteFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(getColor('primary')),
+            ),
+          );
+        }
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Errore nel caricamento delle partite',
+              style: TextStyle(fontSize: 16, color: Colors.red),
+            ),
+          );
+        }
+        final partite = snapshot.data ?? [];
+        if (partite.isEmpty) {
+          return Center(
+            child: Text(
+              'Nessuna partita disponibile',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          );
+        }
+        return ListView.builder(
+          padding: EdgeInsets.fromLTRB(0, 8, 0, isWide ? 8 : 100),
+          itemCount: partite.length,
+          itemBuilder: (context, index) =>
+              _buildPartitaRowSquadra(partite[index]),
+        );
+      },
+    );
+  }
+
+  Widget _buildPartitaRowSquadra(_PartitaConCompetizioneSquadra item) {
+    final partita = item.partita;
+    final competizione = item.competizione;
+    final logoPath =
+        competizione.id <= 4 || competizione.id == 17 || competizione.id == 18
+        ? 'assets/logos/${widget.campionato}/logo_${competizione.cod}_comp.png'
+        : 'assets/logos/logo_${competizione.cod}_comp.png';
+    final data = partita.data;
+    final dataLabel =
+        '${data.day.toString().padLeft(2, '0')}/${data.month.toString().padLeft(2, '0')}/${data.year}';
+    return Card(
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.fromLTRB(12, 8, 12, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(
+                  logoPath,
+                  height: 16,
+                  width: 16,
+                  errorBuilder: (context, error, stackTrace) =>
+                      Icon(Icons.emoji_events, size: 16, color: Colors.grey),
+                ),
+                SizedBox(width: 6),
+                Text(
+                  competizione.nome,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: getColor('primary', forText: true),
+                  ),
+                ),
+                Text(
+                  ' · $dataLabel',
+                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            height: 62,
+            child: buildCampionatoMatch(
+              CampionatoMatchModel(
+                match: partita.id,
+                partita: _partitaClub(partita),
+                campionato: widget.campionato,
+                squadraHome: item.squadraHome,
+                squadraAway: item.squadraAway,
+                competizione: competizione,
+              ),
+              context,
+              null,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1073,21 +1332,35 @@ class _SquadrePageState extends State<SquadrePage> {
       child: Padding(
         padding: EdgeInsets.only(top: 20),
         child: DefaultTabController(
-          length: 4,
+          length: 6,
           child: Column(
             children: [
-              TabBar(
-                tabAlignment: TabAlignment.fill,
-                padding: EdgeInsets.zero,
-                labelColor: getColor('primary', forText: true),
-                unselectedLabelColor: Colors.grey,
-                indicatorColor: getColor('primary', forText: true),
-                tabs: [
-                  Tab(text: 'Squadra'),
-                  Tab(text: 'Palmarès'),
-                  Tab(text: 'Formazione'),
-                  Tab(text: 'Mercato'),
-                ],
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  // Larghezza realistica per tab con etichette come "Statistiche"
+                  const minTabWidth = 90.0;
+                  const tabCount = 6;
+                  final shouldScroll =
+                      tabCount * minTabWidth > constraints.maxWidth;
+                  return TabBar(
+                    isScrollable: shouldScroll,
+                    tabAlignment: shouldScroll
+                        ? TabAlignment.center
+                        : TabAlignment.fill,
+                    padding: EdgeInsets.zero,
+                    labelColor: getColor('primary', forText: true),
+                    unselectedLabelColor: Colors.grey,
+                    indicatorColor: getColor('primary', forText: true),
+                    tabs: [
+                      Tab(text: 'Squadra'),
+                      Tab(text: 'Palmarès'),
+                      Tab(text: 'Formazione'),
+                      Tab(text: 'Mercato'),
+                      Tab(text: 'Partite'),
+                      Tab(text: 'Statistiche'),
+                    ],
+                  );
+                },
               ),
               Expanded(
                 child: TabBarView(
@@ -1103,6 +1376,8 @@ class _SquadrePageState extends State<SquadrePage> {
                       screenWidth,
                       screenHeight,
                     ),
+                    buildPartiteSquadra(context, isWide),
+                    buildStatistiche(context, isWide),
                   ],
                 ),
               ),
@@ -1811,6 +2086,350 @@ class _SquadrePageState extends State<SquadrePage> {
       print('Errore nel recupero del giocatore: $e');
       return null;
     }
+  }
+
+  Carriera? _carrieraStatistiche(Giocatore giocatore) {
+    try {
+      return giocatore.carriera.firstWhere(
+        (c) =>
+            c.idSquadra == widget.squadra.id &&
+            c.campionato == widget.campionato,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  List<_StatRowSquadra> _computeStatRows() {
+    final tuttiIGiocatori = <String, Giocatore>{};
+    for (final g in giocatori) {
+      tuttiIGiocatori[g.id] = g;
+    }
+    for (final g in _giocatoriVenduti) {
+      tuttiIGiocatori.putIfAbsent(g.id, () => g);
+    }
+
+    final righe = <_StatRowSquadra>[];
+    for (final g in tuttiIGiocatori.values) {
+      if (g.ruolo == 'Allenatore') continue;
+      final carriera = _carrieraStatistiche(g);
+      if (carriera == null) continue;
+      righe.add(
+        _StatRowSquadra(
+          giocatore: g,
+          numero: carriera.numero,
+          ruolo: g.ruolo,
+          capitano: carriera.capitano ?? false,
+          presenze: carriera.presenze,
+          gol: carriera.gol,
+          espulsioni: carriera.espulsioni,
+          autogol: carriera.autogol ?? 0,
+          rigoriSbagliati: carriera.rigoriSbagliati ?? 0,
+          golAnnullati: carriera.golAnnullati ?? 0,
+          cleanSheet: carriera.cleanSheet ?? 0,
+        ),
+      );
+    }
+    return righe;
+  }
+
+  List<_StatRowSquadra> _sortStatRows(List<_StatRowSquadra> righe) {
+    final sorted = List<_StatRowSquadra>.from(righe);
+    int compare(_StatRowSquadra a, _StatRowSquadra b) {
+      switch (_statSortColumnIndex) {
+        case 0:
+          return a.numero.compareTo(b.numero);
+        case 2:
+          return a.ruolo.compareTo(b.ruolo);
+        case 3:
+          return a.presenze.compareTo(b.presenze);
+        case 4:
+          return a.gol.compareTo(b.gol);
+        case 5:
+          return a.espulsioni.compareTo(b.espulsioni);
+        case 6:
+          return a.autogol.compareTo(b.autogol);
+        case 7:
+          return a.rigoriSbagliati.compareTo(b.rigoriSbagliati);
+        case 8:
+          return a.golAnnullati.compareTo(b.golAnnullati);
+        case 9:
+          return a.cleanSheet.compareTo(b.cleanSheet);
+        case 1:
+        default:
+          return CommonService.decodePlayerName(
+            a.giocatore.nome,
+          ).compareTo(CommonService.decodePlayerName(b.giocatore.nome));
+      }
+    }
+
+    sorted.sort((a, b) => _statSortAscending ? compare(a, b) : compare(b, a));
+    return sorted;
+  }
+
+  void _onStatSort(int columnIndex, bool ascending) {
+    setState(() {
+      _statSortColumnIndex = columnIndex;
+      _statSortAscending = ascending;
+    });
+  }
+
+  static const List<String> _statSortLabels = [
+    '#',
+    'Nome',
+    'Ruolo',
+    'PG',
+    'Gol',
+    'Esp',
+    'Aut',
+    'Rig',
+    'G.Ann',
+    'CS',
+  ];
+
+  Widget buildStatistiche(BuildContext context, bool isWide) {
+    if (_isLoadingGiocatori) {
+      return Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(getColor('primary')),
+        ),
+      );
+    }
+    final righe = _sortStatRows(_computeStatRows());
+    if (righe.isEmpty) {
+      return Center(
+        child: Text(
+          'Nessuna statistica disponibile',
+          style: TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+      );
+    }
+    return Column(
+      children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: _buildStatSortBar(),
+        ),
+        Expanded(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isWideCard = constraints.maxWidth > 600;
+              return ListView.builder(
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                itemCount: righe.length,
+                itemBuilder: (context, index) =>
+                    _buildStatRigaCard(righe[index], isWideCard),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatSortBar() {
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: getColor('primary', forText: true).withOpacity(0.3),
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<int>(
+                value: _statSortColumnIndex,
+                isExpanded: true,
+                icon: Icon(
+                  Icons.arrow_drop_down,
+                  color: getColor('primary', forText: true),
+                ),
+                items: List.generate(
+                  _statSortLabels.length,
+                  (i) => DropdownMenuItem(
+                    value: i,
+                    child: Text('Ordina per ${_statSortLabels[i]}'),
+                  ),
+                ),
+                onChanged: (value) {
+                  if (value != null) _onStatSort(value, _statSortAscending);
+                },
+              ),
+            ),
+          ),
+        ),
+        SizedBox(width: 8),
+        IconButton(
+          icon: Icon(
+            _statSortAscending ? Icons.arrow_upward : Icons.arrow_downward,
+            color: getColor('primary', forText: true),
+          ),
+          tooltip: _statSortAscending ? 'Crescente' : 'Decrescente',
+          onPressed: () =>
+              _onStatSort(_statSortColumnIndex, !_statSortAscending),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatRigaCard(_StatRowSquadra r, bool isWide) {
+    final nome = CommonService.decodePlayerName(r.giocatore.nome);
+    final statPairs = <(String, int)>[
+      ('PG', r.presenze),
+      ('Gol', r.gol),
+      ('Esp', r.espulsioni),
+      ('Aut', r.autogol),
+      ('Rig', r.rigoriSbagliati),
+      ('G.Ann', r.golAnnullati),
+      ('CS', r.cleanSheet),
+    ];
+
+    Widget statChip(String label, int value) {
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: 6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '$value',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            Text(
+              label,
+              style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final nomeRow = Row(
+      children: [
+        Flexible(
+          child: Text(
+            nome,
+            style: TextStyle(fontWeight: FontWeight.w600),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        if (r.capitano) ...[
+          SizedBox(width: 4),
+          Icon(Icons.star, color: Colors.amber, size: 14),
+        ],
+      ],
+    );
+
+    return Card(
+      margin: EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: getColor('primary').withOpacity(0.1)),
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: isWide
+            ? Row(
+                children: [
+                  _buildNumeroBadge(r.numero),
+                  SizedBox(width: 10),
+                  _buildRuoloBollino(r.ruolo),
+                  SizedBox(width: 10),
+                  Expanded(child: nomeRow),
+                  ...statPairs.map((s) => statChip(s.$1, s.$2)),
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      _buildNumeroBadge(r.numero),
+                      SizedBox(width: 10),
+                      _buildRuoloBollino(r.ruolo),
+                      SizedBox(width: 10),
+                      Expanded(child: nomeRow),
+                    ],
+                  ),
+                  SizedBox(height: 10),
+                  Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: statPairs
+                        .map((s) => statChip(s.$1, s.$2))
+                        .toList(),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+
+  Widget _buildNumeroBadge(int numero) {
+    return Container(
+      width: 28,
+      height: 28,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: getColor('primary').withOpacity(0.1),
+        shape: BoxShape.circle,
+      ),
+      child: Text(
+        '$numero',
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: getColor('primary', forText: true),
+        ),
+      ),
+    );
+  }
+
+  Color _roleColor(String ruolo) {
+    switch (ruolo) {
+      case 'Portiere':
+        return Colors.orange[800]!;
+      case 'Difensore':
+        return Colors.blue[800]!;
+      case 'Centrocampista':
+        return Colors.green[800]!;
+      case 'Attaccante':
+        return Colors.red[800]!;
+      default:
+        return Colors.grey[700]!;
+    }
+  }
+
+  /// Il ruolo viene mostrato come un bollino colorato con la sola iniziale
+  /// (es. 'P' per Portiere), per restare compatto sugli schermi stretti.
+  Widget _buildRuoloBollino(String ruolo) {
+    final color = _roleColor(ruolo);
+    final iniziale = ruolo.isNotEmpty ? ruolo[0].toUpperCase() : '?';
+    return Container(
+      width: 24,
+      height: 24,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        shape: BoxShape.circle,
+        border: Border.all(color: color.withOpacity(0.5)),
+      ),
+      child: Text(
+        iniziale,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          color: color,
+        ),
+      ),
+    );
   }
 
   Widget teamList(

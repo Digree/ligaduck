@@ -8,6 +8,17 @@ import 'package:ligaduck/services/commonService.dart';
 import 'package:mongo_dart/mongo_dart.dart' as mongo;
 import 'package:provider/provider.dart';
 
+class _SostituzionePair {
+  String? idIn;
+  String? idOut;
+  bool infortunio = false;
+  final TextEditingController infortunioController = TextEditingController();
+
+  void dispose() {
+    infortunioController.dispose();
+  }
+}
+
 class AddEventoModalPage extends StatefulWidget {
   final Competizione? competizione;
   final Partita partita;
@@ -35,10 +46,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
   List<TipoEvento> eventi = [];
   TipoEvento? eventoSelezionato;
   String giocatoreSelezionato = '';
-  String giocatoreSelezionatoIn = '';
-  String giocatoreSelezionatoOut = '';
   String tipoGolSelezionato = 'no';
-  String infortunioSelezionato = 'no';
   String esitoRigoreSelezionato = 'segnato';
   bool isLoading = false;
 
@@ -52,8 +60,11 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
   final _recuperoControllerAway = TextEditingController();
   final _squalificaControllerHome = TextEditingController();
   final _squalificaControllerAway = TextEditingController();
-  final _infortunioControllerHome = TextEditingController();
-  final _infortunioControllerAway = TextEditingController();
+  List<_SostituzionePair> _sostituzioniHome = [_SostituzionePair()];
+  List<_SostituzionePair> _sostituzioniAway = [_SostituzionePair()];
+
+  List<_SostituzionePair> _sostituzioniFor(int team) =>
+      team == 0 ? _sostituzioniHome : _sostituzioniAway;
 
   late TabController _tabController;
 
@@ -91,8 +102,12 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
     _recuperoControllerAway.dispose();
     _squalificaControllerHome.dispose();
     _squalificaControllerAway.dispose();
-    _infortunioControllerHome.dispose();
-    _infortunioControllerAway.dispose();
+    for (final pair in _sostituzioniHome) {
+      pair.dispose();
+    }
+    for (final pair in _sostituzioniAway) {
+      pair.dispose();
+    }
     super.dispose();
   }
 
@@ -689,16 +704,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
   }
 
   Widget buildWidgetSostituzione(int team) {
-    List<GiocatoreFormazione> formazione;
-    if (team == 0) {
-      formazione =
-          widget.partita.formazioneHome.panchina +
-          widget.partita.formazioneHome.titolari;
-    } else {
-      formazione =
-          widget.partita.formazioneAway.panchina +
-          widget.partita.formazioneAway.titolari;
-    }
+    final pairs = _sostituzioniFor(team);
     return Form(
       key: team == 0 ? _formKeyHome : _formKeyAway,
       child: Column(
@@ -730,38 +736,13 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                           ? 'supercup'
                           : null,
                     ),
-                    prefixIcon: Icon(
-                      Icons.add,
-                      color: Color(
-                        widget.competizione!.colori.isNotEmpty
-                            ? int.parse(
-                                widget.competizione!.colori[0].replaceFirst(
-                                  '#',
-                                  'FF',
-                                ),
-                                radix: 16,
-                              )
-                            : 0xFF000000,
-                      ),
-                    ),
+                    prefixIcon: Icon(Icons.add, color: getColor()),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: Color(
-                          widget.competizione!.colori.isNotEmpty
-                              ? int.parse(
-                                  widget.competizione!.colori[0].replaceFirst(
-                                    '#',
-                                    'FF',
-                                  ),
-                                  radix: 16,
-                                )
-                              : 0xFF000000,
-                        ),
-                      ),
+                      borderSide: BorderSide(color: getColor()),
                     ),
                   ),
                 ),
@@ -769,6 +750,123 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
             ],
           ),
           SizedBox(height: 16),
+          ...List.generate(
+            pairs.length,
+            (index) => _buildSostituzionePairRow(team, index),
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () => _addSostituzione(team),
+              icon: Icon(Icons.add, color: getColor()),
+              label: Text(
+                'Aggiungi sostituzione',
+                style: TextStyle(
+                  color: getColor(),
+                  fontWeight: FontWeight.w500,
+                  fontFamily: widget.competizione?.id == 5
+                      ? 'champions'
+                      : widget.competizione?.id == 6 ||
+                            widget.competizione?.id == 7
+                      ? 'europa'
+                      : widget.competizione?.id == 8
+                      ? 'supercup'
+                      : null,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _addSostituzione(int team) {
+    setState(() {
+      _sostituzioniFor(team).add(_SostituzionePair());
+    });
+  }
+
+  void _removeSostituzione(int team, int index) {
+    setState(() {
+      final pairs = _sostituzioniFor(team);
+      if (pairs.length > 1) {
+        pairs.removeAt(index).dispose();
+      }
+    });
+  }
+
+  Widget _buildSostituzionePairRow(int team, int index) {
+    final pairs = _sostituzioniFor(team);
+    final pair = pairs[index];
+    List<GiocatoreFormazione> formazione;
+    if (team == 0) {
+      formazione =
+          widget.partita.formazioneHome.panchina +
+          widget.partita.formazioneHome.titolari;
+    } else {
+      formazione =
+          widget.partita.formazioneAway.panchina +
+          widget.partita.formazioneAway.titolari;
+    }
+
+    final idInUsati = pairs
+        .where((p) => p != pair)
+        .map((p) => p.idIn)
+        .whereType<String>()
+        .toSet();
+    final idOutUsati = pairs
+        .where((p) => p != pair)
+        .map((p) => p.idOut)
+        .whereType<String>()
+        .toSet();
+
+    final disponibiliIn = formazione.where(
+      (element) =>
+          element.inCampo == false && !idInUsati.contains(element.idGiocatore),
+    );
+    final disponibiliOut = formazione.where(
+      (element) =>
+          element.inCampo == true && !idOutUsati.contains(element.idGiocatore),
+    );
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 16),
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (pairs.length > 1)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Sostituzione ${index + 1}',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: getColor(),
+                    fontFamily: widget.competizione?.id == 5
+                        ? 'champions'
+                        : widget.competizione?.id == 6 ||
+                              widget.competizione?.id == 7
+                        ? 'europa'
+                        : widget.competizione?.id == 8
+                        ? 'supercup'
+                        : null,
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.close, color: Colors.grey),
+                  tooltip: 'Rimuovi sostituzione',
+                  onPressed: () => _removeSostituzione(team, index),
+                ),
+              ],
+            ),
           Text(
             'Entra',
             style: TextStyle(
@@ -786,7 +884,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
           SizedBox(
             height: 50,
             child: DropdownButtonFormField<String>(
-              //initialValue: null,
+              initialValue: pair.idIn,
               isExpanded: true,
               decoration: InputDecoration(
                 labelText: 'Seleziona Giocatore',
@@ -799,73 +897,30 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                       : widget.competizione?.id == 8
                       ? 'supercup'
                       : null,
-                  color: Color(
-                    widget.competizione!.colori.isNotEmpty
-                        ? int.parse(
-                            widget.competizione!.colori[0].replaceFirst(
-                              '#',
-                              'FF',
-                            ),
-                            radix: 16,
-                          )
-                        : 0xFF000000,
-                  ),
+                  color: getColor(),
                 ),
-                prefixIcon: Icon(
-                  Icons.person,
-                  color: Color(
-                    widget.competizione!.colori.isNotEmpty
-                        ? int.parse(
-                            widget.competizione!.colori[0].replaceFirst(
-                              '#',
-                              'FF',
-                            ),
-                            radix: 16,
-                          )
-                        : 0xFF000000,
-                  ),
-                ),
+                prefixIcon: Icon(Icons.person, color: getColor()),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: Color(
-                      widget.competizione!.colori.isNotEmpty
-                          ? int.parse(
-                              widget.competizione!.colori[0].replaceFirst(
-                                '#',
-                                'FF',
-                              ),
-                              radix: 16,
-                            )
-                          : 0xFF000000,
-                    ),
-                    width: 2,
-                  ),
+                  borderSide: BorderSide(color: getColor(), width: 2),
                 ),
               ),
-              items:
-                  (team == 0
-                          ? formazione.where(
-                              (element) => element.inCampo == false,
-                            )
-                          : formazione.where(
-                              (element) => element.inCampo == false,
-                            ))
-                      .map(
-                        (giocatore) => DropdownMenuItem<String>(
-                          value: giocatore.idGiocatore,
-                          child: Text(
-                            "${giocatore.pos} ${CommonService.decodePlayerName(giocatore.nome)}",
-                          ),
-                        ),
-                      )
-                      .toList(),
+              items: disponibiliIn
+                  .map(
+                    (giocatore) => DropdownMenuItem<String>(
+                      value: giocatore.idGiocatore,
+                      child: Text(
+                        "${giocatore.pos} ${CommonService.decodePlayerName(giocatore.nome)}",
+                      ),
+                    ),
+                  )
+                  .toList(),
               onChanged: (String? newValue) {
                 setState(() {
-                  giocatoreSelezionatoIn = newValue ?? '';
+                  pair.idIn = newValue;
                 });
               },
               validator: (value) {
@@ -874,7 +929,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                     : widget.partita.formazioneAway.titolari.isEmpty) {
                   return null;
                 }
-                if ((value == null || value.isEmpty)) {
+                if (value == null || value.isEmpty) {
                   return 'Inserisci il giocatore';
                 }
                 return null;
@@ -899,6 +954,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
           SizedBox(
             height: 60,
             child: DropdownButtonFormField<String>(
+              initialValue: pair.idOut,
               isExpanded: true,
               decoration: InputDecoration(
                 labelText: 'Seleziona Giocatore',
@@ -911,73 +967,30 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                       : widget.competizione?.id == 8
                       ? 'supercup'
                       : null,
-                  color: Color(
-                    widget.competizione!.colori.isNotEmpty
-                        ? int.parse(
-                            widget.competizione!.colori[0].replaceFirst(
-                              '#',
-                              'FF',
-                            ),
-                            radix: 16,
-                          )
-                        : 0xFF000000,
-                  ),
+                  color: getColor(),
                 ),
-                prefixIcon: Icon(
-                  Icons.person,
-                  color: Color(
-                    widget.competizione!.colori.isNotEmpty
-                        ? int.parse(
-                            widget.competizione!.colori[0].replaceFirst(
-                              '#',
-                              'FF',
-                            ),
-                            radix: 16,
-                          )
-                        : 0xFF000000,
-                  ),
-                ),
+                prefixIcon: Icon(Icons.person, color: getColor()),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: Color(
-                      widget.competizione!.colori.isNotEmpty
-                          ? int.parse(
-                              widget.competizione!.colori[0].replaceFirst(
-                                '#',
-                                'FF',
-                              ),
-                              radix: 16,
-                            )
-                          : 0xFF000000,
-                    ),
-                    width: 2,
-                  ),
+                  borderSide: BorderSide(color: getColor(), width: 2),
                 ),
               ),
-              items:
-                  (team == 0
-                          ? formazione.where(
-                              (element) => element.inCampo == true,
-                            )
-                          : formazione.where(
-                              (element) => element.inCampo == true,
-                            ))
-                      .map(
-                        (giocatore) => DropdownMenuItem<String>(
-                          value: giocatore.idGiocatore,
-                          child: Text(
-                            "${giocatore.pos} ${CommonService.decodePlayerName(giocatore.nome)}",
-                          ),
-                        ),
-                      )
-                      .toList(),
+              items: disponibiliOut
+                  .map(
+                    (giocatore) => DropdownMenuItem<String>(
+                      value: giocatore.idGiocatore,
+                      child: Text(
+                        "${giocatore.pos} ${CommonService.decodePlayerName(giocatore.nome)}",
+                      ),
+                    ),
+                  )
+                  .toList(),
               onChanged: (String? newValue) {
                 setState(() {
-                  giocatoreSelezionatoOut = newValue ?? '';
+                  pair.idOut = newValue;
                 });
               },
               validator: (value) {
@@ -993,7 +1006,8 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
               },
             ),
           ),
-          buildInfortunioRadioButton(),
+          SizedBox(height: 16),
+          _buildInfortunioRadioButtonForPair(pair),
         ],
       ),
     );
@@ -1232,46 +1246,126 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
     );
   }
 
-  Widget buildInfortunioRadioButton() {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      padding: EdgeInsets.all(4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Infortunio',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: getColor(),
-              fontFamily: widget.competizione?.id == 5
-                  ? 'champions'
-                  : widget.competizione?.id == 6 || widget.competizione?.id == 7
-                  ? 'europa'
-                  : widget.competizione?.id == 8
-                  ? 'supercup'
-                  : null,
-            ),
+  Widget _buildInfortunioRadioButtonForPair(_SostituzionePair pair) {
+    return StatefulBuilder(
+      builder: (context, setPairState) {
+        return Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(8),
           ),
-          SizedBox(height: 8),
-          Row(
-            spacing: 8,
+          padding: EdgeInsets.all(4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: FilterChip(
-                  label: Center(
-                    child: Text(
-                      'No',
+              Text(
+                'Infortunio',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: getColor(),
+                  fontFamily: widget.competizione?.id == 5
+                      ? 'champions'
+                      : widget.competizione?.id == 6 ||
+                            widget.competizione?.id == 7
+                      ? 'europa'
+                      : widget.competizione?.id == 8
+                      ? 'supercup'
+                      : null,
+                ),
+              ),
+              SizedBox(height: 8),
+              Row(
+                spacing: 8,
+                children: [
+                  Expanded(
+                    child: FilterChip(
+                      label: Center(
+                        child: Text(
+                          'No',
+                          style: TextStyle(
+                            color: !pair.infortunio ? Colors.white : getColor(),
+                            fontWeight: FontWeight.bold,
+                            fontFamily: widget.competizione?.id == 5
+                                ? 'champions'
+                                : widget.competizione?.id == 6 ||
+                                      widget.competizione?.id == 7
+                                ? 'europa'
+                                : widget.competizione?.id == 8
+                                ? 'supercup'
+                                : null,
+                          ),
+                        ),
+                      ),
+                      selected: !pair.infortunio,
+                      onSelected: (bool selected) {
+                        setPairState(() {
+                          pair.infortunio = false;
+                        });
+                      },
+                      backgroundColor: Colors.white,
+                      selectedColor: getColor(),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        side: BorderSide(
+                          color: !pair.infortunio
+                              ? getColor()
+                              : getColor().withOpacity(0.3),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: FilterChip(
+                      label: Center(
+                        child: Text(
+                          'Si',
+                          style: TextStyle(
+                            color: pair.infortunio ? Colors.white : getColor(),
+                            fontWeight: FontWeight.bold,
+                            fontFamily: widget.competizione?.id == 5
+                                ? 'champions'
+                                : widget.competizione?.id == 6 ||
+                                      widget.competizione?.id == 7
+                                ? 'europa'
+                                : widget.competizione?.id == 8
+                                ? 'supercup'
+                                : null,
+                          ),
+                        ),
+                      ),
+                      selected: pair.infortunio,
+                      onSelected: (bool selected) {
+                        setPairState(() {
+                          pair.infortunio = true;
+                        });
+                      },
+                      backgroundColor: Colors.white,
+                      selectedColor: getColor(),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        side: BorderSide(
+                          color: pair.infortunio
+                              ? getColor()
+                              : getColor().withOpacity(0.3),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              if (pair.infortunio)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Giornate di Infortunio',
                       style: TextStyle(
-                        color: infortunioSelezionato == 'no'
-                            ? Colors.white
-                            : getColor(),
-                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: getColor(),
                         fontFamily: widget.competizione?.id == 5
                             ? 'champions'
                             : widget.competizione?.id == 6 ||
@@ -1282,143 +1376,67 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                             : null,
                       ),
                     ),
-                  ),
-                  selected: infortunioSelezionato == 'no',
-                  onSelected: (bool selected) {
-                    setState(() {
-                      infortunioSelezionato = 'no';
-                    });
-                  },
-                  backgroundColor: Colors.white,
-                  selectedColor: getColor(),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(
-                      color: infortunioSelezionato == 'no'
-                          ? getColor()
-                          : getColor().withOpacity(0.3),
-                    ),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: FilterChip(
-                  label: Center(
-                    child: Text(
-                      'Si',
-                      style: TextStyle(
-                        color: infortunioSelezionato == 'si'
-                            ? Colors.white
-                            : getColor(),
-                        fontWeight: FontWeight.bold,
-                        fontFamily: widget.competizione?.id == 5
-                            ? 'champions'
-                            : widget.competizione?.id == 6 ||
-                                  widget.competizione?.id == 7
-                            ? 'europa'
-                            : widget.competizione?.id == 8
-                            ? 'supercup'
-                            : null,
+                    SizedBox(height: 8),
+                    TextFormField(
+                      controller: pair.infortunioController,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(2),
+                      ],
+                      decoration: InputDecoration(
+                        labelText: 'Numero giornate',
+                        labelStyle: TextStyle(
+                          color: getColor(),
+                          fontFamily: widget.competizione?.id == 5
+                              ? 'champions'
+                              : widget.competizione?.id == 6 ||
+                                    widget.competizione?.id == 7
+                              ? 'europa'
+                              : widget.competizione?.id == 8
+                              ? 'supercup'
+                              : null,
+                        ),
+                        hintStyle: TextStyle(
+                          color: Colors.grey[500],
+                          fontFamily: widget.competizione?.id == 5
+                              ? 'champions'
+                              : widget.competizione?.id == 6 ||
+                                    widget.competizione?.id == 7
+                              ? 'europa'
+                              : widget.competizione?.id == 8
+                              ? 'supercup'
+                              : null,
+                        ),
+                        prefixIcon: Icon(Icons.event_busy, color: getColor()),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: getColor(), width: 2),
+                        ),
                       ),
+                      validator: (value) {
+                        if (!pair.infortunio) {
+                          return null;
+                        }
+                        if (value == null || value.isEmpty) {
+                          return 'Inserisci il numero di giornate';
+                        }
+                        int giornate = int.tryParse(value) ?? 0;
+                        if (giornate <= 0 || giornate > 99) {
+                          return 'Inserisci un numero valido (1-99)';
+                        }
+                        return null;
+                      },
                     ),
-                  ),
-                  selected: infortunioSelezionato == 'si',
-                  onSelected: (bool selected) {
-                    setState(() {
-                      infortunioSelezionato = 'si';
-                    });
-                  },
-                  backgroundColor: Colors.white,
-                  selectedColor: getColor(),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(
-                      color: infortunioSelezionato == 'si'
-                          ? getColor()
-                          : getColor().withOpacity(0.3),
-                    ),
-                  ),
+                  ],
                 ),
-              ),
             ],
           ),
-          SizedBox(height: 8),
-          if (infortunioSelezionato == 'si')
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Giornate di Infortunio',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: getColor(),
-                    fontFamily: widget.competizione?.id == 5
-                        ? 'champions'
-                        : widget.competizione?.id == 6 ||
-                              widget.competizione?.id == 7
-                        ? 'europa'
-                        : widget.competizione?.id == 8
-                        ? 'supercup'
-                        : null,
-                  ),
-                ),
-                SizedBox(height: 8),
-                TextFormField(
-                  controller: _infortunioControllerHome,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(2),
-                  ],
-                  decoration: InputDecoration(
-                    labelText: 'Numero giornate',
-                    labelStyle: TextStyle(
-                      color: getColor(),
-                      fontFamily: widget.competizione?.id == 5
-                          ? 'champions'
-                          : widget.competizione?.id == 6 ||
-                                widget.competizione?.id == 7
-                          ? 'europa'
-                          : widget.competizione?.id == 8
-                          ? 'supercup'
-                          : null,
-                    ),
-                    hintStyle: TextStyle(
-                      color: Colors.grey[500],
-                      fontFamily: widget.competizione?.id == 5
-                          ? 'champions'
-                          : widget.competizione?.id == 6 ||
-                                widget.competizione?.id == 7
-                          ? 'europa'
-                          : widget.competizione?.id == 8
-                          ? 'supercup'
-                          : null,
-                    ),
-                    prefixIcon: Icon(Icons.event_busy, color: getColor()),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: getColor(), width: 2),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Inserisci il numero di giornate';
-                    }
-                    int giornate = int.tryParse(value) ?? 0;
-                    if (giornate <= 0 || giornate > 99) {
-                      return 'Inserisci un numero valido (1-99)';
-                    }
-                    return null;
-                  },
-                ),
-              ],
-            ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -1769,20 +1787,24 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
         }
       }
 
-      if (eventoSelezionato!.cod == 'sos') {
-        GiocatoreFormazione? giocatoreOut;
+      List<Evento> eventiSostituzione = [];
 
+      if (eventoSelezionato!.cod == 'sos') {
         final formazione = team == 0
             ? widget.partita.formazioneHome
             : widget.partita.formazioneAway;
+        final pairs = _sostituzioniFor(team);
+        final giocatoriOut = <GiocatoreFormazione>[];
 
         try {
-          formazione.panchina.firstWhere(
-            (g) => g.idGiocatore == giocatoreSelezionatoIn,
-          );
-          giocatoreOut = formazione.titolari.firstWhere(
-            (g) => g.idGiocatore == giocatoreSelezionatoOut,
-          );
+          for (final pair in pairs) {
+            formazione.panchina.firstWhere((g) => g.idGiocatore == pair.idIn);
+            giocatoriOut.add(
+              formazione.titolari.firstWhere(
+                (g) => g.idGiocatore == pair.idOut,
+              ),
+            );
+          }
         } catch (e) {
           print('Giocatore entrato non trovato nella panchina: $e');
           if (mounted) {
@@ -1793,58 +1815,83 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
           return;
         }
 
-        if (infortunioSelezionato == 'si') {
-          GiocatoreNonDisponibile espulsione = GiocatoreNonDisponibile(
-            idGiocatore: giocatoreOut.idGiocatore,
-            nome: giocatoreOut.nome,
-            pos: giocatoreOut.pos,
-            motivo: 'inf',
-            durata: _infortunioControllerHome.text.isNotEmpty
-                ? int.parse(_infortunioControllerHome.text) + 1
-                : 0,
-            idCompetizione: widget.competizione!.id,
-          );
+        for (var i = 0; i < pairs.length; i++) {
+          final pair = pairs[i];
+          final giocatoreOut = giocatoriOut[i];
 
-          bool squalificaSuccess = await putIndisponibile(
-            espulsione,
-            team == 0 ? widget.partita.idTeamHome : widget.partita.idTeamAway,
-            'infortunio',
-            idNazionale: _getIdNazionale(team, false),
-          );
+          if (pair.infortunio) {
+            GiocatoreNonDisponibile espulsione = GiocatoreNonDisponibile(
+              idGiocatore: giocatoreOut.idGiocatore,
+              nome: giocatoreOut.nome,
+              pos: giocatoreOut.pos,
+              motivo: 'inf',
+              durata: pair.infortunioController.text.isNotEmpty
+                  ? int.parse(pair.infortunioController.text) + 1
+                  : 0,
+              idCompetizione: widget.competizione!.id,
+            );
 
-          if (!squalificaSuccess) {
-            // Mostra errore se la squalifica non è stata salvata
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Errore nel salvare la squalifica'),
-                  backgroundColor: Colors.red,
-                  duration: Duration(seconds: 2),
-                ),
-              );
+            bool squalificaSuccess = await putIndisponibile(
+              espulsione,
+              team == 0 ? widget.partita.idTeamHome : widget.partita.idTeamAway,
+              'infortunio',
+              idNazionale: _getIdNazionale(team, false),
+            );
+
+            if (!squalificaSuccess) {
+              // Mostra errore se la squalifica non è stata salvata
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Errore nel salvare la squalifica'),
+                    backgroundColor: Colors.red,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
             }
           }
+
+          eventiSostituzione.add(
+            Evento(
+              id: mongo.ObjectId().toHexString(),
+              minuto: minuti,
+              recupero: recupero,
+              idGiocatore: pair.idIn!,
+              idGiocatoreOut: pair.idOut,
+              codAzione: codAzione,
+              idTeam: _getIdTeam(team, false),
+              idNazionale: _getIdNazionale(team, false),
+              esitoRigore: esitoRigoreSelezionato == 'segnato' ? true : false,
+            ),
+          );
         }
       }
 
-      evento = Evento(
-        id: mongo.ObjectId().toHexString(),
-        minuto: minuti,
-        recupero: recupero,
-        idGiocatore: eventoSelezionato!.cod == 'sos'
-            ? giocatoreSelezionatoIn
-            : giocatoreSelezionato,
-        idGiocatoreOut: eventoSelezionato!.cod == 'sos'
-            ? giocatoreSelezionatoOut
-            : null,
-        codAzione: codAzione,
-        // Determina team e nazionale in base al tipo di evento e squadra
-        idTeam: _getIdTeam(team, eventoSelezionato!.cod == 'aut'),
-        idNazionale: _getIdNazionale(team, eventoSelezionato!.cod == 'aut'),
-        esitoRigore: esitoRigoreSelezionato == 'segnato' ? true : false,
-      );
+      bool success = true;
 
-      bool success = await putEvento(evento);
+      if (eventoSelezionato!.cod == 'sos') {
+        for (final eventoSos in eventiSostituzione) {
+          final singleSuccess = await putEvento(eventoSos);
+          success = success && singleSuccess;
+        }
+        evento = eventiSostituzione.last;
+      } else {
+        evento = Evento(
+          id: mongo.ObjectId().toHexString(),
+          minuto: minuti,
+          recupero: recupero,
+          idGiocatore: giocatoreSelezionato,
+          idGiocatoreOut: null,
+          codAzione: codAzione,
+          // Determina team e nazionale in base al tipo di evento e squadra
+          idTeam: _getIdTeam(team, eventoSelezionato!.cod == 'aut'),
+          idNazionale: _getIdNazionale(team, eventoSelezionato!.cod == 'aut'),
+          esitoRigore: esitoRigoreSelezionato == 'segnato' ? true : false,
+        );
+
+        success = await putEvento(evento);
+      }
 
       // Resetta isLoading prima di chiudere il dialog
       if (mounted) {
@@ -1971,16 +2018,19 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
     _recuperoControllerAway.clear();
     _squalificaControllerHome.clear();
     _squalificaControllerAway.clear();
-    _infortunioControllerHome.clear();
-    _infortunioControllerAway.clear();
+    for (final pair in _sostituzioniHome) {
+      pair.dispose();
+    }
+    for (final pair in _sostituzioniAway) {
+      pair.dispose();
+    }
     setState(() {
       giocatoreSelezionato = '';
       eventoSelezionato = null;
       tipoGolSelezionato = 'no';
-      giocatoreSelezionatoIn = '';
-      giocatoreSelezionatoOut = '';
       esitoRigoreSelezionato = 'segnato';
-      infortunioSelezionato = 'no';
+      _sostituzioniHome = [_SostituzionePair()];
+      _sostituzioniAway = [_SostituzionePair()];
       _minutoDropdownHome = null;
       _minutoDropdownAway = null;
     });
