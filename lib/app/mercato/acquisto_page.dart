@@ -34,6 +34,7 @@ class _AcquistoPageState extends State<AcquistoPage> {
   bool _hasSearched = false;
   List<Squadra> _squadre = [];
   String _sortType = 'Nome'; // Tipo di ordinamento: Nome, Squadra, Nazione
+  final Set<int> _selectedNumeriMaglia = {};
 
   @override
   void initState() {
@@ -111,7 +112,7 @@ class _AcquistoPageState extends State<AcquistoPage> {
         nomeRicerca,
         ruoloParam,
         nazioneParam,
-        null,
+        _selectedNumeriMaglia.isEmpty ? null : _selectedNumeriMaglia.toList(),
       );
 
       setState(() {
@@ -369,12 +370,16 @@ class _AcquistoPageState extends State<AcquistoPage> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        final numeroController = TextEditingController();
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return Dialog(
               insetPadding: EdgeInsets.symmetric(horizontal: 30, vertical: 30),
               child: Container(
-                constraints: BoxConstraints(maxWidth: 450, maxHeight: 450),
+                constraints: BoxConstraints(
+                  maxWidth: 450,
+                  maxHeight: MediaQuery.of(context).size.height * 0.8,
+                ),
                 padding: EdgeInsets.all(16),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -518,6 +523,118 @@ class _AcquistoPageState extends State<AcquistoPage> {
                                 ),
                               ],
                             ),
+                            SizedBox(height: 24),
+                            // Numero maglia multi-select
+                            Text(
+                              'Numero maglia',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: numeroController,
+                                    keyboardType: TextInputType.number,
+                                    textInputAction: TextInputAction.done,
+                                    decoration: InputDecoration(
+                                      hintText: 'Es. 10',
+                                      enabledBorder: OutlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: Colors.blueAccent.withOpacity(
+                                            0.3,
+                                          ),
+                                        ),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: Colors.blueAccent,
+                                        ),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 10,
+                                      ),
+                                    ),
+                                    onSubmitted: (value) {
+                                      FocusScope.of(context).unfocus();
+                                      final n = int.tryParse(value.trim());
+                                      if (n != null && n >= 0) {
+                                        setDialogState(() {
+                                          _selectedNumeriMaglia.add(n);
+                                        });
+                                        setState(() {});
+                                        numeroController.clear();
+                                      }
+                                    },
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.blueAccent,
+                                    foregroundColor: Colors.white,
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    FocusScope.of(context).unfocus();
+                                    final n = int.tryParse(
+                                      numeroController.text.trim(),
+                                    );
+                                    if (n != null && n >= 0) {
+                                      setDialogState(() {
+                                        _selectedNumeriMaglia.add(n);
+                                      });
+                                      setState(() {});
+                                      numeroController.clear();
+                                    }
+                                  },
+                                  child: Text('Aggiungi'),
+                                ),
+                              ],
+                            ),
+                            if (_selectedNumeriMaglia.isNotEmpty) ...[
+                              SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 4,
+                                children:
+                                    (_selectedNumeriMaglia.toList()..sort())
+                                        .map(
+                                          (n) => Chip(
+                                            label: Text(
+                                              '#$n',
+                                              style: TextStyle(
+                                                color: Colors.blueAccent,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            backgroundColor:
+                                                Colors.blueAccent[50],
+                                            deleteIconColor: Colors.blueAccent,
+                                            onDeleted: () {
+                                              setDialogState(() {
+                                                _selectedNumeriMaglia.remove(n);
+                                              });
+                                              setState(() {});
+                                            },
+                                          ),
+                                        )
+                                        .toList(),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -532,6 +649,7 @@ class _AcquistoPageState extends State<AcquistoPage> {
                             setDialogState(() {
                               _selectedNazione = null;
                               _selectedRuolo = null;
+                              _selectedNumeriMaglia.clear();
                             });
                           },
                           child: Text(

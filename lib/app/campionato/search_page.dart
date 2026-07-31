@@ -212,7 +212,12 @@ class _SearchPageState extends State<SearchPage> {
               constraints: BoxConstraints(
                 maxHeight: MediaQuery.of(context).size.height * 0.8,
               ),
-              padding: EdgeInsets.all(16),
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: 16 + MediaQuery.of(context).viewInsets.bottom,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -377,6 +382,7 @@ class _SearchPageState extends State<SearchPage> {
                                   child: TextField(
                                     controller: numeroController,
                                     keyboardType: TextInputType.number,
+                                    textInputAction: TextInputAction.done,
                                     cursorColor: Colors.white,
                                     style: TextStyle(color: Colors.white),
                                     decoration: InputDecoration(
@@ -401,6 +407,17 @@ class _SearchPageState extends State<SearchPage> {
                                         vertical: 10,
                                       ),
                                     ),
+                                    onSubmitted: (value) {
+                                      FocusScope.of(context).unfocus();
+                                      final n = int.tryParse(value.trim());
+                                      if (n != null && n >= 0) {
+                                        setDialogState(() {
+                                          _selectedNumeriMaglia.add(n);
+                                        });
+                                        setState(() {});
+                                        numeroController.clear();
+                                      }
+                                    },
                                   ),
                                 ),
                                 SizedBox(width: 8),
@@ -417,6 +434,7 @@ class _SearchPageState extends State<SearchPage> {
                                     ),
                                   ),
                                   onPressed: () {
+                                    FocusScope.of(context).unfocus();
                                     final n = int.tryParse(
                                       numeroController.text.trim(),
                                     );
