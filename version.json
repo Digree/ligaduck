@@ -1,24 +1,24 @@
 {
-  "lastUpdate": "2026-07-07",
+  "lastUpdate": "2026-08-01",
   "android": {
-    "version": "44.01.07",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.01.07/ligaduck-v44.01.07.apk",
-    "releaseNotes": "- Bug Fix"
+    "version": "44.02.00",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.00/ligaduck-v44.02.00.apk",
+    "releaseNotes": "- Sostituzioni multiple - Statistiche e partite squadra - Nuove divise Serie B - Bug Fix"
   },
   "ios": {
-    "version": "44.01.07",
+    "version": "44.02.00",
     "downloadUrl": "https://apps.apple.com/app/ligaduck",
-    "releaseNotes": "- Bug Fix"
+    "releaseNotes": "- Sostituzioni multiple - Statistiche e partite squadra - Nuove divise Serie B - Bug Fix"
   },
   "macos": {
-    "version": "44.01.07",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.01.07/ligaduck-v44.01.07.dmg",
-    "releaseNotes": "- Bug Fix"
+    "version": "44.02.00",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.00/ligaduck-v44.02.00.dmg",
+    "releaseNotes": "- Sostituzioni multiple - Statistiche e partite squadra - Nuove divise Serie B - Bug Fix"
   },
   "windows": {
-    "version": "44.01.07",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.01.07/ligaduck-v44.01.07-windows.zip",
-    "msixUrl": "https://github.com/Digree/ligaduck/releases/download/v44.01.07/LigaDuckManager-Windows-v44.01.07.msix",
-    "releaseNotes": "- Bug Fix"
+    "version": "44.02.00",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.00/ligaduck-v44.02.00-windows.zip",
+    "msixUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.00/LigaDuckManager-Windows-v44.02.00.msix",
+    "releaseNotes": "- Sostituzioni multiple - Statistiche e partite squadra - Nuove divise Serie B - Bug Fix"
   }
 }
