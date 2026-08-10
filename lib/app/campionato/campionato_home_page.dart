@@ -2248,17 +2248,16 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
 
         final vincitori = vincitoriSnapshot.data ?? [];
 
-        return FutureBuilder<List<Competizione>>(
-          future: _competizioniFuture,
-          builder: (context, competizioniSnapshot) {
-            if (competizioniSnapshot.connectionState ==
-                ConnectionState.waiting) {
+        return FutureBuilder<List<Object>>(
+          future: Future.wait([_competizioniFuture, _nazionaliFuture]),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
               return Center(
                 child: CircularProgressIndicator(color: Colors.blueAccent),
               );
             }
 
-            if (competizioniSnapshot.hasError) {
+            if (snapshot.hasError) {
               return Center(
                 child: Text(
                   'Errore nel caricamento delle competizioni',
@@ -2267,9 +2266,11 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
               );
             }
 
-            final competizioni = (competizioniSnapshot.data ?? [])
-                .where((c) => c.attiva == true)
-                .toList();
+            final competizioni =
+                ((snapshot.data?[0] as List<Competizione>?) ?? [])
+                    .where((c) => c.attiva == true)
+                    .toList();
+            final nazionali = (snapshot.data?[1] as List<Nazionale>?) ?? [];
 
             if (competizioni.isEmpty) {
               return Center(
@@ -2286,6 +2287,8 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
               itemCount: competizioni.length,
               itemBuilder: (context, index) {
                 final competizione = competizioni[index];
+                final bool isNazionaleComp =
+                    competizione.id == 17 || competizione.id == 18;
 
                 // Trova il vincitore per questa competizione
                 final vincitore = vincitori.firstWhere(
@@ -2296,7 +2299,27 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                   ),
                 );
 
-                final hasVincitore = vincitore.idSquadraVincitrice != 0;
+                // Per le competizioni riservate alle nazionali il vincitore
+                // va dedotto dall'albo d'oro (trofei) delle nazionali, dato
+                // che idSquadraVincitrice non viene valorizzato in quel caso.
+                Nazionale? nazionaleVincitrice;
+                if (isNazionaleComp) {
+                  for (final n in nazionali) {
+                    final haVintoQuestaEdizione = n.trofei.any(
+                      (t) =>
+                          t.idCompetizione == competizione.id &&
+                          t.anni.contains(widget.campionato),
+                    );
+                    if (haVintoQuestaEdizione) {
+                      nazionaleVincitrice = n;
+                      break;
+                    }
+                  }
+                }
+
+                final hasVincitore = isNazionaleComp
+                    ? nazionaleVincitrice != null
+                    : vincitore.idSquadraVincitrice != 0;
 
                 return Card(
                   margin: EdgeInsets.only(bottom: 16),
@@ -2364,11 +2387,21 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                                       size: 24,
                                     ),
                                     SizedBox(width: 12),
-                                    _buildSquadraLogo(vincitore),
+                                    isNazionaleComp
+                                        ? SquadraLogoWidget(
+                                            codSquadra:
+                                                nazionaleVincitrice!.codNazione,
+                                            nomeNazionale:
+                                                nazionaleVincitrice.nome,
+                                            size: 40,
+                                          )
+                                        : _buildSquadraLogo(vincitore),
                                     SizedBox(width: 12),
                                     Expanded(
                                       child: Text(
-                                        vincitore.nomeSquadra,
+                                        isNazionaleComp
+                                            ? nazionaleVincitrice!.nome
+                                            : vincitore.nomeSquadra,
                                         style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold,

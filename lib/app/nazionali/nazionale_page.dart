@@ -9,6 +9,7 @@ import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/models/nazionale.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
+import 'package:ligaduck/app/service/models/trofeo.dart';
 import 'package:ligaduck/app/service/nazionali_provider.dart';
 import 'package:ligaduck/app/service/squadre_provider.dart';
 import 'package:ligaduck/app/nazionali/add_formazione_nazionale_page.dart';
@@ -864,8 +865,39 @@ class _NazionalePageState extends State<NazionalePage> {
 
   // ─── Palmarès ─────────────────────────────────────────────────────────────
 
+  /// Filtra e ricalcola i trofei tenendo solo le edizioni precedenti al
+  /// campionato attualmente visionato (es. se si è nel campionato 43,
+  /// mostra solo i trofei vinti prima del 43).
+  List<Trofeo> _trofeiFinoAdEdizionePrecedente(List<Trofeo> trofei) {
+    final annoAttuale = int.tryParse(widget.campionato);
+    if (annoAttuale == null) return trofei;
+
+    final risultato = <Trofeo>[];
+    for (final trofeo in trofei) {
+      final anniFiltrati = trofeo.anni.where((anno) {
+        final annoInt = int.tryParse(anno);
+        return annoInt == null || annoInt < annoAttuale;
+      }).toList();
+
+      if (anniFiltrati.isEmpty) continue;
+
+      risultato.add(
+        Trofeo(
+          anni: anniFiltrati,
+          quantita: anniFiltrati.length,
+          nome: trofeo.nome,
+          cod: trofeo.cod,
+          idCompetizione: trofeo.idCompetizione,
+        ),
+      );
+    }
+    return risultato;
+  }
+
   Widget _buildPalmares(bool isWide, double screenWidth) {
-    final trofei = (_nazionale ?? widget.nazionale).trofei;
+    final trofei = _trofeiFinoAdEdizionePrecedente(
+      (_nazionale ?? widget.nazionale).trofei,
+    );
     if (trofei.isEmpty) {
       return Center(
         child: Text(

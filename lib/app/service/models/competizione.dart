@@ -6,6 +6,7 @@ class Competizione {
   final String? classifica;
   final List<String> colori;
   final int idCampione;
+  final String idNazioneCampione;
   final bool conclusa;
   final List<Girone>? gironi;
   final Map<String, dynamic>? fasi;
@@ -18,6 +19,7 @@ class Competizione {
     this.classifica,
     required this.colori,
     this.idCampione = 0,
+    this.idNazioneCampione = '',
     this.conclusa = false,
     this.gironi,
     this.fasi,
@@ -32,6 +34,7 @@ class Competizione {
       classifica: json['classifica'],
       colori: json['colori'] != null ? List<String>.from(json['colori']) : [],
       idCampione: json['idCampione'] ?? 0,
+      idNazioneCampione: json['idNazioneCampione'] ?? '',
       conclusa: json['conclusa'] ?? false,
       gironi: json['gironi'] != null
           ? (json['gironi'] as List)
@@ -53,6 +56,7 @@ class Competizione {
       'classifica': classifica,
       'colori': colori,
       'idCampione': idCampione,
+      'idNazioneCampione': idNazioneCampione,
       'conclusa': conclusa,
       'gironi': gironi?.map((g) => g.toJson()).toList(),
       'fasi': fasi,

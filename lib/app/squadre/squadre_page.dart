@@ -6,6 +6,7 @@ import 'package:ligaduck/app/models/partita/partita_formazione_model.dart';
 import 'package:ligaduck/app/service/giocatori_provider.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
+import 'package:ligaduck/app/service/models/trofeo.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/competizioni_provider.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
@@ -495,10 +496,39 @@ class _SquadrePageState extends State<SquadrePage> {
   List<dynamic>? getTrofeiSquadra(Squadra squadra) {
     final currentSquadra = _squadra ?? widget.squadra;
     if (currentSquadra.trofei != null) {
-      return currentSquadra.trofei;
+      return _trofeiFinoAdEdizionePrecedente(currentSquadra.trofei!);
     } else {
       return null;
     }
+  }
+
+  /// Filtra e ricalcola i trofei tenendo solo le edizioni precedenti al
+  /// campionato attualmente visionato (es. se si è nel campionato 43,
+  /// mostra solo i trofei vinti prima del 43).
+  List<Trofeo> _trofeiFinoAdEdizionePrecedente(List<Trofeo> trofei) {
+    final annoAttuale = int.tryParse(widget.campionato);
+    if (annoAttuale == null) return trofei;
+
+    final risultato = <Trofeo>[];
+    for (final trofeo in trofei) {
+      final anniFiltrati = trofeo.anni.where((anno) {
+        final annoInt = int.tryParse(anno);
+        return annoInt == null || annoInt < annoAttuale;
+      }).toList();
+
+      if (anniFiltrati.isEmpty) continue;
+
+      risultato.add(
+        Trofeo(
+          anni: anniFiltrati,
+          quantita: anniFiltrati.length,
+          nome: trofeo.nome,
+          cod: trofeo.cod,
+          idCompetizione: trofeo.idCompetizione,
+        ),
+      );
+    }
+    return risultato;
   }
 
   void getGiocatoriSquadra(Squadra squadra) {

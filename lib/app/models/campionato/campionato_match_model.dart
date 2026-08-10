@@ -68,13 +68,16 @@ Widget buildCampionatoMatch(
 
   if (isPhaseE && !isAndata && model.partita.salvata) {
     // Conta rigori a tempo regolamentare (minuto 121)
+    // Per le partite tra club l'evento porta idTeam, per le nazionali idNazionale
     int rigoriHome121 = model.partita.tabellino
         .where(
           (e) =>
               e.minuto == 121 &&
               e.codAzione == 'rig' &&
               e.esitoRigore == true &&
-              e.idTeam == model.partita.idTeamHome,
+              (e.idTeam == model.partita.idTeamHome ||
+                  (e.idNazionale != null &&
+                      e.idNazionale == model.partita.idNazionaleHome)),
         )
         .length;
 
@@ -84,7 +87,9 @@ Widget buildCampionatoMatch(
               e.minuto == 121 &&
               e.codAzione == 'rig' &&
               e.esitoRigore == true &&
-              e.idTeam == model.partita.idTeamAway,
+              (e.idTeam == model.partita.idTeamAway ||
+                  (e.idNazionale != null &&
+                      e.idNazionale == model.partita.idNazionaleAway)),
         )
         .length;
 

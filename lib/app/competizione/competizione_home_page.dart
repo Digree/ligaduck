@@ -290,6 +290,55 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
 
   // Ottiene i colori della squadra campione per i fuochi d'artificio
   Future<List<Color>> _getChampionColors() async {
+    final bool isNazionaleComp =
+        widget.competizione.id == 17 || widget.competizione.id == 18;
+
+    if (isNazionaleComp) {
+      try {
+        final nazionaliProvider = Provider.of<NazionaliProvider>(
+          context,
+          listen: false,
+        );
+        final nazionali = await nazionaliProvider.fetchNazionali(
+          widget.campionato,
+        );
+
+        // La nazionale vincitrice va dedotta dal proprio albo d'oro (trofei):
+        // idCampione/idNazioneCampione non vengono valorizzati per le
+        // competizioni riservate alle nazionali (id 17/18).
+        Nazionale? campione;
+        for (final n in nazionali) {
+          final haVintoQuestaEdizione = n.trofei.any(
+            (t) =>
+                t.idCompetizione == widget.competizione.id &&
+                t.anni.contains(widget.campionato),
+          );
+          if (haVintoQuestaEdizione) {
+            campione = n;
+            break;
+          }
+        }
+
+        if (campione == null &&
+            widget.competizione.idNazioneCampione.isNotEmpty) {
+          campione = nazionali.firstWhere(
+            (n) => n.id == widget.competizione.idNazioneCampione,
+            orElse: () => nazionali.first,
+          );
+        }
+
+        if (campione == null || campione.colori.isEmpty) {
+          return [Colors.amber, Colors.yellow, Colors.orange];
+        }
+
+        return campione.colori.map((colorName) {
+          return _parseColor(colorName);
+        }).toList();
+      } catch (e) {
+        return [Colors.amber, Colors.yellow, Colors.orange];
+      }
+    }
+
     if (widget.competizione.idCampione == 0) {
       return [Colors.amber, Colors.yellow, Colors.orange];
     }
