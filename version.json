@@ -1,24 +1,24 @@
 {
-  "lastUpdate": "2026-08-01",
+  "lastUpdate": "2026-08-14",
   "android": {
-    "version": "44.02.00",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.00/ligaduck-v44.02.00.apk",
-    "releaseNotes": "- Sostituzioni multiple - Statistiche e partite squadra - Nuove divise Serie B - Bug Fix"
+    "version": "44.02.01",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.01/ligaduck-v44.02.01.apk",
+    "releaseNotes": "- Nuove divise - Modifica giocatori - Bug Fix"
   },
   "ios": {
-    "version": "44.02.00",
+    "version": "44.02.01",
     "downloadUrl": "https://apps.apple.com/app/ligaduck",
-    "releaseNotes": "- Sostituzioni multiple - Statistiche e partite squadra - Nuove divise Serie B - Bug Fix"
+    "releaseNotes": "- Nuove divise - Modifica giocatori - Bug Fix"
   },
   "macos": {
-    "version": "44.02.00",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.00/ligaduck-v44.02.00.dmg",
-    "releaseNotes": "- Sostituzioni multiple - Statistiche e partite squadra - Nuove divise Serie B - Bug Fix"
+    "version": "44.02.01",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.01/ligaduck-v44.02.01.dmg",
+    "releaseNotes": "- Nuove divise - Modifica giocatori - Bug Fix"
   },
   "windows": {
-    "version": "44.02.00",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.00/ligaduck-v44.02.00-windows.zip",
-    "msixUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.00/LigaDuckManager-Windows-v44.02.00.msix",
-    "releaseNotes": "- Sostituzioni multiple - Statistiche e partite squadra - Nuove divise Serie B - Bug Fix"
+    "version": "44.02.01",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.01/ligaduck-v44.02.01-windows.zip",
+    "msixUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.01/LigaDuckManager-Windows-v44.02.01.msix",
+    "releaseNotes": "- Nuove divise - Modifica giocatori - Bug Fix"
   }
 }
