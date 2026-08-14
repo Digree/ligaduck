@@ -92,8 +92,18 @@ flutter:
 
     #loghi competizione
     - assets/logos/
+    - assets/logos/34/
+    - assets/logos/35/
+    - assets/logos/36/
+    - assets/logos/37/
+    - assets/logos/38/
+    - assets/logos/39/
+    - assets/logos/40/
+    - assets/logos/41/
+    - assets/logos/42/
     - assets/logos/43/
     - assets/logos/44/
+
 
     #loghi squadre
     - assets/squadre/

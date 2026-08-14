@@ -410,4 +410,35 @@ class GiocatoriProvider with ChangeNotifier {
       return null;
     }
   }
+
+  Future<bool> aggiornaInfoGiocatore(
+    String campionato,
+    String idGiocatore, {
+    required String nome,
+    required String nazione,
+    String? ruoloAlt,
+    int? idSquadra,
+  }) async {
+    try {
+      final body = <String, dynamic>{'nome': nome, 'nazione': nazione};
+      if (ruoloAlt != null) body['ruoloAlt'] = ruoloAlt;
+      if (idSquadra != null) body['idSquadra'] = idSquadra;
+      final response = await http.post(
+        Uri.parse('${Env.apiUrl}/$campionato/giocatore/$idGiocatore/modifica'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(body),
+      );
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        notifyListeners();
+        return true;
+      }
+      print(
+        'Errore PATCH giocatore: ${response.statusCode} - ${response.body}',
+      );
+      return false;
+    } catch (e) {
+      print('Errore PATCH giocatore: $e');
+      return false;
+    }
+  }
 }

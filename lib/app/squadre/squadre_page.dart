@@ -27,6 +27,7 @@ import 'package:ligaduck/app/widgets/squadra_logo_widget.dart';
 import 'package:oktoast/oktoast.dart';
 import '../../services/commonService.dart';
 import 'package:ligaduck/app/widgets/settings_icon.dart';
+import 'package:ligaduck/app/service/country_service.dart';
 
 class _StatRowSquadra {
   final Giocatore giocatore;
@@ -681,6 +682,181 @@ class _SquadrePageState extends State<SquadrePage> {
         );
       },
     );
+  }
+
+  Future<void> _showEditGiocatoreDialog(
+    BuildContext context,
+    Giocatore giocatore,
+  ) async {
+    final carrieraAttuale = giocatore.carriera.firstWhere(
+      (c) =>
+          c.campionato == widget.campionato && c.idSquadra == widget.squadra.id,
+      orElse: () => giocatore.carriera.firstWhere(
+        (c) => c.campionato == widget.campionato,
+        orElse: () => Carriera(
+          campionato: widget.campionato,
+          idSquadra: widget.squadra.id,
+          numero: 0,
+          gol: 0,
+          presenze: 0,
+          espulsioni: 0,
+          attivo: true,
+        ),
+      ),
+    );
+
+    final primaryColor = getColor('primary');
+    final primaryFgColor = getIconColor('primary');
+
+    final nomeCtrl = TextEditingController(
+      text: CommonService.decodePlayerName(giocatore.nome),
+    );
+    var nazioneSelezionata = giocatore.nazione;
+    var ruoloAltSelezionato = carrieraAttuale.ruoloAlt ?? '';
+    List<String> nazioni = [nazioneSelezionata];
+    bool loadingNazioni = true;
+
+    const ruoliAlt = [
+      '',
+      'Portiere',
+      'Difensore',
+      'Centrocampista',
+      'Attaccante',
+    ];
+
+    final InputDecoration fieldDecoration = InputDecoration(
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: primaryColor, width: 2),
+      ),
+      labelStyle: TextStyle(color: primaryColor),
+    );
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          // load nations once
+          if (loadingNazioni) {
+            CountryService.getAllCountries().then((countries) {
+              final list =
+                  countries
+                      .map((c) => CommonService.decodePlayerName(c.commonName))
+                      .toList()
+                    ..sort();
+              // match case-insensitively so lowercase backend values resolve correctly
+              final match = list.firstWhere(
+                (n) => n.toLowerCase() == nazioneSelezionata.toLowerCase(),
+                orElse: () => list.isNotEmpty ? list.first : nazioneSelezionata,
+              );
+              setDialogState(() {
+                nazioni = list;
+                nazioneSelezionata = match;
+                loadingNazioni = false;
+              });
+            });
+            loadingNazioni = false; // prevent re-triggering
+          }
+
+          return AlertDialog(
+            title: Text('Modifica giocatore'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nomeCtrl,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: fieldDecoration.copyWith(labelText: 'Nome'),
+                ),
+                const SizedBox(height: 12),
+                nazioni.length <= 1
+                    ? Center(
+                        child: CircularProgressIndicator(color: primaryColor),
+                      )
+                    : DropdownButtonFormField<String>(
+                        initialValue: nazioneSelezionata,
+                        isExpanded: true,
+                        menuMaxHeight: 300,
+                        decoration: fieldDecoration.copyWith(
+                          labelText: 'Nazionalità',
+                          prefixIcon: Icon(Icons.flag, color: primaryColor),
+                        ),
+                        items: nazioni
+                            .map(
+                              (n) => DropdownMenuItem(
+                                value: n,
+                                child: Text(n, overflow: TextOverflow.ellipsis),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (v) =>
+                            setDialogState(() => nazioneSelezionata = v!),
+                      ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: ruoliAlt.contains(ruoloAltSelezionato)
+                      ? ruoloAltSelezionato
+                      : '',
+                  isExpanded: true,
+                  decoration: fieldDecoration.copyWith(
+                    labelText: 'Ruolo alternativo',
+                  ),
+                  items: ruoliAlt
+                      .map(
+                        (r) => DropdownMenuItem(
+                          value: r,
+                          child: Text(r.isEmpty ? '—' : r),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (v) =>
+                      setDialogState(() => ruoloAltSelezionato = v ?? ''),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                style: TextButton.styleFrom(foregroundColor: primaryColor),
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Annulla'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  foregroundColor: primaryFgColor,
+                ),
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Salva'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    if (saved != true) return;
+
+    final provider = GiocatoriProvider();
+    final ok = await provider.aggiornaInfoGiocatore(
+      widget.campionato,
+      giocatore.id,
+      nome: nomeCtrl.text.trim(),
+      nazione: nazioneSelezionata.toLowerCase(),
+      ruoloAlt: ruoloAltSelezionato.isEmpty ? null : ruoloAltSelezionato,
+      idSquadra: widget.squadra.id,
+    );
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(ok ? 'Salvato con successo' : 'Errore nel salvataggio'),
+          backgroundColor: ok ? Colors.green : Colors.red,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      if (ok) await fetchGiocatori();
+    }
   }
 
   Widget _buildGlassButton(String text, VoidCallback onTap) {
@@ -2148,7 +2324,7 @@ class _SquadrePageState extends State<SquadrePage> {
         _StatRowSquadra(
           giocatore: g,
           numero: carriera.numero,
-          ruolo: g.ruolo,
+          ruolo: _getRuoloEffettivo(g),
           capitano: carriera.capitano ?? false,
           presenze: carriera.presenze,
           gol: carriera.gol,
@@ -2477,7 +2653,11 @@ class _SquadrePageState extends State<SquadrePage> {
     // Prima squadra (numero <= 21)
     List<Giocatore> portieriPS =
         giocatori
-            .where((g) => g.ruolo == 'Portiere' && _getNumeroGiocatore(g) <= 21)
+            .where(
+              (g) =>
+                  _getRuoloEffettivo(g) == 'Portiere' &&
+                  _getNumeroGiocatore(g) <= 21,
+            )
             .toList()
           ..sort(
             (a, b) => _getNumeroGiocatore(a).compareTo(_getNumeroGiocatore(b)),
@@ -2485,7 +2665,9 @@ class _SquadrePageState extends State<SquadrePage> {
     List<Giocatore> difensoriPS =
         giocatori
             .where(
-              (g) => g.ruolo == 'Difensore' && _getNumeroGiocatore(g) <= 21,
+              (g) =>
+                  _getRuoloEffettivo(g) == 'Difensore' &&
+                  _getNumeroGiocatore(g) <= 21,
             )
             .toList()
           ..sort(
@@ -2495,7 +2677,8 @@ class _SquadrePageState extends State<SquadrePage> {
         giocatori
             .where(
               (g) =>
-                  g.ruolo == 'Centrocampista' && _getNumeroGiocatore(g) <= 21,
+                  _getRuoloEffettivo(g) == 'Centrocampista' &&
+                  _getNumeroGiocatore(g) <= 21,
             )
             .toList()
           ..sort(
@@ -2504,7 +2687,9 @@ class _SquadrePageState extends State<SquadrePage> {
     List<Giocatore> attaccantiPS =
         giocatori
             .where(
-              (g) => g.ruolo == 'Attaccante' && _getNumeroGiocatore(g) <= 21,
+              (g) =>
+                  _getRuoloEffettivo(g) == 'Attaccante' &&
+                  _getNumeroGiocatore(g) <= 21,
             )
             .toList()
           ..sort(
@@ -2514,14 +2699,22 @@ class _SquadrePageState extends State<SquadrePage> {
     // Vivaio (numero > 21)
     List<Giocatore> portieriV =
         giocatori
-            .where((g) => g.ruolo == 'Portiere' && _getNumeroGiocatore(g) > 21)
+            .where(
+              (g) =>
+                  _getRuoloEffettivo(g) == 'Portiere' &&
+                  _getNumeroGiocatore(g) > 21,
+            )
             .toList()
           ..sort(
             (a, b) => _getNumeroGiocatore(a).compareTo(_getNumeroGiocatore(b)),
           );
     List<Giocatore> difensoriV =
         giocatori
-            .where((g) => g.ruolo == 'Difensore' && _getNumeroGiocatore(g) > 21)
+            .where(
+              (g) =>
+                  _getRuoloEffettivo(g) == 'Difensore' &&
+                  _getNumeroGiocatore(g) > 21,
+            )
             .toList()
           ..sort(
             (a, b) => _getNumeroGiocatore(a).compareTo(_getNumeroGiocatore(b)),
@@ -2529,7 +2722,9 @@ class _SquadrePageState extends State<SquadrePage> {
     List<Giocatore> centrocampistiV =
         giocatori
             .where(
-              (g) => g.ruolo == 'Centrocampista' && _getNumeroGiocatore(g) > 21,
+              (g) =>
+                  _getRuoloEffettivo(g) == 'Centrocampista' &&
+                  _getNumeroGiocatore(g) > 21,
             )
             .toList()
           ..sort(
@@ -2538,7 +2733,9 @@ class _SquadrePageState extends State<SquadrePage> {
     List<Giocatore> attaccantiV =
         giocatori
             .where(
-              (g) => g.ruolo == 'Attaccante' && _getNumeroGiocatore(g) > 21,
+              (g) =>
+                  _getRuoloEffettivo(g) == 'Attaccante' &&
+                  _getNumeroGiocatore(g) > 21,
             )
             .toList()
           ..sort(
@@ -2746,7 +2943,7 @@ class _SquadrePageState extends State<SquadrePage> {
         giocatori
             .where(
               (giocatore) =>
-                  giocatore.ruolo == 'Portiere' &&
+                  _getRuoloEffettivo(giocatore) == 'Portiere' &&
                   _getNumeroGiocatore(giocatore) > 21,
             )
             .toList()
@@ -2757,7 +2954,7 @@ class _SquadrePageState extends State<SquadrePage> {
         giocatori
             .where(
               (giocatore) =>
-                  giocatore.ruolo == 'Difensore' &&
+                  _getRuoloEffettivo(giocatore) == 'Difensore' &&
                   _getNumeroGiocatore(giocatore) > 21,
             )
             .toList()
@@ -2768,7 +2965,7 @@ class _SquadrePageState extends State<SquadrePage> {
         giocatori
             .where(
               (giocatore) =>
-                  giocatore.ruolo == 'Centrocampista' &&
+                  _getRuoloEffettivo(giocatore) == 'Centrocampista' &&
                   _getNumeroGiocatore(giocatore) > 21,
             )
             .toList()
@@ -2779,7 +2976,7 @@ class _SquadrePageState extends State<SquadrePage> {
         giocatori
             .where(
               (giocatore) =>
-                  giocatore.ruolo == 'Attaccante' &&
+                  _getRuoloEffettivo(giocatore) == 'Attaccante' &&
                   _getNumeroGiocatore(giocatore) > 21,
             )
             .toList()
@@ -3162,6 +3359,73 @@ class _SquadrePageState extends State<SquadrePage> {
       );
     }
 
+    if (globals.admin) {
+      return Dismissible(
+        key: Key('giocatore_${giocatore.id}'),
+        direction: DismissDirection.endToStart,
+        background: Container(
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 20),
+          color: getColor('primary').withOpacity(0.85),
+          child: const Icon(Icons.more_horiz, color: Colors.white),
+        ),
+        confirmDismiss: (_) async {
+          await showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: Text(
+                CommonService.decodePlayerName(giocatore.nome),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.edit),
+                    title: const Text('Modifica'),
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      _showEditGiocatoreDialog(context, giocatore);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.swap_horiz),
+                    title: const Text('Cedere'),
+                    onTap: () async {
+                      Navigator.of(ctx).pop();
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => CessionePage(
+                            campionato: widget.campionato,
+                            squadra: widget.squadra,
+                            giocatore: giocatore,
+                            tipoMercato: 'estivo',
+                          ),
+                        ),
+                      );
+                      if (result == true) await _loadGiocatori();
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: const Text('Annulla'),
+                ),
+              ],
+            ),
+          );
+          return false; // non rimuovere mai la riga
+        },
+        child: GestureDetector(
+          onLongPress: () => _showEditGiocatoreDialog(context, giocatore),
+          child: playerContent,
+        ),
+      );
+    }
+
     return playerContent;
   }
 
@@ -3371,6 +3635,28 @@ class _SquadrePageState extends State<SquadrePage> {
   bool isLightColor(Color color) {
     final brightness = color.computeLuminance();
     return brightness > 0.5;
+  }
+
+  /// Returns ruoloAlt for the current-year carriera if set, otherwise ruolo.
+  String _getRuoloEffettivo(Giocatore giocatore) {
+    final carriera = giocatore.carriera.firstWhere(
+      (c) =>
+          c.campionato == widget.campionato && c.idSquadra == widget.squadra.id,
+      orElse: () => giocatore.carriera.firstWhere(
+        (c) => c.campionato == widget.campionato,
+        orElse: () => Carriera(
+          campionato: widget.campionato,
+          idSquadra: widget.squadra.id,
+          numero: 0,
+          gol: 0,
+          presenze: 0,
+          espulsioni: 0,
+          attivo: true,
+        ),
+      ),
+    );
+    final alt = carriera.ruoloAlt;
+    return (alt != null && alt.isNotEmpty) ? alt : giocatore.ruolo;
   }
 
   Color getIconColor(String type) {

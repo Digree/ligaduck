@@ -358,23 +358,43 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
     final Map<String, List<GiocatoreFormazione>> panchinaPerRuolo = {};
     for (var r in ordineRuoli) {
       panchinaPerRuolo[r] = _panchina.where((g) {
-        final ruoloEffettivo = (g.ruolo != null && g.ruolo!.isNotEmpty)
+        final gj = widget.giocatori.firstWhere(
+          (gj) => gj.id == g.idGiocatore,
+          orElse: () => Giocatore(
+            id: '',
+            nome: '',
+            eta: 0,
+            ruolo: '',
+            nazione: '',
+            carriera: [],
+            idSquadraAttuale: 0,
+            attivo: false,
+          ),
+        );
+        // prefer ruoloAlt from current-year carriera over base ruolo
+        final carriera = gj.carriera.firstWhere(
+          (c) =>
+              c.campionato == widget.campionato &&
+              c.idSquadra == widget.squadra.id,
+          orElse: () => gj.carriera.firstWhere(
+            (c) => c.campionato == widget.campionato,
+            orElse: () => Carriera(
+              campionato: widget.campionato,
+              idSquadra: widget.squadra.id,
+              numero: 0,
+              gol: 0,
+              presenze: 0,
+              espulsioni: 0,
+              attivo: true,
+            ),
+          ),
+        );
+        final alt = carriera.ruoloAlt;
+        final ruoloEffettivo = (alt != null && alt.isNotEmpty)
+            ? alt
+            : (g.ruolo != null && g.ruolo!.isNotEmpty)
             ? g.ruolo!
-            : widget.giocatori
-                  .firstWhere(
-                    (gj) => gj.id == g.idGiocatore,
-                    orElse: () => Giocatore(
-                      id: '',
-                      nome: '',
-                      eta: 0,
-                      ruolo: '',
-                      nazione: '',
-                      carriera: [],
-                      idSquadraAttuale: 0,
-                      attivo: false,
-                    ),
-                  )
-                  .ruolo;
+            : gj.ruolo;
         return ruoloEffettivo == r;
       }).toList();
     }

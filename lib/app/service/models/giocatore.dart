@@ -71,6 +71,7 @@ class Carriera {
   final bool attivo;
   final Prestito? prestito;
   final String? idNazionale;
+  final String? ruoloAlt;
 
   Carriera({
     required this.campionato,
@@ -89,6 +90,7 @@ class Carriera {
     required this.attivo,
     this.prestito,
     this.idNazionale,
+    this.ruoloAlt,
   });
 
   factory Carriera.fromJson(Map<String, dynamic> json) {
@@ -111,6 +113,7 @@ class Carriera {
           ? Prestito.fromJson(json['prestito'])
           : null,
       idNazionale: json['idNazionale'],
+      ruoloAlt: json['ruoloAlt'],
     );
   }
 
@@ -132,6 +135,7 @@ class Carriera {
       'attivo': attivo,
       'prestito': prestito?.toJson(),
       'idNazionale': idNazionale,
+      'ruoloAlt': ruoloAlt,
     };
   }
 }
