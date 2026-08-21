@@ -292,6 +292,12 @@ class _NostalgiaMatchCardState extends State<NostalgiaMatchCard> {
             ..clear()
             ..addAll(
               squadra.indisponibili
+                  // idCompetizione == 0 vale per tutte le competizioni (es. infortuni)
+                  .where(
+                    (g) =>
+                        g.idCompetizione == 0 ||
+                        g.idCompetizione == widget.competizione.id,
+                  )
                   .map(
                     (g) => GiocatoreNonDisponibile(
                       idGiocatore: g.idGiocatore,

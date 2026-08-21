@@ -236,7 +236,7 @@ class PartiteProvider with ChangeNotifier {
     String? idNazionale,
   }) async {
     try {
-      final url = idNazionale != null
+      final url = (idNazionale?.isNotEmpty ?? false)
           ? '${Env.apiUrl}/$campionato/partita/$idPartita/formazione/nazionale/$idNazionale'
           : '${Env.apiUrl}/$campionato/partita/$idPartita/formazione/$idSquadra';
       final response = await http.post(
@@ -269,9 +269,13 @@ class PartiteProvider with ChangeNotifier {
     String? capitano, {
     String? idNazionale,
   }) async {
-    final body = <String, dynamic>{'divisa': divisa, 'modulo': modulo, 'capitano': capitano};
+    final body = <String, dynamic>{
+      'divisa': divisa,
+      'modulo': modulo,
+      'capitano': capitano,
+    };
     try {
-      final url = idNazionale != null
+      final url = (idNazionale?.isNotEmpty ?? false)
           ? '${Env.apiUrl}/$campionato/partita/$idPartita/modifica/nazionale/$idNazionale'
           : '${Env.apiUrl}/$campionato/partita/$idPartita/modifica/$idSquadra';
       final response = await http.post(
@@ -302,7 +306,7 @@ class PartiteProvider with ChangeNotifier {
     String? idNazionale,
   }) async {
     try {
-      final url = idNazionale != null
+      final url = (idNazionale?.isNotEmpty ?? false)
           ? '${Env.apiUrl}/$campionato/partita/$idPartita/formazione/nazionale/$idNazionale'
           : '${Env.apiUrl}/$campionato/partita/$idPartita/formazione/$teamId';
 

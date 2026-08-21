@@ -3220,7 +3220,7 @@ class _SquadrePageState extends State<SquadrePage> {
           if (giocatore.ruolo != 'Allenatore')
             Builder(
               builder: (context) {
-                // Verifica se il giocatore è capitano
+                // Verifica se il giocatore è capitano nel campionato selezionato
                 final carrieraAttuale = giocatore.carriera.firstWhere(
                   (c) =>
                       c.idSquadra == widget.squadra.id &&
@@ -3235,8 +3235,9 @@ class _SquadrePageState extends State<SquadrePage> {
                     attivo: true,
                   ),
                 );
+                final isCapitano = carrieraAttuale.capitano == true;
 
-                if (carrieraAttuale.capitano == true) {
+                if (isCapitano) {
                   return Padding(
                     padding: EdgeInsets.only(left: 8),
                     child: Image.asset(
@@ -3405,6 +3406,22 @@ class _SquadrePageState extends State<SquadrePage> {
                         ),
                       );
                       if (result == true) await _loadGiocatori();
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.healing),
+                    title: const Text('Infortunio'),
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      _mostraDialogInfortunio(giocatore);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.block),
+                    title: const Text('Squalifica'),
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      _mostraDialogSqualifica(giocatore);
                     },
                   ),
                 ],
@@ -4195,8 +4212,10 @@ class _SquadrePageState extends State<SquadrePage> {
       context,
       listen: false,
     );
+    // Cattura il messenger dalla pagina, non dal dialog (che verrà chiuso/deattivato)
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-    // Trova il capitano attuale (se esiste)
+    // Trova il capitano attuale (se esiste) nel campionato selezionato
     String? idCapitanoAttuale;
     for (var giocatore in giocatori) {
       if (giocatore.ruolo != 'Allenatore') {
@@ -4233,7 +4252,11 @@ class _SquadrePageState extends State<SquadrePage> {
             return AlertDialog(
               title: Text(
                 'Seleziona Capitano',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  color: getColor('primary', forText: true),
+                ),
               ),
               content: SizedBox(
                 width: double.maxFinite,
@@ -4298,23 +4321,18 @@ class _SquadrePageState extends State<SquadrePage> {
               ),
               actions: [
                 TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: getColor('primary'),
+                  ),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: Text('Annulla', style: TextStyle(color: Colors.grey)),
+                  child: Text('Annulla'),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: getColor('primary'),
-                    foregroundColor:
-                        widget.squadra.colori.isNotEmpty &&
-                            (widget.squadra.colori[0].toLowerCase() ==
-                                    'bianco' ||
-                                widget.squadra.colori[0].toLowerCase() ==
-                                    'giallo') &&
-                            widget.squadra.colori.length > 1
-                        ? getColor('secondary')
-                        : Colors.white,
+                    foregroundColor: getIconColor('primary'),
                   ),
                   onPressed: () async {
                     if (idCapitanoSelezionato != null) {
@@ -4342,8 +4360,45 @@ class _SquadrePageState extends State<SquadrePage> {
                       if (!mounted) return;
 
                       if (success) {
+                        // Aggiorna subito lo stato locale (solo per il campionato selezionato)
+                        setState(() {
+                          for (var g in giocatori) {
+                            final idx = g.carriera.indexWhere(
+                              (c) =>
+                                  c.idSquadra == widget.squadra.id &&
+                                  c.campionato == widget.campionato,
+                            );
+                            if (idx == -1) continue;
+                            final c = g.carriera[idx];
+                            final shouldBeCapitano =
+                                g.id == idCapitanoSelezionato;
+                            if (c.capitano == shouldBeCapitano) continue;
+                            g.carriera[idx] = Carriera(
+                              campionato: c.campionato,
+                              idSquadra: c.idSquadra,
+                              numero: c.numero,
+                              gol: c.gol,
+                              presenze: c.presenze,
+                              espulsioni: c.espulsioni,
+                              autogol: c.autogol,
+                              rigoriSbagliati: c.rigoriSbagliati,
+                              golAnnullati: c.golAnnullati,
+                              golSubiti: c.golSubiti,
+                              cleanSheet: c.cleanSheet,
+                              esonero: c.esonero,
+                              capitano: shouldBeCapitano,
+                              attivo: c.attivo,
+                              prestito: c.prestito,
+                              idNazionale: c.idNazionale,
+                              ruoloAlt: c.ruoloAlt,
+                            );
+                          }
+                          for (var t in widget.squadra.formazione.titolari) {
+                            t.capitano = t.idGiocatore == idCapitanoSelezionato;
+                          }
+                        });
                         await _loadGiocatori();
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        scaffoldMessenger.showSnackBar(
                           SnackBar(
                             content: Text('Capitano aggiornato con successo'),
                             backgroundColor: Colors.green,
@@ -4351,7 +4406,7 @@ class _SquadrePageState extends State<SquadrePage> {
                           ),
                         );
                       } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        scaffoldMessenger.showSnackBar(
                           SnackBar(
                             content: Text(
                               'Errore nell\'aggiornamento del capitano',
@@ -4373,6 +4428,307 @@ class _SquadrePageState extends State<SquadrePage> {
         );
       },
     );
+  }
+
+  Future<void> _mostraDialogInfortunio(Giocatore giocatore) async {
+    final squadreProvider = Provider.of<SquadreProvider>(
+      context,
+      listen: false,
+    );
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final durataController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    final primaryColor = getColor('primary');
+    final primaryFgColor = getIconColor('primary');
+    final fieldDecoration = InputDecoration(
+      labelText: 'Durata (partite)',
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: primaryColor, width: 2),
+      ),
+      labelStyle: TextStyle(color: primaryColor),
+    );
+
+    final confermato = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Infortunio',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              color: getColor('primary', forText: true),
+            ),
+          ),
+          content: Form(
+            key: formKey,
+            child: TextFormField(
+              controller: durataController,
+              keyboardType: TextInputType.number,
+              cursorColor: primaryColor,
+              style: TextStyle(color: primaryColor),
+              decoration: fieldDecoration,
+              validator: (value) {
+                final n = int.tryParse(value ?? '');
+                if (n == null || n <= 0) {
+                  return 'Inserisci un numero di partite valido';
+                }
+                return null;
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: primaryColor),
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('Annulla'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: primaryFgColor,
+              ),
+              onPressed: () {
+                if (formKey.currentState!.validate()) {
+                  Navigator.of(context).pop(true);
+                }
+              },
+              child: Text('Salva'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confermato != true) return;
+
+    final indisponibile = GiocatoreNonDisponibile(
+      idGiocatore: giocatore.id,
+      nome: giocatore.nome,
+      pos: 0,
+      motivo: 'inf',
+      durata: int.parse(durataController.text),
+      idCompetizione: 0,
+    );
+
+    final success = await squadreProvider.putIndisponibile(
+      widget.campionato,
+      widget.squadra.id,
+      indisponibile,
+      'infortunio',
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      setState(() {
+        widget.squadra.indisponibili.add(indisponibile);
+      });
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Infortunio registrato per ${CommonService.decodePlayerName(giocatore.nome)}',
+          ),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('Errore nel salvare l\'infortunio'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Future<void> _mostraDialogSqualifica(Giocatore giocatore) async {
+    final squadreProvider = Provider.of<SquadreProvider>(
+      context,
+      listen: false,
+    );
+    final competizioniProvider = Provider.of<CompetizioniProvider>(
+      context,
+      listen: false,
+    );
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    final tutteLeCompetizioni = await competizioniProvider.fetchCompetizioni(
+      widget.campionato,
+    );
+    // Solo le competizioni abilitate alla squadra, escluse quelle riservate alle nazionali
+    final competizioniAbilitate = tutteLeCompetizioni
+        .where(
+          (c) =>
+              c.id != 17 &&
+              c.id != 18 &&
+              widget.squadra.competizioni.contains(c.id),
+        )
+        .toList();
+
+    if (!mounted) return;
+
+    if (competizioniAbilitate.isEmpty) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('Nessuna competizione abilitata per questa squadra'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    final durataController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    Competizione? competizioneSelezionata = competizioniAbilitate.first;
+    final primaryColor = getColor('primary');
+    final primaryFgColor = getIconColor('primary');
+    final InputDecoration fieldDecoration = InputDecoration(
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: primaryColor, width: 2),
+      ),
+      labelStyle: TextStyle(color: primaryColor),
+    );
+
+    final confermato = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text(
+                'Squalifica',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  color: getColor('primary', forText: true),
+                ),
+              ),
+              content: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DropdownButtonFormField<Competizione>(
+                      initialValue: competizioneSelezionata,
+                      isExpanded: true,
+                      icon: Icon(Icons.arrow_drop_down, color: primaryColor),
+                      style: TextStyle(color: primaryColor),
+                      decoration: fieldDecoration.copyWith(
+                        labelText: 'Competizione',
+                      ),
+                      items: competizioniAbilitate
+                          .map(
+                            (c) => DropdownMenuItem<Competizione>(
+                              value: c,
+                              child: Text(
+                                c.nome,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        setDialogState(() {
+                          competizioneSelezionata = value;
+                        });
+                      },
+                    ),
+                    SizedBox(height: 16),
+                    TextFormField(
+                      controller: durataController,
+                      keyboardType: TextInputType.number,
+                      cursorColor: primaryColor,
+                      style: TextStyle(color: primaryColor),
+                      decoration: fieldDecoration.copyWith(
+                        labelText: 'Durata (partite)',
+                      ),
+                      validator: (value) {
+                        final n = int.tryParse(value ?? '');
+                        if (n == null || n <= 0) {
+                          return 'Inserisci un numero di partite valido';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  style: TextButton.styleFrom(foregroundColor: primaryColor),
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text('Annulla'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: primaryFgColor,
+                  ),
+                  onPressed: () {
+                    if (formKey.currentState!.validate() &&
+                        competizioneSelezionata != null) {
+                      Navigator.of(context).pop(true);
+                    }
+                  },
+                  child: Text('Salva'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (confermato != true) return;
+
+    final indisponibile = GiocatoreNonDisponibile(
+      idGiocatore: giocatore.id,
+      nome: giocatore.nome,
+      pos: 0,
+      motivo: 'esp',
+      durata: int.parse(durataController.text),
+      idCompetizione: competizioneSelezionata!.id,
+    );
+
+    final success = await squadreProvider.putIndisponibile(
+      widget.campionato,
+      widget.squadra.id,
+      indisponibile,
+      'squalifica',
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      setState(() {
+        widget.squadra.indisponibili.add(indisponibile);
+      });
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Squalifica registrata per ${CommonService.decodePlayerName(giocatore.nome)}',
+          ),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('Errore nel salvare la squalifica'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   Future<void> _mostraDialogAssegnaNumeri() async {

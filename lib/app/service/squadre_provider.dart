@@ -186,7 +186,7 @@ class SquadreProvider with ChangeNotifier {
     String? idNazionale,
   }) async {
     try {
-      final url = idNazionale != null
+      final url = (idNazionale?.isNotEmpty ?? false)
           ? '${Env.apiUrl}/$campionato/nazionali/$idNazionale/$statoGiocatore'
           : '${Env.apiUrl}/$campionato/squadra/$idSquadra/$statoGiocatore';
       final response = await http.post(
@@ -217,7 +217,7 @@ class SquadreProvider with ChangeNotifier {
     String? idNazionale,
   }) async {
     try {
-      final url = idNazionale != null
+      final url = (idNazionale?.isNotEmpty ?? false)
           ? '${Env.apiUrl}/$campionato/nazionali/$idNazionale/delete/$idGiocatore/$statoGiocatore'
           : '${Env.apiUrl}/$campionato/squadra/$idSquadra/delete/$idGiocatore/$statoGiocatore';
       final response = await http.delete(
@@ -367,7 +367,7 @@ class SquadreProvider with ChangeNotifier {
     String? idNazionale,
   }) async {
     try {
-      final url = idNazionale != null
+      final url = (idNazionale?.isNotEmpty ?? false)
           ? '${Env.apiUrl}/$campionato/nazionali/$idNazionale/$idPartita/ultime5'
           : '${Env.apiUrl}/$campionato/squadra/$idSquadra/$idPartita/ultime5';
       final response = await http.get(Uri.parse(url));

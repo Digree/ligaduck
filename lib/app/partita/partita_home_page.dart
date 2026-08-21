@@ -316,7 +316,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
           orElse: () => nazionali.first,
         );
         formazioneSource = nazionale.formazione;
-        indisponibiliSource = nazionale.indisponibili;
+        // idCompetizione == 0 vale per tutte le competizioni (es. infortuni)
+        indisponibiliSource = nazionale.indisponibili
+            .where(
+              (g) =>
+                  g.idCompetizione == 0 || g.idCompetizione == competizione!.id,
+            )
+            .toList();
       } else {
         final provider = Provider.of<SquadreProvider>(context, listen: false);
         final squadra = selectedFormazione == 0
@@ -333,7 +339,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                 competizione!.id,
               );
         formazioneSource = squadra.formazione;
-        indisponibiliSource = squadra.indisponibili;
+        // idCompetizione == 0 vale per tutte le competizioni (es. infortuni)
+        indisponibiliSource = squadra.indisponibili
+            .where(
+              (g) =>
+                  g.idCompetizione == 0 || g.idCompetizione == competizione!.id,
+            )
+            .toList();
       }
 
       setState(() {
@@ -7149,7 +7161,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     if (success) {
       if (refreshAfterSave) {
         final updatedPartita = await fetchPartita();
-        final bool isHome = idNazionale != null
+        final bool isHome = (idNazionale?.isNotEmpty ?? false)
             ? idNazionale == partita!.idNazionaleHome
             : idSquadra == partita!.idTeamHome;
         setState(() {
@@ -7594,7 +7606,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
           if (success) {
             // Ricarica la partita
             final updatedPartita = await fetchPartita();
-            final bool isHome = idNazionale != null
+            final bool isHome = (idNazionale?.isNotEmpty ?? false)
                 ? idNazionale == partita!.idNazionaleHome
                 : teamId == partita!.idTeamHome;
             setState(() {
