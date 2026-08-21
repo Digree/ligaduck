@@ -1,24 +1,24 @@
 {
-  "lastUpdate": "2026-08-14",
+  "lastUpdate": "2026-08-21",
   "android": {
-    "version": "44.02.01",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.01/ligaduck-v44.02.01.apk",
-    "releaseNotes": "- Nuove divise - Modifica giocatori - Bug Fix"
+    "version": "44.02.02",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.02/ligaduck-v44.02.02.apk",
+    "releaseNotes": "- Infortuni e Squalifiche fuori partita - Bug Fix"
   },
   "ios": {
-    "version": "44.02.01",
+    "version": "44.02.02",
     "downloadUrl": "https://apps.apple.com/app/ligaduck",
-    "releaseNotes": "- Nuove divise - Modifica giocatori - Bug Fix"
+    "releaseNotes": "- Infortuni e Squalifiche fuori partita - Bug Fix"
   },
   "macos": {
-    "version": "44.02.01",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.01/ligaduck-v44.02.01.dmg",
-    "releaseNotes": "- Nuove divise - Modifica giocatori - Bug Fix"
+    "version": "44.02.02",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.02/ligaduck-v44.02.02.dmg",
+    "releaseNotes": "- Infortuni e Squalifiche fuori partita - Bug Fix"
   },
   "windows": {
-    "version": "44.02.01",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.01/ligaduck-v44.02.01-windows.zip",
-    "msixUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.01/LigaDuckManager-Windows-v44.02.01.msix",
-    "releaseNotes": "- Nuove divise - Modifica giocatori - Bug Fix"
+    "version": "44.02.02",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.02/ligaduck-v44.02.02-windows.zip",
+    "msixUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.02/LigaDuckManager-Windows-v44.02.02.msix",
+    "releaseNotes": "- Infortuni e Squalifiche fuori partita - Bug Fix"
   }
 }
