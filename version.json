@@ -1,24 +1,24 @@
 {
-  "lastUpdate": "2026-08-21",
+  "lastUpdate": "2026-08-27",
   "android": {
-    "version": "44.02.02",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.02/ligaduck-v44.02.02.apk",
-    "releaseNotes": "- Infortuni e Squalifiche fuori partita - Bug Fix"
+    "version": "44.02.03",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.03/ligaduck-v44.02.03.apk",
+    "releaseNotes": "- Modifica semplificata orario partite - Asterischi diversi per i prestiti - Bug Fix "
   },
   "ios": {
-    "version": "44.02.02",
+    "version": "44.02.03",
     "downloadUrl": "https://apps.apple.com/app/ligaduck",
-    "releaseNotes": "- Infortuni e Squalifiche fuori partita - Bug Fix"
+    "releaseNotes": "- Modifica semplificata orario partite - Asterischi diversi per i prestiti - Bug Fix "
   },
   "macos": {
-    "version": "44.02.02",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.02/ligaduck-v44.02.02.dmg",
-    "releaseNotes": "- Infortuni e Squalifiche fuori partita - Bug Fix"
+    "version": "44.02.03",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.03/ligaduck-v44.02.03.dmg",
+    "releaseNotes": "- Modifica semplificata orario partite - Asterischi diversi per i prestiti - Bug Fix "
   },
   "windows": {
-    "version": "44.02.02",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.02/ligaduck-v44.02.02-windows.zip",
-    "msixUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.02/LigaDuckManager-Windows-v44.02.02.msix",
-    "releaseNotes": "- Infortuni e Squalifiche fuori partita - Bug Fix"
+    "version": "44.02.03",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.03/ligaduck-v44.02.03-windows.zip",
+    "msixUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.03/LigaDuckManager-Windows-v44.02.03.msix",
+    "releaseNotes": "- Modifica semplificata orario partite - Asterischi diversi per i prestiti - Bug Fix "
   }
 }
