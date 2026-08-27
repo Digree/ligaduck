@@ -2534,28 +2534,43 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                 right: isWide ? 16 : 8,
                 top: 8.0,
               ),
-              child: DropdownButton<String>(
-                value: selectedGiornata,
-                hint: const Text('Seleziona giornata'),
-                isExpanded: true,
-                items: giornate
-                    .map(
-                      (g) => DropdownMenuItem<String>(
-                        value: g.id,
-                        child: Text(
-                          g.fase == 'G'
-                              ? "${g.giornata}^ Giornata"
-                              : CommonService.decodePlayerName(g.giornata),
-                        ),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (String? newValue) {
-                  setState(() {
-                    selectedGiornata = newValue;
-                  });
-                  _verificaPartiteSalvate();
-                },
+              child: Row(
+                children: [
+                  Expanded(
+                    child: DropdownButton<String>(
+                      value: selectedGiornata,
+                      hint: const Text('Seleziona giornata'),
+                      isExpanded: true,
+                      items: giornate
+                          .map(
+                            (g) => DropdownMenuItem<String>(
+                              value: g.id,
+                              child: Text(
+                                g.fase == 'G'
+                                    ? "${g.giornata}^ Giornata"
+                                    : CommonService.decodePlayerName(
+                                        g.giornata,
+                                      ),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          selectedGiornata = newValue;
+                        });
+                        _verificaPartiteSalvate();
+                      },
+                    ),
+                  ),
+                  if (globals.admin && selectedGiornata != null)
+                    IconButton(
+                      icon: const Icon(Icons.edit_calendar),
+                      tooltip: 'Modifica orari partite',
+                      onPressed: () =>
+                          _showModificaOrariDialog(selectedGiornata!),
+                    ),
+                ],
               ),
             );
           }
@@ -2564,6 +2579,354 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
         }
       },
     );
+  }
+
+  /// Colore della competizione usato per coerenza grafica nei popup.
+  Color _competizioneColor() {
+    return widget.competizione.colori.isNotEmpty
+        ? Color(
+            int.parse(
+              widget.competizione.colori[0].replaceFirst('#', 'FF'),
+              radix: 16,
+            ),
+          )
+        : Colors.blueGrey;
+  }
+
+  /// Wrapper di tema condiviso da tutti i picker nativi (data/ora).
+  Widget _themedPickerBuilder(BuildContext ctx, Widget? child) {
+    final color = _competizioneColor();
+    return Theme(
+      data: Theme.of(ctx).copyWith(
+        colorScheme: Theme.of(
+          ctx,
+        ).colorScheme.copyWith(primary: color, onPrimary: Colors.white),
+      ),
+      child: child!,
+    );
+  }
+
+  /// Chiede data e ora tramite i picker nativi, partendo dal valore attuale.
+  Future<DateTime?> _pickDataOra(DateTime iniziale) async {
+    final data = await showDatePicker(
+      context: context,
+      initialDate: iniziale,
+      firstDate: DateTime(iniziale.year - 5),
+      lastDate: DateTime(iniziale.year + 5),
+      builder: _themedPickerBuilder,
+    );
+    if (data == null || !mounted) return null;
+    final ora = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(iniziale),
+      builder: _themedPickerBuilder,
+    );
+    if (ora == null) return null;
+    return DateTime(data.year, data.month, data.day, ora.hour, ora.minute);
+  }
+
+  /// Chiede solo l'orario, mantenendo invariata la data.
+  Future<TimeOfDay?> _pickOra(DateTime iniziale) {
+    return showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(iniziale),
+      builder: _themedPickerBuilder,
+    );
+  }
+
+  void _refreshDopoModificaDate() {
+    setState(() {
+      _partiteCache.clear();
+      _partiteWidgetCache.clear();
+      _invalidateCacheKey++;
+    });
+    _caricaGiornate();
+    _verificaPartiteSalvate();
+  }
+
+  /// Popup con la lista delle partite della giornata: orario modificabile
+  /// singolarmente per ogni partita oppure applicabile a tutte insieme.
+  Future<void> _showModificaOrariDialog(String idGiornata) async {
+    final partiteProvider = Provider.of<PartiteProvider>(
+      context,
+      listen: false,
+    );
+    final partiteOriginali = await partiteProvider.fetchPartite(
+      widget.campionato,
+      idGiornata,
+      forceRefresh: true,
+    );
+    if (!mounted) return;
+    if (partiteOriginali.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nessuna partita da modificare')),
+      );
+      return;
+    }
+
+    final color = _competizioneColor();
+    // Copia di lavoro: le modifiche vengono applicate solo al salvataggio.
+    final partite = partiteOriginali
+        .map((p) => p.copyWith())
+        .toList(growable: false);
+
+    final salvato = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          DateTime oggiConOra(DateTime originale) {
+            final oggi = DateTime.now();
+            return DateTime(
+              oggi.year,
+              oggi.month,
+              oggi.day,
+              originale.hour,
+              originale.minute,
+            );
+          }
+
+          Future<void> modificaSingola(Partita p) async {
+            final nuovaData = await _pickDataOra(p.data);
+            if (nuovaData != null) setDialogState(() => p.data = nuovaData);
+          }
+
+          Future<void> modificaOrarioSingolo(Partita p) async {
+            final nuovaOra = await _pickOra(p.data);
+            if (nuovaOra == null) return;
+            setDialogState(
+              () => p.data = DateTime(
+                p.data.year,
+                p.data.month,
+                p.data.day,
+                nuovaOra.hour,
+                nuovaOra.minute,
+              ),
+            );
+          }
+
+          Future<void> modificaTutte() async {
+            final nuovaData = await _pickDataOra(partite.first.data);
+            if (nuovaData == null) return;
+            setDialogState(() {
+              for (final p in partite) {
+                p.data = nuovaData;
+              }
+            });
+          }
+
+          Future<void> modificaOrarioTutte() async {
+            final nuovaOra = await _pickOra(partite.first.data);
+            if (nuovaOra == null) return;
+            setDialogState(() {
+              for (final p in partite) {
+                p.data = DateTime(
+                  p.data.year,
+                  p.data.month,
+                  p.data.day,
+                  nuovaOra.hour,
+                  nuovaOra.minute,
+                );
+              }
+            });
+          }
+
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 24,
+            ),
+            titlePadding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            contentPadding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+            title: Text(
+              'Modifica orari partite',
+              style: TextStyle(fontWeight: FontWeight.bold, color: color),
+            ),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: color,
+                          side: BorderSide(color: color),
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                        ),
+                        onPressed: modificaTutte,
+                        icon: const Icon(Icons.event_repeat, size: 18),
+                        label: const Text('Applica a tutte'),
+                      ),
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: color,
+                          side: BorderSide(color: color),
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                        ),
+                        onPressed: modificaOrarioTutte,
+                        icon: const Icon(Icons.access_time, size: 18),
+                        label: const Text('Orario'),
+                      ),
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: color,
+                          side: BorderSide(color: color),
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                        ),
+                        onPressed: () => setDialogState(() {
+                          for (final p in partite) {
+                            p.data = oggiConOra(p.data);
+                          }
+                        }),
+                        icon: const Icon(Icons.today, size: 18),
+                        label: const Text('Oggi'),
+                      ),
+                    ],
+                  ),
+                  const Divider(),
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: (MediaQuery.of(ctx).size.height * 0.4).clamp(
+                        200.0,
+                        400.0,
+                      ),
+                    ),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: partite.length,
+                      separatorBuilder: (_, _) => Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final p = partite[index];
+                        return ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                          ),
+                          title: Text(
+                            '${CommonService.decodePlayerName(p.teamHome)} - ${CommonService.decodePlayerName(p.teamAway)}',
+                            style: const TextStyle(fontSize: 13),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          subtitle: Text(
+                            '${p.data.day.toString().padLeft(2, '0')}/${p.data.month.toString().padLeft(2, '0')}/${p.data.year} '
+                            '${p.data.hour.toString().padLeft(2, '0')}:${p.data.minute.toString().padLeft(2, '0')}',
+                            style: TextStyle(color: color, fontSize: 12),
+                          ),
+                          trailing: PopupMenuButton<String>(
+                            icon: Icon(Icons.more_time, color: color),
+                            tooltip: 'Modifica orario partita',
+                            padding: EdgeInsets.zero,
+                            onSelected: (value) {
+                              switch (value) {
+                                case 'oggi':
+                                  setDialogState(
+                                    () => p.data = oggiConOra(p.data),
+                                  );
+                                  break;
+                                case 'orario':
+                                  modificaOrarioSingolo(p);
+                                  break;
+                                case 'completo':
+                                  modificaSingola(p);
+                                  break;
+                              }
+                            },
+                            itemBuilder: (context) => const [
+                              PopupMenuItem(
+                                value: 'oggi',
+                                child: ListTile(
+                                  leading: Icon(Icons.today),
+                                  title: Text('Imposta a oggi'),
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'orario',
+                                child: ListTile(
+                                  leading: Icon(Icons.access_time),
+                                  title: Text('Modifica solo orario'),
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'completo',
+                                child: ListTile(
+                                  leading: Icon(Icons.edit),
+                                  title: Text('Modifica data e orario'),
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                style: TextButton.styleFrom(foregroundColor: Colors.grey),
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Annulla'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: color,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Salva'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    if (salvato != true || !mounted) return;
+
+    var tutteOk = true;
+    for (var i = 0; i < partite.length; i++) {
+      if (partite[i].data == partiteOriginali[i].data) continue;
+      final ok = await partiteProvider.aggiornaDataPartita(
+        widget.campionato,
+        partite[i].id,
+        partite[i].data,
+      );
+      if (!ok) tutteOk = false;
+    }
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          tutteOk
+              ? 'Orari aggiornati con successo'
+              : 'Errore nell\'aggiornamento di alcuni orari',
+        ),
+        backgroundColor: tutteOk ? Colors.green : Colors.red,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+    _refreshDopoModificaDate();
   }
 
   Widget buildPartiteList(String idGiornata, {bool shrinkWrap = false}) {

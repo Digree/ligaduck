@@ -416,11 +416,13 @@ class GiocatoriProvider with ChangeNotifier {
     String idGiocatore, {
     required String nome,
     required String nazione,
+    String? ruolo,
     String? ruoloAlt,
     int? idSquadra,
   }) async {
     try {
       final body = <String, dynamic>{'nome': nome, 'nazione': nazione};
+      if (ruolo != null) body['ruolo'] = ruolo;
       if (ruoloAlt != null) body['ruoloAlt'] = ruoloAlt;
       if (idSquadra != null) body['idSquadra'] = idSquadra;
       final response = await http.post(

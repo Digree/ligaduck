@@ -568,9 +568,25 @@ class _SquadrePageState extends State<SquadrePage> {
     return carrieraStessaAnnata.numero;
   }
 
-  /// Ritorna null = nessun asterisco, Colors.red = nuovo acquisto esterno,
+  /// Ritorna null = nessun asterisco, Colors.purple = giocatore in prestito,
+  /// Colors.red = nuovo acquisto esterno,
   /// Colors.lightBlue = acquisto nello stesso anno (stesso campionato, squadra diversa)
   Color? _getAcquistoColor(Giocatore giocatore) {
+    final carrieraAttuale = giocatore.carriera.firstWhere(
+      (c) =>
+          c.campionato == widget.campionato && c.idSquadra == widget.squadra.id,
+      orElse: () => Carriera(
+        campionato: widget.campionato,
+        idSquadra: widget.squadra.id,
+        numero: 0,
+        gol: 0,
+        presenze: 0,
+        espulsioni: 0,
+        attivo: true,
+      ),
+    );
+    if (carrieraAttuale.prestito?.inPrestito == true) return Colors.purple;
+
     if (giocatore.carriera.length <= 1) return null;
 
     final annoAttuale = int.tryParse(widget.campionato);
@@ -707,15 +723,18 @@ class _SquadrePageState extends State<SquadrePage> {
 
     final primaryColor = getColor('primary');
     final primaryFgColor = getIconColor('primary');
+    final isAllenatore = giocatore.ruolo == 'Allenatore';
 
     final nomeCtrl = TextEditingController(
       text: CommonService.decodePlayerName(giocatore.nome),
     );
     var nazioneSelezionata = giocatore.nazione;
+    var ruoloSelezionato = giocatore.ruolo;
     var ruoloAltSelezionato = carrieraAttuale.ruoloAlt ?? '';
     List<String> nazioni = [nazioneSelezionata];
     bool loadingNazioni = true;
 
+    const ruoli = ['Portiere', 'Difensore', 'Centrocampista', 'Attaccante'];
     const ruoliAlt = [
       '',
       'Portiere',
@@ -760,7 +779,9 @@ class _SquadrePageState extends State<SquadrePage> {
           }
 
           return AlertDialog(
-            title: Text('Modifica giocatore'),
+            title: Text(
+              isAllenatore ? 'Modifica allenatore' : 'Modifica giocatore',
+            ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -793,26 +814,42 @@ class _SquadrePageState extends State<SquadrePage> {
                         onChanged: (v) =>
                             setDialogState(() => nazioneSelezionata = v!),
                       ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: ruoliAlt.contains(ruoloAltSelezionato)
-                      ? ruoloAltSelezionato
-                      : '',
-                  isExpanded: true,
-                  decoration: fieldDecoration.copyWith(
-                    labelText: 'Ruolo alternativo',
+                if (!isAllenatore) ...[
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: ruoli.contains(ruoloSelezionato)
+                        ? ruoloSelezionato
+                        : ruoli.first,
+                    isExpanded: true,
+                    decoration: fieldDecoration.copyWith(labelText: 'Ruolo'),
+                    items: ruoli
+                        .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                        .toList(),
+                    onChanged: (v) => setDialogState(
+                      () => ruoloSelezionato = v ?? ruoloSelezionato,
+                    ),
                   ),
-                  items: ruoliAlt
-                      .map(
-                        (r) => DropdownMenuItem(
-                          value: r,
-                          child: Text(r.isEmpty ? '—' : r),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (v) =>
-                      setDialogState(() => ruoloAltSelezionato = v ?? ''),
-                ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: ruoliAlt.contains(ruoloAltSelezionato)
+                        ? ruoloAltSelezionato
+                        : '',
+                    isExpanded: true,
+                    decoration: fieldDecoration.copyWith(
+                      labelText: 'Ruolo alternativo',
+                    ),
+                    items: ruoliAlt
+                        .map(
+                          (r) => DropdownMenuItem(
+                            value: r,
+                            child: Text(r.isEmpty ? '—' : r),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) =>
+                        setDialogState(() => ruoloAltSelezionato = v ?? ''),
+                  ),
+                ],
               ],
             ),
             actions: [
@@ -843,7 +880,10 @@ class _SquadrePageState extends State<SquadrePage> {
       giocatore.id,
       nome: nomeCtrl.text.trim(),
       nazione: nazioneSelezionata.toLowerCase(),
-      ruoloAlt: ruoloAltSelezionato.isEmpty ? null : ruoloAltSelezionato,
+      ruolo: isAllenatore ? null : ruoloSelezionato,
+      ruoloAlt: isAllenatore || ruoloAltSelezionato.isEmpty
+          ? null
+          : ruoloAltSelezionato,
       idSquadra: widget.squadra.id,
     );
 
@@ -3356,7 +3396,10 @@ class _SquadrePageState extends State<SquadrePage> {
           // Mostra popup per aggiungere nuovo allenatore
           await _mostraDialogSceltaAllenatore();
         },
-        child: playerContent,
+        child: GestureDetector(
+          onLongPress: () => _showEditGiocatoreDialog(context, giocatore),
+          child: playerContent,
+        ),
       );
     }
 

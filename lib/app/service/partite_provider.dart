@@ -354,4 +354,30 @@ class PartiteProvider with ChangeNotifier {
       return false;
     }
   }
+
+  Future<bool> aggiornaDataPartita(
+    String campionato,
+    String idPartita,
+    DateTime data,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${Env.apiUrl}/$campionato/partita/$idPartita/data'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'data': data.toIso8601String()}),
+      );
+
+      if (response.statusCode == 200) {
+        _cache.invalidate('partita_${campionato}_$idPartita');
+        _cache.invalidatePrefix('partite_$campionato');
+        return true;
+      } else {
+        print('Errore POST: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Errore POST: $e');
+      return false;
+    }
+  }
 }
