@@ -316,11 +316,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
           orElse: () => nazionali.first,
         );
         formazioneSource = nazionale.formazione;
-        // idCompetizione == 0 vale per tutte le competizioni (es. infortuni)
+        // Un infortunio vale sempre, indipendentemente dall'idCompetizione;
+        // le squalifiche restano filtrate per competizione (idCompetizione == 0 vale per tutte)
         indisponibiliSource = nazionale.indisponibili
             .where(
               (g) =>
-                  g.idCompetizione == 0 || g.idCompetizione == competizione!.id,
+                  g.motivo == 'inf' ||
+                  g.idCompetizione == 0 ||
+                  g.idCompetizione == competizione!.id,
             )
             .toList();
       } else {
@@ -339,11 +342,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                 competizione!.id,
               );
         formazioneSource = squadra.formazione;
-        // idCompetizione == 0 vale per tutte le competizioni (es. infortuni)
+        // Un infortunio vale sempre, indipendentemente dall'idCompetizione;
+        // le squalifiche restano filtrate per competizione (idCompetizione == 0 vale per tutte)
         indisponibiliSource = squadra.indisponibili
             .where(
               (g) =>
-                  g.idCompetizione == 0 || g.idCompetizione == competizione!.id,
+                  g.motivo == 'inf' ||
+                  g.idCompetizione == 0 ||
+                  g.idCompetizione == competizione!.id,
             )
             .toList();
       }

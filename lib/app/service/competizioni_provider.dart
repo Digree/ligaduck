@@ -220,6 +220,66 @@ class CompetizioniProvider with ChangeNotifier {
     }
   }
 
+  /// Salva le fasce (pot 1-4) assegnate alle squadre per il sorteggio fase a campionato.
+  Future<bool> aggiornaFasceCompetizione(
+    String campionato,
+    int idCompetizione,
+    List<FasciaSquadra> fasce,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse(
+          '${Env.apiUrl}/$campionato/competizioni/$idCompetizione/fasce',
+        ),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(fasce.map((f) => f.toJson()).toList()),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        notifyListeners();
+        return true;
+      } else {
+        print(
+          'Errore POST aggiorna fasce: ${response.statusCode} - ${response.body}',
+        );
+        return false;
+      }
+    } catch (e) {
+      print('Errore POST aggiorna fasce: $e');
+      return false;
+    }
+  }
+
+  /// Salva gli accoppiamenti manuali (informativi, non legati a una Partita) della sezione Risultati.
+  Future<bool> aggiornaAccoppiamentiCompetizione(
+    String campionato,
+    int idCompetizione,
+    List<AccoppiamentoManuale> accoppiamenti,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse(
+          '${Env.apiUrl}/$campionato/competizioni/$idCompetizione/accoppiamenti',
+        ),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(accoppiamenti.map((a) => a.toJson()).toList()),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        notifyListeners();
+        return true;
+      } else {
+        print(
+          'Errore POST accoppiamenti: ${response.statusCode} - ${response.body}',
+        );
+        return false;
+      }
+    } catch (e) {
+      print('Errore POST accoppiamenti: $e');
+      return false;
+    }
+  }
+
   /// Salva il tabellone eliminazione sul server.
   Future<bool> salvaTabellone(
     String campionato,
@@ -245,6 +305,41 @@ class CompetizioniProvider with ChangeNotifier {
       }
     } catch (e) {
       print('Errore POST tabellone: $e');
+      return false;
+    }
+  }
+
+  /// Salva i posti qualificazione (Champions/Europa League/Conference) sul server.
+  Future<bool> salvaPosizioniClassifica(
+    String campionato,
+    int idCompetizione,
+    int postiChampions,
+    int postiEuropaLeague,
+    int postiConference,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse(
+          '${Env.apiUrl}/$campionato/competizioni/$idCompetizione/posizioni-classifica',
+        ),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'postiChampions': postiChampions,
+          'postiEuropaLeague': postiEuropaLeague,
+          'postiConference': postiConference,
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else {
+        print(
+          'Errore POST posizioni-classifica: ${response.statusCode} - ${response.body}',
+        );
+        return false;
+      }
+    } catch (e) {
+      print('Errore POST posizioni-classifica: $e');
       return false;
     }
   }

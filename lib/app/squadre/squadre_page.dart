@@ -20,6 +20,7 @@ import 'package:ligaduck/app/campionato/mercato/models/esonero.dart';
 import 'package:provider/provider.dart';
 import 'package:ligaduck/app/squadre/add_formazione_page.dart';
 import 'package:ligaduck/app/squadre/add_giocatori_page.dart';
+import 'package:ligaduck/app/squadre/giocatore_page.dart';
 import 'package:ligaduck/app/mercato/acquisto_page.dart';
 import 'package:ligaduck/app/mercato/cessione_page.dart';
 import 'package:ligaduck/app/widgets/search_giocatori_widgets.dart';
@@ -3145,6 +3146,20 @@ class _SquadrePageState extends State<SquadrePage> {
     );
   }
 
+  void _openGiocatorePage(BuildContext context, Giocatore giocatore) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => GiocatorePage(
+          giocatore: giocatore,
+          squadra: widget.squadra,
+          campionato: widget.campionato,
+          gradientColors: _allGradientColors(),
+        ),
+      ),
+    );
+  }
+
   Widget teamListPlayer(
     BuildContext context,
     bool isWide,
@@ -3313,6 +3328,11 @@ class _SquadrePageState extends State<SquadrePage> {
           ),
         ],
       ),
+    );
+
+    playerContent = GestureDetector(
+      onTap: () => _openGiocatorePage(context, giocatore),
+      child: playerContent,
     );
 
     // Wrap in Dismissible only for Allenatore when admin is true

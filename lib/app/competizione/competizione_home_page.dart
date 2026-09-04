@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:csv/csv.dart';
 import 'package:file_selector/file_selector.dart';
@@ -80,6 +81,22 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
   bool _testFireworks =
       true; // Flag per attivare/disattivare i fuochi d'artificio
   List<Girone> _gironiConfigurati = [];
+  late int _postiChampions;
+  late int _postiEuropaLeague;
+  late int _postiConference;
+  List<FasciaSquadra> _fasceConfigurate = [];
+  bool _modificaFasceAttiva = false;
+  List<AccoppiamentoManuale> _accoppiamentiConfigurati = [];
+  bool _modificaRisultatiAttiva = false;
+  String _vistaSquadre = 'lista';
+
+  // Competizioni con formato fase a campionato (sorteggio con fasce/pot)
+  static const List<int> _competizioniFasceERisultati = [5, 6, 7];
+
+  // Conference League (id 7) usa 6 fasce con 1 accoppiamento a testa,
+  // le altre competizioni a fasce usano 4 fasce con 2 accoppiamenti a testa.
+  int get _numeroFasce => widget.competizione.id == 7 ? 6 : 4;
+  int get _avversariPerFascia => widget.competizione.id == 7 ? 1 : 2;
 
   @override
   void initState() {
@@ -118,6 +135,15 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       );
     }
     _gironiConfigurati = List<Girone>.from(widget.competizione.gironi ?? []);
+    _postiChampions = widget.competizione.postiChampions;
+    _postiEuropaLeague = widget.competizione.postiEuropaLeague;
+    _postiConference = widget.competizione.postiConference;
+    _fasceConfigurate = List<FasciaSquadra>.from(
+      widget.competizione.fasce ?? [],
+    );
+    _accoppiamentiConfigurati = List<AccoppiamentoManuale>.from(
+      widget.competizione.accoppiamenti ?? [],
+    );
     _caricaClassifica();
   }
 
@@ -3228,40 +3254,56 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       numGironi = count;
     }
 
-    return Padding(
-      padding: EdgeInsets.only(top: 8.0),
-      child: widget.competizione.classifica == "Gironi"
-          ? ListView.builder(
-              shrinkWrap: shrinkWrap,
-              physics: shrinkWrap ? NeverScrollableScrollPhysics() : null,
-              itemCount: numGironi,
-              itemBuilder: (context, index) {
-                return cardClassifica(
-                  giornata,
-                  isWide,
-                  screenWidth,
-                  screenHeight,
-                  index,
-                  girone:
-                      _isClassificaGironi() &&
-                          widget.competizione.gironi != null &&
-                          widget.competizione.gironi!.isNotEmpty
-                      ? widget.competizione.gironi![index]
-                      : null,
-                );
-              },
-            )
-          : shrinkWrap
-          ? cardClassifica(giornata, isWide, screenWidth, screenHeight, 0)
-          : SingleChildScrollView(
-              child: cardClassifica(
-                giornata,
-                isWide,
-                screenWidth,
-                screenHeight,
-                0,
+    return Column(
+      children: [
+        if (widget.competizione.id == 1 && globals.admin)
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: () => _showModificaPosizioniClassificaDialog(),
+              icon: Icon(Icons.edit, size: 18, color: _competizioneColor()),
+              label: Text(
+                'Modifica posti qualificazione',
+                style: TextStyle(color: _competizioneColor()),
               ),
             ),
+          ),
+        Padding(
+          padding: EdgeInsets.only(top: 8.0),
+          child: widget.competizione.classifica == "Gironi"
+              ? ListView.builder(
+                  shrinkWrap: shrinkWrap,
+                  physics: shrinkWrap ? NeverScrollableScrollPhysics() : null,
+                  itemCount: numGironi,
+                  itemBuilder: (context, index) {
+                    return cardClassifica(
+                      giornata,
+                      isWide,
+                      screenWidth,
+                      screenHeight,
+                      index,
+                      girone:
+                          _isClassificaGironi() &&
+                              widget.competizione.gironi != null &&
+                              widget.competizione.gironi!.isNotEmpty
+                          ? widget.competizione.gironi![index]
+                          : null,
+                    );
+                  },
+                )
+              : shrinkWrap
+              ? cardClassifica(giornata, isWide, screenWidth, screenHeight, 0)
+              : SingleChildScrollView(
+                  child: cardClassifica(
+                    giornata,
+                    isWide,
+                    screenWidth,
+                    screenHeight,
+                    0,
+                  ),
+                ),
+        ),
+      ],
     );
   }
 
@@ -3700,7 +3742,11 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
 
         squadre.sort((a, b) => a.nome.compareTo(b.nome));
 
-        return ListView.builder(
+        final mostraFasceERisultati = _competizioniFasceERisultati.contains(
+          widget.competizione.id,
+        );
+
+        final listaSquadre = ListView.builder(
           itemCount: squadre.length,
           itemBuilder: (context, index) {
             final squadra = squadre[index];
@@ -3768,7 +3814,754 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
             );
           },
         );
+
+        if (!mostraFasceERisultati) return listaSquadre;
+
+        final coloreCompetizione = _competizioneColor();
+
+        return Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: DropdownButtonFormField<String>(
+                initialValue: _vistaSquadre,
+                isDense: true,
+                icon: Icon(Icons.arrow_drop_down, color: coloreCompetizione),
+                dropdownColor: Colors.white,
+                style: TextStyle(
+                  color: coloreCompetizione,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+                decoration: InputDecoration(
+                  isDense: true,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  filled: true,
+                  fillColor: coloreCompetizione.withOpacity(0.08),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: coloreCompetizione.withOpacity(0.4),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: coloreCompetizione.withOpacity(0.4),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: coloreCompetizione, width: 2),
+                  ),
+                ),
+                items: [
+                  DropdownMenuItem(
+                    value: 'lista',
+                    child: Text('Lista Squadre'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'fasce',
+                    child: Text('Fasce e Risultati'),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value == null) return;
+                  setState(() {
+                    _vistaSquadre = value;
+                  });
+                },
+              ),
+            ),
+            Expanded(
+              child: _vistaSquadre == 'fasce'
+                  ? SingleChildScrollView(child: _buildFasceERisultati(squadre))
+                  : listaSquadre,
+            ),
+          ],
+        );
       },
+    );
+  }
+
+  /// Sezione "Fasce e Risultati" (stile sorteggio UEFA) mostrata in cima al
+  /// tab Squadre per le competizioni a fase campionato (Champions/Europa/Conference).
+  Widget _buildFasceERisultati(List<Squadra> squadre) {
+    final color = _competizioneColor();
+    return Card(
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: Column(
+          children: [
+            ExpansionTile(
+              title: Text(
+                'Fasce',
+                style: TextStyle(fontWeight: FontWeight.bold, color: color),
+              ),
+              trailing: globals.admin
+                  ? IconButton(
+                      icon: Icon(
+                        _modificaFasceAttiva ? Icons.close : Icons.edit,
+                        color: color,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _modificaFasceAttiva = !_modificaFasceAttiva;
+                        });
+                      },
+                    )
+                  : Icon(Icons.expand_more, color: color),
+              children: [
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: _buildFasceCards(squadre),
+                ),
+              ],
+            ),
+            Divider(height: 1),
+            ExpansionTile(
+              title: Text(
+                'Risultati',
+                style: TextStyle(fontWeight: FontWeight.bold, color: color),
+              ),
+              trailing: globals.admin
+                  ? IconButton(
+                      icon: Icon(
+                        _modificaRisultatiAttiva ? Icons.close : Icons.edit,
+                        color: color,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _modificaRisultatiAttiva = !_modificaRisultatiAttiva;
+                        });
+                      },
+                    )
+                  : Icon(Icons.expand_more, color: color),
+              children: [
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: _buildRisultatiCards(squadre),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Divide una lista di card in una griglia responsive: più colonne su schermi
+  // larghi, una singola colonna su schermi stretti.
+  Widget _responsiveCardGrid(List<Widget> cards) {
+    if (cards.isEmpty) return SizedBox.shrink();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth > 1100
+            ? 4
+            : constraints.maxWidth > 650
+            ? 2
+            : 1;
+        const spacing = 12.0;
+        final cardWidth = columns == 1
+            ? constraints.maxWidth
+            : (constraints.maxWidth - (columns - 1) * spacing) / columns;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: cards
+              .map((c) => SizedBox(width: cardWidth, child: c))
+              .toList(),
+        );
+      },
+    );
+  }
+
+  // Card in stile glassmorphism (sfumatura del colore competizione + blur),
+  // dimensionata in base al contenuto invece che a width/height fisse.
+  Widget _glassCard({required Color color, required Widget child}) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [color.withOpacity(0.4), color.withOpacity(0.15)],
+            ),
+            border: Border.all(color: Colors.white.withOpacity(0.4), width: 2),
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+
+  // Testo leggibile sopra lo sfondo colorato/sfocato delle glass card.
+  TextStyle _glassTextStyle({
+    double fontSize = 14,
+    FontWeight fontWeight = FontWeight.normal,
+    Color color = Colors.white,
+  }) {
+    return TextStyle(
+      color: color,
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      shadows: [
+        Shadow(
+          offset: Offset(1, 1),
+          blurRadius: 2,
+          color: Colors.black.withOpacity(0.4),
+        ),
+      ],
+    );
+  }
+
+  int? _fasciaDiSquadra(int idSquadra) {
+    return _fasceConfigurate
+        .cast<FasciaSquadra?>()
+        .firstWhere((f) => f!.idSquadra == idSquadra, orElse: () => null)
+        ?.fascia;
+  }
+
+  Widget _buildStemmaSquadra(Squadra s, {double size = 24}) {
+    final isNazionale =
+        _nazionaleIdByFakeId.containsKey(s.id) || _isNazionaleSquadra(s);
+    return isNazionale
+        ? CircleAvatar(
+            radius: size / 2,
+            backgroundImage: NetworkImage(CommonService.getFlagUrl(s.nome)),
+            onBackgroundImageError: (_, _) {},
+          )
+        : SquadraLogoWidget(codSquadra: s.cod, squadra: s, size: size);
+  }
+
+  void _setFasciaSquadra(int idSquadra, int? fascia) {
+    setState(() {
+      _fasceConfigurate.removeWhere((f) => f.idSquadra == idSquadra);
+      if (fascia != null) {
+        _fasceConfigurate.add(
+          FasciaSquadra(idSquadra: idSquadra, fascia: fascia),
+        );
+      }
+    });
+  }
+
+  Widget _buildFasceCards(List<Squadra> squadre) {
+    final color = _competizioneColor();
+    final nonAssegnate = squadre
+        .where((s) => _fasciaDiSquadra(s.id) == null)
+        .toList();
+
+    Widget buildTeamRow(Squadra s) {
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: 2),
+        child: Row(
+          children: [
+            _buildStemmaSquadra(s),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                CommonService.decodePlayerName(s.nome),
+                overflow: TextOverflow.ellipsis,
+                style: _glassTextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+            if (globals.admin && _modificaFasceAttiva)
+              DropdownButton<int?>(
+                value: _fasciaDiSquadra(s.id),
+                underline: SizedBox(),
+                dropdownColor: color,
+                iconEnabledColor: Colors.white,
+                hint: Text('-', style: _glassTextStyle()),
+                items: [
+                  DropdownMenuItem<int?>(
+                    value: null,
+                    child: Text('-', style: _glassTextStyle()),
+                  ),
+                  for (int f = 1; f <= _numeroFasce; f++)
+                    DropdownMenuItem<int?>(
+                      value: f,
+                      child: Text('$f', style: _glassTextStyle()),
+                    ),
+                ],
+                onChanged: (value) => _setFasciaSquadra(s.id, value),
+              ),
+          ],
+        ),
+      );
+    }
+
+    Widget buildGroupCard(String titolo, List<Squadra> lista) {
+      return _glassCard(
+        color: color,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              titolo,
+              style: _glassTextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            if (lista.isEmpty)
+              Text(
+                'Nessuna squadra',
+                style: _glassTextStyle(fontSize: 13, color: Colors.white70),
+              )
+            else
+              ...lista.map(buildTeamRow),
+          ],
+        ),
+      );
+    }
+
+    final cards = [
+      if (nonAssegnate.isNotEmpty)
+        buildGroupCard('Non assegnate', nonAssegnate),
+      for (int f = 1; f <= _numeroFasce; f++)
+        buildGroupCard(
+          'Fascia $f',
+          squadre.where((s) => _fasciaDiSquadra(s.id) == f).toList(),
+        ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _responsiveCardGrid(cards),
+        if (globals.admin && _modificaFasceAttiva)
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: color,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                final provider = Provider.of<CompetizioniProvider>(
+                  context,
+                  listen: false,
+                );
+                final saved = await provider.aggiornaFasceCompetizione(
+                  widget.campionato,
+                  widget.competizione.id,
+                  _fasceConfigurate,
+                );
+                if (!context.mounted) return;
+                if (saved) {
+                  setState(() {
+                    _modificaFasceAttiva = false;
+                  });
+                }
+                _showMessage(
+                  saved
+                      ? 'Fasce salvate con successo'
+                      : 'Impossibile salvare le fasce',
+                );
+              },
+              child: Text('Salva Fasce'),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildRisultatiCards(List<Squadra> squadre) {
+    final color = _competizioneColor();
+    final sezioni = <Widget>[];
+
+    for (int fascia = 1; fascia <= _numeroFasce; fascia++) {
+      final squadreFascia = squadre
+          .where((s) => _fasciaDiSquadra(s.id) == fascia)
+          .toList();
+      if (squadreFascia.isEmpty) continue;
+
+      sezioni.add(
+        Padding(
+          padding: EdgeInsets.only(top: 8, bottom: 6),
+          child: Text(
+            'Fascia $fascia',
+            style: TextStyle(fontWeight: FontWeight.bold, color: color),
+          ),
+        ),
+      );
+      sezioni.add(
+        _responsiveCardGrid(
+          squadreFascia
+              .map((s) => _buildRisultatoSquadraCard(s, squadre))
+              .toList(),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ...sezioni,
+        if (globals.admin && _modificaRisultatiAttiva)
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Center(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: color,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: _salvaAccoppiamenti,
+                child: Text('Salva Risultati'),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  AccoppiamentoManuale? _accoppiamento(int idSquadra, int idAvversario) {
+    return _accoppiamentiConfigurati.cast<AccoppiamentoManuale?>().firstWhere(
+      (a) => a!.idSquadra == idSquadra && a.idAvversario == idAvversario,
+      orElse: () => null,
+    );
+  }
+
+  void _rimuoviAccoppiamento(int idSquadra, int idAvversario) {
+    final esistente = _accoppiamento(idSquadra, idAvversario);
+    final reciproco = _accoppiamento(idAvversario, idSquadra);
+    if (esistente != null) _accoppiamentiConfigurati.remove(esistente);
+    if (reciproco != null) _accoppiamentiConfigurati.remove(reciproco);
+  }
+
+  bool _aggiungiAccoppiamento(int idSquadra, int idAvversario) {
+    final fasciaAvversario = _fasciaDiSquadra(idAvversario);
+    final fasciaSquadra = _fasciaDiSquadra(idSquadra);
+    if (fasciaAvversario != null &&
+            _countAvversariFascia(idSquadra, fasciaAvversario) >=
+                _avversariPerFascia ||
+        fasciaSquadra != null &&
+            _countAvversariFascia(idAvversario, fasciaSquadra) >=
+                _avversariPerFascia) {
+      _showMessage(
+        'Puoi selezionare al massimo $_avversariPerFascia squadre per fascia',
+      );
+      return false;
+    }
+    _accoppiamentiConfigurati.add(
+      AccoppiamentoManuale(
+        idSquadra: idSquadra,
+        idAvversario: idAvversario,
+        casa: true,
+      ),
+    );
+    _accoppiamentiConfigurati.add(
+      AccoppiamentoManuale(
+        idSquadra: idAvversario,
+        idAvversario: idSquadra,
+        casa: false,
+      ),
+    );
+    return true;
+  }
+
+  void _impostaAvversarioSlot(int idSquadra, Squadra? vecchio, Squadra? nuovo) {
+    setState(() {
+      if (vecchio != null) _rimuoviAccoppiamento(idSquadra, vecchio.id);
+      if (nuovo != null) _aggiungiAccoppiamento(idSquadra, nuovo.id);
+    });
+  }
+
+  void _toggleCasaTrasferta(int idSquadra, int idAvversario) {
+    setState(() {
+      final esistente = _accoppiamento(idSquadra, idAvversario);
+      if (esistente == null) return;
+      final reciproco = _accoppiamento(idAvversario, idSquadra);
+      _accoppiamentiConfigurati.remove(esistente);
+      _accoppiamentiConfigurati.add(
+        AccoppiamentoManuale(
+          idSquadra: idSquadra,
+          idAvversario: idAvversario,
+          casa: !esistente.casa,
+        ),
+      );
+      if (reciproco != null) {
+        _accoppiamentiConfigurati.remove(reciproco);
+        _accoppiamentiConfigurati.add(
+          AccoppiamentoManuale(
+            idSquadra: idAvversario,
+            idAvversario: idSquadra,
+            casa: !reciproco.casa,
+          ),
+        );
+      }
+    });
+  }
+
+  Widget _buildRisultatoSquadraCard(Squadra squadra, List<Squadra> squadre) {
+    final editabile = globals.admin && _modificaRisultatiAttiva;
+    return _glassCard(
+      color: _competizioneColor(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              _buildStemmaSquadra(squadra, size: 28),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  CommonService.decodePlayerName(squadra.nome),
+                  style: _glassTextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          for (final fascia in List.generate(_numeroFasce, (i) => i + 1))
+            _buildAvversariFascia(squadra, fascia, squadre),
+          if (editabile)
+            Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: TextButton.icon(
+                  onPressed: _salvaAccoppiamenti,
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  ),
+                  icon: Icon(Icons.save, size: 16, color: Colors.white),
+                  label: Text('Salva', style: _glassTextStyle(fontSize: 13)),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  int _countAvversariFascia(int idSquadra, int fascia) {
+    return _accoppiamentiConfigurati
+        .where(
+          (a) =>
+              a.idSquadra == idSquadra &&
+              _fasciaDiSquadra(a.idAvversario) == fascia,
+        )
+        .length;
+  }
+
+  Widget _buildAvversariFascia(
+    Squadra squadra,
+    int fascia,
+    List<Squadra> squadre,
+  ) {
+    final tuttiAvversari = squadre
+        .where((s) => _fasciaDiSquadra(s.id) == fascia && s.id != squadra.id)
+        .toList();
+    if (tuttiAvversari.isEmpty) return SizedBox.shrink();
+
+    final selezionati =
+        tuttiAvversari
+            .where((a) => _accoppiamento(squadra.id, a.id) != null)
+            .toList()
+          ..sort((a, b) => a.id.compareTo(b.id));
+
+    final editabile = globals.admin && _modificaRisultatiAttiva;
+
+    if (!editabile) {
+      if (selezionati.isEmpty) return SizedBox.shrink();
+      return Padding(
+        padding: EdgeInsets.only(top: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Fascia $fascia',
+              style: _glassTextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: Colors.white70,
+              ),
+            ),
+            for (final avversario in selezionati)
+              _buildRigaAvversarioSelezionato(squadra, avversario),
+          ],
+        ),
+      );
+    }
+
+    return Padding(
+      padding: EdgeInsets.only(top: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Fascia $fascia (${selezionati.length}/$_avversariPerFascia)',
+            style: _glassTextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: Colors.white70,
+            ),
+          ),
+          for (int slot = 0; slot < _avversariPerFascia; slot++)
+            _buildAvversarioSlot(squadra, slot, selezionati, tuttiAvversari),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRigaAvversarioSelezionato(Squadra squadra, Squadra avversario) {
+    final accoppiamento = _accoppiamento(squadra.id, avversario.id)!;
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          _buildStemmaSquadra(avversario, size: 20),
+          SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              CommonService.decodePlayerName(avversario.nome),
+              overflow: TextOverflow.ellipsis,
+              style: _glassTextStyle(),
+            ),
+          ),
+          Icon(
+            accoppiamento.casa ? Icons.home : Icons.flight_takeoff,
+            size: 18,
+            color: Colors.white,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAvversarioSlot(
+    Squadra squadra,
+    int slot,
+    List<Squadra> selezionati,
+    List<Squadra> tuttiAvversari,
+  ) {
+    final Squadra? selezionato = slot < selezionati.length
+        ? selezionati[slot]
+        : null;
+    final altriSlot = [
+      for (int i = 0; i < selezionati.length; i++)
+        if (i != slot) selezionati[i].id,
+    ];
+
+    final opzioni = tuttiAvversari
+        .where((s) => !altriSlot.contains(s.id))
+        .toList();
+
+    final accoppiamento = selezionato != null
+        ? _accoppiamento(squadra.id, selezionato.id)
+        : null;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        children: [
+          Expanded(
+            child: DropdownButtonHideUnderline(
+              child: DropdownButtonFormField<int?>(
+                initialValue: selezionato?.id,
+                isDense: true,
+                dropdownColor: _competizioneColor().withOpacity(0.95),
+                decoration: InputDecoration(
+                  isDense: true,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.15),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                hint: Text(
+                  'Seleziona squadra',
+                  style: _glassTextStyle(fontSize: 13, color: Colors.white70),
+                ),
+                style: _glassTextStyle(fontSize: 13),
+                items: [
+                  DropdownMenuItem<int?>(
+                    value: null,
+                    child: Text(
+                      'Nessuna',
+                      style: _glassTextStyle(
+                        fontSize: 13,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ),
+                  for (final opzione in opzioni)
+                    DropdownMenuItem<int?>(
+                      value: opzione.id,
+                      child: Text(
+                        CommonService.decodePlayerName(opzione.nome),
+                        overflow: TextOverflow.ellipsis,
+                        style: _glassTextStyle(fontSize: 13),
+                      ),
+                    ),
+                ],
+                onChanged: (nuovoId) {
+                  final nuovo = nuovoId == null
+                      ? null
+                      : tuttiAvversari.firstWhere((s) => s.id == nuovoId);
+                  _impostaAvversarioSlot(squadra.id, selezionato, nuovo);
+                },
+              ),
+            ),
+          ),
+          if (selezionato != null) ...[
+            SizedBox(width: 6),
+            IconButton(
+              padding: EdgeInsets.zero,
+              constraints: BoxConstraints(),
+              icon: Icon(
+                (accoppiamento?.casa ?? true)
+                    ? Icons.home
+                    : Icons.flight_takeoff,
+                size: 18,
+                color: Colors.white,
+              ),
+              onPressed: () => _toggleCasaTrasferta(squadra.id, selezionato.id),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Future<void> _salvaAccoppiamenti() async {
+    final provider = Provider.of<CompetizioniProvider>(context, listen: false);
+    final saved = await provider.aggiornaAccoppiamentiCompetizione(
+      widget.campionato,
+      widget.competizione.id,
+      _accoppiamentiConfigurati,
+    );
+
+    if (!mounted) return;
+    if (saved) {
+      setState(() {
+        _modificaRisultatiAttiva = false;
+      });
+    }
+    _showMessage(
+      saved
+          ? 'Risultati salvati con successo'
+          : 'Impossibile salvare i risultati',
     );
   }
 
@@ -3985,10 +4778,23 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
 
   Color? _getPositionBoxColor(int posizione, int totalTeams) {
     if (widget.competizione.id == 1) {
-      if (posizione <= 4) return Colors.blue[900];
-      if (posizione == 5 || posizione == 6) return Colors.orange[800];
-      if (posizione == 7) return Colors.green;
+      if (posizione <= _postiChampions) return Colors.blue[900];
+      if (posizione <= _postiChampions + _postiEuropaLeague) {
+        return Colors.orange[800];
+      }
+      if (posizione <=
+          _postiChampions + _postiEuropaLeague + _postiConference) {
+        return Colors.green;
+      }
       if (posizione > totalTeams - 3) return Colors.red;
+    }
+    if (widget.competizione.id == 14) {
+      if (posizione <= 2) return Colors.green;
+      if (posizione <= 8) return Colors.blue[900];
+      if (posizione == totalTeams - 2 || posizione == totalTeams - 3) {
+        return Colors.grey;
+      }
+      if (posizione > totalTeams - 2) return Colors.red;
     }
     return null;
   }
@@ -4726,6 +5532,28 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
 
         return StatefulBuilder(
           builder: (context, setState) {
+            // Esclude le squadre già assegnate ad altre partite della giornata
+            // (una squadra non può giocare più di una partita nella stessa giornata)
+            List<Squadra> squadreDisponibili(int currentIndex, String field) {
+              final usedIds = <int>{};
+              for (int i = 0; i < partite.length; i++) {
+                final idHome = partite[i]['idHome'];
+                final idAway = partite[i]['idAway'];
+                if (i == currentIndex) {
+                  if (field == 'idHome' && idAway != null) {
+                    usedIds.add(idAway);
+                  }
+                  if (field == 'idAway' && idHome != null) {
+                    usedIds.add(idHome);
+                  }
+                  continue;
+                }
+                if (idHome != null) usedIds.add(idHome);
+                if (idAway != null) usedIds.add(idAway);
+              }
+              return squadre.where((s) => !usedIds.contains(s.id)).toList();
+            }
+
             return AlertDialog(
               title: Row(
                 children: [
@@ -5315,17 +6143,22 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                               ),
                                             ),
                                           ),
-                                          items: squadre.map((squadra) {
-                                            return DropdownMenuItem<int>(
-                                              value: squadra.id,
-                                              child: Text(
-                                                CommonService.decodePlayerName(
-                                                  squadra.nome,
-                                                ),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            );
-                                          }).toList(),
+                                          items:
+                                              squadreDisponibili(
+                                                index,
+                                                'idHome',
+                                              ).map((squadra) {
+                                                return DropdownMenuItem<int>(
+                                                  value: squadra.id,
+                                                  child: Text(
+                                                    CommonService.decodePlayerName(
+                                                      squadra.nome,
+                                                    ),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                );
+                                              }).toList(),
                                           onChanged: (value) {
                                             setState(() {
                                               partite[index]['idHome'] = value;
@@ -5376,17 +6209,22 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                               ),
                                             ),
                                           ),
-                                          items: squadre.map((squadra) {
-                                            return DropdownMenuItem<int>(
-                                              value: squadra.id,
-                                              child: Text(
-                                                CommonService.decodePlayerName(
-                                                  squadra.nome,
-                                                ),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            );
-                                          }).toList(),
+                                          items:
+                                              squadreDisponibili(
+                                                index,
+                                                'idAway',
+                                              ).map((squadra) {
+                                                return DropdownMenuItem<int>(
+                                                  value: squadra.id,
+                                                  child: Text(
+                                                    CommonService.decodePlayerName(
+                                                      squadra.nome,
+                                                    ),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                );
+                                              }).toList(),
                                           onChanged: (value) {
                                             setState(() {
                                               partite[index]['idAway'] = value;
@@ -5451,18 +6289,25 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                                   vertical: 8,
                                                 ),
                                           ),
-                                          items: squadre.map((squadra) {
-                                            return DropdownMenuItem<int>(
-                                              value: squadra.id,
-                                              child: Text(
-                                                CommonService.decodePlayerName(
-                                                  squadra.nome,
-                                                ),
-                                                style: TextStyle(fontSize: 12),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            );
-                                          }).toList(),
+                                          items:
+                                              squadreDisponibili(
+                                                index,
+                                                'idHome',
+                                              ).map((squadra) {
+                                                return DropdownMenuItem<int>(
+                                                  value: squadra.id,
+                                                  child: Text(
+                                                    CommonService.decodePlayerName(
+                                                      squadra.nome,
+                                                    ),
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                    ),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                );
+                                              }).toList(),
                                           onChanged: (value) {
                                             setState(() {
                                               partite[index]['idHome'] = value;
@@ -5518,18 +6363,25 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                                   vertical: 8,
                                                 ),
                                           ),
-                                          items: squadre.map((squadra) {
-                                            return DropdownMenuItem<int>(
-                                              value: squadra.id,
-                                              child: Text(
-                                                CommonService.decodePlayerName(
-                                                  squadra.nome,
-                                                ),
-                                                style: TextStyle(fontSize: 12),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            );
-                                          }).toList(),
+                                          items:
+                                              squadreDisponibili(
+                                                index,
+                                                'idAway',
+                                              ).map((squadra) {
+                                                return DropdownMenuItem<int>(
+                                                  value: squadra.id,
+                                                  child: Text(
+                                                    CommonService.decodePlayerName(
+                                                      squadra.nome,
+                                                    ),
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                    ),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                );
+                                              }).toList(),
                                           onChanged: (value) {
                                             setState(() {
                                               partite[index]['idAway'] = value;
@@ -6484,6 +7336,142 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), duration: Duration(seconds: 2)),
+    );
+  }
+
+  void _showModificaPosizioniClassificaDialog() {
+    final championsController = TextEditingController(
+      text: _postiChampions.toString(),
+    );
+    final europaLeagueController = TextEditingController(
+      text: _postiEuropaLeague.toString(),
+    );
+    final conferenceController = TextEditingController(
+      text: _postiConference.toString(),
+    );
+    bool isSaving = false;
+    final color = _competizioneColor();
+
+    InputDecoration fieldDecoration(String label) => InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(color: color),
+      border: OutlineInputBorder(borderSide: BorderSide(color: color)),
+      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: color)),
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: color, width: 2),
+      ),
+    );
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setStateDialog) {
+            return AlertDialog(
+              title: Text(
+                'Posti qualificazione',
+                style: TextStyle(color: color, fontWeight: FontWeight.bold),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: championsController,
+                    keyboardType: TextInputType.number,
+                    cursorColor: color,
+                    decoration: fieldDecoration('Champions League'),
+                  ),
+                  SizedBox(height: 12),
+                  TextField(
+                    controller: europaLeagueController,
+                    keyboardType: TextInputType.number,
+                    cursorColor: color,
+                    decoration: fieldDecoration('Europa League'),
+                  ),
+                  SizedBox(height: 12),
+                  TextField(
+                    controller: conferenceController,
+                    keyboardType: TextInputType.number,
+                    cursorColor: color,
+                    decoration: fieldDecoration('Conference League'),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  style: TextButton.styleFrom(foregroundColor: Colors.grey),
+                  onPressed: isSaving
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(),
+                  child: Text('Annulla'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: color,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: isSaving
+                      ? null
+                      : () async {
+                          final champions =
+                              int.tryParse(championsController.text) ??
+                              _postiChampions;
+                          final europaLeague =
+                              int.tryParse(europaLeagueController.text) ??
+                              _postiEuropaLeague;
+                          final conference =
+                              int.tryParse(conferenceController.text) ??
+                              _postiConference;
+
+                          setStateDialog(() {
+                            isSaving = true;
+                          });
+
+                          final provider = Provider.of<CompetizioniProvider>(
+                            context,
+                            listen: false,
+                          );
+                          final saved = await provider.salvaPosizioniClassifica(
+                            widget.campionato,
+                            widget.competizione.id,
+                            champions,
+                            europaLeague,
+                            conference,
+                          );
+
+                          if (!context.mounted) return;
+
+                          if (saved) {
+                            setState(() {
+                              _postiChampions = champions;
+                              _postiEuropaLeague = europaLeague;
+                              _postiConference = conference;
+                            });
+                          }
+
+                          Navigator.of(dialogContext).pop();
+                          _showMessage(
+                            saved
+                                ? 'Posti qualificazione salvati con successo'
+                                : 'Impossibile salvare i posti qualificazione',
+                          );
+                        },
+                  child: isSaving
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text('Salva'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 

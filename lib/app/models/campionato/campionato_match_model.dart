@@ -164,15 +164,13 @@ Widget buildCampionatoMatch(
             model.squadraHome!.categoria != 'Serie A' &&
             model.squadraHome!.categoria != 'Serie B' &&
             model.squadraHome!.categoria != 'Serie C' &&
-            model.squadraHome!.categoria != 'Serie D' &&
-            model.nazionaleHome != null;
+            model.squadraHome!.categoria != 'Serie D';
         bool isAwayEstera =
             model.squadraAway?.categoria != null &&
             model.squadraAway!.categoria != 'Serie A' &&
             model.squadraAway!.categoria != 'Serie B' &&
             model.squadraAway!.categoria != 'Serie C' &&
-            model.squadraAway!.categoria != 'Serie D' &&
-            model.nazionaleAway != null;
+            model.squadraAway!.categoria != 'Serie D';
 
         // Check phase logic
         bool isPhaseE = (currentFase ?? '').toUpperCase() == 'E';

@@ -10,6 +10,7 @@ import 'package:ligaduck/app/service/squadre_provider.dart';
 import 'package:ligaduck/app/service/giocatori_provider.dart';
 import 'package:ligaduck/app/service/mercato_provider.dart';
 import 'package:ligaduck/app/service/nazionali_provider.dart';
+import 'package:ligaduck/app/widgets/splash_page.dart';
 import 'package:ligaduck/services/update_notifier.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -56,7 +57,13 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   Timer? _cacheCleanupTimer;
+  Timer? _splashProgressTimer;
   final _cache = CacheService();
+
+  double _splashProgress = 0.0;
+  bool _loading = true;
+  List<Config>? _configs;
+  Object? _configError;
 
   @override
   void initState() {
@@ -68,6 +75,47 @@ class _MyAppState extends State<MyApp> {
 
     // Controlla aggiornamenti all'avvio (silenzioso)
     _checkForUpdatesOnStart();
+
+    _loadInitialData();
+  }
+
+  void _loadInitialData() {
+    // Avanza il progresso "finto" mentre attendiamo la risposta reale,
+    // così l'utente vede sempre un feedback anche se il fetch è lento.
+    _splashProgressTimer = Timer.periodic(const Duration(milliseconds: 120), (
+      timer,
+    ) {
+      if (!mounted) return;
+      setState(() {
+        if (_splashProgress < 0.9) {
+          _splashProgress += 0.03;
+          if (_splashProgress > 0.9) _splashProgress = 0.9;
+        }
+      });
+    });
+
+    configs(context)
+        .then((data) {
+          _splashProgressTimer?.cancel();
+          if (!mounted) return;
+          setState(() {
+            _splashProgress = 1.0;
+            _configs = data;
+          });
+          Future.delayed(const Duration(milliseconds: 200), () {
+            if (!mounted) return;
+            setState(() => _loading = false);
+          });
+        })
+        .catchError((e) {
+          _splashProgressTimer?.cancel();
+          if (!mounted) return;
+          setState(() {
+            _splashProgress = 1.0;
+            _configError = e;
+            _loading = false;
+          });
+        });
   }
 
   Future<void> _checkForUpdatesOnStart() async {
@@ -90,6 +138,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void dispose() {
     _cacheCleanupTimer?.cancel();
+    _splashProgressTimer?.cancel();
     super.dispose();
   }
 
@@ -104,64 +153,59 @@ class _MyAppState extends State<MyApp> {
       supportedLocales: [Locale('it', 'IT')],
       locale: Locale('it', 'IT'),
       navigatorObservers: [routeObserver],
-      home: FutureBuilder(
-        future: configs(context),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(color: Colors.blueAccent),
-              ),
-            );
-          } else if (snapshot.hasError) {
-            return Scaffold(
-              body: Center(child: Text('Errore nel caricamento dei dati')),
-            );
-          } else if (snapshot.hasData) {
-            final configs = snapshot.data!;
-            if (configs.isEmpty) {
-              return Scaffold(
-                body: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('Nessun dato disponibile'),
-                      SizedBox(height: 20),
-                      ElevatedButton(
-                        onPressed: () {
-                          setState(() {});
-                        },
-                        child: Icon(Icons.refresh, color: Colors.blueAccent),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            } else {
-              List<Config> filteredConfigs = snapshot.data ?? [];
-
-              String campionato = "";
-
-              if (filteredConfigs.isNotEmpty) {
-                for (var config in filteredConfigs) {
-                  if (config.cod == "camp_attuale") {
-                    campionato = config.value;
-                    break;
-                  }
-                }
-              }
-
-              return CampionatoHomePage(
-                title: "$campionato° Campionato",
-                campionato: campionato,
-              );
-            }
-          } else {
-            return Scaffold(body: Center(child: Text('Stato sconosciuto')));
-          }
-        },
-      ),
+      home: _buildHome(),
       theme: ThemeData(fontFamily: 'Franklin Gothic'),
+    );
+  }
+
+  Widget _buildHome() {
+    if (_loading) {
+      return SplashPage(progress: _splashProgress);
+    }
+
+    if (_configError != null) {
+      return Scaffold(
+        body: Center(child: Text('Errore nel caricamento dei dati')),
+      );
+    }
+
+    final filteredConfigs = _configs ?? [];
+    if (filteredConfigs.isEmpty) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('Nessun dato disponibile'),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _loading = true;
+                    _splashProgress = 0.0;
+                    _configError = null;
+                  });
+                  _loadInitialData();
+                },
+                child: Icon(Icons.refresh, color: Colors.blueAccent),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    String campionato = "";
+    for (var config in filteredConfigs) {
+      if (config.cod == "camp_attuale") {
+        campionato = config.value;
+        break;
+      }
+    }
+
+    return CampionatoHomePage(
+      title: "$campionato° Campionato",
+      campionato: campionato,
     );
   }
 

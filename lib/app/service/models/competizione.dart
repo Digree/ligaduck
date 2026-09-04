@@ -10,6 +10,11 @@ class Competizione {
   final bool conclusa;
   final List<Girone>? gironi;
   final Map<String, dynamic>? fasi;
+  final int postiChampions;
+  final int postiEuropaLeague;
+  final int postiConference;
+  final List<FasciaSquadra>? fasce;
+  final List<AccoppiamentoManuale>? accoppiamenti;
 
   Competizione({
     required this.id,
@@ -23,6 +28,11 @@ class Competizione {
     this.conclusa = false,
     this.gironi,
     this.fasi,
+    this.postiChampions = 4,
+    this.postiEuropaLeague = 2,
+    this.postiConference = 1,
+    this.fasce,
+    this.accoppiamenti,
   });
 
   factory Competizione.fromJson(Map<String, dynamic> json) {
@@ -44,6 +54,22 @@ class Competizione {
       fasi: json['fasi'] != null
           ? Map<String, dynamic>.from(json['fasi'] as Map)
           : null,
+      postiChampions: json['postiChampions'] ?? 4,
+      postiEuropaLeague: json['postiEuropaLeague'] ?? 2,
+      postiConference: json['postiConference'] ?? 1,
+      fasce: json['fasce'] != null
+          ? (json['fasce'] as List)
+                .map((e) => FasciaSquadra.fromJson(e as Map<String, dynamic>))
+                .toList()
+          : null,
+      accoppiamenti: json['accoppiamenti'] != null
+          ? (json['accoppiamenti'] as List)
+                .map(
+                  (e) =>
+                      AccoppiamentoManuale.fromJson(e as Map<String, dynamic>),
+                )
+                .toList()
+          : null,
     );
   }
 
@@ -60,8 +86,55 @@ class Competizione {
       'conclusa': conclusa,
       'gironi': gironi?.map((g) => g.toJson()).toList(),
       'fasi': fasi,
+      'postiChampions': postiChampions,
+      'postiEuropaLeague': postiEuropaLeague,
+      'postiConference': postiConference,
+      'fasce': fasce?.map((f) => f.toJson()).toList(),
+      'accoppiamenti': accoppiamenti?.map((a) => a.toJson()).toList(),
     };
   }
+}
+
+/// Fascia (pot 1-4) assegnata a una squadra per il sorteggio fase a campionato.
+class FasciaSquadra {
+  final int idSquadra;
+  final int fascia;
+
+  FasciaSquadra({required this.idSquadra, required this.fascia});
+
+  factory FasciaSquadra.fromJson(Map<String, dynamic> json) {
+    return FasciaSquadra(idSquadra: json['idSquadra'], fascia: json['fascia']);
+  }
+
+  Map<String, dynamic> toJson() => {'idSquadra': idSquadra, 'fascia': fascia};
+}
+
+/// Nota risultato inserita a mano nella sezione "Fasce e Risultati", puramente
+/// informativa: non ha alcun legame con una Partita reale.
+class AccoppiamentoManuale {
+  final int idSquadra;
+  final int idAvversario;
+  final bool casa;
+
+  AccoppiamentoManuale({
+    required this.idSquadra,
+    required this.idAvversario,
+    required this.casa,
+  });
+
+  factory AccoppiamentoManuale.fromJson(Map<String, dynamic> json) {
+    return AccoppiamentoManuale(
+      idSquadra: json['idSquadra'],
+      idAvversario: json['idAvversario'],
+      casa: json['casa'] ?? true,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'idSquadra': idSquadra,
+    'idAvversario': idAvversario,
+    'casa': casa,
+  };
 }
 
 class CompetizioneVincitore {
