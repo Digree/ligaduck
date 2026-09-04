@@ -1,24 +1,24 @@
 {
-  "lastUpdate": "2026-08-27",
+  "lastUpdate": "2026-09-04",
   "android": {
-    "version": "44.02.03",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.03/ligaduck-v44.02.03.apk",
-    "releaseNotes": "- Modifica semplificata orario partite - Asterischi diversi per i prestiti - Bug Fix "
+    "version": "44.03.00",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.03.00/ligaduck-v44.03.00.apk",
+    "releaseNotes": "- Nuova Splash page - Fasce e risultati in Champions League, Europa League e Conference League - Bug Fix"
   },
   "ios": {
-    "version": "44.02.03",
+    "version": "44.03.00",
     "downloadUrl": "https://apps.apple.com/app/ligaduck",
-    "releaseNotes": "- Modifica semplificata orario partite - Asterischi diversi per i prestiti - Bug Fix "
+    "releaseNotes": "- Nuova Splash page - Fasce e risultati in Champions League, Europa League e Conference League - Bug Fix"
   },
   "macos": {
-    "version": "44.02.03",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.03/ligaduck-v44.02.03.dmg",
-    "releaseNotes": "- Modifica semplificata orario partite - Asterischi diversi per i prestiti - Bug Fix "
+    "version": "44.03.00",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.03.00/ligaduck-v44.03.00.dmg",
+    "releaseNotes": "- Nuova Splash page - Fasce e risultati in Champions League, Europa League e Conference League - Bug Fix"
   },
   "windows": {
-    "version": "44.02.03",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.03/ligaduck-v44.02.03-windows.zip",
-    "msixUrl": "https://github.com/Digree/ligaduck/releases/download/v44.02.03/LigaDuckManager-Windows-v44.02.03.msix",
-    "releaseNotes": "- Modifica semplificata orario partite - Asterischi diversi per i prestiti - Bug Fix "
+    "version": "44.03.00",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.03.00/ligaduck-v44.03.00-windows.zip",
+    "msixUrl": "https://github.com/Digree/ligaduck/releases/download/v44.03.00/LigaDuckManager-Windows-v44.03.00.msix",
+    "releaseNotes": "- Nuova Splash page - Fasce e risultati in Champions League, Europa League e Conference League - Bug Fix"
   }
 }
