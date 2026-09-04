@@ -1,7 +1,7 @@
 name: ligaduck
 description: "A new Flutter project."
 publish_to: "none"
-version: 44.02.03
+version: 44.03.00
 
 environment:
   sdk: ^3.8.1
