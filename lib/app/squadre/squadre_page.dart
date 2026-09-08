@@ -735,6 +735,11 @@ class _SquadrePageState extends State<SquadrePage> {
     List<String> nazioni = [nazioneSelezionata];
     bool loadingNazioni = true;
 
+    var isExGiocatore = giocatore.ex?.isNotEmpty ?? false;
+    String? exIdSelezionato = giocatore.ex;
+    String? exNomeSelezionato;
+    var loadingExNome = isExGiocatore;
+
     const ruoli = ['Portiere', 'Difensore', 'Centrocampista', 'Attaccante'];
     const ruoliAlt = [
       '',
@@ -777,6 +782,20 @@ class _SquadrePageState extends State<SquadrePage> {
               });
             });
             loadingNazioni = false; // prevent re-triggering
+          }
+
+          if (loadingExNome && exIdSelezionato != null) {
+            GiocatoriProvider()
+                .fetchGiocatoreById(widget.campionato, exIdSelezionato!)
+                .then((g) {
+                  setDialogState(() {
+                    exNomeSelezionato = g != null
+                        ? CommonService.decodePlayerName(g.nome)
+                        : null;
+                    loadingExNome = false;
+                  });
+                });
+            loadingExNome = false; // prevent re-triggering
           }
 
           return AlertDialog(
@@ -851,6 +870,75 @@ class _SquadrePageState extends State<SquadrePage> {
                         setDialogState(() => ruoloAltSelezionato = v ?? ''),
                   ),
                 ],
+                if (isAllenatore) ...[
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'È un ex giocatore?',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: primaryColor,
+                      ),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      Radio<bool>(
+                        value: false,
+                        groupValue: isExGiocatore,
+                        onChanged: (v) => setDialogState(() {
+                          isExGiocatore = v!;
+                          exIdSelezionato = null;
+                          exNomeSelezionato = null;
+                        }),
+                        activeColor: primaryColor,
+                      ),
+                      const Text('No'),
+                      const SizedBox(width: 20),
+                      Radio<bool>(
+                        value: true,
+                        groupValue: isExGiocatore,
+                        onChanged: (v) =>
+                            setDialogState(() => isExGiocatore = v!),
+                        activeColor: primaryColor,
+                      ),
+                      const Text('Sì'),
+                    ],
+                  ),
+                  if (isExGiocatore) ...[
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final selezionato = await _cercaGiocatoreExDialog(
+                            ctx,
+                          );
+                          if (selezionato != null) {
+                            setDialogState(() {
+                              exIdSelezionato = selezionato.id;
+                              exNomeSelezionato =
+                                  CommonService.decodePlayerName(
+                                    selezionato.nome,
+                                  );
+                            });
+                          }
+                        },
+                        icon: const Icon(Icons.search),
+                        label: Text(
+                          loadingExNome
+                              ? 'Caricamento...'
+                              : (exNomeSelezionato ?? 'Cerca giocatore ex'),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          foregroundColor: primaryFgColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ],
             ),
             actions: [
@@ -886,6 +974,7 @@ class _SquadrePageState extends State<SquadrePage> {
           ? null
           : ruoloAltSelezionato,
       idSquadra: widget.squadra.id,
+      ex: isAllenatore ? (exIdSelezionato ?? '') : null,
     );
 
     if (mounted) {
@@ -898,6 +987,108 @@ class _SquadrePageState extends State<SquadrePage> {
       );
       if (ok) await fetchGiocatori();
     }
+  }
+
+  /// Mostra un elenco di giocatori inattivi tra cui scegliere quello ex-collegato.
+  Future<Giocatore?> _cercaGiocatoreExDialog(BuildContext context) async {
+    final giocatoriProvider = GiocatoriProvider();
+    Giocatore? selezionato;
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        String searchQuery = '';
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text('Cerca Giocatore Ex'),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 400,
+                child: Column(
+                  children: [
+                    TextField(
+                      decoration: InputDecoration(
+                        labelText: 'Cerca per nome',
+                        prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (value) {
+                        setDialogState(() {
+                          searchQuery = value.toLowerCase();
+                        });
+                      },
+                    ),
+                    SizedBox(height: 16),
+                    Expanded(
+                      child: FutureBuilder<List<Giocatore>>(
+                        future: giocatoriProvider.getGiocatoriInattivi(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return Center(
+                              child: CircularProgressIndicator(
+                                color: getColor('primary'),
+                              ),
+                            );
+                          }
+                          if (snapshot.hasError) {
+                            return Center(
+                              child: Text('Errore nel caricamento'),
+                            );
+                          }
+                          final tuttiGiocatori = snapshot.data ?? [];
+                          final giocatoriFiltrati = tuttiGiocatori
+                              .where(
+                                (g) =>
+                                    g.ruolo != 'Allenatore' &&
+                                    (searchQuery.isEmpty ||
+                                        g.nome.toLowerCase().contains(
+                                          searchQuery,
+                                        )),
+                              )
+                              .toList();
+                          if (giocatoriFiltrati.isEmpty) {
+                            return Center(
+                              child: Text('Nessun giocatore trovato'),
+                            );
+                          }
+                          return ListView.builder(
+                            itemCount: giocatoriFiltrati.length,
+                            itemBuilder: (context, index) {
+                              final g = giocatoriFiltrati[index];
+                              return ListTile(
+                                title: Text(g.nome),
+                                subtitle: Text(
+                                  '${g.ruolo} - ${CommonService.decodePlayerName(g.nazione)}',
+                                ),
+                                onTap: () {
+                                  selezionato = g;
+                                  Navigator.of(context).pop();
+                                },
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: getColor('primary'),
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('Annulla'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    return selezionato;
   }
 
   Widget _buildGlassButton(String text, VoidCallback onTap) {
@@ -3463,7 +3654,7 @@ class _SquadrePageState extends State<SquadrePage> {
                           builder: (_) => CessionePage(
                             campionato: widget.campionato,
                             squadra: widget.squadra,
-                            giocatore: giocatore,
+                            giocatori: [giocatore],
                             tipoMercato: 'estivo',
                           ),
                         ),
@@ -5110,10 +5301,17 @@ class _SquadrePageState extends State<SquadrePage> {
   }
 
   Future<void> _mostraDialogSelezioneGiocatore(String tipoMercato) async {
-    // Filtra solo i giocatori attivi
-    final giocatoriDisponibili = giocatori
-        .where((g) => g.attivo && g.idSquadraAttuale == widget.squadra.id)
-        .toList();
+    // `giocatori` è già la rosa scoped a questa squadra/campionato dal backend,
+    // ma esclude comunque allenatori e chi non ha una carriera in questo campionato.
+    final giocatoriDisponibili =
+        giocatori
+            .where(
+              (g) =>
+                  g.ruolo != 'Allenatore' &&
+                  g.carriera.any((c) => c.campionato == widget.campionato),
+            )
+            .toList()
+          ..sort((b, a) => a.ruolo.compareTo(b.ruolo));
 
     if (giocatoriDisponibili.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -5159,7 +5357,7 @@ class _SquadrePageState extends State<SquadrePage> {
                           builder: (context) => CessionePage(
                             campionato: widget.campionato,
                             squadra: widget.squadra,
-                            giocatore: giocatore,
+                            giocatori: [giocatore],
                             tipoMercato: tipoMercato,
                           ),
                         ),
@@ -5188,14 +5386,16 @@ class _SquadrePageState extends State<SquadrePage> {
   }
 
   Future<void> _mostraDialogFineCarriera(String tipoMercato) async {
-    final giocatoriDisponibili = giocatori
-        .where(
-          (g) =>
-              g.attivo &&
-              g.idSquadraAttuale == widget.squadra.id &&
-              g.ruolo != 'Allenatore',
-        )
-        .toList();
+    // `giocatori` è già la rosa scoped a questa squadra/campionato dal backend.
+    final giocatoriDisponibili =
+        giocatori
+            .where(
+              (g) =>
+                  g.ruolo != 'Allenatore' &&
+                  g.carriera.any((c) => c.campionato == widget.campionato),
+            )
+            .toList()
+          ..sort((b, a) => a.ruolo.compareTo(b.ruolo));
 
     if (giocatoriDisponibili.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(

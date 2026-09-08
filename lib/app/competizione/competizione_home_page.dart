@@ -3254,10 +3254,8 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       numGironi = count;
     }
 
-    return Column(
-      children: [
-        if (widget.competizione.id == 1 && globals.admin)
-          Align(
+    final modificaPostiButton = widget.competizione.id == 1 && globals.admin
+        ? Align(
             alignment: Alignment.centerRight,
             child: TextButton.icon(
               onPressed: () => _showModificaPosizioniClassificaDialog(),
@@ -3267,44 +3265,64 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                 style: TextStyle(color: _competizioneColor()),
               ),
             ),
-          ),
-        Padding(
-          padding: EdgeInsets.only(top: 8.0),
-          child: widget.competizione.classifica == "Gironi"
-              ? ListView.builder(
-                  shrinkWrap: shrinkWrap,
-                  physics: shrinkWrap ? NeverScrollableScrollPhysics() : null,
-                  itemCount: numGironi,
-                  itemBuilder: (context, index) {
-                    return cardClassifica(
-                      giornata,
-                      isWide,
-                      screenWidth,
-                      screenHeight,
-                      index,
-                      girone:
-                          _isClassificaGironi() &&
-                              widget.competizione.gironi != null &&
-                              widget.competizione.gironi!.isNotEmpty
-                          ? widget.competizione.gironi![index]
-                          : null,
-                    );
-                  },
-                )
-              : shrinkWrap
-              ? cardClassifica(giornata, isWide, screenWidth, screenHeight, 0)
-              : SingleChildScrollView(
-                  child: cardClassifica(
-                    giornata,
-                    isWide,
-                    screenWidth,
-                    screenHeight,
-                    0,
+          )
+        : null;
+
+    return Column(
+      children: [
+        _wrapClassificaContent(
+          shrinkWrap,
+          Padding(
+            padding: EdgeInsets.only(top: 8.0),
+            child: widget.competizione.classifica == "Gironi"
+                ? ListView.builder(
+                    shrinkWrap: shrinkWrap,
+                    physics: shrinkWrap ? NeverScrollableScrollPhysics() : null,
+                    itemCount: numGironi,
+                    itemBuilder: (context, index) {
+                      return cardClassifica(
+                        giornata,
+                        isWide,
+                        screenWidth,
+                        screenHeight,
+                        index,
+                        girone:
+                            _isClassificaGironi() &&
+                                widget.competizione.gironi != null &&
+                                widget.competizione.gironi!.isNotEmpty
+                            ? widget.competizione.gironi![index]
+                            : null,
+                      );
+                    },
+                  )
+                : shrinkWrap
+                ? cardClassifica(giornata, isWide, screenWidth, screenHeight, 0)
+                // Non-shrinkWrap: il bottone va dentro lo scroll, non fuori (altrimenti resta fissato in fondo alla pagina).
+                : SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        cardClassifica(
+                          giornata,
+                          isWide,
+                          screenWidth,
+                          screenHeight,
+                          0,
+                        ),
+                        ?modificaPostiButton,
+                      ],
+                    ),
                   ),
-                ),
+          ),
         ),
+        if (shrinkWrap && modificaPostiButton != null) modificaPostiButton,
       ],
     );
+  }
+
+  // Senza shrinkWrap la classifica vive dentro una TabBarView (altezza vincolata):
+  // serve Expanded per dare un viewport limitato e permettere lo scroll interno.
+  Widget _wrapClassificaContent(bool shrinkWrap, Widget child) {
+    return shrinkWrap ? child : Expanded(child: child);
   }
 
   Widget cardClassifica(

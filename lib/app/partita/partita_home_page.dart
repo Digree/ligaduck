@@ -10,6 +10,8 @@ import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
+import 'package:ligaduck/app/service/giornate_provider.dart';
+import 'package:ligaduck/app/service/models/giornata.dart';
 import 'package:ligaduck/app/service/partite_provider.dart';
 import 'package:ligaduck/app/service/squadre_provider.dart';
 import 'package:ligaduck/app/service/giocatori_provider.dart';
@@ -1578,6 +1580,11 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                               buildTabellino(),
                               SizedBox(height: 16),
                               buildUltime5PartiteWide(),
+                              SizedBox(height: 32),
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 16),
+                                child: _buildClassificaSection(),
+                              ),
                               SizedBox(height: 32),
                             ],
                           ),
@@ -3586,7 +3593,375 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
               );
             },
           ),
+
+          SizedBox(height: 32),
+
+          _buildClassificaSection(),
         ],
+      ),
+    );
+  }
+
+  // Classifica della giornata precedente a questa partita (a 0 punti se non esiste, es. 1a giornata)
+  Widget _buildClassificaSection() {
+    return FutureBuilder<List<PosizioneClassifica>>(
+      future: _fetchClassificaGiornataPrecedente(),
+      builder: (context, classificaSnapshot) {
+        if (!classificaSnapshot.hasData || classificaSnapshot.data!.isEmpty) {
+          return SizedBox.shrink();
+        }
+        return _buildClassificaPartita(classificaSnapshot.data!);
+      },
+    );
+  }
+
+  // Tutte le squadre della competizione a 0 punti/statistiche, ordinate alfabeticamente
+  // (usata quando non esiste ancora una classifica precedente)
+  Future<List<PosizioneClassifica>> _classificaVuota() async {
+    final bool isNazionaleHome = partita!.idNazionaleHome?.isNotEmpty ?? false;
+    final bool isNazionaleAway = partita!.idNazionaleAway?.isNotEmpty ?? false;
+    final bool isCompNazionale =
+        competizione!.id == 17 || competizione!.id == 18;
+
+    // (id, nome) di tutte le squadre/nazionali che partecipano alla competizione
+    List<(String id, String nome)> squadreComp = [];
+    try {
+      if (isCompNazionale || isNazionaleHome || isNazionaleAway) {
+        final nazionaliProvider = Provider.of<NazionaliProvider>(
+          context,
+          listen: false,
+        );
+        final nazionali = await nazionaliProvider.fetchNazionali(
+          widget.campionato,
+        );
+        squadreComp = nazionali
+            .where((n) => n.competizioni.contains(competizione!.id))
+            .map((n) => (n.id, n.nome))
+            .toList();
+      } else {
+        final squadreProvider = Provider.of<SquadreProvider>(
+          context,
+          listen: false,
+        );
+        final squadre = await squadreProvider.fetchSquadreByCompetizione(
+          widget.campionato,
+          competizione!.id,
+        );
+        squadreComp = squadre.map((s) => (s.id.toString(), s.nome)).toList();
+      }
+    } catch (_) {}
+
+    squadreComp.sort(
+      (a, b) => CommonService.decodePlayerName(a.$2).toLowerCase().compareTo(
+        CommonService.decodePlayerName(b.$2).toLowerCase(),
+      ),
+    );
+
+    int posizioneDi(String id) {
+      final index = squadreComp.indexWhere((s) => s.$1 == id);
+      return index == -1 ? 1 : index + 1;
+    }
+
+    final posizioneHome = posizioneDi(
+      isNazionaleHome
+          ? (partita!.idNazionaleHome ?? '')
+          : partita!.idTeamHome.toString(),
+    );
+    final posizioneAway = posizioneDi(
+      isNazionaleAway
+          ? (partita!.idNazionaleAway ?? '')
+          : partita!.idTeamAway.toString(),
+    );
+
+    PosizioneClassifica zero({
+      required int idSquadra,
+      String? idNazionale,
+      required int posizione,
+    }) {
+      return PosizioneClassifica(
+        posizione: posizione,
+        idSquadra: idSquadra,
+        idNazionale: idNazionale,
+        win: 0,
+        draw: 0,
+        loss: 0,
+        punti: 0,
+        gFatti: 0,
+        gSubiti: 0,
+        diff: 0,
+        partiteGiocate: 0,
+      );
+    }
+
+    return [
+      zero(
+        idSquadra: partita!.idTeamHome,
+        idNazionale: isNazionaleHome ? partita!.idNazionaleHome : null,
+        posizione: posizioneHome,
+      ),
+      zero(
+        idSquadra: partita!.idTeamAway,
+        idNazionale: isNazionaleAway ? partita!.idNazionaleAway : null,
+        posizione: posizioneAway,
+      ),
+    ];
+  }
+
+  Future<List<PosizioneClassifica>> _fetchClassificaGiornataPrecedente() async {
+    if (partita == null || competizione == null) return [];
+
+    final giornateProvider = Provider.of<GiornateProvider>(
+      context,
+      listen: false,
+    );
+    final giornate = await giornateProvider.fetchGiornate(
+      widget.campionato,
+      competizione!.id,
+    );
+
+    Giornata? giornataCorrente;
+    try {
+      giornataCorrente = giornate.firstWhere(
+        (g) => g.id == partita!.idGiornata,
+      );
+    } catch (_) {
+      return _classificaVuota();
+    }
+
+    final numeroCorrente = int.tryParse(giornataCorrente.giornata);
+    // Prima giornata (o numero non valido): nessuna giornata precedente, tutti a 0 punti
+    if (numeroCorrente == null || numeroCorrente <= 1) {
+      return _classificaVuota();
+    }
+
+    Giornata? giornataPrecedente;
+    try {
+      giornataPrecedente = giornate.firstWhere(
+        (g) => int.tryParse(g.giornata) == numeroCorrente - 1,
+      );
+    } catch (_) {
+      return _classificaVuota();
+    }
+
+    if (giornataPrecedente.classifica == null ||
+        giornataPrecedente.classifica!.isEmpty) {
+      return _classificaVuota();
+    }
+
+    return giornataPrecedente.classifica!;
+  }
+
+  Widget _buildClassificaPartita(List<PosizioneClassifica> classifica) {
+    final bool isNazionaleHome = partita!.idNazionaleHome?.isNotEmpty ?? false;
+    final bool isNazionaleAway = partita!.idNazionaleAway?.isNotEmpty ?? false;
+
+    PosizioneClassifica? posHome;
+    PosizioneClassifica? posAway;
+    try {
+      posHome = classifica.firstWhere(
+        (p) => isNazionaleHome
+            ? p.idNazionale == partita!.idNazionaleHome
+            : p.idSquadra == partita!.idTeamHome,
+      );
+    } catch (_) {}
+    try {
+      posAway = classifica.firstWhere(
+        (p) => isNazionaleAway
+            ? p.idNazionale == partita!.idNazionaleAway
+            : p.idSquadra == partita!.idTeamAway,
+      );
+    } catch (_) {}
+
+    if (posHome == null && posAway == null) return SizedBox.shrink();
+
+    // Ordina le due righe per posizione in classifica
+    final righe = [
+      if (posHome != null)
+        (
+          pos: posHome,
+          codSquadra: partita!.codHome,
+          nome: partita!.teamHome,
+          isNazionale: isNazionaleHome,
+        ),
+      if (posAway != null)
+        (
+          pos: posAway,
+          codSquadra: partita!.codAway,
+          nome: partita!.teamAway,
+          isNazionale: isNazionaleAway,
+        ),
+    ]..sort((a, b) => a.pos.posizione.compareTo(b.pos.posizione));
+
+    final Color competizioneColor = Color(
+      competizione!.colori.isNotEmpty
+          ? int.parse(
+              competizione!.colori[0].replaceFirst('#', 'FF'),
+              radix: 16,
+            )
+          : 0xFF000000,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Classifica',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            fontFamily: competizione?.id == 5
+                ? 'champions'
+                : competizione?.id == 6 || competizione?.id == 7
+                ? 'europa'
+                : competizione?.id == 8
+                ? 'supercup'
+                : null,
+          ),
+        ),
+        SizedBox(height: 16),
+        Container(
+          decoration: BoxDecoration(
+            color: competizioneColor,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            children: [
+              _buildClassificaHeaderRow(),
+              for (var i = 0; i < righe.length; i++) ...[
+                if (i > 0) Divider(color: Colors.white24, height: 1),
+                _buildClassificaTeamRow(
+                  righe[i].pos,
+                  codSquadra: righe[i].codSquadra,
+                  nome: righe[i].nome,
+                  isNazionale: righe[i].isNazionale,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildClassificaHeaderRow() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 28,
+            child: Text(
+              'Pos',
+              style: TextStyle(fontSize: 11, color: Colors.white70),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              'Squadra',
+              style: TextStyle(fontSize: 11, color: Colors.white70),
+            ),
+          ),
+          _classificaHeaderCell('Pt'),
+          _classificaHeaderCell('PG'),
+          _classificaHeaderCell('V'),
+          _classificaHeaderCell('P'),
+          _classificaHeaderCell('S'),
+          _classificaHeaderCell('GF'),
+          _classificaHeaderCell('GS'),
+          _classificaHeaderCell('DR'),
+        ],
+      ),
+    );
+  }
+
+  Widget _classificaHeaderCell(String label) {
+    return SizedBox(
+      width: 28,
+      child: Text(
+        label,
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: 10, color: Colors.white70),
+      ),
+    );
+  }
+
+  Widget _buildClassificaTeamRow(
+    PosizioneClassifica pos, {
+    required String codSquadra,
+    required String nome,
+    required bool isNazionale,
+  }) {
+    Squadra? squadra;
+    if (!isNazionale) {
+      try {
+        squadra = _squadreCache.firstWhere((s) => s.cod == codSquadra);
+      } catch (_) {}
+    }
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 28,
+            child: Text(
+              '${pos.posizione}',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Row(
+              children: [
+                SquadraLogoWidget(
+                  codSquadra: codSquadra,
+                  squadra: squadra,
+                  size: 24,
+                  nomeNazionale: isNazionale ? nome : null,
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    CommonService.decodePlayerName(nome),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _classificaValueCell('${pos.punti}', bold: true),
+          _classificaValueCell('${pos.partiteGiocate}'),
+          _classificaValueCell('${pos.win}'),
+          _classificaValueCell('${pos.draw}'),
+          _classificaValueCell('${pos.loss}'),
+          _classificaValueCell('${pos.gFatti}'),
+          _classificaValueCell('${pos.gSubiti}'),
+          _classificaValueCell('${pos.diff > 0 ? '+' : ''}${pos.diff}'),
+        ],
+      ),
+    );
+  }
+
+  Widget _classificaValueCell(String value, {bool bold = false}) {
+    return SizedBox(
+      width: 28,
+      child: Text(
+        value,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 12,
+          color: Colors.white,
+          fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+        ),
       ),
     );
   }

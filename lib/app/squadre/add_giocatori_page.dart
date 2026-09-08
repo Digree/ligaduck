@@ -582,10 +582,21 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
                 child: Column(
                   children: [
                     TextField(
+                      cursorColor: getColor('primary'),
                       decoration: InputDecoration(
                         labelText: 'Cerca per nome',
-                        prefixIcon: Icon(Icons.search),
+                        labelStyle: TextStyle(color: getColor('primary')),
+                        prefixIcon: Icon(
+                          Icons.search,
+                          color: getColor('primary'),
+                        ),
                         border: OutlineInputBorder(),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: getColor('primary'),
+                            width: 2,
+                          ),
+                        ),
                       ),
                       onChanged: (value) {
                         setDialogState(() {
@@ -660,6 +671,9 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
               ),
               actions: [
                 TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: getColor('primary'),
+                  ),
                   onPressed: () => Navigator.of(context).pop(),
                   child: Text('Annulla'),
                 ),

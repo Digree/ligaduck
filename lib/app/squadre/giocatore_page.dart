@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ligaduck/app/service/giocatori_provider.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
@@ -25,15 +26,28 @@ class GiocatorePage extends StatefulWidget {
   State<GiocatorePage> createState() => _GiocatorePageState();
 }
 
-class _GiocatorePageState extends State<GiocatorePage> {
+class _GiocatorePageState extends State<GiocatorePage>
+    with SingleTickerProviderStateMixin {
   final Map<String, List<Squadra>> _squadrePerCampionato = {};
   bool _loadingSquadre = true;
+  Giocatore? _giocatoreEx;
+  TabController? _tabController;
 
   Giocatore get giocatore => widget.giocatore;
   Squadra get squadra => widget.squadra;
   String get campionato => widget.campionato;
 
   bool get _isAllenatore => giocatore.ruolo == 'Allenatore';
+  bool get _haGiocatoreCollegato =>
+      _isAllenatore && (giocatore.ex?.isNotEmpty ?? false);
+
+  /// Giocatore/allenatore mostrato nell'header in base al tab selezionato.
+  Giocatore get _visualizzato {
+    if (_tabController == null || _tabController!.index == 0) {
+      return giocatore;
+    }
+    return _giocatoreEx ?? giocatore;
+  }
 
   /// Colore di testo (bianco o nero) che contrasta con lo sfondo del banner in
   /// gradiente (usa il colore all'estremità in basso a destra del gradiente).
@@ -47,11 +61,37 @@ class _GiocatorePageState extends State<GiocatorePage> {
   @override
   void initState() {
     super.initState();
-    _loadSquadreCarriera();
+    _loadDati();
+  }
+
+  @override
+  void dispose() {
+    _tabController?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadDati() async {
+    if (_haGiocatoreCollegato) {
+      _giocatoreEx = await GiocatoriProvider().fetchGiocatoreById(
+        campionato,
+        giocatore.ex!,
+      );
+    }
+    if (_haGiocatoreCollegato && _giocatoreEx != null) {
+      _tabController = TabController(length: 2, vsync: this)
+        ..addListener(() {
+          if (mounted) setState(() {});
+        });
+    }
+    await _loadSquadreCarriera();
   }
 
   Future<void> _loadSquadreCarriera() async {
-    final campionati = giocatore.carriera.map((c) => c.campionato).toSet();
+    final campionati = {
+      ...giocatore.carriera.map((c) => c.campionato),
+      if (_giocatoreEx != null)
+        ..._giocatoreEx!.carriera.map((c) => c.campionato),
+    };
     final provider = SquadreProvider();
 
     await Future.wait(
@@ -81,8 +121,8 @@ class _GiocatorePageState extends State<GiocatorePage> {
     return null;
   }
 
-  Carriera? _find(bool Function(Carriera) test) {
-    for (final c in giocatore.carriera) {
+  Carriera? _findIn(List<Carriera> carriera, bool Function(Carriera) test) {
+    for (final c in carriera) {
       if (test(c)) return c;
     }
     return null;
@@ -99,64 +139,116 @@ class _GiocatorePageState extends State<GiocatorePage> {
   /// all'età anagrafica le edizioni trascorse tra quella più vecchia e quella
   /// attualmente visualizzata (es. carriera più vecchia 34, campionato attuale
   /// 44 => età + (44-34)).
-  int get _etaCalcolata {
-    if (giocatore.carriera.isEmpty) return giocatore.eta;
-    final edizioni = giocatore.carriera
+  int _etaCalcolataFor(Giocatore g) {
+    if (g.carriera.isEmpty) return g.eta;
+    final edizioni = g.carriera
         .map((c) => int.tryParse(c.campionato))
         .whereType<int>()
         .toList();
-    if (edizioni.isEmpty) return giocatore.eta;
+    if (edizioni.isEmpty) return g.eta;
     final piuVecchia = edizioni.reduce((a, b) => a < b ? a : b);
     final attuale = int.tryParse(campionato) ?? piuVecchia;
-    return giocatore.eta + (attuale - piuVecchia);
+    return g.eta + (attuale - piuVecchia);
   }
 
   @override
   Widget build(BuildContext context) {
-    final nome = CommonService.decodePlayerName(giocatore.nome);
+    final haTab = _haGiocatoreCollegato && _giocatoreEx != null;
+    final g = _visualizzato;
+    final nome = CommonService.decodePlayerName(g.nome);
     final carrieraAttuale =
-        _find((c) => c.campionato == campionato && c.idSquadra == squadra.id) ??
-        _find((c) => c.campionato == campionato);
-    final indisponibile = _indisponibile;
-
-    final carrieraOrdinata = [...giocatore.carriera]
-      ..sort((a, b) => b.campionato.compareTo(a.campionato));
+        _findIn(
+          g.carriera,
+          (c) => c.campionato == campionato && c.idSquadra == squadra.id,
+        ) ??
+        _findIn(g.carriera, (c) => c.campionato == campionato);
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      body: ListView(
-        padding: EdgeInsets.zero,
+      body: Column(
         children: [
-          _buildHeader(nome, carrieraAttuale),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (indisponibile != null) ...[
-                  _buildIndisponibileBanner(indisponibile),
-                  const SizedBox(height: 16),
-                ],
-                _buildEtaRuoloCard(),
-                const SizedBox(height: 16),
-                const Text(
-                  'Carriera',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                _buildCarrieraCard(carrieraOrdinata),
-              ],
-            ),
+          _buildHeader(
+            g,
+            nome,
+            carrieraAttuale,
+            ritirato: haTab && _tabController!.index == 1,
+          ),
+          if (haTab) _buildTabBarStrip(),
+          Expanded(
+            child: haTab
+                ? TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildContenuto(giocatore, etaSource: _giocatoreEx),
+                      _buildContenuto(_giocatoreEx!),
+                    ],
+                  )
+                : _buildContenuto(giocatore),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildHeader(String nome, Carriera? carrieraAttuale) {
+  Widget _buildTabBarStrip() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: widget.gradientColors,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        labelColor: _headerContrastColor,
+        unselectedLabelColor: _headerContrastColor.withOpacity(0.6),
+        indicatorColor: _headerContrastColor,
+        tabs: const [
+          Tab(text: 'Allenatore'),
+          Tab(text: 'Giocatore'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContenuto(Giocatore g, {Giocatore? etaSource}) {
+    // La disponibilità è tracciata solo per il giocatore/allenatore principale.
+    final indisponibile = g.id == giocatore.id ? _indisponibile : null;
+
+    final carrieraOrdinata = [...g.carriera]
+      ..sort((a, b) => b.campionato.compareTo(a.campionato));
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        if (indisponibile != null) ...[
+          _buildIndisponibileBanner(indisponibile),
+          const SizedBox(height: 16),
+        ],
+        _buildEtaRuoloCard(g, etaSource: etaSource),
+        const SizedBox(height: 16),
+        const Text(
+          'Carriera',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        _buildCarrieraCard(carrieraOrdinata),
+      ],
+    );
+  }
+
+  Widget _buildHeader(
+    Giocatore g,
+    String nome,
+    Carriera? carrieraAttuale, {
+    bool ritirato = false,
+  }) {
     final numero = carrieraAttuale?.numero ?? 0;
+    final isAllenatore = g.ruolo == 'Allenatore';
     final countryCode = CommonService.getCountryCode(
-      giocatore.nazione.toLowerCase(),
+      g.nazione.toLowerCase(),
     ).toUpperCase();
 
     return Container(
@@ -170,6 +262,7 @@ class _GiocatorePageState extends State<GiocatorePage> {
         ),
       ),
       child: SafeArea(
+        bottom: false,
         child: Stack(
           children: [
             Positioned(
@@ -191,11 +284,20 @@ class _GiocatorePageState extends State<GiocatorePage> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        if (_isAllenatore)
+                        if (isAllenatore)
                           const Padding(
                             padding: EdgeInsets.only(right: 8, bottom: 4),
                             child: Icon(
                               Icons.person_4,
+                              color: Colors.white,
+                              size: 40,
+                            ),
+                          )
+                        else if (ritirato)
+                          const Padding(
+                            padding: EdgeInsets.only(right: 8, bottom: 4),
+                            child: Icon(
+                              Icons.person_off,
                               color: Colors.white,
                               size: 40,
                             ),
@@ -234,7 +336,7 @@ class _GiocatorePageState extends State<GiocatorePage> {
                       CircleAvatar(
                         radius: 24,
                         backgroundImage: NetworkImage(
-                          CommonService.getFlagUrl(giocatore.nazione),
+                          CommonService.getFlagUrl(g.nazione),
                         ),
                         onBackgroundImageError: (_, _) {},
                       ),
@@ -307,7 +409,9 @@ class _GiocatorePageState extends State<GiocatorePage> {
     );
   }
 
-  Widget _buildEtaRuoloCard() {
+  Widget _buildEtaRuoloCard(Giocatore g, {Giocatore? etaSource}) {
+    final eta = _etaCalcolataFor(etaSource ?? g);
+    final isAllenatore = g.ruolo == 'Allenatore';
     return _card(
       child: Row(
         children: [
@@ -321,7 +425,7 @@ class _GiocatorePageState extends State<GiocatorePage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '$_etaCalcolata anni',
+                  '$eta anni',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -343,7 +447,7 @@ class _GiocatorePageState extends State<GiocatorePage> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    _isAllenatore ? 'Allenatore' : giocatore.ruolo,
+                    isAllenatore ? 'Allenatore' : g.ruolo,
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,

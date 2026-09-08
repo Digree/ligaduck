@@ -419,12 +419,14 @@ class GiocatoriProvider with ChangeNotifier {
     String? ruolo,
     String? ruoloAlt,
     int? idSquadra,
+    String? ex,
   }) async {
     try {
       final body = <String, dynamic>{'nome': nome, 'nazione': nazione};
       if (ruolo != null) body['ruolo'] = ruolo;
       if (ruoloAlt != null) body['ruoloAlt'] = ruoloAlt;
       if (idSquadra != null) body['idSquadra'] = idSquadra;
+      if (ex != null) body['ex'] = ex;
       final response = await http.post(
         Uri.parse('${Env.apiUrl}/$campionato/giocatore/$idGiocatore/modifica'),
         headers: {'Content-Type': 'application/json'},

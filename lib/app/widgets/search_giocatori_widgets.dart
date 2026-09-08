@@ -85,6 +85,22 @@ Widget buildRuoloChip(
   );
 }
 
+/// Trova la carriera del giocatore nel campionato indicato. Se il giocatore
+/// ha più carriere nello stesso campionato (es. trasferimento a stagione in corso),
+/// privilegia quella con la squadra attuale del giocatore, altrimenti prende l'ultima.
+Carriera? findCarrieraCampionato(Giocatore giocatore, String campionato) {
+  final carriereCampionato = giocatore.carriera
+      .where((c) => c.campionato == campionato)
+      .toList();
+
+  if (carriereCampionato.isEmpty) return null;
+
+  return carriereCampionato.firstWhere(
+    (c) => c.idSquadra == giocatore.idSquadraAttuale,
+    orElse: () => carriereCampionato.last,
+  );
+}
+
 /// Widget per costruire la card di un giocatore
 Widget buildGiocatoreCard({
   required Giocatore giocatore,
@@ -92,28 +108,16 @@ Widget buildGiocatoreCard({
   required String campionato,
   VoidCallback? onTap,
 }) {
-  // Trova la carriera del giocatore nel campionato corrente (la più recente se ce ne sono più)
   Squadra? squadra;
-  Carriera? carrieraPiuRecente;
+  final carrieraPiuRecente = findCarrieraCampionato(giocatore, campionato);
 
   try {
-    // Prende tutte le carriere con il campionato corrente e sceglie l'ultima (più recente)
-    final carriereCampionato = giocatore.carriera
-        .where((c) => c.campionato == campionato)
-        .toList();
-
-    if (carriereCampionato.isNotEmpty) {
-      carrieraPiuRecente = carriereCampionato.last;
-
-      // Trova la squadra usando l'idSquadra dalla carriera
-      if (carrieraPiuRecente.idSquadra > 0) {
-        squadra = squadre.firstWhere(
-          (s) => s.id == carrieraPiuRecente!.idSquadra,
-        );
-      }
+    // Trova la squadra usando l'idSquadra dalla carriera
+    if (carrieraPiuRecente != null && carrieraPiuRecente.idSquadra > 0) {
+      squadra = squadre.firstWhere((s) => s.id == carrieraPiuRecente.idSquadra);
     }
   } catch (e) {
-    // Carriera o squadra non trovata
+    // Squadra non trovata
   }
 
   return Card(
@@ -140,7 +144,6 @@ Widget buildGiocatoreCard({
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   if (squadra != null &&
-                      giocatore.attivo &&
                       (carrieraPiuRecente?.esonero != true)) ...[
                     SizedBox(height: 6),
                     Row(
@@ -346,12 +349,8 @@ void _sortRisultatiGiocatori(
         String? nomeSquadraB;
 
         try {
-          // Prende tutte le carriere con il campionato corrente e sceglie l'ultima (più recente)
-          final carriereA = a.carriera
-              .where((c) => c.campionato == campionato)
-              .toList();
-          if (carriereA.isNotEmpty) {
-            final carrieraA = carriereA.last;
+          final carrieraA = findCarrieraCampionato(a, campionato);
+          if (carrieraA != null) {
             final squadraA = squadre.firstWhere(
               (s) => s.id == carrieraA.idSquadra,
             );
@@ -362,12 +361,8 @@ void _sortRisultatiGiocatori(
         }
 
         try {
-          // Prende tutte le carriere con il campionato corrente e sceglie l'ultima (più recente)
-          final carriereB = b.carriera
-              .where((c) => c.campionato == campionato)
-              .toList();
-          if (carriereB.isNotEmpty) {
-            final carrieraB = carriereB.last;
+          final carrieraB = findCarrieraCampionato(b, campionato);
+          if (carrieraB != null) {
             final squadraB = squadre.firstWhere(
               (s) => s.id == carrieraB.idSquadra,
             );

@@ -319,6 +319,7 @@ class CommonService {
       'israele': 'il',
       'siria': 'sy',
       'syria': 'sy',
+      'armenia': 'am',
     };
 
     if (countryMap.containsKey(nazioneNome)) {

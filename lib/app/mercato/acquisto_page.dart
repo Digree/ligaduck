@@ -312,11 +312,19 @@ class _AcquistoPageState extends State<AcquistoPage> {
     );
 
     if (conferma == true) {
+      // Squadra di provenienza nel campionato di questo mercato, non quella attuale del giocatore
+      final carrieraCampionato = findCarrieraCampionato(
+        giocatore,
+        widget.campionato,
+      );
+      final idSquadraCessione =
+          carrieraCampionato?.idSquadra ?? giocatore.idSquadraAttuale;
+
       // Crea l'oggetto Acquisto
       final acquisto = Trasferimento(
         idGiocatore: giocatore.id,
         idSquadraAcquisto: widget.squadra.id,
-        idSquadraCessione: giocatore.idSquadraAttuale,
+        idSquadraCessione: idSquadraCessione,
         definitivo: tipoAcquisto == 'definitivo',
         prestito: tipoAcquisto == 'prestito',
         sessione: widget.tipoMercato,

@@ -11,14 +11,14 @@ import 'package:provider/provider.dart';
 class CessionePage extends StatefulWidget {
   final String campionato;
   final Squadra squadra;
-  final Giocatore giocatore;
+  final List<Giocatore> giocatori;
   final String tipoMercato; // 'estivo' o 'invernale'
 
   const CessionePage({
     super.key,
     required this.campionato,
     required this.squadra,
-    required this.giocatore,
+    required this.giocatori,
     required this.tipoMercato,
   });
 
@@ -267,7 +267,7 @@ class _CessionePageState extends State<CessionePage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Info giocatore
+              // Info giocatore/i
               Container(
                 padding: EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -277,14 +277,20 @@ class _CessionePageState extends State<CessionePage> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.person, color: Colors.blueAccent, size: 28),
+                    Icon(
+                      widget.giocatori.length > 1 ? Icons.groups : Icons.person,
+                      color: Colors.blueAccent,
+                      size: 28,
+                    ),
                     SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            widget.giocatore.nome,
+                            widget.giocatori.length > 1
+                                ? '${widget.giocatori.length} giocatori'
+                                : widget.giocatori.first.nome,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -460,7 +466,9 @@ class _CessionePageState extends State<CessionePage> {
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           content: Text(
-            'Confermi la cessione ${tipoCessione == 'definitivo' ? 'definitiva' : 'in prestito'} di ${widget.giocatore.nome} a ${squadraDestinazione.nome}?',
+            widget.giocatori.length > 1
+                ? 'Confermi la cessione ${tipoCessione == 'definitivo' ? 'definitiva' : 'in prestito'} di ${widget.giocatori.length} giocatori a ${squadraDestinazione.nome}?'
+                : 'Confermi la cessione ${tipoCessione == 'definitivo' ? 'definitiva' : 'in prestito'} di ${widget.giocatori.first.nome} a ${squadraDestinazione.nome}?',
             style: TextStyle(fontSize: 16),
           ),
           actions: [
@@ -482,57 +490,60 @@ class _CessionePageState extends State<CessionePage> {
     );
 
     if (conferma == true) {
-      // Crea l'oggetto Acquisto (per cessione idSquadraAcquisto è la destinazione)
-      final cessione = Trasferimento(
-        idGiocatore: widget.giocatore.id,
-        idSquadraAcquisto: squadraDestinazione.id,
-        idSquadraCessione: widget.squadra.id,
-        definitivo: tipoCessione == 'definitivo',
-        prestito: tipoCessione == 'prestito',
-        sessione: widget.tipoMercato,
-      );
-
-      // Log dell'oggetto creato
-      print('Oggetto Cessione creato:');
-      print(cessione.toString());
-      print('JSON: ${cessione.toJson()}');
-
-      // Chiama il backend per salvare il trasferimento
       final mercatoProvider = Provider.of<MercatoProvider>(
         context,
         listen: false,
       );
-      final success = await mercatoProvider.addTrasferimento(
-        widget.campionato,
-        cessione,
-      );
 
-      // Mostra messaggio in base al risultato
-      if (mounted) {
-        if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Cessione ${tipoCessione == 'definitivo' ? 'definitiva' : 'in prestito'} di ${widget.giocatore.nome} a ${squadraDestinazione.nome} completata!',
-              ),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 3),
-            ),
-          );
-          // Torna alla pagina precedente
-          Navigator.pop(context, true);
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Errore durante la cessione di ${widget.giocatore.nome}. Riprova.',
-              ),
-              backgroundColor: Colors.red,
-              duration: Duration(seconds: 3),
-            ),
-          );
-        }
+      // Cede ogni giocatore selezionato alla stessa squadra destinazione.
+      var successi = 0;
+      for (final giocatore in widget.giocatori) {
+        final cessione = Trasferimento(
+          idGiocatore: giocatore.id,
+          idSquadraAcquisto: squadraDestinazione.id,
+          idSquadraCessione: widget.squadra.id,
+          definitivo: tipoCessione == 'definitivo',
+          prestito: tipoCessione == 'prestito',
+          sessione: widget.tipoMercato,
+        );
+        final success = await mercatoProvider.addTrasferimento(
+          widget.campionato,
+          cessione,
+        );
+        if (success) successi++;
       }
+
+      if (!mounted) return;
+      final tuttiOk = successi == widget.giocatori.length;
+      final tipoLabel = tipoCessione == 'definitivo'
+          ? 'definitiva'
+          : 'in prestito';
+      if (widget.giocatori.length > 1) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              tuttiOk
+                  ? 'Cessione $tipoLabel di $successi giocatori a ${squadraDestinazione.nome} completata!'
+                  : 'Ceduti $successi di ${widget.giocatori.length} giocatori a ${squadraDestinazione.nome}. Alcune cessioni sono fallite.',
+            ),
+            backgroundColor: tuttiOk ? Colors.green : Colors.orange,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              tuttiOk
+                  ? 'Cessione $tipoLabel di ${widget.giocatori.first.nome} a ${squadraDestinazione.nome} completata!'
+                  : 'Errore durante la cessione di ${widget.giocatori.first.nome}. Riprova.',
+            ),
+            backgroundColor: tuttiOk ? Colors.green : Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+      if (successi > 0) Navigator.pop(context, true);
     }
   }
 
@@ -806,7 +817,9 @@ class _CessionePageState extends State<CessionePage> {
               style: TextStyle(color: Colors.white, fontSize: 18),
             ),
             Text(
-              'Giocatore: ${widget.giocatore.nome}',
+              widget.giocatori.length > 1
+                  ? '${widget.giocatori.length} giocatori selezionati'
+                  : 'Giocatore: ${widget.giocatori.first.nome}',
               style: TextStyle(color: Colors.white70, fontSize: 13),
             ),
           ],
