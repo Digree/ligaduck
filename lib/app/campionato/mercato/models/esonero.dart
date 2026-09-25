@@ -13,10 +13,10 @@ class Esonero {
 
   factory Esonero.fromJson(Map<String, dynamic> json) {
     return Esonero(
-      id: json['id'],
-      idAllenatore: json['idAllenatore'],
-      giornataEsonero: json['giornataEsonero'],
-      idSquadra: json['idSquadra'],
+      id: json['id']?.toString() ?? '',
+      idAllenatore: json['idAllenatore']?.toString() ?? '',
+      giornataEsonero: json['giornataEsonero']?.toString() ?? '',
+      idSquadra: json['idSquadra'] ?? 0,
     );
   }
 

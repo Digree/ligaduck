@@ -383,14 +383,36 @@ class _SquadrePageState extends State<SquadrePage> {
         listen: false,
       );
 
-      // Chiamata al backend per copiare la formazione attuale nella pre-mercato
+      // Conserva una copia indipendente della formazione inviata al backend.
+      final formazioneSalvata = Formazione.fromJson(
+        widget.squadra.formazione.toJson(),
+      );
       final success = await squadreProvider.aggiornaFormazionePreMercato(
         widget.campionato,
         widget.squadra.id,
-        widget.squadra.formazione,
+        formazioneSalvata,
       );
+      if (!mounted) return;
 
       if (success) {
+        setState(() {
+          final formazioneOld = widget.squadra.formazioneOld;
+          formazioneOld.titolari
+            ..clear()
+            ..addAll(formazioneSalvata.titolari);
+          formazioneOld.panchina
+            ..clear()
+            ..addAll(formazioneSalvata.panchina);
+          formazioneOld.nonConvocati
+            ..clear()
+            ..addAll(formazioneSalvata.nonConvocati);
+          formazioneOld.indisponibili
+            ..clear()
+            ..addAll(formazioneSalvata.indisponibili);
+          formazioneOld.modulo = formazioneSalvata.modulo;
+          formazioneOld.allenatore = formazioneSalvata.allenatore;
+          _giocatoriVenduti = [];
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Formazione pre mercato aggiornata con successo'),
@@ -398,8 +420,6 @@ class _SquadrePageState extends State<SquadrePage> {
             duration: Duration(seconds: 2),
           ),
         );
-        await _loadGiocatori();
-        setState(() {});
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -410,6 +430,7 @@ class _SquadrePageState extends State<SquadrePage> {
         );
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Errore: $e'),
@@ -3908,8 +3929,8 @@ class _SquadrePageState extends State<SquadrePage> {
     return brightness > 0.5;
   }
 
-  /// Returns ruoloAlt for the current-year carriera if set, otherwise ruolo.
-  String _getRuoloEffettivo(Giocatore giocatore) {
+  /// Usa il ruolo alternativo dell'annata, poi quello salvato o quello di base.
+  String _getRuoloEffettivo(Giocatore giocatore, {String? ruoloSalvato}) {
     final carriera = giocatore.carriera.firstWhere(
       (c) =>
           c.campionato == widget.campionato && c.idSquadra == widget.squadra.id,
@@ -3927,7 +3948,10 @@ class _SquadrePageState extends State<SquadrePage> {
       ),
     );
     final alt = carriera.ruoloAlt;
-    return (alt != null && alt.isNotEmpty) ? alt : giocatore.ruolo;
+    if (alt != null && alt.isNotEmpty) return alt;
+    return (ruoloSalvato != null && ruoloSalvato.isNotEmpty)
+        ? ruoloSalvato
+        : giocatore.ruolo;
   }
 
   Color getIconColor(String type) {
@@ -5853,11 +5877,12 @@ class _SquadrePageState extends State<SquadrePage> {
       ),
     );
 
-    // Raggruppa la panchina per ruolo (con fallback ai dati Giocatore)
+    // Raggruppa la panchina dando precedenza al ruolo alternativo dell'annata.
     // Per la formazioneOld include anche i giocatori venduti nel mercato invernale.
     final tuttiGiocatori = isOldFormazione
         ? [...giocatori, ..._giocatoriVenduti]
         : giocatori;
+    final giocatoriPerId = {for (final g in tuttiGiocatori) g.id: g};
 
     final ordineRuoli = [
       'Portiere',
@@ -5865,50 +5890,17 @@ class _SquadrePageState extends State<SquadrePage> {
       'Centrocampista',
       'Attaccante',
     ];
-    final Map<String, List<GiocatoreFormazione>> panchinaPerRuolo = {};
-    for (var r in ordineRuoli) {
-      panchinaPerRuolo[r] = formazione.panchina.where((g) {
-        final ruoloEffettivo = (g.ruolo != null && g.ruolo!.isNotEmpty)
-            ? g.ruolo!
-            : tuttiGiocatori
-                  .firstWhere(
-                    (gj) => gj.id == g.idGiocatore,
-                    orElse: () => Giocatore(
-                      id: '',
-                      nome: '',
-                      eta: 0,
-                      ruolo: '',
-                      nazione: '',
-                      carriera: [],
-                      idSquadraAttuale: 0,
-                      attivo: false,
-                    ),
-                  )
-                  .ruolo;
-        return ruoloEffettivo == r;
-      }).toList();
+    final panchinaPerRuolo = {
+      for (final ruolo in ordineRuoli) ruolo: <GiocatoreFormazione>[],
+    };
+    final senzaRuolo = <GiocatoreFormazione>[];
+    for (final g in formazione.panchina) {
+      final giocatore = giocatoriPerId[g.idGiocatore];
+      final ruoloEffettivo = giocatore != null
+          ? _getRuoloEffettivo(giocatore, ruoloSalvato: g.ruolo)
+          : g.ruolo ?? '';
+      (panchinaPerRuolo[ruoloEffettivo] ?? senzaRuolo).add(g);
     }
-    // Giocatori senza ruolo specificato
-    final senzaRuolo = formazione.panchina.where((g) {
-      final ruoloEffettivo = (g.ruolo != null && g.ruolo!.isNotEmpty)
-          ? g.ruolo!
-          : tuttiGiocatori
-                .firstWhere(
-                  (gj) => gj.id == g.idGiocatore,
-                  orElse: () => Giocatore(
-                    id: '',
-                    nome: '',
-                    eta: 0,
-                    ruolo: '',
-                    nazione: '',
-                    carriera: [],
-                    idSquadraAttuale: 0,
-                    attivo: false,
-                  ),
-                )
-                .ruolo;
-      return !ordineRuoli.contains(ruoloEffettivo);
-    }).toList();
 
     List<Widget> panchinaRows = [];
     for (var ruolo in ordineRuoli) {

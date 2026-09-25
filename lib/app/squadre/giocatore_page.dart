@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/service/giocatori_provider.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
+import 'package:ligaduck/app/service/models/nazionale.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
+import 'package:ligaduck/app/service/nazionali_provider.dart';
 import 'package:ligaduck/app/service/squadre_provider.dart';
 import 'package:ligaduck/app/widgets/squadra_logo_widget.dart';
 import '../../services/commonService.dart';
@@ -10,7 +12,7 @@ import '../../services/commonService.dart';
 /// Pagina di dettaglio di un giocatore (o allenatore) di una squadra.
 class GiocatorePage extends StatefulWidget {
   final Giocatore giocatore;
-  final Squadra squadra;
+  final Squadra? squadra;
   final String campionato;
   final List<Color> gradientColors;
 
@@ -29,12 +31,13 @@ class GiocatorePage extends StatefulWidget {
 class _GiocatorePageState extends State<GiocatorePage>
     with SingleTickerProviderStateMixin {
   final Map<String, List<Squadra>> _squadrePerCampionato = {};
+  final Map<String, List<Nazionale>> _nazionaliPerCampionato = {};
   bool _loadingSquadre = true;
   Giocatore? _giocatoreEx;
   TabController? _tabController;
 
   Giocatore get giocatore => widget.giocatore;
-  Squadra get squadra => widget.squadra;
+  Squadra? get squadra => widget.squadra;
   String get campionato => widget.campionato;
 
   bool get _isAllenatore => giocatore.ruolo == 'Allenatore';
@@ -87,15 +90,20 @@ class _GiocatorePageState extends State<GiocatorePage>
   }
 
   Future<void> _loadSquadreCarriera() async {
+    final carriere = [...giocatore.carriera, ...?_giocatoreEx?.carriera];
     final campionati = {
-      ...giocatore.carriera.map((c) => c.campionato),
-      if (_giocatoreEx != null)
-        ..._giocatoreEx!.carriera.map((c) => c.campionato),
+      for (final c in carriere)
+        if (!(c.idNazionale?.isNotEmpty ?? false)) c.campionato,
+    };
+    final campionatiNazionali = {
+      for (final c in carriere)
+        if (c.idNazionale?.isNotEmpty ?? false) c.campionato,
     };
     final provider = SquadreProvider();
+    final nazionaliProvider = NazionaliProvider();
 
-    await Future.wait(
-      campionati.map((camp) async {
+    await Future.wait([
+      ...campionati.map((camp) async {
         try {
           final squadre = await provider.fetchSquadre(camp);
           _squadrePerCampionato[camp] = squadre;
@@ -103,20 +111,38 @@ class _GiocatorePageState extends State<GiocatorePage>
           // Ignora edizioni non recuperabili: verrà mostrato un placeholder.
         }
       }),
-    );
+      ...campionatiNazionali.map((camp) async {
+        try {
+          _nazionaliPerCampionato[camp] = await nazionaliProvider
+              .fetchNazionali(camp);
+        } catch (_) {
+          // Ignora edizioni non recuperabili: verrà mostrato un placeholder.
+        }
+      }),
+    ]);
 
     if (!mounted) return;
     setState(() => _loadingSquadre = false);
   }
 
   Squadra? _squadraPerCarriera(Carriera c) {
-    if (c.idSquadra == squadra.id && c.campionato == campionato) {
+    if (c.idNazionale?.isNotEmpty ?? false) return null;
+    if (c.idSquadra == squadra?.id && c.campionato == campionato) {
       return squadra;
     }
     final lista = _squadrePerCampionato[c.campionato];
     if (lista == null) return null;
     for (final s in lista) {
       if (s.id == c.idSquadra) return s;
+    }
+    return null;
+  }
+
+  Nazionale? _nazionalePerCarriera(Carriera c) {
+    if (!(c.idNazionale?.isNotEmpty ?? false)) return null;
+    for (final nazionale
+        in _nazionaliPerCampionato[c.campionato] ?? <Nazionale>[]) {
+      if (nazionale.id == c.idNazionale) return nazionale;
     }
     return null;
   }
@@ -129,7 +155,7 @@ class _GiocatorePageState extends State<GiocatorePage>
   }
 
   GiocatoreNonDisponibile? get _indisponibile {
-    for (final g in squadra.indisponibili) {
+    for (final g in squadra?.indisponibili ?? <GiocatoreNonDisponibile>[]) {
       if (g.idGiocatore == giocatore.id) return g;
     }
     return null;
@@ -140,15 +166,7 @@ class _GiocatorePageState extends State<GiocatorePage>
   /// attualmente visualizzata (es. carriera più vecchia 34, campionato attuale
   /// 44 => età + (44-34)).
   int _etaCalcolataFor(Giocatore g) {
-    if (g.carriera.isEmpty) return g.eta;
-    final edizioni = g.carriera
-        .map((c) => int.tryParse(c.campionato))
-        .whereType<int>()
-        .toList();
-    if (edizioni.isEmpty) return g.eta;
-    final piuVecchia = edizioni.reduce((a, b) => a < b ? a : b);
-    final attuale = int.tryParse(campionato) ?? piuVecchia;
-    return g.eta + (attuale - piuVecchia);
+    return g.etaNelCampionato(campionato);
   }
 
   @override
@@ -159,7 +177,7 @@ class _GiocatorePageState extends State<GiocatorePage>
     final carrieraAttuale =
         _findIn(
           g.carriera,
-          (c) => c.campionato == campionato && c.idSquadra == squadra.id,
+          (c) => c.campionato == campionato && c.idSquadra == squadra?.id,
         ) ??
         _findIn(g.carriera, (c) => c.campionato == campionato);
 
@@ -218,7 +236,19 @@ class _GiocatorePageState extends State<GiocatorePage>
     final indisponibile = g.id == giocatore.id ? _indisponibile : null;
 
     final carrieraOrdinata = [...g.carriera]
-      ..sort((a, b) => b.campionato.compareTo(a.campionato));
+      ..sort((a, b) {
+        final campionatoA = int.tryParse(a.campionato);
+        final campionatoB = int.tryParse(b.campionato);
+        final ordineCampionato = campionatoA != null && campionatoB != null
+            ? campionatoB.compareTo(campionatoA)
+            : b.campionato.compareTo(a.campionato);
+        if (ordineCampionato != 0) return ordineCampionato;
+
+        // Dopo un trasferimento a gennaio, la nuova squadra viene prima
+        // di quella lasciata, la cui carriera non è più attiva.
+        if (a.attivo != b.attivo) return a.attivo ? -1 : 1;
+        return 0;
+      });
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -528,6 +558,8 @@ class _GiocatorePageState extends State<GiocatorePage>
 
   Widget _buildCarrieraRow(Carriera c, bool isWide) {
     final squadraCarriera = _squadraPerCarriera(c);
+    final nazionaleCarriera = _nazionalePerCarriera(c);
+    final isNazionale = c.idNazionale?.isNotEmpty ?? false;
     final statPairs = <(String, int)>[
       ('PG', c.presenze),
       ('Gol', c.gol),
@@ -541,7 +573,13 @@ class _GiocatorePageState extends State<GiocatorePage>
     final logo = SizedBox(
       width: 36,
       height: 36,
-      child: squadraCarriera != null
+      child: nazionaleCarriera != null
+          ? SquadraLogoWidget(
+              codSquadra: nazionaleCarriera.codNazione,
+              nomeNazionale: nazionaleCarriera.nome,
+              size: 36,
+            )
+          : squadraCarriera != null
           ? SquadraLogoWidget(
               codSquadra: squadraCarriera.cod,
               squadra: squadraCarriera,
@@ -557,7 +595,11 @@ class _GiocatorePageState extends State<GiocatorePage>
           children: [
             Flexible(
               child: Text(
-                squadraCarriera?.nome ?? 'Squadra sconosciuta',
+                nazionaleCarriera?.nome ??
+                    squadraCarriera?.nome ??
+                    (isNazionale
+                        ? 'Nazionale sconosciuta'
+                        : 'Squadra sconosciuta'),
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),

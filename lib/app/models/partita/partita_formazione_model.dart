@@ -788,6 +788,7 @@ String _formatPlayerName(String nomeCompleto) {
         parole[0] != 'Gilberto' &&
         parole[0] != 'El' &&
         parole[0] != 'Nitron' &&
+        parole[0] != 'Dued' &&
         parole[0] != 'Del') {
       nomeDecodificato =
           '${parole[0][0].toUpperCase()}. ${parole.sublist(1).join(' ')}';

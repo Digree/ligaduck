@@ -9,6 +9,7 @@ import 'package:ligaduck/app/widgets/search_giocatori_widgets.dart';
 import 'package:ligaduck/services/commonService.dart';
 import 'package:provider/provider.dart';
 import 'package:ligaduck/app/squadre/squadre_page.dart';
+import 'package:ligaduck/app/squadre/giocatore_page.dart';
 
 class SearchPage extends StatefulWidget {
   final String campionato;
@@ -34,6 +35,8 @@ class _SearchPageState extends State<SearchPage> {
   List<Squadra> _squadre = [];
   String _sortType = 'Nome'; // Tipo di ordinamento: Nome, Squadra, Nazione
   final Set<int> _selectedNumeriMaglia = {};
+  static const _limitiEta = RangeValues(16, 30);
+  RangeValues _selectedEta = _limitiEta;
 
   @override
   void initState() {
@@ -126,6 +129,7 @@ class _SearchPageState extends State<SearchPage> {
             ? _selectedNazione
             : null;
         String? ruoloParam = _selectedRuolo;
+        final intervalloEta = _selectedEta;
 
         final risultati = await provider.fetchGiocatoriByNome(
           widget.campionato,
@@ -136,7 +140,11 @@ class _SearchPageState extends State<SearchPage> {
         );
 
         setState(() {
-          _risultatiRicerca = risultati;
+          _risultatiRicerca = risultati.where((giocatore) {
+            final eta = giocatore.etaNelCampionato(widget.campionato);
+            return eta >= intervalloEta.start &&
+                (intervalloEta.end == _limitiEta.end || eta <= intervalloEta.end);
+          }).toList();
           _isSearching = false;
         });
       } catch (e) {
@@ -366,6 +374,53 @@ class _SearchPageState extends State<SearchPage> {
                               ],
                             ),
                             SizedBox(height: 24),
+                            Text(
+                              'Età',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              _selectedEta.end == _limitiEta.end
+                                  ? '${_selectedEta.start.round()} anni o più'
+                                  : 'Da ${_selectedEta.start.round()} a '
+                                        '${_selectedEta.end.round()} anni',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            RangeSlider(
+                              values: _selectedEta,
+                              min: _limitiEta.start,
+                              max: _limitiEta.end,
+                              divisions: 14,
+                              activeColor: Colors.white,
+                              inactiveColor: Colors.white30,
+                              labels: RangeLabels(
+                                '${_selectedEta.start.round()} anni',
+                                _selectedEta.end == _limitiEta.end
+                                    ? '30+ anni'
+                                    : '${_selectedEta.end.round()} anni',
+                              ),
+                              semanticFormatterCallback: (value) =>
+                                  value == _limitiEta.end
+                                  ? '30 anni o più'
+                                  : '${value.round()} anni',
+                              onChanged: (values) {
+                                setDialogState(() {
+                                  _selectedEta = values;
+                                });
+                              },
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: const [
+                                Text('16', style: TextStyle(color: Colors.white)),
+                                Text('30+', style: TextStyle(color: Colors.white)),
+                              ],
+                            ),
+                            SizedBox(height: 24),
                             // Numero maglia multi-select
                             Text(
                               'Numero maglia',
@@ -545,6 +600,7 @@ class _SearchPageState extends State<SearchPage> {
                             _selectedNazioneSquadre = null;
                             _selectedRuolo = null;
                             _selectedNumeriMaglia.clear();
+                            _selectedEta = _limitiEta;
                           });
                         },
                         color: Colors.red,
@@ -671,13 +727,47 @@ class _SearchPageState extends State<SearchPage> {
             _sortType = newSort;
           });
         },
-        onGiocatoreTap: (giocatore) {
-          // TODO: Naviga alla pagina del giocatore
-        },
+        onGiocatoreTap: _openGiocatorePage,
       );
     } else {
       return _buildRisultatiSquadre();
     }
+  }
+
+  void _openGiocatorePage(Giocatore giocatore) {
+    final carriera = findCarrieraCampionato(giocatore, widget.campionato);
+    Squadra? squadra;
+    for (final candidata in _squadre) {
+      if (candidata.id == carriera?.idSquadra) {
+        squadra = candidata;
+        break;
+      }
+    }
+
+    final primaryColor = squadra != null && squadra.colori.isNotEmpty
+        ? CommonService.getColor('primary', squadra)
+        : Colors.grey;
+    final gradientColors = [
+      primaryColor,
+      if (squadra != null && squadra.colori.length > 1)
+        CommonService.getColor('secondary', squadra)
+      else
+        primaryColor,
+      if (squadra != null && squadra.colori.length > 2)
+        CommonService.getColor('tertiary', squadra),
+    ];
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => GiocatorePage(
+          giocatore: giocatore,
+          squadra: squadra,
+          campionato: widget.campionato,
+          gradientColors: gradientColors,
+        ),
+      ),
+    );
   }
 
   Widget _buildRisultatiSquadre() {

@@ -21,6 +21,18 @@ class Giocatore {
     required this.attivo,
   });
 
+  /// Età nell'edizione indicata, a partire dalla prima carriera registrata.
+  int etaNelCampionato(String campionato) {
+    final edizioni = carriera
+        .map((c) => int.tryParse(c.campionato))
+        .whereType<int>()
+        .toList();
+    if (edizioni.isEmpty) return eta;
+    final primaEdizione = edizioni.reduce((a, b) => a < b ? a : b);
+    final edizioneAttuale = int.tryParse(campionato) ?? primaEdizione;
+    return eta + (edizioneAttuale - primaEdizione);
+  }
+
   factory Giocatore.fromJson(Map<String, dynamic> json) {
     return Giocatore(
       id: json['id'],
