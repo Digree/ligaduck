@@ -9,7 +9,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:file_selector/file_selector.dart';
 import 'dart:io';
-import 'dart:typed_data';
 
 class SettingsIcon extends StatelessWidget {
   final Color iconColor;
@@ -428,6 +427,8 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
   }
 
   Future<void> _startDownload() async {
+    http.Client? client;
+    IOSink? output;
     try {
       // Determina il nome del file
       final fileName = widget.downloadUrl.split('/').last;
@@ -501,28 +502,42 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
       });
 
       // Crea la richiesta HTTP
-      final client = http.Client();
+      client = http.Client();
       final request = http.Request('GET', Uri.parse(widget.downloadUrl));
       final response = await client.send(request);
 
       if (response.statusCode == 200) {
-        // Ottieni la dimensione totale del file
         final contentLength = response.contentLength ?? 0;
-        final bytes = <int>[];
+        var downloadedBytes = 0;
+        var lastProgressUpdate = DateTime.now();
+        output = File(filePath).openWrite();
 
         setState(() {
           _status = 'Download in corso...';
         });
 
-        // Scarica il file con progresso
         await for (var chunk in response.stream) {
-          bytes.addAll(chunk);
-          if (contentLength > 0) {
+          output.add(chunk);
+          downloadedBytes += chunk.length;
+
+          final now = DateTime.now();
+          if (contentLength > 0 &&
+              now.difference(lastProgressUpdate).inMilliseconds >= 200) {
             setState(() {
-              _progress = bytes.length / contentLength;
+              _progress = downloadedBytes / contentLength;
+              _status =
+                  'Download in corso... '
+                  '${(downloadedBytes / (1024 * 1024)).toStringAsFixed(0)} MB';
             });
+            lastProgressUpdate = now;
           }
         }
+
+        await output.flush();
+        await output.close();
+        output = null;
+        client.close();
+        client = null;
 
         setState(() {
           _status = 'Salvataggio file...';
@@ -530,25 +545,8 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
 
         print('Path salvataggio: $filePath');
 
-        if (isDesktop) {
-          // Su desktop usa XFile per salvare
-          final file = XFile.fromData(
-            Uint8List.fromList(bytes),
-            name: fileName,
-            mimeType: Platform.isMacOS
-                ? 'application/x-apple-diskimage'
-                : 'application/zip',
-          );
-
-          await file.saveTo(filePath);
-        } else {
-          // Su mobile usa File per salvare direttamente
-          final file = File(filePath);
-          await file.writeAsBytes(bytes);
-        }
-
         print('File salvato con successo');
-        print('Dimensione file: ${bytes.length} bytes');
+        print('Dimensione file: $downloadedBytes bytes');
 
         setState(() {
           _progress = 1.0;
@@ -568,6 +566,10 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
         throw Exception('Errore HTTP: ${response.statusCode}');
       }
     } catch (e) {
+      try {
+        await output?.close();
+      } catch (_) {}
+      client?.close();
       if (!mounted) return;
       setState(() {
         _status = 'Errore: $e';
@@ -588,10 +590,13 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
     }
   }
 
-  String _getInstructionText() {
+  String _getInstructionText(String filePath) {
     if (Platform.isMacOS) {
       return 'Clicca "Apri file" per montare e installare il DMG.';
     } else if (Platform.isWindows) {
+      if (filePath.toLowerCase().endsWith('.msix')) {
+        return 'Apri il file MSIX e segui App Installer per installare l\'aggiornamento.';
+      }
       return 'Clicca "Apri file" per estrarre il contenuto del ZIP.';
     } else if (Platform.isAndroid) {
       return 'Il file APK è stato salvato nella cartella Download. Clicca "Installa" per installare l\'APK. Potrebbero essere necessari permessi per installare app da origini sconosciute.';
@@ -642,7 +647,7 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
               ),
               SizedBox(height: 16),
               Text(
-                _getInstructionText(),
+                _getInstructionText(filePath),
                 style: TextStyle(fontSize: 14, color: Colors.grey[700]),
               ),
             ],

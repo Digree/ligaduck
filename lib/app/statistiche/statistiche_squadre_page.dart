@@ -629,7 +629,7 @@ class _StatisticheSquadrePageState extends State<StatisticheSquadrePage> {
     Widget kit(int numero) {
       return Expanded(
         child: Image.asset(
-          'assets/divise/divise_$campionato/${squadra.cod}_$numero$suffix.png',
+          'assets/divise/divise_$campionato/${squadra.cod}_$numero$suffix.webp',
           fit: BoxFit.contain,
           errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
         ),

@@ -2,6 +2,37 @@
 
 Script modulari per creare release di Liga Duck Manager.
 
+## Ottimizza le divise
+
+Le divise sono WebP con lato massimo di 768 px. Quando aggiungi una stagione,
+inserisci la sua cartella `assets/divise/divise_<stagione>/` nella sezione
+`flutter.assets` di `pubspec.yaml`. Aggiungi o aggiorna le divise come PNG, poi
+dalla root del repository crea l'ambiente Python e installa Pillow:
+
+```bash
+python3 -m venv .venv-assets
+.venv-assets/bin/python -m pip install -r scripts/requirements-assets.txt
+```
+
+Poi converti le nuove divise aggiunte sotto `assets/divise`:
+
+```bash
+.venv-assets/bin/python scripts/convert_divise_to_webp.py --directory assets/divise/divise_<stagione>
+```
+
+Lo script conserva i PNG per impostazione predefinita. Dopo aver verificato le
+WebP e aggiornato eventuali riferimenti Dart, rimuovi i PNG convertiti usando
+l'opzione esplicita:
+
+```bash
+.venv-assets/bin/python scripts/convert_divise_to_webp.py --delete-source
+```
+
+Su Windows usa `.venv-assets\\Scripts\\python.exe` al posto del percorso
+`.venv-assets/bin/python`. Dopo la conversione, rigenera il manifest Flutter con
+`flutter pub get`. Se vengono usati getter tipizzati da FlutterGen, rigenera
+anche il file con `dart run build_runner build --delete-conflicting-outputs`.
+
 ## 🎯 Script Disponibili
 
 ### 1. **Aggiorna Versione**

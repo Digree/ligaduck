@@ -984,7 +984,7 @@ class _NostalgiaMatchCardState extends State<NostalgiaMatchCard> {
           alignment: Alignment.center,
           children: [
             Image.asset(
-              'assets/divise/divise_${widget.campionato}/${codSquadra}_$divisa.png',
+              'assets/divise/divise_${widget.campionato}/${codSquadra}_$divisa.webp',
               width: 26,
               height: 26,
               fit: BoxFit.cover,

@@ -455,7 +455,7 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
                     alignment: Alignment.center,
                     children: [
                       Image.asset(
-                        'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_1.png',
+                        'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_1.webp',
                         width: 40,
                         height: 40,
                         fit: BoxFit.contain,

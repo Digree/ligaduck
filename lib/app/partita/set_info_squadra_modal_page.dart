@@ -434,8 +434,8 @@ class _SetInfoSquadraModalPageState extends State<SetInfoSquadraModalPage> {
     bool isSelected = currentDivisa == divisaNumber;
     final altSuffix = _useDivisaAlt() ? '_alt' : '';
     String assetPath = team == 0
-        ? 'assets/divise/divise_${widget.campionato}/${widget.partita.codHome}_$divisaNumber$altSuffix.png'
-        : 'assets/divise/divise_${widget.campionato}/${widget.partita.codAway}_$divisaNumber$altSuffix.png';
+        ? 'assets/divise/divise_${widget.campionato}/${widget.partita.codHome}_$divisaNumber$altSuffix.webp'
+        : 'assets/divise/divise_${widget.campionato}/${widget.partita.codAway}_$divisaNumber$altSuffix.webp';
 
     return FutureBuilder<bool>(
       future: _assetExists(assetPath),
@@ -507,8 +507,8 @@ class _SetInfoSquadraModalPageState extends State<SetInfoSquadraModalPage> {
     final altSuffix = _useDivisaAlt() ? '_alt' : '';
     for (int i = 1; i <= 3; i++) {
       String assetPath = widget.team == 0
-          ? 'assets/divise/divise_${widget.campionato}/${widget.partita.codHome}_$i$altSuffix.png'
-          : 'assets/divise/divise_${widget.campionato}/${widget.partita.codAway}_$i$altSuffix.png';
+          ? 'assets/divise/divise_${widget.campionato}/${widget.partita.codHome}_$i$altSuffix.webp'
+          : 'assets/divise/divise_${widget.campionato}/${widget.partita.codAway}_$i$altSuffix.webp';
       if (await _assetExists(assetPath)) {
         return true;
       }

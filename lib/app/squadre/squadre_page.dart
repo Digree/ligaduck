@@ -1408,7 +1408,7 @@ class _SquadrePageState extends State<SquadrePage> {
                 Flexible(
                   flex: 1,
                   child: Image.asset(
-                    'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_1$suffix.png',
+                    'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_1$suffix.webp',
                     fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) =>
                         SizedBox.shrink(),
@@ -1417,7 +1417,7 @@ class _SquadrePageState extends State<SquadrePage> {
                 Flexible(
                   flex: 1,
                   child: Image.asset(
-                    'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_2$suffix.png',
+                    'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_2$suffix.webp',
                     fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) =>
                         SizedBox.shrink(),
@@ -1426,7 +1426,7 @@ class _SquadrePageState extends State<SquadrePage> {
                 Flexible(
                   flex: 1,
                   child: Image.asset(
-                    'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_3$suffix.png',
+                    'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_3$suffix.webp',
                     fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) =>
                         SizedBox.shrink(),
@@ -3408,7 +3408,7 @@ class _SquadrePageState extends State<SquadrePage> {
                   alignment: Alignment.center,
                   children: [
                     Image.asset(
-                      'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_1.png',
+                      'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_1.webp',
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) =>
                           _buildJerseyPlaceholder(
@@ -5962,7 +5962,7 @@ class _SquadrePageState extends State<SquadrePage> {
                     alignment: Alignment.center,
                     children: [
                       Image.asset(
-                        'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_1.png',
+                        'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_1.webp',
                         fit: BoxFit.contain,
                         errorBuilder: (_, _, _) => Icon(
                           Icons.person,
@@ -6016,7 +6016,7 @@ class _SquadrePageState extends State<SquadrePage> {
                   width: 32,
                   height: 32,
                   child: Image.asset(
-                    'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_1.png',
+                    'assets/divise/divise_${widget.campionato}/${widget.squadra.cod}_1.webp',
                     fit: BoxFit.contain,
                     errorBuilder: (_, _, _) => Icon(
                       Icons.person,

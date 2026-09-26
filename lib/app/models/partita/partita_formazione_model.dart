@@ -309,7 +309,7 @@ Widget buildGiocatore(
           alignment: Alignment.center,
           children: [
             Image.asset(
-              'assets/divise/divise_${model.campionato}/${model.codSquadra}_1.png',
+              'assets/divise/divise_${model.campionato}/${model.codSquadra}_1.webp',
               width: 40,
               height: 40,
               fit: BoxFit.cover,
@@ -414,8 +414,8 @@ Widget buildGiocatore(
           children: [
             Image.asset(
               model.divisa != null
-                  ? 'assets/divise/divise_${model.campionato}/${model.codSquadra}_${model.divisa}${model.useAlt ? '_alt' : ''}.png'
-                  : 'assets/divise/divise_${model.campionato}/${model.codSquadra}_1${model.useAlt ? '_alt' : ''}.png',
+                  ? 'assets/divise/divise_${model.campionato}/${model.codSquadra}_${model.divisa}${model.useAlt ? '_alt' : ''}.webp'
+                  : 'assets/divise/divise_${model.campionato}/${model.codSquadra}_1${model.useAlt ? '_alt' : ''}.webp',
               width: 40,
               height: 40,
               fit: BoxFit.cover,
@@ -622,7 +622,7 @@ void _showGiocatoreDropdown(
                   decoration: BoxDecoration(
                     image: DecorationImage(
                       image: AssetImage(
-                        'assets/divise/divise_${model.campionato}/${model.codSquadra}_1.png',
+                        'assets/divise/divise_${model.campionato}/${model.codSquadra}_1.webp',
                       ),
                       fit: BoxFit.cover,
                     ),

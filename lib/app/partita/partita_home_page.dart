@@ -667,6 +667,11 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(200),
         child: AppBar(
+          backgroundColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          forceMaterialTransparency: true,
           leading: IconButton(
             icon: Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () {
@@ -7293,7 +7298,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
 
   String _getDivisaPath(String cod, int divisa) {
     final suffix = _useDivisaAlt(cod) ? '_alt' : '';
-    return 'assets/divise/divise_${widget.campionato}/${cod}_$divisa$suffix.png';
+    return 'assets/divise/divise_${widget.campionato}/${cod}_$divisa$suffix.webp';
   }
 
   Future<List<String>> getColoriSquadra(String codSquadra) async {
