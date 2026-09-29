@@ -60,6 +60,13 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   final List<bool> _periodiGioco = List.filled(6, false);
   int _periodoCorrente = -1; // -1 = nessun periodo selezionato
 
+  Color get _coloreCompetizione {
+    final colori = competizione?.colori ?? [];
+    if (colori.isEmpty) return const Color(0xFF007AFF);
+    final hex = colori.first.replaceFirst('#', 'FF');
+    return Color(int.tryParse(hex, radix: 16) ?? 0xFF007AFF);
+  }
+
   static const List<String> _labelFasce = [
     '0-15',
     '15-30',
@@ -663,15 +670,23 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
 
     bool hasRigori121 = partita!.tabellino.any((e) => e.minuto == 121);
 
+    Color headerColorAt(int index, Color fallback) {
+      if (competizione!.colori.length <= index) return fallback;
+      final hex = competizione!.colori[index].replaceFirst('#', 'FF');
+      return Color(int.tryParse(hex, radix: 16) ?? fallback.toARGB32());
+    }
+
+    final headerStartColor = headerColorAt(0, const Color(0xFF1565C0));
+    final headerEndColor = headerColorAt(1, headerStartColor);
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(200),
         child: AppBar(
-          backgroundColor: Colors.transparent,
+          backgroundColor: headerStartColor,
           surfaceTintColor: Colors.transparent,
           elevation: 0,
           scrolledUnderElevation: 0,
-          forceMaterialTransparency: true,
           leading: IconButton(
             icon: Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () {
@@ -710,38 +725,14 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             ),
           ],
           flexibleSpace: Container(
-            decoration: competizione == null
-                ? BoxDecoration(color: Colors.grey[800])
-                : BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Color(
-                          competizione!.colori.isNotEmpty
-                              ? int.parse(
-                                  competizione!.colori[0].replaceFirst(
-                                    '#',
-                                    'FF',
-                                  ),
-                                  radix: 16,
-                                )
-                              : 0xFF000000,
-                        ),
-                        Color(
-                          competizione!.colori.length > 1
-                              ? int.parse(
-                                  competizione!.colori[1].replaceFirst(
-                                    '#',
-                                    'FF',
-                                  ),
-                                  radix: 16,
-                                )
-                              : 0xFF000000,
-                        ),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
+            decoration: BoxDecoration(
+              color: headerStartColor,
+              gradient: LinearGradient(
+                colors: [headerStartColor, headerEndColor],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
             child: SafeArea(
               child: Stack(
                 children: [
@@ -6719,7 +6710,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     );
   }
 
-  void rimuoviDallaPanchina(team, giocatore) {
+  void rimuoviDallaPanchina(int team, GiocatoreFormazione giocatore) {
     setState(() {
       if (team == 0) {
         partita!.formazioneHome.nonConvocati.add(giocatore);
@@ -6738,6 +6729,103 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
           (a, b) => a.pos.compareTo(b.pos),
         );
       }
+    });
+
+    _chiediSeInfortunato(team, giocatore);
+  }
+
+  Future<void> _chiediSeInfortunato(
+    int team,
+    GiocatoreFormazione giocatore,
+  ) async {
+    final infortunato = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(
+          'Giocatore infortunato?',
+          style: TextStyle(
+            color: Colors.black,
+            fontFamily: competizione?.id == 5
+                ? 'champions'
+                : competizione?.id == 6 || competizione?.id == 7
+                ? 'europa'
+                : competizione?.id == 8
+                ? 'supercup'
+                : null,
+          ),
+        ),
+        content: Text(
+          "Puoi segnare l'infortunio solo per questa partita. Non viene aggiunto agli indisponibili della squadra.",
+          style: TextStyle(
+            color: Colors.black,
+            fontFamily: competizione?.id == 5
+                ? 'champions'
+                : competizione?.id == 6 || competizione?.id == 7
+                ? 'europa'
+                : competizione?.id == 8
+                ? 'supercup'
+                : null,
+          ),
+        ),
+        actions: [
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: _coloreCompetizione),
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(
+              'Solo non convocato',
+              style: TextStyle(
+                fontFamily: competizione?.id == 5
+                    ? 'champions'
+                    : competizione?.id == 6 || competizione?.id == 7
+                    ? 'europa'
+                    : competizione?.id == 8
+                    ? 'supercup'
+                    : null,
+              ),
+            ),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: _coloreCompetizione),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(
+              'Segna infortunio',
+              style: TextStyle(
+                fontFamily: competizione?.id == 5
+                    ? 'champions'
+                    : competizione?.id == 6 || competizione?.id == 7
+                    ? 'europa'
+                    : competizione?.id == 8
+                    ? 'supercup'
+                    : null,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (infortunato != true || !mounted) return;
+
+    final formazione = team == 0
+        ? partita!.formazioneHome
+        : partita!.formazioneAway;
+    if (formazione.indisponibili.any(
+      (element) => element.idGiocatore == giocatore.idGiocatore,
+    )) {
+      return;
+    }
+
+    setState(() {
+      formazione.indisponibili.add(
+        GiocatoreNonDisponibile(
+          idGiocatore: giocatore.idGiocatore,
+          nome: giocatore.nome,
+          pos: giocatore.pos,
+          motivo: 'inf',
+          durata: 1,
+          idCompetizione: competizione!.id,
+        ),
+      );
     });
   }
 
@@ -6761,6 +6849,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
+              color: Colors.black,
               fontFamily: competizione?.id == 5
                   ? 'champions'
                   : competizione?.id == 6 || competizione?.id == 7
@@ -6775,154 +6864,224 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
               in (team == 0
                   ? partita!.formazioneHome.indisponibili
                   : partita!.formazioneAway.indisponibili))
-            Container(
-              //width: screenWidth * 1,
-              height: 60,
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                border: Border(
-                  bottom: BorderSide(
-                    color: Colors.grey[350] ?? Colors.grey,
-                    width: 1.0,
+            Dismissible(
+              key: ValueKey('${team}_${giocatore.idGiocatore}'),
+              direction: admin && !partita!.salvata && giocatore.motivo == 'inf'
+                  ? DismissDirection.endToStart
+                  : DismissDirection.none,
+              background: Container(
+                color: _coloreCompetizione,
+                alignment: Alignment.centerRight,
+                padding: EdgeInsets.only(right: 16),
+                child: Icon(Icons.delete_outline, color: Colors.white),
+              ),
+              confirmDismiss: (direction) async {
+                if (!admin || partita!.salvata || giocatore.motivo != 'inf') {
+                  return false;
+                }
+                return await showDialog<bool>(
+                      context: context,
+                      builder: (dialogContext) => AlertDialog(
+                        title: Text(
+                          'Rimuovi infortunio',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                        content: Text(
+                          'Rimuovere l\'infortunio solo da questa partita?',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                        actions: [
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              foregroundColor: _coloreCompetizione,
+                            ),
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(false),
+                            child: Text('Annulla'),
+                          ),
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              foregroundColor: _coloreCompetizione,
+                            ),
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(true),
+                            child: Text('Rimuovi'),
+                          ),
+                        ],
+                      ),
+                    ) ??
+                    false;
+              },
+              onDismissed: (direction) =>
+                  _rimuoviInfortunioDallaPartita(team, giocatore),
+              child: Container(
+                //width: screenWidth * 1,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Colors.grey[350] ?? Colors.grey,
+                      width: 1.0,
+                    ),
                   ),
                 ),
-              ),
-              child: Row(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.only(left: 20),
-                    child: SizedBox(
-                      width: 40,
-                      height: 40,
-                      child:
-                          (team == 0 &&
-                              (partita!.idNazionaleHome?.isNotEmpty ?? false))
-                          ? _buildJerseyFromStringColors(
-                              giocatore.pos,
-                              _coloriNazionaleHome,
-                            )
-                          : (team == 1 &&
-                                (partita!.idNazionaleAway?.isNotEmpty ?? false))
-                          ? _buildJerseyFromStringColors(
-                              giocatore.pos,
-                              _coloriNazionaleAway,
-                            )
-                          : Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                Image.asset(
-                                  team == 0
-                                      ? _getDivisaPath(
-                                          partita!.codHome,
-                                          partita!.divisaHome,
-                                        )
-                                      : _getDivisaPath(
-                                          partita!.codAway,
-                                          partita!.divisaAway,
+                child: Row(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.only(left: 20),
+                      child: SizedBox(
+                        width: 40,
+                        height: 40,
+                        child:
+                            (team == 0 &&
+                                (partita!.idNazionaleHome?.isNotEmpty ?? false))
+                            ? _buildJerseyFromStringColors(
+                                giocatore.pos,
+                                _coloriNazionaleHome,
+                              )
+                            : (team == 1 &&
+                                  (partita!.idNazionaleAway?.isNotEmpty ??
+                                      false))
+                            ? _buildJerseyFromStringColors(
+                                giocatore.pos,
+                                _coloriNazionaleAway,
+                              )
+                            : Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  Image.asset(
+                                    team == 0
+                                        ? _getDivisaPath(
+                                            partita!.codHome,
+                                            partita!.divisaHome,
+                                          )
+                                        : _getDivisaPath(
+                                            partita!.codAway,
+                                            partita!.divisaAway,
+                                          ),
+                                    width: 40,
+                                    height: 40,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) =>
+                                        _buildJerseyPlaceholderWithTeamColors(
+                                          giocatore.pos,
+                                          team == 0
+                                              ? partita!.codHome
+                                              : partita!.codAway,
                                         ),
-                                  width: 40,
-                                  height: 40,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      _buildJerseyPlaceholderWithTeamColors(
-                                        giocatore.pos,
-                                        team == 0
-                                            ? partita!.codHome
-                                            : partita!.codAway,
-                                      ),
-                                ),
-                                Text(
-                                  '${giocatore.pos}',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 16,
-                                    fontFamily: competizione?.id == 5
-                                        ? 'champions'
-                                        : competizione?.id == 6 ||
-                                              competizione?.id == 7
-                                        ? 'europa'
-                                        : competizione?.id == 8
-                                        ? 'supercup'
-                                        : null,
-                                    shadows: [
-                                      Shadow(
-                                        offset: Offset(-1.0, -1.0),
-                                        blurRadius: 0.0,
-                                        color: Colors.black,
-                                      ),
-                                      Shadow(
-                                        offset: Offset(1.0, -1.0),
-                                        blurRadius: 0.0,
-                                        color: Colors.black,
-                                      ),
-                                      Shadow(
-                                        offset: Offset(1.0, 1.0),
-                                        blurRadius: 0.0,
-                                        color: Colors.black,
-                                      ),
-                                      Shadow(
-                                        offset: Offset(-1.0, 1.0),
-                                        blurRadius: 0.0,
-                                        color: Colors.black,
-                                      ),
-                                    ],
                                   ),
-                                ),
-                              ],
+                                  Text(
+                                    '${giocatore.pos}',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 16,
+                                      fontFamily: competizione?.id == 5
+                                          ? 'champions'
+                                          : competizione?.id == 6 ||
+                                                competizione?.id == 7
+                                          ? 'europa'
+                                          : competizione?.id == 8
+                                          ? 'supercup'
+                                          : null,
+                                      shadows: [
+                                        Shadow(
+                                          offset: Offset(-1.0, -1.0),
+                                          blurRadius: 0.0,
+                                          color: Colors.black,
+                                        ),
+                                        Shadow(
+                                          offset: Offset(1.0, -1.0),
+                                          blurRadius: 0.0,
+                                          color: Colors.black,
+                                        ),
+                                        Shadow(
+                                          offset: Offset(1.0, 1.0),
+                                          blurRadius: 0.0,
+                                          color: Colors.black,
+                                        ),
+                                        Shadow(
+                                          offset: Offset(-1.0, 1.0),
+                                          blurRadius: 0.0,
+                                          color: Colors.black,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.only(left: 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              CommonService.decodePlayerName(giocatore.nome),
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: competizione?.id == 5
+                                    ? 'champions'
+                                    : competizione?.id == 6 ||
+                                          competizione?.id == 7
+                                    ? 'europa'
+                                    : competizione?.id == 8
+                                    ? 'supercup'
+                                    : null,
+                              ),
                             ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(left: 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          CommonService.decodePlayerName(giocatore.nome),
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: competizione?.id == 5
-                                ? 'champions'
-                                : competizione?.id == 6 || competizione?.id == 7
-                                ? 'europa'
-                                : competizione?.id == 8
-                                ? 'supercup'
-                                : null,
-                          ),
+                            SizedBox(height: 2),
+                            Text(
+                              giocatore.motivo == 'esp'
+                                  ? 'Squalificato'
+                                  : giocatore.motivo == 'inf'
+                                  ? 'Infortunato'
+                                  : '',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 11,
+                                fontWeight: FontWeight.normal,
+                                fontFamily: competizione?.id == 5
+                                    ? 'champions'
+                                    : competizione?.id == 6 ||
+                                          competizione?.id == 7
+                                    ? 'europa'
+                                    : competizione?.id == 8
+                                    ? 'supercup'
+                                    : null,
+                              ),
+                            ),
+                          ],
                         ),
-                        SizedBox(height: 2),
-                        Text(
-                          giocatore.motivo == 'esp'
-                              ? 'Squalificato'
-                              : giocatore.motivo == 'inf'
-                              ? 'Infortunato'
-                              : '',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 11,
-                            fontWeight: FontWeight.normal,
-                            fontFamily: competizione?.id == 5
-                                ? 'champions'
-                                : competizione?.id == 6 || competizione?.id == 7
-                                ? 'europa'
-                                : competizione?.id == 8
-                                ? 'supercup'
-                                : null,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
         ],
       ),
     );
+  }
+
+  void _rimuoviInfortunioDallaPartita(
+    int team,
+    GiocatoreNonDisponibile giocatore,
+  ) {
+    final formazione = team == 0
+        ? partita!.formazioneHome
+        : partita!.formazioneAway;
+    setState(() {
+      formazione.indisponibili.removeWhere(
+        (element) => element.idGiocatore == giocatore.idGiocatore,
+      );
+    });
   }
 
   Widget buildNonConvocati(int team) {

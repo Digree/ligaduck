@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
+import 'package:ligaduck/app/service/models/nazionale.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/widgets/squadra_logo_widget.dart';
 import 'package:ligaduck/services/commonService.dart';
@@ -101,15 +102,66 @@ Carriera? findCarrieraCampionato(Giocatore giocatore, String campionato) {
   );
 }
 
+Carriera? findCarrieraNazionaleCampionato(
+  Giocatore giocatore,
+  String campionato,
+) {
+  final carriereNazionali = giocatore.carriera
+      .where(
+        (c) =>
+            c.campionato == campionato && (c.idNazionale?.isNotEmpty ?? false),
+      )
+      .toList();
+  if (carriereNazionali.isEmpty) return null;
+
+  return carriereNazionali.lastWhere(
+    (c) => c.attivo,
+    orElse: () => carriereNazionali.last,
+  );
+}
+
+String _nomeSquadraGiocatore(
+  Giocatore giocatore,
+  List<Squadra> squadre,
+  List<Nazionale> nazionali,
+  String campionato,
+) {
+  if (giocatore.ruolo == 'Allenatore') {
+    final carrieraNazionale = findCarrieraNazionaleCampionato(
+      giocatore,
+      campionato,
+    );
+    final idNazionale = carrieraNazionale?.idNazionale;
+    if (idNazionale != null) {
+      for (final nazionale in nazionali) {
+        if (nazionale.id == idNazionale) return nazionale.nome;
+      }
+    }
+  }
+
+  final carriera = findCarrieraCampionato(giocatore, campionato);
+  if (carriera != null) {
+    for (final squadra in squadre) {
+      if (squadra.id == carriera.idSquadra) return squadra.nome;
+    }
+  }
+  return '';
+}
+
 /// Widget per costruire la card di un giocatore
 Widget buildGiocatoreCard({
   required Giocatore giocatore,
   required List<Squadra> squadre,
+  required List<Nazionale> nazionali,
   required String campionato,
   VoidCallback? onTap,
 }) {
   Squadra? squadra;
   final carrieraPiuRecente = findCarrieraCampionato(giocatore, campionato);
+  Nazionale? nazionale;
+  final carrieraNazionale = giocatore.ruolo == 'Allenatore'
+      ? findCarrieraNazionaleCampionato(giocatore, campionato)
+      : null;
 
   try {
     // Trova la squadra usando l'idSquadra dalla carriera
@@ -118,6 +170,15 @@ Widget buildGiocatoreCard({
     }
   } catch (e) {
     // Squadra non trovata
+  }
+
+  try {
+    final idNazionale = carrieraNazionale?.idNazionale;
+    if (idNazionale != null) {
+      nazionale = nazionali.firstWhere((n) => n.id == idNazionale);
+    }
+  } catch (e) {
+    // Nazionale non trovata
   }
 
   return Card(
@@ -167,6 +228,30 @@ Widget buildGiocatoreCard({
                       ],
                     ),
                   ],
+                  if (nazionale != null &&
+                      (carrieraNazionale?.esonero != true)) ...[
+                    SizedBox(height: 6),
+                    Row(
+                      children: [
+                        SquadraLogoWidget(
+                          codSquadra: nazionale.codNazione,
+                          nomeNazionale: nazionale.nome,
+                          size: 18,
+                        ),
+                        SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            CommonService.decodePlayerName(nazionale.nome),
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[700],
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -197,6 +282,7 @@ Widget buildGiocatoreCard({
 Widget buildRisultatiGiocatori({
   required List<Giocatore> risultati,
   required List<Squadra> squadre,
+  required List<Nazionale> nazionali,
   required String campionato,
   required String sortType,
   required Function(String) onSortChanged,
@@ -236,7 +322,13 @@ Widget buildRisultatiGiocatori({
 
   // Ordina i risultati in base al tipo selezionato
   List<Giocatore> risultatiOrdinati = List.from(risultati);
-  _sortRisultatiGiocatori(risultatiOrdinati, sortType, squadre, campionato);
+  _sortRisultatiGiocatori(
+    risultatiOrdinati,
+    sortType,
+    squadre,
+    nazionali,
+    campionato,
+  );
 
   return Container(
     decoration: BoxDecoration(
@@ -319,6 +411,7 @@ Widget buildRisultatiGiocatori({
               return buildGiocatoreCard(
                 giocatore: risultatiOrdinati[index],
                 squadre: squadre,
+                nazionali: nazionali,
                 campionato: campionato,
                 onTap: onGiocatoreTap != null
                     ? () => onGiocatoreTap(risultatiOrdinati[index])
@@ -336,6 +429,7 @@ void _sortRisultatiGiocatori(
   List<Giocatore> risultati,
   String sortType,
   List<Squadra> squadre,
+  List<Nazionale> nazionali,
   String campionato,
 ) {
   switch (sortType) {
@@ -344,35 +438,19 @@ void _sortRisultatiGiocatori(
       break;
     case 'Squadra':
       risultati.sort((a, b) {
-        // Trova le squadre per entrambi i giocatori
-        String? nomeSquadraA;
-        String? nomeSquadraB;
-
-        try {
-          final carrieraA = findCarrieraCampionato(a, campionato);
-          if (carrieraA != null) {
-            final squadraA = squadre.firstWhere(
-              (s) => s.id == carrieraA.idSquadra,
-            );
-            nomeSquadraA = squadraA.nome;
-          }
-        } catch (e) {
-          nomeSquadraA = '';
-        }
-
-        try {
-          final carrieraB = findCarrieraCampionato(b, campionato);
-          if (carrieraB != null) {
-            final squadraB = squadre.firstWhere(
-              (s) => s.id == carrieraB.idSquadra,
-            );
-            nomeSquadraB = squadraB.nome;
-          }
-        } catch (e) {
-          nomeSquadraB = '';
-        }
-
-        return (nomeSquadraA ?? '').compareTo(nomeSquadraB ?? '');
+        final nomeSquadraA = _nomeSquadraGiocatore(
+          a,
+          squadre,
+          nazionali,
+          campionato,
+        );
+        final nomeSquadraB = _nomeSquadraGiocatore(
+          b,
+          squadre,
+          nazionali,
+          campionato,
+        );
+        return nomeSquadraA.compareTo(nomeSquadraB);
       });
       break;
     case 'Nazione':

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/service/giocatori_provider.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
+import 'package:ligaduck/app/service/models/nazionale.dart';
 import 'package:ligaduck/app/service/squadre_provider.dart';
+import 'package:ligaduck/app/service/nazionali_provider.dart';
 import 'package:ligaduck/app/service/mercato_provider.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/service/models/trasferimento.dart';
@@ -33,6 +35,7 @@ class _AcquistoPageState extends State<AcquistoPage> {
   bool _isSearching = false;
   bool _hasSearched = false;
   List<Squadra> _squadre = [];
+  List<Nazionale> _nazionali = [];
   String _sortType = 'Nome'; // Tipo di ordinamento: Nome, Squadra, Nazione
   final Set<int> _selectedNumeriMaglia = {};
 
@@ -41,6 +44,7 @@ class _AcquistoPageState extends State<AcquistoPage> {
     super.initState();
     _loadNazionalita();
     _loadSquadre();
+    _loadNazionali();
   }
 
   Future<void> _loadSquadre() async {
@@ -52,6 +56,19 @@ class _AcquistoPageState extends State<AcquistoPage> {
       });
     } catch (e) {
       print('Errore caricamento squadre: $e');
+    }
+  }
+
+  Future<void> _loadNazionali() async {
+    final provider = Provider.of<NazionaliProvider>(context, listen: false);
+    try {
+      final nazionali = await provider.fetchNazionali(widget.campionato);
+      if (!mounted) return;
+      setState(() {
+        _nazionali = nazionali;
+      });
+    } catch (e) {
+      debugPrint('Errore caricamento nazionali: $e');
     }
   }
 
@@ -747,6 +764,7 @@ class _AcquistoPageState extends State<AcquistoPage> {
     return buildRisultatiGiocatori(
       risultati: _risultatiRicerca,
       squadre: _squadre,
+      nazionali: _nazionali,
       campionato: widget.campionato,
       sortType: _sortType,
       onSortChanged: (newSort) {

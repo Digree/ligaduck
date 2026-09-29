@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:glassmorphism/glassmorphism.dart';
+import 'package:ligaduck/app/widgets/platform_glass.dart';
 
 class CompetizioneButtonModel {
   final String text;
@@ -30,7 +30,7 @@ Widget buildCompetizioneButton(
     child: InkWell(
       onTap: model.onPressed,
       borderRadius: BorderRadius.circular(20),
-      child: GlassmorphicContainer(
+      child: PlatformGlassContainer(
         width: isWide ? 190 : screenWidth * 0.3,
         height: isWide ? 160 : screenHeight * 0.1,
         borderRadius: 20,

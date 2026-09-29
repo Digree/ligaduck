@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:glassmorphism/glassmorphism.dart';
+import 'package:ligaduck/app/widgets/platform_glass.dart';
 import 'package:ligaduck/app/partita/partita_home_page.dart';
 import 'package:ligaduck/app/service/models/nazionale.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
@@ -216,7 +216,7 @@ Widget buildCampionatoMatch(
         }
       },
       borderRadius: BorderRadius.circular(16),
-      child: GlassmorphicContainer(
+      child: PlatformGlassContainer(
         width: double.infinity,
         height: 50,
         borderRadius: 16,
@@ -567,7 +567,7 @@ Future<void> _showRisultatoDialog(
                                   Navigator.of(dialogContext).pop();
                                 },
                           borderRadius: BorderRadius.circular(12),
-                          child: GlassmorphicContainer(
+                          child: PlatformGlassContainer(
                             width: double.infinity,
                             height: 50,
                             borderRadius: 12,
@@ -706,7 +706,7 @@ Future<void> _showRisultatoDialog(
                                   }
                                 },
                           borderRadius: BorderRadius.circular(12),
-                          child: GlassmorphicContainer(
+                          child: PlatformGlassContainer(
                             width: double.infinity,
                             height: 50,
                             borderRadius: 12,

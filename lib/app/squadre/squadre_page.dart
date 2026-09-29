@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:glassmorphism/glassmorphism.dart';
+import 'package:ligaduck/app/widgets/platform_glass.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
 import 'package:ligaduck/app/models/partita/partita_formazione_model.dart';
@@ -1116,7 +1116,7 @@ class _SquadrePageState extends State<SquadrePage> {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
-      child: GlassmorphicContainer(
+      child: PlatformGlassContainer(
         width: double.infinity,
         height: 50,
         borderRadius: 12,
@@ -4227,7 +4227,20 @@ class _SquadrePageState extends State<SquadrePage> {
                             );
                           }
 
-                          final allenatori = snapshot.data ?? [];
+                          final allenatori = (snapshot.data ?? []).where((a) {
+                            final carriereStagione = a.carriera
+                                .where(
+                                  (carriera) =>
+                                      carriera.campionato == widget.campionato,
+                                )
+                                .toList();
+                            return a.attivo &&
+                                a.ruolo == 'Allenatore' &&
+                                (carriereStagione.isEmpty ||
+                                    carriereStagione.any(
+                                      (carriera) => carriera.esonero == true,
+                                    ));
+                          });
                           final allenatoriFiltrati = allenatori
                               .where(
                                 (a) =>
@@ -5832,7 +5845,7 @@ class _SquadrePageState extends State<SquadrePage> {
                           setState(() {});
                         }
                       },
-                      child: GlassmorphicContainer(
+                      child: PlatformGlassContainer(
                         width: 64,
                         height: 64,
                         borderRadius: 32,
@@ -6184,7 +6197,7 @@ class _SquadrePageState extends State<SquadrePage> {
                 }
               },
               borderRadius: BorderRadius.circular(12),
-              child: GlassmorphicContainer(
+              child: PlatformGlassContainer(
                 width: double.infinity,
                 height: 50,
                 borderRadius: 12,
@@ -6239,7 +6252,7 @@ class _SquadrePageState extends State<SquadrePage> {
                 await _aggiornaFormazionePreMercato();
               },
               borderRadius: BorderRadius.circular(12),
-              child: GlassmorphicContainer(
+              child: PlatformGlassContainer(
                 width: double.infinity,
                 height: 50,
                 borderRadius: 12,
@@ -6296,7 +6309,7 @@ class _SquadrePageState extends State<SquadrePage> {
                 await _resetFormazione();
               },
               borderRadius: BorderRadius.circular(12),
-              child: GlassmorphicContainer(
+              child: PlatformGlassContainer(
                 width: double.infinity,
                 height: 50,
                 borderRadius: 12,

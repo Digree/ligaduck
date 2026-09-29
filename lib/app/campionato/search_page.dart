@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:glassmorphism/glassmorphism.dart';
+import 'package:ligaduck/app/widgets/platform_glass.dart';
 import 'package:ligaduck/app/service/giocatori_provider.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
+import 'package:ligaduck/app/service/models/nazionale.dart';
 import 'package:ligaduck/app/service/squadre_provider.dart';
+import 'package:ligaduck/app/service/nazionali_provider.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/widgets/squadra_logo_widget.dart';
 import 'package:ligaduck/app/widgets/search_giocatori_widgets.dart';
@@ -30,6 +32,7 @@ class _SearchPageState extends State<SearchPage> {
   List<String> _nazionalitaSquadre = ['Tutte'];
   List<Giocatore> _risultatiRicerca = [];
   List<Squadra> _risultatiRicercaSquadre = [];
+  List<Nazionale> _nazionali = [];
   bool _isSearching = false;
   bool _hasSearched = false;
   List<Squadra> _squadre = [];
@@ -44,6 +47,7 @@ class _SearchPageState extends State<SearchPage> {
     _loadNazionalita();
     _loadNazionalitaSquadre();
     _loadSquadre();
+    _loadNazionali();
   }
 
   Future<void> _loadSquadre() async {
@@ -55,6 +59,19 @@ class _SearchPageState extends State<SearchPage> {
       });
     } catch (e) {
       print('Errore caricamento squadre: $e');
+    }
+  }
+
+  Future<void> _loadNazionali() async {
+    final provider = Provider.of<NazionaliProvider>(context, listen: false);
+    try {
+      final nazionali = await provider.fetchNazionali(widget.campionato);
+      if (!mounted) return;
+      setState(() {
+        _nazionali = nazionali;
+      });
+    } catch (e) {
+      debugPrint('Errore caricamento nazionali: $e');
     }
   }
 
@@ -143,7 +160,8 @@ class _SearchPageState extends State<SearchPage> {
           _risultatiRicerca = risultati.where((giocatore) {
             final eta = giocatore.etaNelCampionato(widget.campionato);
             return eta >= intervalloEta.start &&
-                (intervalloEta.end == _limitiEta.end || eta <= intervalloEta.end);
+                (intervalloEta.end == _limitiEta.end ||
+                    eta <= intervalloEta.end);
           }).toList();
           _isSearching = false;
         });
@@ -416,8 +434,14 @@ class _SearchPageState extends State<SearchPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: const [
-                                Text('16', style: TextStyle(color: Colors.white)),
-                                Text('30+', style: TextStyle(color: Colors.white)),
+                                Text(
+                                  '16',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                                Text(
+                                  '30+',
+                                  style: TextStyle(color: Colors.white),
+                                ),
                               ],
                             ),
                             SizedBox(height: 24),
@@ -639,7 +663,7 @@ class _SearchPageState extends State<SearchPage> {
     return InkWell(
       onTap: onPressed,
       borderRadius: BorderRadius.circular(12),
-      child: GlassmorphicContainer(
+      child: PlatformGlassContainer(
         width: 100,
         height: 30,
         borderRadius: 12,
@@ -720,6 +744,7 @@ class _SearchPageState extends State<SearchPage> {
       return buildRisultatiGiocatori(
         risultati: _risultatiRicerca,
         squadre: _squadre,
+        nazionali: _nazionali,
         campionato: widget.campionato,
         sortType: _sortType,
         onSortChanged: (newSort) {

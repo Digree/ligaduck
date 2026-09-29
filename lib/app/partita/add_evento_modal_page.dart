@@ -799,16 +799,30 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
   Widget _buildSostituzionePairRow(int team, int index) {
     final pairs = _sostituzioniFor(team);
     final pair = pairs[index];
-    List<GiocatoreFormazione> formazione;
-    if (team == 0) {
-      formazione =
-          widget.partita.formazioneHome.panchina +
-          widget.partita.formazioneHome.titolari;
-    } else {
-      formazione =
-          widget.partita.formazioneAway.panchina +
-          widget.partita.formazioneAway.titolari;
-    }
+    final formazione = team == 0
+        ? widget.partita.formazioneHome
+        : widget.partita.formazioneAway;
+    final indisponibili = formazione.indisponibili
+        .map((giocatore) => giocatore.idGiocatore)
+        .toSet();
+    final idTeam = _getIdTeam(team, false);
+    final idNazionale = _getIdNazionale(team, false);
+    final eventiSostituzione = widget.partita.tabellino
+        .where(
+          (evento) =>
+              evento.codAzione == 'sos' &&
+              ((idTeam != null && evento.idTeam == idTeam) ||
+                  (idNazionale?.isNotEmpty == true &&
+                      evento.idNazionale == idNazionale)),
+        )
+        .toList();
+    final idGiocatoriUsciti = eventiSostituzione
+        .map((evento) => evento.idGiocatoreOut)
+        .whereType<String>()
+        .toSet();
+    final idGiocatoriEntrati = eventiSostituzione
+        .map((evento) => evento.idGiocatore)
+        .toSet();
 
     final idInUsati = pairs
         .where((p) => p != pair)
@@ -821,14 +835,27 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
         .whereType<String>()
         .toSet();
 
-    final disponibiliIn = formazione.where(
+    final disponibiliIn = formazione.panchina.where(
       (element) =>
-          element.inCampo == false && !idInUsati.contains(element.idGiocatore),
+          !element.inCampo &&
+          !indisponibili.contains(element.idGiocatore) &&
+          !idGiocatoriUsciti.contains(element.idGiocatore) &&
+          !idInUsati.contains(element.idGiocatore),
     );
-    final disponibiliOut = formazione.where(
-      (element) =>
-          element.inCampo == true && !idOutUsati.contains(element.idGiocatore),
-    );
+    final disponibiliOut = [
+      ...formazione.titolari.where(
+        (element) =>
+            element.inCampo &&
+            !idGiocatoriUsciti.contains(element.idGiocatore) &&
+            !idOutUsati.contains(element.idGiocatore),
+      ),
+      ...formazione.panchina.where(
+        (element) =>
+            idGiocatoriEntrati.contains(element.idGiocatore) &&
+            !idGiocatoriUsciti.contains(element.idGiocatore) &&
+            !idOutUsati.contains(element.idGiocatore),
+      ),
+    ];
 
     return Container(
       margin: EdgeInsets.only(bottom: 16),
@@ -1828,7 +1855,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
               durata: pair.infortunioController.text.isNotEmpty
                   ? int.parse(pair.infortunioController.text) + 1
                   : 0,
-              idCompetizione: widget.competizione!.id,
+              idCompetizione: 0,
             );
 
             bool squalificaSuccess = await putIndisponibile(

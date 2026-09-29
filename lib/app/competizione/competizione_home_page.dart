@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:csv/csv.dart';
 import 'package:file_selector/file_selector.dart';
@@ -29,6 +28,7 @@ import 'package:ligaduck/app/service/squadre_provider.dart';
 import 'package:ligaduck/app/nazionali/nazionale_page.dart';
 import 'package:ligaduck/app/squadre/squadre_page.dart';
 import 'package:ligaduck/app/widgets/squadra_logo_widget.dart';
+import 'package:ligaduck/app/widgets/platform_glass.dart';
 import 'package:ligaduck/services/commonService.dart';
 import 'package:mongo_dart/mongo_dart.dart' as mongo;
 import 'package:provider/provider.dart';
@@ -4001,23 +4001,22 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
   // Card in stile glassmorphism (sfumatura del colore competizione + blur),
   // dimensionata in base al contenuto invece che a width/height fisse.
   Widget _glassCard({required Color color, required Widget child}) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-        child: Container(
-          padding: EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [color.withOpacity(0.4), color.withOpacity(0.15)],
-            ),
-            border: Border.all(color: Colors.white.withOpacity(0.4), width: 2),
+    return PlatformBackdropBlur(
+      sigmaX: 15,
+      sigmaY: 15,
+      borderRadius: 16,
+      fallbackColor: color.withOpacity(0.95),
+      child: Container(
+        padding: EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [color.withOpacity(0.4), color.withOpacity(0.15)],
           ),
-          child: child,
         ),
+        child: child,
       ),
     );
   }

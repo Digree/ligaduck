@@ -1,6 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:glassmorphism/glassmorphism.dart';
+import 'package:ligaduck/app/widgets/platform_glass.dart';
 import 'package:ligaduck/app/nazionali/nazionale_page.dart';
 import 'package:ligaduck/app/service/models/nazionale.dart';
 import 'package:ligaduck/services/commonService.dart';
@@ -206,7 +206,7 @@ class _ListaNazionaliWidgetState extends State<ListaNazionaliWidget> {
                               ),
                             ),
                           ),
-                          child: GlassmorphicContainer(
+                          child: PlatformGlassContainer(
                             width: double.infinity,
                             height: 40,
                             borderRadius: 30,

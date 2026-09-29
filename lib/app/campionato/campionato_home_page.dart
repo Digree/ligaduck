@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:glassmorphism/glassmorphism.dart';
+import 'package:ligaduck/app/widgets/platform_glass.dart';
 import 'package:ligaduck/app/competizione/competizione_home_page.dart';
 import 'package:ligaduck/app/config/models/global.dart';
 import 'package:ligaduck/app/home_page.dart';
@@ -441,7 +441,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                   ).then((_) => _refreshPage());
                 },
                 borderRadius: BorderRadius.circular(12),
-                child: GlassmorphicContainer(
+                child: PlatformGlassContainer(
                   width: double.infinity,
                   height: 50,
                   borderRadius: 12,
@@ -612,7 +612,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                   }
                 },
                 borderRadius: BorderRadius.circular(12),
-                child: GlassmorphicContainer(
+                child: PlatformGlassContainer(
                   width: double.infinity,
                   height: 50,
                   borderRadius: 12,
@@ -652,7 +652,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                   _mostraDialogCompetizioniAbilitate();
                 },
                 borderRadius: BorderRadius.circular(12),
-                child: GlassmorphicContainer(
+                child: PlatformGlassContainer(
                   width: double.infinity,
                   height: 50,
                   borderRadius: 12,
@@ -909,7 +909,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
               left: 16,
               right: 16,
               bottom: 16,
-              child: GlassmorphicContainer(
+              child: PlatformGlassContainer(
                 width: MediaQuery.of(context).size.width - 32,
                 height: 70,
                 borderRadius: 35,
@@ -958,7 +958,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
       },
       borderRadius: BorderRadius.circular(35),
       child: isSelected
-          ? GlassmorphicContainer(
+          ? PlatformGlassContainer(
               width: 100,
               height: 60,
               borderRadius: 35,
@@ -1168,7 +1168,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                             ),
                           ],
                         ),
-                        child: GlassmorphicContainer(
+                        child: PlatformGlassContainer(
                           width: double.infinity,
                           height: double.infinity,
                           borderRadius: 16,

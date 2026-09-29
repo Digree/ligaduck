@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:glassmorphism/glassmorphism.dart';
+import 'package:ligaduck/app/widgets/platform_glass.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
 import 'package:ligaduck/app/models/partita/partita_formazione_model.dart';
 import 'package:ligaduck/app/service/competizioni_provider.dart';
@@ -281,7 +281,7 @@ class _NazionalePageState extends State<NazionalePage> {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
-      child: GlassmorphicContainer(
+      child: PlatformGlassContainer(
         width: double.infinity,
         height: 50,
         borderRadius: 12,
@@ -1155,7 +1155,7 @@ class _NazionalePageState extends State<NazionalePage> {
                           setState(() {});
                         }
                       },
-                      child: GlassmorphicContainer(
+                      child: PlatformGlassContainer(
                         width: 64,
                         height: 64,
                         borderRadius: 32,
@@ -1285,7 +1285,7 @@ class _NazionalePageState extends State<NazionalePage> {
                       }
                     },
                     borderRadius: BorderRadius.circular(12),
-                    child: GlassmorphicContainer(
+                    child: PlatformGlassContainer(
                       width: double.infinity,
                       height: 50,
                       borderRadius: 12,
@@ -1330,7 +1330,7 @@ class _NazionalePageState extends State<NazionalePage> {
                 InkWell(
                   onTap: _resetFormazione,
                   borderRadius: BorderRadius.circular(12),
-                  child: GlassmorphicContainer(
+                  child: PlatformGlassContainer(
                     width: double.infinity,
                     height: 50,
                     borderRadius: 12,
@@ -1473,6 +1473,7 @@ class _NazionalePageState extends State<NazionalePage> {
       builder: (_) => _ConvocazioneDialog(
         ruolo: ruolo,
         campionato: widget.campionato,
+        nazionale: _nazionale ?? widget.nazionale,
         nazionaleNome: widget.nazionale.nome,
         giaConvocatiIds: (_nazionale ?? widget.nazionale).convocati
             .map((c) => c.idGiocatore)
@@ -2292,6 +2293,7 @@ class _NazionalePageState extends State<NazionalePage> {
 class _ConvocazioneDialog extends StatefulWidget {
   final String ruolo;
   final String campionato;
+  final Nazionale nazionale;
   final String nazionaleNome;
   final Set<String> giaConvocatiIds;
   final Color primaryColor;
@@ -2301,6 +2303,7 @@ class _ConvocazioneDialog extends StatefulWidget {
   const _ConvocazioneDialog({
     required this.ruolo,
     required this.campionato,
+    required this.nazionale,
     required this.nazionaleNome,
     required this.giaConvocatiIds,
     required this.primaryColor,
@@ -2549,6 +2552,7 @@ class _ConvocazioneDialogState extends State<_ConvocazioneDialog> {
                   : buildRisultatiGiocatori(
                       risultati: _risultati,
                       squadre: _squadre,
+                      nazionali: [widget.nazionale],
                       campionato: widget.campionato,
                       sortType: _sortType,
                       onSortChanged: (s) => setState(() => _sortType = s),

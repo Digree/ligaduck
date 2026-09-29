@@ -1,6 +1,7 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
-import 'package:glassmorphism/glassmorphism.dart';
+import 'package:ligaduck/app/widgets/platform_glass.dart';
 import 'package:ligaduck/app/config/models/global.dart';
 import 'package:ligaduck/app/models/campionato/lista_nazionali_model.dart';
 import 'package:ligaduck/app/service/country_service.dart';
@@ -109,8 +110,11 @@ class _ListaSquadreStateWidget extends State<_ListaSquadreState>
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(26),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                  child: PlatformBackdropBlur(
+                    sigmaX: 18,
+                    sigmaY: 18,
+                    borderRadius: 26,
+                    fallbackColor: Colors.white.withOpacity(0.95),
                     child: Container(
                       height: 44,
                       decoration: BoxDecoration(
@@ -537,7 +541,7 @@ Widget showSquadre(ListaSquadreModel model, String categoria) {
                           );
                         },
                         borderRadius: BorderRadius.circular(12),
-                        child: GlassmorphicContainer(
+                        child: PlatformGlassContainer(
                           width: double.infinity,
                           height: 40,
                           borderRadius: 30,
