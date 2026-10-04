@@ -1572,8 +1572,9 @@ class _NazionalePageState extends State<NazionalePage> {
                 final nazionaliProv = context.read<NazionaliProvider>();
                 final giocatoriProv = GiocatoriProvider();
                 final nazionaleId = (_nazionale ?? widget.nazionale).id;
-                final allenatoriPrima = await giocatoriProv
-                    .getAllenatoriLiberi();
+                final allenatoriPrima = await giocatoriProv.getAllenatoriLiberi(
+                  widget.campionato,
+                );
                 final squadraFake = _nazionaleAsSquadra();
                 final result = await Navigator.push(
                   context,
@@ -1589,7 +1590,7 @@ class _NazionalePageState extends State<NazionalePage> {
                 );
                 if (result == true) {
                   final allenatoriDopo = await giocatoriProv
-                      .getAllenatoriLiberi();
+                      .getAllenatoriLiberi(widget.campionato);
                   final nuovi = allenatoriDopo
                       .where((a) => !allenatoriPrima.any((p) => p.id == a.id))
                       .toList();
@@ -1708,7 +1709,9 @@ class _NazionalePageState extends State<NazionalePage> {
                   SizedBox(height: 16),
                   Expanded(
                     child: FutureBuilder<List<Giocatore>>(
-                      future: giocatoriProvider.getAllenatoriLiberi(),
+                      future: giocatoriProvider.getAllenatoriLiberi(
+                        widget.campionato,
+                      ),
                       builder: (_, snap) {
                         if (snap.connectionState == ConnectionState.waiting) {
                           return Center(

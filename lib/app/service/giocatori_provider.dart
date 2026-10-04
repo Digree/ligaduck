@@ -206,10 +206,10 @@ class GiocatoriProvider with ChangeNotifier {
     }
   }
 
-  Future<List<Giocatore>> getAllenatoriLiberi() async {
+  Future<List<Giocatore>> getAllenatoriLiberi(String campionato) async {
     try {
       final response = await http.get(
-        Uri.parse('${Env.apiUrl}/allenatori/liberi'),
+        Uri.parse('${Env.apiUrl}/$campionato/allenatori/liberi'),
       );
 
       if (response.statusCode == 200) {

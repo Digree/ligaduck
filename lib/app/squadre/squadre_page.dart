@@ -341,11 +341,10 @@ class _SquadrePageState extends State<SquadrePage> {
     final competizioni = await competizioniProvider.fetchCompetizioni(
       widget.campionato,
     );
-    if (_squadra != null) {
-      setState(() {
-        _squadra = _addCompetizioni(_squadra!, competizioni);
-      });
-    }
+    if (!mounted || _squadra == null) return;
+    setState(() {
+      _squadra = _addCompetizioni(_squadra!, competizioni);
+    });
   }
 
   Squadra _addCompetizioni(Squadra squadra, List<Competizione> competizioni) {
@@ -4208,7 +4207,9 @@ class _SquadrePageState extends State<SquadrePage> {
                     SizedBox(height: 16),
                     Expanded(
                       child: FutureBuilder<List<Giocatore>>(
-                        future: giocatoriProvider.getAllenatoriLiberi(),
+                        future: giocatoriProvider.getAllenatoriLiberi(
+                          widget.campionato,
+                        ),
                         builder: (context, snapshot) {
                           if (snapshot.connectionState ==
                               ConnectionState.waiting) {
@@ -4228,7 +4229,7 @@ class _SquadrePageState extends State<SquadrePage> {
                           }
 
                           final allenatori = (snapshot.data ?? []).where((a) {
-                            final carriereStagione = a.carriera
+                            final carriereCampionato = a.carriera
                                 .where(
                                   (carriera) =>
                                       carriera.campionato == widget.campionato,
@@ -4236,8 +4237,8 @@ class _SquadrePageState extends State<SquadrePage> {
                                 .toList();
                             return a.attivo &&
                                 a.ruolo == 'Allenatore' &&
-                                (carriereStagione.isEmpty ||
-                                    carriereStagione.any(
+                                (carriereCampionato.isEmpty ||
+                                    carriereCampionato.any(
                                       (carriera) => carriera.esonero == true,
                                     ));
                           });
