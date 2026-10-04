@@ -1,24 +1,24 @@
 {
-  "lastUpdate": "2026-09-26",
+  "lastUpdate": "2026-10-04",
   "android": {
-    "version": "44.03.03",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.03.03/ligaduck-v44.03.03.apk",
-    "releaseNotes": "- Bug Fix"
+    "version": "44.03.04",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.03.04/ligaduck-v44.03.04.apk",
+    "releaseNotes": "- Bug Fix - Divise vecchi campionati"
   },
   "ios": {
-    "version": "44.03.03",
+    "version": "44.03.04",
     "downloadUrl": "https://apps.apple.com/app/ligaduck",
-    "releaseNotes": "- Bug Fix"
+    "releaseNotes": "- Bug Fix - Divise vecchi campionati"
   },
   "macos": {
-    "version": "44.03.03",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.03.03/ligaduck-v44.03.03.dmg",
-    "releaseNotes": "- Bug Fix"
+    "version": "44.03.04",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.03.04/ligaduck-v44.03.04.dmg",
+    "releaseNotes": "- Bug Fix - Divise vecchi campionati"
   },
   "windows": {
-    "version": "44.03.03",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.03.03/ligaduck-v44.03.03-windows.zip",
-    "msixUrl": "https://github.com/Digree/ligaduck/releases/download/v44.03.03/LigaDuckManager-Windows-v44.03.03.msix",
-    "releaseNotes": "- Bug Fix"
+    "version": "44.03.04",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.03.04/ligaduck-v44.03.04-windows.zip",
+    "msixUrl": "https://github.com/Digree/ligaduck/releases/download/v44.03.04/LigaDuckManager-Windows-v44.03.04.msix",
+    "releaseNotes": "- Bug Fix - Divise vecchi campionati"
   }
 }
