@@ -2001,6 +2001,17 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   Widget buildTabellinoRow(evento) {
     double screenWidth = MediaQuery.of(context).size.width;
     final bool isEventoCasa = _isEventoCasa(evento);
+    final formazioneEvento = isEventoCasa
+        ? partita!.formazioneHome
+        : partita!.formazioneAway;
+    final giocatoreUscitoInfortunato =
+        evento.codAzione == 'sos' &&
+        evento.idGiocatoreOut != null &&
+        formazioneEvento.indisponibili.any(
+          (indisponibile) =>
+              indisponibile.idGiocatore == evento.idGiocatoreOut &&
+              indisponibile.motivo == 'inf',
+        );
 
     Widget rowContent = Container(
       width: screenWidth * 1,
@@ -2136,21 +2147,38 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                     : null,
                               ),
                             ),
-                            Text(
-                              'per ${setNomeTabellino(evento.idGiocatoreOut, partita!.formazioneHome)}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                                fontStyle: FontStyle.italic,
-                                fontFamily: competizione?.id == 5
-                                    ? 'champions'
-                                    : competizione?.id == 6 ||
-                                          competizione?.id == 7
-                                    ? 'europa'
-                                    : competizione?.id == 8
-                                    ? 'supercup'
-                                    : null,
-                              ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'per ${setNomeTabellino(evento.idGiocatoreOut, partita!.formazioneHome)}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                    fontStyle: FontStyle.italic,
+                                    fontFamily: competizione?.id == 5
+                                        ? 'champions'
+                                        : competizione?.id == 6 ||
+                                              competizione?.id == 7
+                                        ? 'europa'
+                                        : competizione?.id == 8
+                                        ? 'supercup'
+                                        : null,
+                                  ),
+                                ),
+                                if (giocatoreUscitoInfortunato)
+                                  Padding(
+                                    padding: EdgeInsets.only(left: 4),
+                                    child: Tooltip(
+                                      message: 'Infortunato',
+                                      child: Icon(
+                                        Icons.healing,
+                                        color: Colors.orange,
+                                        size: 16,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ],
                         )
@@ -2309,21 +2337,38 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                     : null,
                               ),
                             ),
-                            Text(
-                              'per ${setNomeTabellino(evento.idGiocatoreOut, partita!.formazioneAway)}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                                fontStyle: FontStyle.italic,
-                                fontFamily: competizione?.id == 5
-                                    ? 'champions'
-                                    : competizione?.id == 6 ||
-                                          competizione?.id == 7
-                                    ? 'europa'
-                                    : competizione?.id == 8
-                                    ? 'supercup'
-                                    : null,
-                              ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'per ${setNomeTabellino(evento.idGiocatoreOut, partita!.formazioneAway)}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                    fontStyle: FontStyle.italic,
+                                    fontFamily: competizione?.id == 5
+                                        ? 'champions'
+                                        : competizione?.id == 6 ||
+                                              competizione?.id == 7
+                                        ? 'europa'
+                                        : competizione?.id == 8
+                                        ? 'supercup'
+                                        : null,
+                                  ),
+                                ),
+                                if (giocatoreUscitoInfortunato)
+                                  Padding(
+                                    padding: EdgeInsets.only(left: 4),
+                                    child: Tooltip(
+                                      message: 'Infortunato',
+                                      child: Icon(
+                                        Icons.healing,
+                                        color: Colors.orange,
+                                        size: 16,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ],
                         )
@@ -3174,121 +3219,121 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                               esitoColor = Colors.red;
                             }
 
-                            return InkWell(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => PartitaHomePage(
-                                      partitaId: p.id,
-                                      campionato: widget.campionato,
+                            return _HoverScale(
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => PartitaHomePage(
+                                        partitaId: p.id,
+                                        campionato: widget.campionato,
+                                      ),
                                     ),
+                                  );
+                                },
+                                child: Container(
+                                  width: 68,
+                                  margin: EdgeInsets.only(right: 4),
+                                  padding: EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                                );
-                              },
-                              child: Container(
-                                width: 68,
-                                margin: EdgeInsets.only(right: 4),
-                                padding: EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[100],
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Column(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Container(
-                                      width: 24,
-                                      height: 24,
-                                      decoration: BoxDecoration(
-                                        color: esitoColor,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          esito,
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 13,
+                                  child: Column(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Container(
+                                        width: 24,
+                                        height: 24,
+                                        decoration: BoxDecoration(
+                                          color: esitoColor,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            esito,
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 13,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                    Column(
-                                      children: [
-                                        Text(
-                                          isHome ? 'vs' : '@',
-                                          style: TextStyle(
+                                      Column(
+                                        children: [
+                                          Icon(
+                                            isHome ? Icons.home : Icons.flight,
                                             color: Colors.grey[600],
-                                            fontSize: 9,
+                                            size: 10,
                                           ),
-                                        ),
-                                        SizedBox(height: 2),
-                                        isNazionaleAvversario
-                                            ? CircleAvatar(
-                                                radius: 10,
-                                                backgroundImage: NetworkImage(
-                                                  CommonService.getFlagUrl(
-                                                    nomeAvversario,
+                                          SizedBox(height: 2),
+                                          isNazionaleAvversario
+                                              ? CircleAvatar(
+                                                  radius: 10,
+                                                  backgroundImage: NetworkImage(
+                                                    CommonService.getFlagUrl(
+                                                      nomeAvversario,
+                                                    ),
                                                   ),
-                                                ),
-                                                onBackgroundImageError:
-                                                    (_, _) {},
-                                              )
-                                            : FutureBuilder<Squadra?>(
-                                                future: _squadreFuture.then((
-                                                  squadre,
-                                                ) {
-                                                  try {
-                                                    return squadre.firstWhere(
-                                                      (s) =>
-                                                          s.cod ==
-                                                          codAvversario,
-                                                    );
-                                                  } catch (e) {
-                                                    return null;
-                                                  }
-                                                }),
-                                                builder: (context, snapshot) {
-                                                  if (!snapshot.hasData ||
-                                                      snapshot.data == null) {
-                                                    return Icon(
-                                                      Icons.shield,
-                                                      size: 20,
-                                                      color: Colors.grey,
-                                                    );
-                                                  }
+                                                  onBackgroundImageError:
+                                                      (_, _) {},
+                                                )
+                                              : FutureBuilder<Squadra?>(
+                                                  future: _squadreFuture.then((
+                                                    squadre,
+                                                  ) {
+                                                    try {
+                                                      return squadre.firstWhere(
+                                                        (s) =>
+                                                            s.cod ==
+                                                            codAvversario,
+                                                      );
+                                                    } catch (e) {
+                                                      return null;
+                                                    }
+                                                  }),
+                                                  builder: (context, snapshot) {
+                                                    if (!snapshot.hasData ||
+                                                        snapshot.data == null) {
+                                                      return Icon(
+                                                        Icons.shield,
+                                                        size: 20,
+                                                        color: Colors.grey,
+                                                      );
+                                                    }
 
-                                                  return Image.asset(
-                                                    'assets/squadre/$codAvversario.png',
-                                                    height: 20,
-                                                    width: 20,
-                                                    errorBuilder:
-                                                        (
-                                                          context,
-                                                          error,
-                                                          stackTrace,
-                                                        ) {
-                                                          return _buildTeamLogoPlaceholder(
-                                                            snapshot.data!,
-                                                            size: 20,
-                                                          );
-                                                        },
-                                                  );
-                                                },
-                                              ),
-                                      ],
-                                    ),
-                                    Text(
-                                      risultato,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
+                                                    return Image.asset(
+                                                      'assets/squadre/$codAvversario.png',
+                                                      height: 20,
+                                                      width: 20,
+                                                      errorBuilder:
+                                                          (
+                                                            context,
+                                                            error,
+                                                            stackTrace,
+                                                          ) {
+                                                            return _buildTeamLogoPlaceholder(
+                                                              snapshot.data!,
+                                                              size: 20,
+                                                            );
+                                                          },
+                                                    );
+                                                  },
+                                                ),
+                                        ],
                                       ),
-                                    ),
-                                  ],
+                                      Text(
+                                        risultato,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             );
@@ -3462,121 +3507,121 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                               esitoColor = Colors.red;
                             }
 
-                            return InkWell(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => PartitaHomePage(
-                                      partitaId: p.id,
-                                      campionato: widget.campionato,
+                            return _HoverScale(
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => PartitaHomePage(
+                                        partitaId: p.id,
+                                        campionato: widget.campionato,
+                                      ),
                                     ),
+                                  );
+                                },
+                                child: Container(
+                                  width: 68,
+                                  margin: EdgeInsets.only(right: 4),
+                                  padding: EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                                );
-                              },
-                              child: Container(
-                                width: 68,
-                                margin: EdgeInsets.only(right: 4),
-                                padding: EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[100],
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Column(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Container(
-                                      width: 24,
-                                      height: 24,
-                                      decoration: BoxDecoration(
-                                        color: esitoColor,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          esito,
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 13,
+                                  child: Column(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Container(
+                                        width: 24,
+                                        height: 24,
+                                        decoration: BoxDecoration(
+                                          color: esitoColor,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            esito,
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 13,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                    Column(
-                                      children: [
-                                        Text(
-                                          isHome ? 'vs' : '@',
-                                          style: TextStyle(
+                                      Column(
+                                        children: [
+                                          Icon(
+                                            isHome ? Icons.home : Icons.flight,
                                             color: Colors.grey[600],
-                                            fontSize: 9,
+                                            size: 10,
                                           ),
-                                        ),
-                                        SizedBox(height: 2),
-                                        isNazionaleAvversario
-                                            ? CircleAvatar(
-                                                radius: 10,
-                                                backgroundImage: NetworkImage(
-                                                  CommonService.getFlagUrl(
-                                                    nomeAvversario,
+                                          SizedBox(height: 2),
+                                          isNazionaleAvversario
+                                              ? CircleAvatar(
+                                                  radius: 10,
+                                                  backgroundImage: NetworkImage(
+                                                    CommonService.getFlagUrl(
+                                                      nomeAvversario,
+                                                    ),
                                                   ),
-                                                ),
-                                                onBackgroundImageError:
-                                                    (_, _) {},
-                                              )
-                                            : FutureBuilder<Squadra?>(
-                                                future: _squadreFuture.then((
-                                                  squadre,
-                                                ) {
-                                                  try {
-                                                    return squadre.firstWhere(
-                                                      (s) =>
-                                                          s.cod ==
-                                                          codAvversario,
-                                                    );
-                                                  } catch (e) {
-                                                    return null;
-                                                  }
-                                                }),
-                                                builder: (context, snapshot) {
-                                                  if (!snapshot.hasData ||
-                                                      snapshot.data == null) {
-                                                    return Icon(
-                                                      Icons.shield,
-                                                      size: 20,
-                                                      color: Colors.grey,
-                                                    );
-                                                  }
+                                                  onBackgroundImageError:
+                                                      (_, _) {},
+                                                )
+                                              : FutureBuilder<Squadra?>(
+                                                  future: _squadreFuture.then((
+                                                    squadre,
+                                                  ) {
+                                                    try {
+                                                      return squadre.firstWhere(
+                                                        (s) =>
+                                                            s.cod ==
+                                                            codAvversario,
+                                                      );
+                                                    } catch (e) {
+                                                      return null;
+                                                    }
+                                                  }),
+                                                  builder: (context, snapshot) {
+                                                    if (!snapshot.hasData ||
+                                                        snapshot.data == null) {
+                                                      return Icon(
+                                                        Icons.shield,
+                                                        size: 20,
+                                                        color: Colors.grey,
+                                                      );
+                                                    }
 
-                                                  return Image.asset(
-                                                    'assets/squadre/$codAvversario.png',
-                                                    height: 20,
-                                                    width: 20,
-                                                    errorBuilder:
-                                                        (
-                                                          context,
-                                                          error,
-                                                          stackTrace,
-                                                        ) {
-                                                          return _buildTeamLogoPlaceholder(
-                                                            snapshot.data!,
-                                                            size: 20,
-                                                          );
-                                                        },
-                                                  );
-                                                },
-                                              ),
-                                      ],
-                                    ),
-                                    Text(
-                                      risultato,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
+                                                    return Image.asset(
+                                                      'assets/squadre/$codAvversario.png',
+                                                      height: 20,
+                                                      width: 20,
+                                                      errorBuilder:
+                                                          (
+                                                            context,
+                                                            error,
+                                                            stackTrace,
+                                                          ) {
+                                                            return _buildTeamLogoPlaceholder(
+                                                              snapshot.data!,
+                                                              size: 20,
+                                                            );
+                                                          },
+                                                    );
+                                                  },
+                                                ),
+                                        ],
                                       ),
-                                    ),
-                                  ],
+                                      Text(
+                                        risultato,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             );
@@ -4615,119 +4660,121 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                             esitoColor = Colors.red;
                           }
 
-                          return InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => PartitaHomePage(
-                                    partitaId: p.id,
-                                    campionato: widget.campionato,
+                          return _HoverScale(
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PartitaHomePage(
+                                      partitaId: p.id,
+                                      campionato: widget.campionato,
+                                    ),
                                   ),
+                                );
+                              },
+                              child: Container(
+                                width: 38,
+                                margin: EdgeInsets.only(right: 2),
+                                padding: EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[100],
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
-                              );
-                            },
-                            child: Container(
-                              width: 38,
-                              margin: EdgeInsets.only(right: 2),
-                              padding: EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Column(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Container(
-                                    width: 14,
-                                    height: 14,
-                                    decoration: BoxDecoration(
-                                      color: esitoColor,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        esito,
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 8,
+                                child: Column(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Container(
+                                      width: 14,
+                                      height: 14,
+                                      decoration: BoxDecoration(
+                                        color: esitoColor,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          esito,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 8,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  Column(
-                                    children: [
-                                      Text(
-                                        isHome ? 'vs' : '@',
-                                        style: TextStyle(
+                                    Column(
+                                      children: [
+                                        Icon(
+                                          isHome ? Icons.home : Icons.flight,
                                           color: Colors.grey[600],
-                                          fontSize: 6,
+                                          size: 7,
                                         ),
-                                      ),
-                                      SizedBox(height: 1),
-                                      isNazionaleAvversario
-                                          ? CircleAvatar(
-                                              radius: 7,
-                                              backgroundImage: NetworkImage(
-                                                CommonService.getFlagUrl(
-                                                  nomeAvversario,
+                                        SizedBox(height: 1),
+                                        isNazionaleAvversario
+                                            ? CircleAvatar(
+                                                radius: 7,
+                                                backgroundImage: NetworkImage(
+                                                  CommonService.getFlagUrl(
+                                                    nomeAvversario,
+                                                  ),
                                                 ),
-                                              ),
-                                              onBackgroundImageError: (_, _) {},
-                                            )
-                                          : FutureBuilder<Squadra?>(
-                                              future: _squadreFuture.then((
-                                                squadre,
-                                              ) {
-                                                try {
-                                                  return squadre.firstWhere(
-                                                    (s) =>
-                                                        s.cod == codAvversario,
-                                                  );
-                                                } catch (e) {
-                                                  return null;
-                                                }
-                                              }),
-                                              builder: (context, snapshot) {
-                                                if (!snapshot.hasData ||
-                                                    snapshot.data == null) {
-                                                  return Icon(
-                                                    Icons.shield,
-                                                    size: 14,
-                                                    color: Colors.grey,
-                                                  );
-                                                }
+                                                onBackgroundImageError:
+                                                    (_, _) {},
+                                              )
+                                            : FutureBuilder<Squadra?>(
+                                                future: _squadreFuture.then((
+                                                  squadre,
+                                                ) {
+                                                  try {
+                                                    return squadre.firstWhere(
+                                                      (s) =>
+                                                          s.cod ==
+                                                          codAvversario,
+                                                    );
+                                                  } catch (e) {
+                                                    return null;
+                                                  }
+                                                }),
+                                                builder: (context, snapshot) {
+                                                  if (!snapshot.hasData ||
+                                                      snapshot.data == null) {
+                                                    return Icon(
+                                                      Icons.shield,
+                                                      size: 14,
+                                                      color: Colors.grey,
+                                                    );
+                                                  }
 
-                                                return Image.asset(
-                                                  'assets/squadre/$codAvversario.png',
-                                                  height: 14,
-                                                  width: 14,
-                                                  errorBuilder:
-                                                      (
-                                                        context,
-                                                        error,
-                                                        stackTrace,
-                                                      ) {
-                                                        return _buildTeamLogoPlaceholder(
-                                                          snapshot.data!,
-                                                          size: 14,
-                                                        );
-                                                      },
-                                                );
-                                              },
-                                            ),
-                                    ],
-                                  ),
-                                  Text(
-                                    risultato,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 8,
+                                                  return Image.asset(
+                                                    'assets/squadre/$codAvversario.png',
+                                                    height: 14,
+                                                    width: 14,
+                                                    errorBuilder:
+                                                        (
+                                                          context,
+                                                          error,
+                                                          stackTrace,
+                                                        ) {
+                                                          return _buildTeamLogoPlaceholder(
+                                                            snapshot.data!,
+                                                            size: 14,
+                                                          );
+                                                        },
+                                                  );
+                                                },
+                                              ),
+                                      ],
                                     ),
-                                  ),
-                                ],
+                                    Text(
+                                      risultato,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 8,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           );
@@ -4810,119 +4857,121 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                             esitoColor = Colors.red;
                           }
 
-                          return InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => PartitaHomePage(
-                                    partitaId: p.id,
-                                    campionato: widget.campionato,
+                          return _HoverScale(
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PartitaHomePage(
+                                      partitaId: p.id,
+                                      campionato: widget.campionato,
+                                    ),
                                   ),
+                                );
+                              },
+                              child: Container(
+                                width: 38,
+                                margin: EdgeInsets.only(right: 2),
+                                padding: EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[100],
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
-                              );
-                            },
-                            child: Container(
-                              width: 38,
-                              margin: EdgeInsets.only(right: 2),
-                              padding: EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Column(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Container(
-                                    width: 14,
-                                    height: 14,
-                                    decoration: BoxDecoration(
-                                      color: esitoColor,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        esito,
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 8,
+                                child: Column(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Container(
+                                      width: 14,
+                                      height: 14,
+                                      decoration: BoxDecoration(
+                                        color: esitoColor,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          esito,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 8,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  Column(
-                                    children: [
-                                      Text(
-                                        isHome ? 'vs' : '@',
-                                        style: TextStyle(
+                                    Column(
+                                      children: [
+                                        Icon(
+                                          isHome ? Icons.home : Icons.flight,
                                           color: Colors.grey[600],
-                                          fontSize: 6,
+                                          size: 7,
                                         ),
-                                      ),
-                                      SizedBox(height: 1),
-                                      isNazionaleAvversario
-                                          ? CircleAvatar(
-                                              radius: 7,
-                                              backgroundImage: NetworkImage(
-                                                CommonService.getFlagUrl(
-                                                  nomeAvversario,
+                                        SizedBox(height: 1),
+                                        isNazionaleAvversario
+                                            ? CircleAvatar(
+                                                radius: 7,
+                                                backgroundImage: NetworkImage(
+                                                  CommonService.getFlagUrl(
+                                                    nomeAvversario,
+                                                  ),
                                                 ),
-                                              ),
-                                              onBackgroundImageError: (_, _) {},
-                                            )
-                                          : FutureBuilder<Squadra?>(
-                                              future: _squadreFuture.then((
-                                                squadre,
-                                              ) {
-                                                try {
-                                                  return squadre.firstWhere(
-                                                    (s) =>
-                                                        s.cod == codAvversario,
-                                                  );
-                                                } catch (e) {
-                                                  return null;
-                                                }
-                                              }),
-                                              builder: (context, snapshot) {
-                                                if (!snapshot.hasData ||
-                                                    snapshot.data == null) {
-                                                  return Icon(
-                                                    Icons.shield,
-                                                    size: 14,
-                                                    color: Colors.grey,
-                                                  );
-                                                }
+                                                onBackgroundImageError:
+                                                    (_, _) {},
+                                              )
+                                            : FutureBuilder<Squadra?>(
+                                                future: _squadreFuture.then((
+                                                  squadre,
+                                                ) {
+                                                  try {
+                                                    return squadre.firstWhere(
+                                                      (s) =>
+                                                          s.cod ==
+                                                          codAvversario,
+                                                    );
+                                                  } catch (e) {
+                                                    return null;
+                                                  }
+                                                }),
+                                                builder: (context, snapshot) {
+                                                  if (!snapshot.hasData ||
+                                                      snapshot.data == null) {
+                                                    return Icon(
+                                                      Icons.shield,
+                                                      size: 14,
+                                                      color: Colors.grey,
+                                                    );
+                                                  }
 
-                                                return Image.asset(
-                                                  'assets/squadre/$codAvversario.png',
-                                                  height: 14,
-                                                  width: 14,
-                                                  errorBuilder:
-                                                      (
-                                                        context,
-                                                        error,
-                                                        stackTrace,
-                                                      ) {
-                                                        return _buildTeamLogoPlaceholder(
-                                                          snapshot.data!,
-                                                          size: 14,
-                                                        );
-                                                      },
-                                                );
-                                              },
-                                            ),
-                                    ],
-                                  ),
-                                  Text(
-                                    risultato,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 8,
+                                                  return Image.asset(
+                                                    'assets/squadre/$codAvversario.png',
+                                                    height: 14,
+                                                    width: 14,
+                                                    errorBuilder:
+                                                        (
+                                                          context,
+                                                          error,
+                                                          stackTrace,
+                                                        ) {
+                                                          return _buildTeamLogoPlaceholder(
+                                                            snapshot.data!,
+                                                            size: 14,
+                                                          );
+                                                        },
+                                                  );
+                                                },
+                                              ),
+                                      ],
                                     ),
-                                  ),
-                                ],
+                                    Text(
+                                      risultato,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 8,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           );
@@ -8373,4 +8422,31 @@ class JerseyClipper extends CustomClipper<Path> {
 
   @override
   bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+}
+
+class _HoverScale extends StatefulWidget {
+  final Widget child;
+
+  const _HoverScale({required this.child});
+
+  @override
+  State<_HoverScale> createState() => _HoverScaleState();
+}
+
+class _HoverScaleState extends State<_HoverScale> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedScale(
+        scale: _isHovered ? 2 : 1,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOut,
+        child: widget.child,
+      ),
+    );
+  }
 }

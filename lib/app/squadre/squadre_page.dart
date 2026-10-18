@@ -72,6 +72,18 @@ class _PartitaConCompetizioneSquadra {
   });
 }
 
+class _EsoneroAllenatoreInfo {
+  final String idAllenatore;
+  final String nomeAllenatore;
+  final int giornataSubentro;
+
+  _EsoneroAllenatoreInfo({
+    required this.idAllenatore,
+    required this.nomeAllenatore,
+    required this.giornataSubentro,
+  });
+}
+
 class SquadrePage extends StatefulWidget {
   final Squadra squadra;
   final String campionato;
@@ -92,6 +104,7 @@ class _SquadrePageState extends State<SquadrePage> {
   bool _isLoadingGiocatori = false;
   Squadra? _squadra;
   Future<List<Esonero>>? _esoneriFuture;
+  Future<_EsoneroAllenatoreInfo?>? _esoneroAllenatoreFuture;
   String _selectedSquadType = 'Prima Squadra'; // Nuovo stato per il dropdown
   String _selectedFormazioneType =
       'Attuale'; // Tipo di formazione: Attuale o Pre-mercato
@@ -109,6 +122,7 @@ class _SquadrePageState extends State<SquadrePage> {
     _loadGiocatori();
     _populateTrofeiCod();
     _loadEsoneri();
+    _esoneroAllenatoreFuture = _loadEsoneroAllenatore();
     _loadPartiteSquadra();
   }
 
@@ -120,6 +134,33 @@ class _SquadrePageState extends State<SquadrePage> {
     _esoneriFuture = squadreProvider.getEsoneri(
       widget.campionato,
       widget.squadra.id,
+    );
+  }
+
+  Future<_EsoneroAllenatoreInfo?> _loadEsoneroAllenatore() async {
+    final esoneri = await _esoneriFuture!;
+    Esonero? ultimoEsonero;
+    int? ultimaGiornata;
+
+    for (final esonero in esoneri) {
+      final giornata = int.tryParse(esonero.giornataEsonero);
+      if (giornata != null &&
+          (ultimaGiornata == null || giornata > ultimaGiornata)) {
+        ultimoEsonero = esonero;
+        ultimaGiornata = giornata;
+      }
+    }
+
+    if (ultimoEsonero == null || ultimaGiornata == null) return null;
+
+    final allenatore = await GiocatoriProvider().getGiocatoreById(
+      widget.campionato,
+      ultimoEsonero.idAllenatore,
+    );
+    return _EsoneroAllenatoreInfo(
+      idAllenatore: ultimoEsonero.idAllenatore,
+      nomeAllenatore: allenatore?.nome ?? 'Sconosciuto',
+      giornataSubentro: ultimaGiornata + 1,
     );
   }
 
@@ -3380,7 +3421,7 @@ class _SquadrePageState extends State<SquadrePage> {
   ) {
     Widget playerContent = Container(
       width: screenWidth * 1,
-      height: 60,
+      height: giocatore.ruolo == 'Allenatore' ? 76 : 60,
       decoration: BoxDecoration(
         color: Colors.transparent,
         border: Border(
@@ -3450,37 +3491,89 @@ class _SquadrePageState extends State<SquadrePage> {
             ),
           Padding(
             padding: EdgeInsets.only(left: 20),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  CommonService.decodePlayerName(giocatore.nome),
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                if (giocatore.ruolo != 'Allenatore')
-                  Builder(
-                    builder: (context) {
-                      final color = _getAcquistoColor(giocatore);
-                      if (color == null) return const SizedBox.shrink();
-                      return Padding(
-                        padding: EdgeInsets.only(left: 3),
-                        child: Text(
-                          '*',
-                          style: TextStyle(
-                            color: color,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+            child: giocatore.ruolo == 'Allenatore'
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        CommonService.decodePlayerName(giocatore.nome),
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      FutureBuilder<_EsoneroAllenatoreInfo?>(
+                        future: _esoneroAllenatoreFuture,
+                        builder: (context, snapshot) {
+                          final info = snapshot.data;
+                          if (info == null ||
+                              info.idAllenatore == giocatore.id) {
+                            return SizedBox.shrink();
+                          }
+                          return Text(
+                            'sostituisce ${CommonService.decodePlayerName(info.nomeAllenatore)} dalla ${info.giornataSubentro}ª giornata',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 11,
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  )
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        CommonService.decodePlayerName(giocatore.nome),
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (giocatore.ruolo != 'Allenatore')
+                        Builder(
+                          builder: (context) {
+                            final color = _getAcquistoColor(giocatore);
+                            if (color == null) {
+                              return const SizedBox.shrink();
+                            }
+                            return Padding(
+                              padding: EdgeInsets.only(left: 3),
+                              child: Text(
+                                '*',
+                                style: TextStyle(
+                                  color: color,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      if (giocatore.ruolo != 'Allenatore' &&
+                          widget.squadra.indisponibili.any(
+                            (indisponibile) =>
+                                indisponibile.idGiocatore == giocatore.id &&
+                                indisponibile.motivo == 'inf',
+                          ))
+                        Padding(
+                          padding: EdgeInsets.only(left: 6),
+                          child: Tooltip(
+                            message: 'Infortunato',
+                            child: Icon(
+                              Icons.healing,
+                              color: Colors.orange,
+                              size: 18,
+                            ),
                           ),
                         ),
-                      );
-                    },
+                    ],
                   ),
-              ],
-            ),
           ),
           // Icona capitano
           if (giocatore.ruolo != 'Allenatore')
