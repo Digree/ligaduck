@@ -1472,7 +1472,18 @@ class _SquadrePageState extends State<SquadrePage> {
                         SizedBox.shrink(),
                   ),
                 ),
-                isWide ? moreInfo(context, isWide) : Container(),
+                if (isWide)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      moreInfo(context, isWide),
+                      const SizedBox(width: 20),
+                      SizedBox(
+                        width: screenWidth * 0.15,
+                        child: _buildUltimiRisultati(),
+                      ),
+                    ],
+                  ),
                 Padding(padding: EdgeInsets.only(left: 20), child: Column()),
               ],
             ),
@@ -1531,52 +1542,41 @@ class _SquadrePageState extends State<SquadrePage> {
         Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (isWide)
-              Flexible(
-                child: Stack(
-                  children: [
-                    Image.asset(
-                      'assets/miscellaneous/stadium.png',
-                      fit: BoxFit.contain,
-                      color: Colors.white,
-                      colorBlendMode: BlendMode.srcATop,
-                    ),
-                    Padding(
-                      padding: EdgeInsets.all(2),
-                      child: Image.asset(
-                        'assets/miscellaneous/stadium.png',
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            else
-              Stack(
+            SizedBox(
+              width: isWide ? 200 : null,
+              height: isWide ? 120 : 60,
+              child: Stack(
+                alignment: Alignment.center,
                 children: [
                   Image.asset(
                     'assets/miscellaneous/stadium.png',
                     fit: BoxFit.contain,
                     color: Colors.white,
                     colorBlendMode: BlendMode.srcATop,
-                    height: 60,
+                    width: isWide ? 200 : null,
+                    height: isWide ? 120 : 60,
                   ),
                   Padding(
                     padding: EdgeInsets.all(2),
                     child: Image.asset(
                       'assets/miscellaneous/stadium.png',
                       fit: BoxFit.contain,
-                      height: 60,
+                      width: isWide ? 196 : null,
+                      height: isWide ? 120 : 60,
                     ),
                   ),
                 ],
               ),
+            ),
             if (isWide)
-              Flexible(
+              SizedBox(
+                width: 200,
                 child: Stack(
+                  alignment: Alignment.center,
                   children: [
                     Text(
                       CommonService.decodePlayerName(widget.squadra.stadio),
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -1588,6 +1588,7 @@ class _SquadrePageState extends State<SquadrePage> {
                     ),
                     Text(
                       CommonService.decodePlayerName(widget.squadra.stadio),
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.black,
                         fontSize: 20,
@@ -1768,8 +1769,9 @@ class _SquadrePageState extends State<SquadrePage> {
     double screenWidth,
     double screenHeight,
   ) {
+    final cardHeight = isWide ? screenWidth * 0.65 : screenWidth * 0.4;
     return SizedBox(
-      height: 200.0,
+      height: isWide ? cardHeight : 200,
       child: CarouselSlider(
         items: [
           //1st Image of Slider
@@ -1779,7 +1781,7 @@ class _SquadrePageState extends State<SquadrePage> {
             padding: EdgeInsets.only(left: 16, top: 16, right: 16),
             child: Container(
               width: isWide ? screenWidth * 0.14 : screenWidth * 0.9,
-              height: isWide ? 250 : screenWidth * 0.4,
+              height: cardHeight,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
@@ -1802,14 +1804,47 @@ class _SquadrePageState extends State<SquadrePage> {
                 ],
               ),
               clipBehavior: Clip.antiAlias,
-              child: Center(child: moreInfo(context, isWide)),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [moreInfo(context, isWide)],
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 16, top: 16, right: 16),
+            child: Container(
+              width: screenWidth * 0.9,
+              height: cardHeight,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: _allGradientColors(),
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(32),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Center(child: _buildUltimiRisultati()),
             ),
           ),
         ],
 
         //Slider Container properties
         options: CarouselOptions(
-          height: screenWidth * 0.4, // Altezza del carousel
+          height: cardHeight,
           enlargeCenterPage: true,
           autoPlay: false,
           aspectRatio: 16 / 9,
@@ -1817,6 +1852,122 @@ class _SquadrePageState extends State<SquadrePage> {
           enableInfiniteScroll: true,
           viewportFraction: 0.8,
         ),
+      ),
+    );
+  }
+
+  Widget _buildUltimiRisultati() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Text(
+          'Ultimi 5 risultati',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        FutureBuilder<List<_PartitaConCompetizioneSquadra>>(
+          future: _partiteFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const SizedBox(
+                width: 10,
+                height: 10,
+                child: CircularProgressIndicator(
+                  strokeWidth: 1.5,
+                  color: Colors.white,
+                ),
+              );
+            }
+            if (snapshot.hasError) {
+              return const Tooltip(
+                message: 'Impossibile caricare i risultati',
+                child: Icon(Icons.error_outline, color: Colors.white, size: 16),
+              );
+            }
+
+            final risultati =
+                (snapshot.data ?? [])
+                    .where((item) => item.partita.salvata)
+                    .toList()
+                  ..sort((a, b) => b.partita.data.compareTo(a.partita.data));
+            final ultimiRisultati = risultati.take(5).toList();
+
+            if (ultimiRisultati.isEmpty) {
+              return const SizedBox.shrink();
+            }
+
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  for (final item in ultimiRisultati)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 3),
+                      child: _buildRisultatoTile(item),
+                    ),
+                ],
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRisultatoTile(_PartitaConCompetizioneSquadra item) {
+    final partita = item.partita;
+    final isHome = partita.codHome == widget.squadra.cod;
+    final golSquadra = isHome ? partita.risultatoHome : partita.risultatoAway;
+    final golAvversaria = isHome
+        ? partita.risultatoAway
+        : partita.risultatoHome;
+    final squadraAvversaria = isHome ? item.squadraAway : item.squadraHome;
+    final codAvversaria = isHome ? partita.codAway : partita.codHome;
+    final avversaria = isHome ? partita.teamAway : partita.teamHome;
+    final esito = golSquadra > golAvversaria
+        ? 'V'
+        : golSquadra < golAvversaria
+        ? 'P'
+        : 'N';
+    final coloreEsito = esito == 'V'
+        ? Colors.green
+        : esito == 'P'
+        ? Colors.red
+        : Colors.grey;
+    final nomeAvversaria = CommonService.decodePlayerName(avversaria);
+    final data = partita.data;
+
+    return Tooltip(
+      message:
+          '$nomeAvversaria · ${data.day.toString().padLeft(2, '0')}/${data.month.toString().padLeft(2, '0')}/${data.year} · $golSquadra-$golAvversaria',
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SquadraLogoWidget(
+            codSquadra: codAvversaria,
+            squadra: squadraAvversaria,
+            size: 24,
+          ),
+          const SizedBox(height: 2),
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: coloreEsito,
+              shape: BoxShape.circle,
+            ),
+          ),
+        ],
       ),
     );
   }

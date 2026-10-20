@@ -4,10 +4,21 @@ import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/models/nazionale.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
+import 'package:ligaduck/app/service/models/trofeo.dart';
+import 'package:ligaduck/app/service/models/competizione.dart';
+import 'package:ligaduck/app/service/competizioni_provider.dart';
 import 'package:ligaduck/app/service/nazionali_provider.dart';
 import 'package:ligaduck/app/service/squadre_provider.dart';
 import 'package:ligaduck/app/widgets/squadra_logo_widget.dart';
 import '../../services/commonService.dart';
+
+class _TrofeoVinto {
+  final String nome;
+  final String cod;
+  final Set<String> stagioni;
+
+  _TrofeoVinto({required this.nome, required this.cod, required this.stagioni});
+}
 
 /// Pagina di dettaglio di un giocatore (o allenatore) di una squadra.
 class GiocatorePage extends StatefulWidget {
@@ -32,6 +43,7 @@ class _GiocatorePageState extends State<GiocatorePage>
     with SingleTickerProviderStateMixin {
   final Map<String, List<Squadra>> _squadrePerCampionato = {};
   final Map<String, List<Nazionale>> _nazionaliPerCampionato = {};
+  final Map<String, List<Competizione>> _competizioniPerCampionato = {};
   bool _loadingSquadre = true;
   Giocatore? _giocatoreEx;
   TabController? _tabController;
@@ -99,13 +111,11 @@ class _GiocatorePageState extends State<GiocatorePage>
       for (final c in carriere)
         if (c.idNazionale?.isNotEmpty ?? false) c.campionato,
     };
-    final provider = SquadreProvider();
-    final nazionaliProvider = NazionaliProvider();
-
+    final tuttiICampionati = {...campionati, ...campionatiNazionali};
     await Future.wait([
       ...campionati.map((camp) async {
         try {
-          final squadre = await provider.fetchSquadre(camp);
+          final squadre = await SquadreProvider().fetchSquadre(camp);
           _squadrePerCampionato[camp] = squadre;
         } catch (_) {
           // Ignora edizioni non recuperabili: verrà mostrato un placeholder.
@@ -113,10 +123,18 @@ class _GiocatorePageState extends State<GiocatorePage>
       }),
       ...campionatiNazionali.map((camp) async {
         try {
-          _nazionaliPerCampionato[camp] = await nazionaliProvider
+          _nazionaliPerCampionato[camp] = await NazionaliProvider()
               .fetchNazionali(camp);
         } catch (_) {
           // Ignora edizioni non recuperabili: verrà mostrato un placeholder.
+        }
+      }),
+      ...tuttiICampionati.map((camp) async {
+        try {
+          _competizioniPerCampionato[camp] = await CompetizioniProvider()
+              .fetchCompetizioni(camp);
+        } catch (_) {
+          // L'albo d'oro resta consultabile anche se mancano i nomi competizione.
         }
       }),
     ]);
@@ -264,7 +282,17 @@ class _GiocatorePageState extends State<GiocatorePage>
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        _buildCarrieraCard(carrieraOrdinata),
+        _buildCarrieraCard(
+          carrieraOrdinata,
+          isAllenatore: g.ruolo == 'Allenatore',
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Palmarès',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        _buildPalmares(carrieraOrdinata),
       ],
     );
   }
@@ -492,7 +520,10 @@ class _GiocatorePageState extends State<GiocatorePage>
     );
   }
 
-  Widget _buildCarrieraCard(List<Carriera> carrieraOrdinata) {
+  Widget _buildCarrieraCard(
+    List<Carriera> carrieraOrdinata, {
+    required bool isAllenatore,
+  }) {
     if (_loadingSquadre) {
       return _card(
         child: Padding(
@@ -527,11 +558,151 @@ class _GiocatorePageState extends State<GiocatorePage>
             children: [
               for (var i = 0; i < carrieraOrdinata.length; i++) ...[
                 if (i > 0) const Divider(height: 24),
-                _buildCarrieraRow(carrieraOrdinata[i], isWide),
+                _buildCarrieraRow(
+                  carrieraOrdinata[i],
+                  isWide,
+                  mostraDivisa: !isAllenatore,
+                ),
               ],
             ],
           );
         },
+      ),
+    );
+  }
+
+  List<_TrofeoVinto> _trofeiVinti(List<Carriera> carriere) {
+    final trofeiPerChiave = <String, _TrofeoVinto>{};
+
+    for (final carriera in carriere) {
+      final isNazionale = carriera.idNazionale?.isNotEmpty ?? false;
+      final trofei = isNazionale
+          ? _nazionalePerCarriera(carriera)?.trofei ?? <Trofeo>[]
+          : _squadraPerCarriera(carriera)?.trofei ?? <Trofeo>[];
+      final competizioni =
+          _competizioniPerCampionato[carriera.campionato] ?? <Competizione>[];
+
+      for (final trofeo in trofei) {
+        if (!trofeo.anni.contains(carriera.campionato)) continue;
+
+        Competizione? competizione;
+        for (final c in competizioni) {
+          if (c.id == trofeo.idCompetizione) {
+            competizione = c;
+            break;
+          }
+        }
+
+        final nome = trofeo.nome?.isNotEmpty == true
+            ? trofeo.nome!
+            : competizione?.nome ?? 'Trofeo';
+        final cod = trofeo.cod?.isNotEmpty == true
+            ? trofeo.cod!
+            : competizione?.cod ?? 'champions_league';
+        final key = '${trofeo.idCompetizione}_$cod';
+        final existing = trofeiPerChiave[key];
+
+        if (existing == null) {
+          trofeiPerChiave[key] = _TrofeoVinto(
+            nome: nome,
+            cod: cod,
+            stagioni: {carriera.campionato},
+          );
+        } else {
+          existing.stagioni.add(carriera.campionato);
+        }
+      }
+    }
+
+    final trofei = trofeiPerChiave.values.toList()
+      ..sort((a, b) {
+        final nomeOrdine = a.nome.compareTo(b.nome);
+        if (nomeOrdine != 0) return nomeOrdine;
+        return _confrontaStagioni(a.stagioni.first, b.stagioni.first);
+      });
+    return trofei;
+  }
+
+  int _confrontaStagioni(String a, String b) {
+    final annoA = int.tryParse(a);
+    final annoB = int.tryParse(b);
+    if (annoA != null && annoB != null) return annoA.compareTo(annoB);
+    return a.compareTo(b);
+  }
+
+  Widget _buildPalmares(List<Carriera> carriere) {
+    if (_loadingSquadre) {
+      return _card(
+        child: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(
+              widget.gradientColors.isNotEmpty
+                  ? widget.gradientColors.first
+                  : Colors.blueAccent,
+            ),
+          ),
+        ),
+      );
+    }
+
+    final trofei = _trofeiVinti(carriere);
+    if (trofei.isEmpty) {
+      return _card(
+        child: Text(
+          'Nessun trofeo vinto nelle stagioni di carriera',
+          style: TextStyle(color: Colors.grey[600]),
+        ),
+      );
+    }
+
+    return _card(
+      child: Column(
+        children: [
+          for (var i = 0; i < trofei.length; i++) ...[
+            if (i > 0) const Divider(height: 20),
+            Builder(
+              builder: (context) {
+                final stagioni = trofei[i].stagioni.toList()
+                  ..sort(_confrontaStagioni);
+                return Row(
+                  children: [
+                    Image.asset(
+                      'assets/trophies/${trofei[i].cod}.png',
+                      width: 42,
+                      height: 42,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, _, _) => const Icon(
+                        Icons.emoji_events,
+                        size: 36,
+                        color: Colors.amber,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            trofei[i].nome,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            stagioni.join(", "),
+                            style: TextStyle(
+                              color: Colors.grey[700],
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -556,7 +727,128 @@ class _GiocatorePageState extends State<GiocatorePage>
     );
   }
 
-  Widget _buildCarrieraRow(Carriera c, bool isWide) {
+  Widget _buildCarrieraDivisa(Carriera carriera, Squadra squadra) {
+    const categorieItaliane = {'serie a', 'serie b', 'serie c', 'serie d'};
+    final categoria = squadra.categoria.trim().toLowerCase();
+    final squadraEstera =
+        categoria.isNotEmpty && !categorieItaliane.contains(categoria);
+
+    return SizedBox(
+      width: 40,
+      height: 44,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Image.asset(
+            'assets/divise/divise_${carriera.campionato}/${squadra.cod}_1.webp',
+            width: 40,
+            height: 44,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) => squadraEstera
+                ? _buildMagliaPersonalizzata(squadra)
+                : Icon(Icons.sports, color: Colors.grey[400], size: 28),
+          ),
+          if (carriera.numero != 0)
+            Text(
+              '${carriera.numero}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 11,
+                shadows: [
+                  Shadow(
+                    offset: Offset(-1, -1),
+                    blurRadius: 1,
+                    color: Colors.black,
+                  ),
+                  Shadow(
+                    offset: Offset(1, 1),
+                    blurRadius: 1,
+                    color: Colors.black,
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMagliaPersonalizzata(Squadra squadra) {
+    const colorMap = <String, Color>{
+      'rosso': Colors.red,
+      'verde': Colors.green,
+      'blu': Colors.blueAccent,
+      'blu scuro': Color(0xFF0D47A1),
+      'giallo': Color(0xFFFDD835),
+      'arancione': Color(0xFFE65100),
+      'viola': Color(0xFF6A1B9A),
+      'nero': Colors.black,
+      'bianco': Colors.white,
+      'grigio': Colors.grey,
+      'fucsia': Color(0xFFAD1457),
+      'rosa': Color(0xFFFF93B7),
+      'ciano': Color(0xFF4FC3F7),
+      'marrone': Color(0xFF7A3622),
+    };
+    final colori = squadra.colori
+        .map((colore) => colorMap[colore.toLowerCase()] ?? Colors.grey)
+        .toList();
+    if (colori.isEmpty) colori.add(Colors.grey);
+
+    return Center(
+      child: SizedBox(
+        width: 32,
+        height: 40,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            ClipPath(
+              clipper: _CarrieraJerseyClipper(),
+              child: Container(color: Colors.black.withValues(alpha: 0.35)),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(1.5),
+              child: ClipPath(
+                clipper: _CarrieraJerseyClipper(),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: colori.length > 1
+                        ? LinearGradient(
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            colors: colori,
+                          )
+                        : null,
+                    color: colori.length == 1 ? colori.first : null,
+                  ),
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: Container(
+                      height: 16,
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Color(0x2EFFFFFF), Colors.transparent],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCarrieraRow(
+    Carriera c,
+    bool isWide, {
+    required bool mostraDivisa,
+  }) {
     final squadraCarriera = _squadraPerCarriera(c);
     final nazionaleCarriera = _nazionalePerCarriera(c);
     final isNazionale = c.idNazionale?.isNotEmpty ?? false;
@@ -643,6 +935,10 @@ class _GiocatorePageState extends State<GiocatorePage>
           const SizedBox(width: 12),
           Expanded(child: nomeCampionato),
           ...statPairs.map((s) => _statChip(s.$1, s.$2)),
+          if (mostraDivisa && !isNazionale && squadraCarriera != null) ...[
+            const SizedBox(width: 8),
+            _buildCarrieraDivisa(c, squadraCarriera),
+          ],
         ],
       );
     }
@@ -655,6 +951,10 @@ class _GiocatorePageState extends State<GiocatorePage>
             logo,
             const SizedBox(width: 12),
             Expanded(child: nomeCampionato),
+            if (mostraDivisa && !isNazionale && squadraCarriera != null) ...[
+              const SizedBox(width: 8),
+              _buildCarrieraDivisa(c, squadraCarriera),
+            ],
           ],
         ),
         const SizedBox(height: 10),
@@ -666,4 +966,29 @@ class _GiocatorePageState extends State<GiocatorePage>
       ],
     );
   }
+}
+
+class _CarrieraJerseyClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final w = size.width;
+    final h = size.height;
+    return Path()
+      ..moveTo(0, h * 0.30)
+      ..quadraticBezierTo(0, h * 0.08, w * 0.18, h * 0.04)
+      ..lineTo(w * 0.34, 0)
+      ..cubicTo(w * 0.40, h * 0.02, w * 0.46, h * 0.13, w * 0.50, h * 0.13)
+      ..cubicTo(w * 0.54, h * 0.13, w * 0.60, h * 0.02, w * 0.66, 0)
+      ..lineTo(w * 0.82, h * 0.04)
+      ..quadraticBezierTo(w, h * 0.08, w, h * 0.30)
+      ..quadraticBezierTo(w, h * 0.40, w * 0.88, h * 0.42)
+      ..lineTo(w * 0.88, h * 0.97)
+      ..quadraticBezierTo(w * 0.50, h * 1.02, w * 0.12, h * 0.97)
+      ..lineTo(w * 0.12, h * 0.42)
+      ..quadraticBezierTo(0, h * 0.40, 0, h * 0.30)
+      ..close();
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }

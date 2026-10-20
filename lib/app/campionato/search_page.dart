@@ -990,11 +990,12 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   String _getNazioneBandiera(String categoria) {
-    // Se la categoria è Serie A, B o C (Paperi), mostra bandiera Italia
+    // Le categorie delle serie italiane devono mostrare la bandiera italiana.
     final categoriaLower = categoria.toLowerCase();
     if (categoriaLower == 'serie a' ||
         categoriaLower == 'serie b' ||
-        categoriaLower == 'serie c') {
+        categoriaLower == 'serie c' ||
+        categoriaLower == 'serie d') {
       return 'italia';
     }
     return categoria;

@@ -532,8 +532,13 @@ class _StatisticheSquadrePageState extends State<StatisticheSquadrePage> {
                 ? const LinearProgressIndicator(color: Colors.blueAccent)
                 : DropdownButtonFormField<String>(
                     initialValue: _campionatoSelezionato,
+                    style: const TextStyle(color: Colors.blueAccent),
                     decoration: InputDecoration(
                       labelText: 'Campionato',
+                      labelStyle: const TextStyle(color: Colors.blueAccent),
+                      floatingLabelStyle: const TextStyle(
+                        color: Colors.blueAccent,
+                      ),
                       prefixIcon: const Icon(
                         Icons.emoji_events,
                         color: Colors.blueAccent,
@@ -564,7 +569,10 @@ class _StatisticheSquadrePageState extends State<StatisticheSquadrePage> {
                         .map(
                           (c) => DropdownMenuItem(
                             value: c,
-                            child: Text('$c° Campionato'),
+                            child: Text(
+                              '$c° Campionato',
+                              style: const TextStyle(color: Colors.blueAccent),
+                            ),
                           ),
                         )
                         .toList(),
@@ -612,12 +620,7 @@ class _StatisticheSquadrePageState extends State<StatisticheSquadrePage> {
   }
 
   Widget _buildRosaTab(Squadra squadra) {
-    return Column(
-      children: [
-        _buildDiviseSection(squadra),
-        Expanded(child: _buildRosaTable(squadra)),
-      ],
-    );
+    return _buildRosaTable(squadra);
   }
 
   Widget _buildDiviseSection(Squadra squadra) {
@@ -703,40 +706,60 @@ class _StatisticheSquadrePageState extends State<StatisticheSquadrePage> {
     return FutureBuilder<List<_RigaGiocatore>>(
       future: _righeFuture,
       builder: (context, snapshot) {
+        final divise = _buildDiviseSection(squadra);
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(color: Colors.blueAccent),
+          return ListView(
+            children: [
+              divise,
+              const Padding(
+                padding: EdgeInsets.all(24),
+                child: Center(
+                  child: CircularProgressIndicator(color: Colors.blueAccent),
+                ),
+              ),
+            ],
           );
         }
         if (snapshot.hasError) {
-          return const Center(
-            child: Text('Errore nel caricamento dei giocatori'),
+          return ListView(
+            children: [
+              divise,
+              const Padding(
+                padding: EdgeInsets.all(24),
+                child: Center(
+                  child: Text('Errore nel caricamento dei giocatori'),
+                ),
+              ),
+            ],
           );
         }
         final righe = _sortRighe(snapshot.data ?? []);
         if (righe.isEmpty) {
-          return const Center(child: Text('Nessun giocatore disponibile'));
-        }
-        return Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: _buildSortBar(),
-            ),
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final isWide = constraints.maxWidth > 600;
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    itemCount: righe.length,
-                    itemBuilder: (context, index) =>
-                        _buildRigaCard(righe[index], isWide),
-                  );
-                },
+          return ListView(
+            children: [
+              divise,
+              const Padding(
+                padding: EdgeInsets.all(24),
+                child: Center(child: Text('Nessun giocatore disponibile')),
               ),
-            ),
-          ],
+            ],
+          );
+        }
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth > 600;
+            return ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              children: [
+                divise,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
+                  child: _buildSortBar(),
+                ),
+                ...righe.map((riga) => _buildRigaCard(riga, isWide)),
+              ],
+            );
+          },
         );
       },
     );
@@ -756,6 +779,7 @@ class _StatisticheSquadrePageState extends State<StatisticheSquadrePage> {
               child: DropdownButton<int>(
                 value: _sortColumnIndex,
                 isExpanded: true,
+                style: const TextStyle(color: Colors.blueAccent),
                 icon: const Icon(
                   Icons.arrow_drop_down,
                   color: Colors.blueAccent,
@@ -764,7 +788,10 @@ class _StatisticheSquadrePageState extends State<StatisticheSquadrePage> {
                   _sortLabels.length,
                   (i) => DropdownMenuItem(
                     value: i,
-                    child: Text('Ordina per ${_sortLabels[i]}'),
+                    child: Text(
+                      'Ordina per ${_sortLabels[i]}',
+                      style: const TextStyle(color: Colors.blueAccent),
+                    ),
                   ),
                 ),
                 onChanged: (value) {

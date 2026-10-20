@@ -6878,6 +6878,57 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     });
   }
 
+  int? _getNumeroMagliaIndisponibile(
+    int team,
+    GiocatoreNonDisponibile giocatore,
+  ) {
+    if (giocatore.pos > 0) return giocatore.pos;
+
+    final formazione = team == 0
+        ? partita!.formazioneHome
+        : partita!.formazioneAway;
+    for (final giocatoreFormazione in [
+      ...formazione.titolari,
+      ...formazione.panchina,
+      ...formazione.nonConvocati,
+    ]) {
+      if (giocatoreFormazione.idGiocatore == giocatore.idGiocatore &&
+          giocatoreFormazione.pos > 0) {
+        return giocatoreFormazione.pos;
+      }
+    }
+
+    final isNazionale = team == 0
+        ? partita!.idNazionaleHome?.isNotEmpty ?? false
+        : partita!.idNazionaleAway?.isNotEmpty ?? false;
+    if (isNazionale) {
+      final convocati = team == 0
+          ? _convocatiNazionaleHome
+          : _convocatiNazionaleAway;
+      for (final convocato in convocati) {
+        if (convocato.idGiocatore == giocatore.idGiocatore &&
+            convocato.numeroMaglia > 0) {
+          return convocato.numeroMaglia;
+        }
+      }
+      return null;
+    }
+
+    final giocatori = team == 0 ? giocatoriHome : giocatoriAway;
+    final idSquadra = team == 0 ? partita!.idTeamHome : partita!.idTeamAway;
+    for (final giocatoreCompleto in giocatori) {
+      if (giocatoreCompleto.id != giocatore.idGiocatore) continue;
+      for (final carriera in giocatoreCompleto.carriera) {
+        if (carriera.campionato == widget.campionato &&
+            carriera.idSquadra == idSquadra &&
+            carriera.numero > 0) {
+          return carriera.numero;
+        }
+      }
+    }
+    return null;
+  }
+
   Future<Widget> buildIndisponibili(int team) async {
     final indisponibili = team == 0
         ? partita!.formazioneHome.indisponibili
@@ -6886,6 +6937,11 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     if (indisponibili.isEmpty) {
       return SizedBox.shrink();
     }
+
+    final numeriMagliaIndisponibili = <String, int?>{
+      for (final giocatore in indisponibili)
+        giocatore.idGiocatore: _getNumeroMagliaIndisponibile(team, giocatore),
+    };
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16),
@@ -6986,15 +7042,27 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                             (team == 0 &&
                                 (partita!.idNazionaleHome?.isNotEmpty ?? false))
                             ? _buildJerseyFromStringColors(
-                                giocatore.pos,
+                                numeriMagliaIndisponibili[giocatore
+                                        .idGiocatore] ??
+                                    0,
                                 _coloriNazionaleHome,
+                                showNumber:
+                                    numeriMagliaIndisponibili[giocatore
+                                        .idGiocatore] !=
+                                    null,
                               )
                             : (team == 1 &&
                                   (partita!.idNazionaleAway?.isNotEmpty ??
                                       false))
                             ? _buildJerseyFromStringColors(
-                                giocatore.pos,
+                                numeriMagliaIndisponibili[giocatore
+                                        .idGiocatore] ??
+                                    0,
                                 _coloriNazionaleAway,
+                                showNumber:
+                                    numeriMagliaIndisponibili[giocatore
+                                        .idGiocatore] !=
+                                    null,
                               )
                             : Stack(
                                 alignment: Alignment.center,
@@ -7014,14 +7082,19 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                     fit: BoxFit.cover,
                                     errorBuilder: (context, error, stackTrace) =>
                                         _buildJerseyPlaceholderWithTeamColors(
-                                          giocatore.pos,
+                                          numeriMagliaIndisponibili[giocatore
+                                                  .idGiocatore] ??
+                                              0,
                                           team == 0
                                               ? partita!.codHome
                                               : partita!.codAway,
                                         ),
                                   ),
                                   Text(
-                                    '${giocatore.pos}',
+                                    numeriMagliaIndisponibili[giocatore
+                                                .idGiocatore]
+                                            ?.toString() ??
+                                        'N/D',
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.w900,
