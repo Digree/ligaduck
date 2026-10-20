@@ -937,14 +937,20 @@ class _SearchPageState extends State<SearchPage> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          Navigator.push(
+        onTap: () async {
+          final categoriaAggiornata = await Navigator.push<bool>(
             context,
             MaterialPageRoute(
               builder: (context) =>
                   SquadrePage(campionato: widget.campionato, squadra: squadra),
             ),
           );
+          if (categoriaAggiornata == true && mounted) {
+            await _loadSquadre();
+            if (_hasSearched && _searchType == 'Squadre') {
+              await _performSearch();
+            }
+          }
         },
         child: Padding(
           padding: EdgeInsets.all(12),

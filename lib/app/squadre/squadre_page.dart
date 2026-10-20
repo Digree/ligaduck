@@ -111,6 +111,7 @@ class _SquadrePageState extends State<SquadrePage> {
   String _selectedMercatoView =
       'Esoneri'; // Esoneri, Mercato Estivo, Mercato Invernale
   bool _showAltDivise = false;
+  bool _categoriaAggiornata = false;
   int _statSortColumnIndex = 0;
   bool _statSortAscending = true;
   Future<List<_PartitaConCompetizioneSquadra>>? _partiteFuture;
@@ -1068,10 +1069,30 @@ class _SquadrePageState extends State<SquadrePage> {
                 child: Column(
                   children: [
                     TextField(
+                      cursorColor: getColor('primary'),
+                      style: TextStyle(color: getColor('primary')),
                       decoration: InputDecoration(
                         labelText: 'Cerca per nome',
-                        prefixIcon: Icon(Icons.search),
-                        border: OutlineInputBorder(),
+                        labelStyle: TextStyle(
+                          color: getColor('primary', forText: true),
+                        ),
+                        floatingLabelStyle: TextStyle(
+                          color: getColor('primary', forText: true),
+                        ),
+                        prefixIcon: Icon(
+                          Icons.search,
+                          color: getColor('primary', forText: true),
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: getColor('primary'),
+                            width: 2,
+                          ),
+                        ),
                       ),
                       onChanged: (value) {
                         setDialogState(() {
@@ -1198,7 +1219,14 @@ class _SquadrePageState extends State<SquadrePage> {
 
     bool isWide = MediaQuery.of(context).size.width > 1000;
     return OKToast(
-      child: Scaffold(
+      child: PopScope<bool>(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (!didPop) {
+            Navigator.of(context).pop(_categoriaAggiornata);
+          }
+        },
+        child: Scaffold(
         appBar: PreferredSize(
           preferredSize: Size.fromHeight(kToolbarHeight),
           child: AppBar(
@@ -1243,7 +1271,7 @@ class _SquadrePageState extends State<SquadrePage> {
             leading: IconButton(
               icon: Icon(Icons.arrow_back, color: getIconColor('primary')),
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.pop(context, _categoriaAggiornata);
               },
             ),
             title: Text(
@@ -1261,6 +1289,7 @@ class _SquadrePageState extends State<SquadrePage> {
               infoTeam(context, isWide, screenWidth, screenHeight),
             ],
           ),
+        ),
         ),
       ),
     );
@@ -4437,10 +4466,30 @@ class _SquadrePageState extends State<SquadrePage> {
                 child: Column(
                   children: [
                     TextField(
+                      cursorColor: getColor('primary'),
+                      style: TextStyle(color: getColor('primary')),
                       decoration: InputDecoration(
                         labelText: 'Cerca per nome',
-                        prefixIcon: Icon(Icons.search),
-                        border: OutlineInputBorder(),
+                        labelStyle: TextStyle(
+                          color: getColor('primary', forText: true),
+                        ),
+                        floatingLabelStyle: TextStyle(
+                          color: getColor('primary', forText: true),
+                        ),
+                        prefixIcon: Icon(
+                          Icons.search,
+                          color: getColor('primary', forText: true),
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: getColor('primary'),
+                            width: 2,
+                          ),
+                        ),
                       ),
                       onChanged: (value) {
                         setDialogState(() {
@@ -4707,6 +4756,7 @@ class _SquadrePageState extends State<SquadrePage> {
                                 categoriaSelezionata,
                               );
                           if (success) {
+                            _categoriaAggiornata = true;
                             showToast(
                               'Categoria aggiornata a $categoriaSelezionata',
                               duration: Duration(seconds: 2),

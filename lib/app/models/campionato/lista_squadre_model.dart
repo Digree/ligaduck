@@ -16,12 +16,14 @@ class ListaSquadreModel {
   final Future<List<Squadra>> squadreFuture;
   final Future<List<Competizione>> competizioniFuture;
   final Future<List<Nazionale>> nazionaliFuture;
+  final VoidCallback? onSquadreUpdated;
 
   ListaSquadreModel({
     required this.campionato,
     required this.squadreFuture,
     required this.competizioniFuture,
     required this.nazionaliFuture,
+    this.onSquadreUpdated,
   });
 }
 
@@ -529,8 +531,9 @@ Widget showSquadre(ListaSquadreModel model, String categoria) {
                         vertical: 4.0,
                       ),
                       child: InkWell(
-                        onTap: () {
-                          Navigator.push(
+                        onTap: () async {
+                          final categoriaAggiornata =
+                              await Navigator.push<bool>(
                             context,
                             MaterialPageRoute(
                               builder: (context) => SquadrePage(
@@ -539,6 +542,9 @@ Widget showSquadre(ListaSquadreModel model, String categoria) {
                               ),
                             ),
                           );
+                          if (categoriaAggiornata == true) {
+                            model.onSquadreUpdated?.call();
+                          }
                         },
                         borderRadius: BorderRadius.circular(12),
                         child: PlatformGlassContainer(
