@@ -4,7 +4,8 @@ publish_to: "none"
 version: 44.03.04
 
 environment:
-  sdk: ^3.8.1
+  sdk: ^3.11.0
+  flutter: ">=3.41.2"
 
 dependencies:
   flutter:
@@ -28,6 +29,7 @@ dependencies:
   path_provider: ^2.1.2
 
   intl: any
+  native_liquid_glass: ^0.3.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

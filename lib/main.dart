@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:native_liquid_glass/native_liquid_glass.dart';
 import 'package:ligaduck/app/campionato/campionato_home_page.dart';
 import 'package:ligaduck/app/config/models/config.dart';
 import 'package:ligaduck/app/config/models/service/config_provider.dart';
@@ -152,7 +153,11 @@ class _MyAppState extends State<MyApp> {
       ],
       supportedLocales: [Locale('it', 'IT')],
       locale: Locale('it', 'IT'),
-      navigatorObservers: [routeObserver],
+      navigatorObservers: [
+        routeObserver,
+        if (NativeLiquidGlassUtils.supportsLiquidGlass)
+          LiquidGlassNavigatorObserver(),
+      ],
       home: _buildHome(),
       theme: ThemeData(fontFamily: 'Franklin Gothic'),
     );

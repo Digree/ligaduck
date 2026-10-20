@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/widgets/platform_glass.dart';
+import 'package:native_liquid_glass/native_liquid_glass.dart';
 import 'package:ligaduck/app/service/giocatori_provider.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/models/nazionale.dart';
@@ -660,6 +661,22 @@ class _SearchPageState extends State<SearchPage> {
     required VoidCallback onPressed,
     required Color color,
   }) {
+    if (NativeLiquidGlassUtils.supportsLiquidGlass) {
+      return LiquidGlassButton(
+        label: text,
+        onPressed: onPressed,
+        width: 100,
+        height: 30,
+        tint: color,
+        foregroundColor: Colors.white,
+        labelTextStyle: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+        style: LiquidGlassButtonStyle.prominentGlass,
+      );
+    }
+
     return InkWell(
       onTap: onPressed,
       borderRadius: BorderRadius.circular(12),

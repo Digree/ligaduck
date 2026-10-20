@@ -2,6 +2,12 @@
 
 A new Flutter project.
 
+## Effetti glass
+
+Su iOS 26 e versioni successive la barra di navigazione principale e i pulsanti glass dedicati usano i controlli Liquid Glass nativi di Apple (`native_liquid_glass`). Su versioni precedenti di iOS e sulle altre piattaforme restano attivi i widget Flutter esistenti.
+
+Windows usa intenzionalmente superfici opache per gli sfondi glass: il blur GPU (`BackdropFilter`) è disabilitato nel fallback di piattaforma, per evitare artefatti di compositing. Non è quindi un effetto che dipende da un driver GPU errato; il rendering Windows è già instradato sul fallback opaco.
+
 ## 📦 Build & Release
 
 LigaDuck Manager supporta build per multiple piattaforme:

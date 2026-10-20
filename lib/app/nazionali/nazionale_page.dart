@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/widgets/platform_glass.dart';
+import 'package:native_liquid_glass/native_liquid_glass.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
 import 'package:ligaduck/app/models/partita/partita_formazione_model.dart';
 import 'package:ligaduck/app/service/competizioni_provider.dart';
@@ -278,6 +279,24 @@ class _NazionalePageState extends State<NazionalePage> {
   }
 
   Widget _buildGlassButton(String text, VoidCallback onTap) {
+    if (NativeLiquidGlassUtils.supportsLiquidGlass) {
+      return LayoutBuilder(
+        builder: (context, constraints) => LiquidGlassButton(
+          label: text,
+          onPressed: onTap,
+          width: constraints.maxWidth,
+          height: 50,
+          tint: Colors.white,
+          foregroundColor: getIconColor('primary'),
+          labelTextStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+          style: LiquidGlassButtonStyle.prominentGlass,
+        ),
+      );
+    }
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),

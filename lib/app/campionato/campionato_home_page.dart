@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/widgets/platform_glass.dart';
+import 'package:native_liquid_glass/native_liquid_glass.dart';
 import 'package:ligaduck/app/competizione/competizione_home_page.dart';
 import 'package:ligaduck/app/config/models/global.dart';
 import 'package:ligaduck/app/home_page.dart';
@@ -911,40 +912,81 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
               left: 16,
               right: 16,
               bottom: 16,
-              child: PlatformGlassContainer(
-                width: MediaQuery.of(context).size.width - 32,
-                height: 70,
-                borderRadius: 35,
-                blur: 20,
-                alignment: Alignment.center,
-                border: 2,
-                linearGradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.blueAccent.withOpacity(0.8),
-                    Colors.blueAccent.withOpacity(0.5),
-                  ],
-                ),
-                borderGradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.white.withOpacity(0.5),
-                    Colors.white.withOpacity(0.2),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildNavItem(Icons.home, 'Home', 0),
-                    _buildNavItem(Icons.shield, 'Squadre', 1),
-                    _buildNavItem(Icons.compare_arrows_outlined, 'Mercato', 2),
-                    _buildNavItem(Icons.emoji_events, "Albo d'oro", 3),
-                  ],
-                ),
-              ),
+              child: _buildBottomNavigationBar(context),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomNavigationBar(BuildContext context) {
+    if (NativeLiquidGlassUtils.supportsLiquidGlass) {
+      return LiquidGlassTabBar(
+        items: const [
+          LiquidGlassTabItem(
+            label: 'Home',
+            icon: NativeLiquidGlassIcon.iconData(Icons.home_outlined),
+            selectedIcon: NativeLiquidGlassIcon.iconData(Icons.home),
+          ),
+          LiquidGlassTabItem(
+            label: 'Squadre',
+            icon: NativeLiquidGlassIcon.iconData(Icons.shield_outlined),
+            selectedIcon: NativeLiquidGlassIcon.iconData(Icons.shield),
+          ),
+          LiquidGlassTabItem(
+            label: 'Mercato',
+            icon: NativeLiquidGlassIcon.iconData(Icons.compare_arrows_outlined),
+            selectedIcon: NativeLiquidGlassIcon.iconData(Icons.compare_arrows),
+          ),
+          LiquidGlassTabItem(
+            label: "Albo d'oro",
+            icon: NativeLiquidGlassIcon.iconData(Icons.emoji_events_outlined),
+            selectedIcon: NativeLiquidGlassIcon.iconData(Icons.emoji_events),
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        onTabSelected: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        height: 70,
+        selectedItemColor: Colors.white,
+        labelTextStyle: const TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
+      );
+    }
+
+    return PlatformGlassContainer(
+      width: MediaQuery.of(context).size.width - 32,
+      height: 70,
+      borderRadius: 35,
+      blur: 20,
+      alignment: Alignment.center,
+      border: 2,
+      linearGradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Colors.blueAccent.withOpacity(0.8),
+          Colors.blueAccent.withOpacity(0.5),
+        ],
+      ),
+      borderGradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Colors.white.withOpacity(0.5), Colors.white.withOpacity(0.2)],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildNavItem(Icons.home, 'Home', 0),
+          _buildNavItem(Icons.shield, 'Squadre', 1),
+          _buildNavItem(Icons.compare_arrows_outlined, 'Mercato', 2),
+          _buildNavItem(Icons.emoji_events, "Albo d'oro", 3),
         ],
       ),
     );
