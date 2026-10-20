@@ -82,13 +82,13 @@ class _MyAppState extends State<MyApp> {
   void _loadInitialData() {
     // Avanza il progresso "finto" mentre attendiamo la risposta reale,
     // così l'utente vede sempre un feedback anche se il fetch è lento.
-    _splashProgressTimer = Timer.periodic(const Duration(milliseconds: 120), (
+    _splashProgressTimer = Timer.periodic(const Duration(milliseconds: 480), (
       timer,
     ) {
       if (!mounted) return;
       setState(() {
         if (_splashProgress < 0.9) {
-          _splashProgress += 0.03;
+          _splashProgress += 0.12;
           if (_splashProgress > 0.9) _splashProgress = 0.9;
         }
       });

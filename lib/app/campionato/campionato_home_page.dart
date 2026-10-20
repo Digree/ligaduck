@@ -574,11 +574,11 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                       ),
                     );
 
-                    final timer = Timer.periodic(Duration(milliseconds: 200), (
+                    final timer = Timer.periodic(Duration(milliseconds: 400), (
                       t,
                     ) {
                       if (progressNotifier.value < 0.85) {
-                        progressNotifier.value = (progressNotifier.value + 0.04)
+                        progressNotifier.value = (progressNotifier.value + 0.08)
                             .clamp(0.0, 0.85);
                       } else {
                         t.cancel();

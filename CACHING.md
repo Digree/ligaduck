@@ -131,9 +131,17 @@ await partiteProvider.putEvento(campionato, idPartita, evento);
 - Le durate sono calibrate in base alla frequenza di aggiornamento dei dati
 - L'invalidazione è **automatica** dopo operazioni di modifica
 - Il sistema è **type-safe** grazie ai generics
+- Le richieste simultanee con la stessa chiave vengono accorpate: un solo fetch alimenta tutti i chiamanti
+- Gli errori non vengono memorizzati nella cache; una richiesta successiva può riprovare
 
 ## Monitoraggio
 
 Per verificare l'efficacia del caching, cercare nei log:
 - Le chiamate effettive al backend mostrano il response status
 - Le operazioni di invalidazione mostrano quando la cache viene pulita
+
+## Riduzione del lavoro UI e backend
+
+- Gli indicatori di caricamento mantengono lo stesso aspetto e una durata simile, ma aggiornano il progresso meno frequentemente.
+- I fetch read-only non emettono notifiche globali quando non aggiornano lo stato del provider, evitando rebuild e richieste conseguenti.
+- Le risposte backend di partite e giornate risolvono squadre, nazionali e ruoli con lookup indicizzati invece di confrontare ogni elemento con l'intera lista.

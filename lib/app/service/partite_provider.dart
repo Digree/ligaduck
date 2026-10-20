@@ -32,28 +32,29 @@ class PartiteProvider with ChangeNotifier {
       }
     }
 
-    try {
-      final response = await http.get(
-        Uri.parse('${Env.apiUrl}/$campionato/$idGiornata/partite'),
-      );
+    return _cache.getOrJoin(cacheKey, () async {
+      try {
+        final response = await http.get(
+          Uri.parse('${Env.apiUrl}/$campionato/$idGiornata/partite'),
+        );
 
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        _partite = data.map((item) => Partita.fromJson(item)).toList();
+        if (response.statusCode == 200) {
+          final List<dynamic> data = json.decode(response.body);
+          _partite = data.map((item) => Partita.fromJson(item)).toList();
 
-        // Salva in cache
-        _cache.set(cacheKey, _partite);
+          _cache.set(cacheKey, _partite);
 
-        notifyListeners();
-        return _partite;
-      } else {
-        throw Exception('Errore nel caricamento: ${response.statusCode}');
+          notifyListeners();
+          return _partite;
+        } else {
+          throw Exception('Errore nel caricamento: ${response.statusCode}');
+        }
+      } catch (e) {
+        print('Tipo errore: ${e.runtimeType}');
+        print('Dettaglio errore: $e');
+        return [];
       }
-    } catch (e) {
-      print('Tipo errore: ${e.runtimeType}');
-      print('Dettaglio errore: $e');
-      return [];
-    }
+    });
   }
 
   Future<List<Partita>> fetchPartiteByDate(
@@ -198,34 +199,35 @@ class PartiteProvider with ChangeNotifier {
       }
     }
 
-    try {
-      final url = '${Env.apiUrl}/$campionato/partita/$idPartita';
-      print('Tentativo di fetch partita da URL: $url');
-      print('Campionato: $campionato, ID Partita: $idPartita');
+    return _cache.getOrJoin(cacheKey, () async {
+      try {
+        final url = '${Env.apiUrl}/$campionato/partita/$idPartita';
+        print('Tentativo di fetch partita da URL: $url');
+        print('Campionato: $campionato, ID Partita: $idPartita');
 
-      final response = await http.get(Uri.parse(url));
+        final response = await http.get(Uri.parse(url));
 
-      print('Status Code ricevuto: ${response.statusCode}');
-      if (response.statusCode != 200) {
-        print('Risposta del server: ${response.body}');
+        print('Status Code ricevuto: ${response.statusCode}');
+        if (response.statusCode != 200) {
+          print('Risposta del server: ${response.body}');
+        }
+
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> data = json.decode(response.body);
+          final partita = Partita.fromJson(data);
+
+          _cache.set(cacheKey, partita);
+
+          return partita;
+        } else {
+          throw Exception('Errore nel caricamento: ${response.statusCode}');
+        }
+      } catch (e) {
+        print('Tipo errore: ${e.runtimeType}');
+        print('Dettaglio errore: $e');
+        rethrow;
       }
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(response.body);
-        final partita = Partita.fromJson(data);
-
-        // Salva in cache
-        _cache.set(cacheKey, partita);
-
-        return partita;
-      } else {
-        throw Exception('Errore nel caricamento: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Tipo errore: ${e.runtimeType}');
-      print('Dettaglio errore: $e');
-      rethrow;
-    }
+    });
   }
 
   Future<bool> putFormazione(

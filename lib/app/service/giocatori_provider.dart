@@ -155,28 +155,29 @@ class GiocatoriProvider with ChangeNotifier {
       }
     }
 
-    try {
-      final response = await http.get(
-        Uri.parse('${Env.apiUrl}/$campionato/giocatore/$idGiocatore'),
-      );
+    return _cache.getOrJoin(cacheKey, () async {
+      try {
+        final response = await http.get(
+          Uri.parse('${Env.apiUrl}/$campionato/giocatore/$idGiocatore'),
+        );
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(response.body);
-        Giocatore giocatore = Giocatore.fromJson(data);
-        giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> data = json.decode(response.body);
+          Giocatore giocatore = Giocatore.fromJson(data);
+          giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
 
-        // Salva in cache
-        _cache.set(cacheKey, giocatore);
+          _cache.set(cacheKey, giocatore);
 
-        return giocatore;
-      } else {
-        throw Exception('Errore nel caricamento: ${response.statusCode}');
+          return giocatore;
+        } else {
+          throw Exception('Errore nel caricamento: ${response.statusCode}');
+        }
+      } catch (e) {
+        print('Tipo errore: ${e.runtimeType}');
+        print('Dettaglio errore: $e');
+        return null;
       }
-    } catch (e) {
-      print('Tipo errore: ${e.runtimeType}');
-      print('Dettaglio errore: $e');
-      return null;
-    }
+    });
   }
 
   Future<List<Giocatore>> getGiocatoriInattivi() async {
@@ -330,7 +331,6 @@ class GiocatoriProvider with ChangeNotifier {
         final List<dynamic> data = json.decode(response.body);
         List<String> nazioni = data.map((item) => item.toString()).toList();
 
-        notifyListeners();
         return nazioni;
       } else {
         throw Exception('Errore nel caricamento: ${response.statusCode}');

@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:ligaduck/app/campionato/mercato/models/esonero.dart';
 import 'package:ligaduck/app/config/env.dart';
+import 'package:ligaduck/app/service/cache_service.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import '../../services/commonService.dart';
 
 class SquadreProvider with ChangeNotifier {
   List<Squadra> _squadre = [];
+  final _cache = CacheService();
 
   List<Squadra> get squadre => _squadre;
 
@@ -53,44 +55,46 @@ class SquadreProvider with ChangeNotifier {
     int idSquadra,
     int idCompetizione,
   ) async {
-    try {
-      final response = await http.get(
-        Uri.parse(
-          '${Env.apiUrl}/$campionato/squadre/$idSquadra?competizione=$idCompetizione',
-        ),
-      );
+    final cacheKey = 'squadra_${campionato}_${idCompetizione}_$idSquadra';
+    return _cache.getOrJoin(cacheKey, () async {
+      try {
+        final response = await http.get(
+          Uri.parse(
+            '${Env.apiUrl}/$campionato/squadre/$idSquadra?competizione=$idCompetizione',
+          ),
+        );
 
-      if (response.statusCode == 200) {
-        final dynamic data = json.decode(response.body);
+        if (response.statusCode == 200) {
+          final dynamic data = json.decode(response.body);
 
-        if (data == null) {
-          throw Exception('Dati squadra non disponibili');
+          if (data == null) {
+            throw Exception('Dati squadra non disponibili');
+          }
+
+          Squadra squadra = Squadra.fromJson(data);
+
+          for (var giocatore in squadra.formazione.titolari) {
+            giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
+          }
+
+          for (var giocatore in squadra.formazione.panchina) {
+            giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
+          }
+
+          for (var giocatore in squadra.indisponibili) {
+            giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
+          }
+
+          return squadra;
+        } else {
+          throw Exception('Errore nel caricamento: ${response.statusCode}');
         }
-
-        Squadra squadra = Squadra.fromJson(data);
-
-        for (var giocatore in squadra.formazione.titolari) {
-          giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
-        }
-
-        for (var giocatore in squadra.formazione.panchina) {
-          giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
-        }
-
-        for (var giocatore in squadra.indisponibili) {
-          giocatore.nome = CommonService.decodePlayerName(giocatore.nome);
-        }
-
-        notifyListeners();
-        return squadra;
-      } else {
-        throw Exception('Errore nel caricamento: ${response.statusCode}');
+      } catch (e) {
+        print('Tipo errore: ${e.runtimeType}');
+        print('Dettaglio errore: $e');
+        return Future.error('Errore nel caricamento della squadra');
       }
-    } catch (e) {
-      print('Tipo errore: ${e.runtimeType}');
-      print('Dettaglio errore: $e');
-      return Future.error('Errore nel caricamento della squadra');
-    }
+    });
   }
 
   Future<List<Squadra>> fetchSquadreByCompetizione(
@@ -124,7 +128,6 @@ class SquadreProvider with ChangeNotifier {
           }
         }
 
-        notifyListeners();
         return squadre;
       } else {
         throw Exception('Errore nel caricamento: ${response.statusCode}');
@@ -166,7 +169,6 @@ class SquadreProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         List<String> moduli = data.map((item) => item.toString()).toList();
-        notifyListeners();
         return moduli;
       } else {
         throw Exception('Errore nel caricamento: ${response.statusCode}');
@@ -269,7 +271,6 @@ class SquadreProvider with ChangeNotifier {
         List<Esonero> moduli = data
             .map((item) => Esonero.fromJson(item))
             .toList();
-        notifyListeners();
         return moduli;
       } else {
         throw Exception('Errore nel caricamento: ${response.statusCode}');
@@ -423,7 +424,6 @@ class SquadreProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         List<String> nazioni = data.map((item) => item.toString()).toList();
-        notifyListeners();
         return nazioni;
       } else {
         throw Exception('Errore nel caricamento: ${response.statusCode}');
@@ -471,7 +471,6 @@ class SquadreProvider with ChangeNotifier {
           }
         }
 
-        notifyListeners();
         return squadre;
       } else {
         throw Exception('Errore nel caricamento: ${response.statusCode}');

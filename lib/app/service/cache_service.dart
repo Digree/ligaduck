@@ -4,6 +4,23 @@ class CacheService {
   CacheService._internal();
 
   final Map<String, CacheEntry> _cache = {};
+  final Map<String, Future<dynamic>> _inFlight = {};
+
+  /// Riutilizza la richiesta già in corso per la stessa chiave.
+  Future<T> getOrJoin<T>(String key, Future<T> Function() loader) async {
+    final pending = _inFlight[key];
+    if (pending != null) return await pending as T;
+
+    final request = Future<T>.sync(loader);
+    _inFlight[key] = request;
+    try {
+      return await request;
+    } finally {
+      if (identical(_inFlight[key], request)) {
+        _inFlight.remove(key);
+      }
+    }
+  }
 
   /// Cache con durata personalizzata (default 5 minuti)
   T? get<T>(String key, {Duration? maxAge}) {
