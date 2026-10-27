@@ -1,4 +1,6 @@
+import 'package:ligaduck/app/widgets/liquid_glass_dropdown.dart';
 import 'package:flutter/material.dart';
+import 'package:ligaduck/app/widgets/liquid_glass_close_button.dart';
 import 'package:ligaduck/app/models/partita/partita_formazione_model.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/models/partita.dart';
@@ -145,7 +147,7 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
     }
 
     return DropdownButtonHideUnderline(
-      child: DropdownButton<String>(
+      child: LiquidGlassDropdownButton<String>(
         value: validValue,
         isExpanded: true,
         icon: Icon(
@@ -256,8 +258,8 @@ class _AddFormazionePageState extends State<AddFormazionePage> {
             ),
           ),
         ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: getIconColor()),
+        leading: LiquidGlassBackButton(
+          color: getIconColor(),
           onPressed: () {
             Navigator.pop(context);
           },

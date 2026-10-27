@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ligaduck/app/widgets/liquid_glass_close_button.dart';
 import 'package:ligaduck/app/service/giocatori_provider.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/models/nazionale.dart';
@@ -326,8 +327,7 @@ class _GiocatorePageState extends State<GiocatorePage>
             Positioned(
               top: 10,
               left: 10,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
+              child: LiquidGlassBackButton(
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ),

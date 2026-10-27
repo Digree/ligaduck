@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ligaduck/app/widgets/liquid_glass_button_theme.dart';
 
 class CampionatoButtonModel {
   final String text;
@@ -13,7 +14,7 @@ Widget buildCampionatoButton(CampionatoButtonModel model) {
     child: SizedBox(
       width: 240,
       height: 100,
-      child: FloatingActionButton(
+      child: LiquidGlassFloatingActionButton(
         heroTag: model.text,
         onPressed: model.onPressed,
         backgroundColor: Colors.blueAccent,

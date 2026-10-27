@@ -1,4 +1,6 @@
+import 'package:ligaduck/app/widgets/liquid_glass_dropdown.dart';
 import 'package:flutter/material.dart';
+import 'package:ligaduck/app/widgets/liquid_glass_close_button.dart';
 import 'package:ligaduck/app/competizione/competizione_home_page.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/giornata.dart';
@@ -110,8 +112,7 @@ class _GolAnnullatiPageState extends State<GolAnnullatiPage> {
                   Positioned(
                     top: 10,
                     left: 10,
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    child: LiquidGlassBackButton(
                       onPressed: () {
                         Navigator.push(
                           context,
@@ -197,22 +198,24 @@ class _GolAnnullatiPageState extends State<GolAnnullatiPage> {
                   ),
                 ),
                 SizedBox(width: 8),
-                DropdownButton<String>(
-                  value: _sortBy,
-                  items: ['Quantità', 'Nome', 'Squadra'].map((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    if (newValue != null) {
-                      setState(() {
-                        _sortBy = newValue;
-                        _sortGolAnnullati();
-                      });
-                    }
-                  },
+                LiquidGlassDropdownBox(
+                  child: LiquidGlassDropdownButton<String>(
+                    value: _sortBy,
+                    items: ['Quantità', 'Nome', 'Squadra'].map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          _sortBy = newValue;
+                          _sortGolAnnullati();
+                        });
+                      }
+                    },
+                  ),
                 ),
               ],
             ),

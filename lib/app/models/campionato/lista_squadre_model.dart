@@ -1,3 +1,4 @@
+import 'package:ligaduck/app/widgets/liquid_glass_dropdown.dart';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import 'package:ligaduck/app/service/models/nazionale.dart';
 import 'package:ligaduck/app/service/models/squadra.dart';
 import 'package:ligaduck/app/squadre/squadre_page.dart';
 import 'package:ligaduck/services/commonService.dart';
+import 'package:native_liquid_glass/native_liquid_glass.dart';
 
 class ListaSquadreModel {
   final String campionato;
@@ -246,7 +248,7 @@ class _ListaSquadreStateWidget extends State<_ListaSquadreState>
                           border: Border.all(color: Colors.blueAccent),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: DropdownButton<String>(
+                        child: LiquidGlassDropdownButton<String>(
                           value: _selectedCampionato,
                           isExpanded: true,
                           underline: SizedBox(),
@@ -534,77 +536,79 @@ Widget showSquadre(ListaSquadreModel model, String categoria) {
                         onTap: () async {
                           final categoriaAggiornata =
                               await Navigator.push<bool>(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => SquadrePage(
-                                squadra: squadra,
-                                campionato: model.campionato,
-                              ),
-                            ),
-                          );
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => SquadrePage(
+                                    squadra: squadra,
+                                    campionato: model.campionato,
+                                  ),
+                                ),
+                              );
                           if (categoriaAggiornata == true) {
                             model.onSquadreUpdated?.call();
                           }
                         },
-                        borderRadius: BorderRadius.circular(12),
-                        child: PlatformGlassContainer(
-                          width: double.infinity,
-                          height: 40,
-                          borderRadius: 30,
-                          blur: 15,
-                          alignment: Alignment.center,
-                          border: 2,
-                          linearGradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            /* colors: [
+                        borderRadius: BorderRadius.circular(25),
+                        child: NativeLiquidGlassUtils.supportsLiquidGlass
+                            ? _buildSquadraGlassPill(squadra)
+                            : PlatformGlassContainer(
+                                width: double.infinity,
+                                height: 40,
+                                borderRadius: 30,
+                                blur: 15,
+                                alignment: Alignment.center,
+                                border: 2,
+                                linearGradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  /* colors: [
                               Colors.blueAccent.withOpacity(0.5),
                               Colors.blueAccent.withOpacity(0.1),
                             ], */
-                            colors: [
-                              mostraColori
-                                  ? CommonService.getColor(
-                                      'primary',
-                                      squadra,
-                                    ).withOpacity(0.7)
-                                  : Colors.blueAccent.withOpacity(0.5),
-                              mostraColori
-                                  ? CommonService.getColor(
-                                      'secondary',
-                                      squadra,
-                                    ).withOpacity(0.5)
-                                  : Colors.blueAccent.withOpacity(0.1),
-                            ],
-                          ),
-                          borderGradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              mostraColori
-                                  ? CommonService.getColor(
-                                      'primary',
-                                      squadra,
-                                    ).withOpacity(0.5)
-                                  : Colors.white.withOpacity(0.1),
-                              mostraColori
-                                  ? CommonService.getColor(
-                                      'secondary',
-                                      squadra,
-                                    ).withOpacity(0.1)
-                                  : Colors.white.withOpacity(0.2),
-                            ],
-                          ),
-                          child: Text(
-                            CommonService.decodePlayerName(squadra.nome),
-                            style: TextStyle(
-                              color: mostraColori
-                                  ? Colors.black
-                                  : Colors.blue[900],
-                              //fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
+                                  colors: [
+                                    mostraColori
+                                        ? CommonService.getColor(
+                                            'primary',
+                                            squadra,
+                                          ).withOpacity(0.7)
+                                        : Colors.blueAccent.withOpacity(0.5),
+                                    mostraColori
+                                        ? CommonService.getColor(
+                                            'secondary',
+                                            squadra,
+                                          ).withOpacity(0.5)
+                                        : Colors.blueAccent.withOpacity(0.1),
+                                  ],
+                                ),
+                                borderGradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    mostraColori
+                                        ? CommonService.getColor(
+                                            'primary',
+                                            squadra,
+                                          ).withOpacity(0.5)
+                                        : Colors.white.withOpacity(0.1),
+                                    mostraColori
+                                        ? CommonService.getColor(
+                                            'secondary',
+                                            squadra,
+                                          ).withOpacity(0.1)
+                                        : Colors.white.withOpacity(0.2),
+                                  ],
+                                ),
+                                child: Text(
+                                  CommonService.decodePlayerName(squadra.nome),
+                                  style: TextStyle(
+                                    color: mostraColori
+                                        ? Colors.black
+                                        : Colors.blue[900],
+                                    //fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
                       ),
                     ),
                   ),
@@ -633,4 +637,48 @@ Squadra addCompetizioni(Squadra squadra, List<Competizione> competizioni) {
     }
   }
   return squadra;
+}
+
+Widget _buildSquadraGlassPill(Squadra squadra) {
+  final primary = mostraColori
+      ? CommonService.getColor('primary', squadra)
+      : Colors.blueAccent;
+  final secondary = mostraColori
+      ? CommonService.getColor('secondary', squadra)
+      : Colors.lightBlueAccent;
+  return FractionallySizedBox(
+    widthFactor: 1,
+    child: SizedBox(
+      height: 40,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(25),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: DecoratedBox(
+            decoration: ShapeDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [primary.withOpacity(0.75), secondary.withOpacity(0.3)],
+              ),
+              shape: StadiumBorder(
+                side: BorderSide(color: Colors.white.withOpacity(0.35)),
+              ),
+            ),
+            child: Center(
+              child: Text(
+                CommonService.decodePlayerName(squadra.nome),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: mostraColori ? Colors.black : Colors.blue[900],
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }

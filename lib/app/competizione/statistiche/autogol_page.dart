@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ligaduck/app/widgets/liquid_glass_close_button.dart';
 import 'package:ligaduck/app/competizione/competizione_home_page.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
 import 'package:ligaduck/app/service/models/giornata.dart';
@@ -85,8 +86,7 @@ class _AutogolPageState extends State<AutogolPage> {
                   Positioned(
                     top: 10,
                     left: 10,
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    child: LiquidGlassBackButton(
                       onPressed: () {
                         Navigator.push(
                           context,

@@ -1,4 +1,7 @@
+import 'package:ligaduck/app/widgets/liquid_glass_dropdown.dart';
+import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
+import 'package:ligaduck/app/widgets/liquid_glass_close_button.dart';
 import 'package:ligaduck/app/widgets/platform_glass.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
@@ -28,7 +31,10 @@ import 'package:ligaduck/app/widgets/squadra_logo_widget.dart';
 import 'package:oktoast/oktoast.dart';
 import '../../services/commonService.dart';
 import 'package:ligaduck/app/widgets/settings_icon.dart';
+import 'package:ligaduck/app/widgets/liquid_glass_action_group.dart';
+import 'package:ligaduck/app/widgets/liquid_glass_button_theme.dart';
 import 'package:ligaduck/app/service/country_service.dart';
+import 'package:native_liquid_glass/native_liquid_glass.dart';
 
 class _StatRowSquadra {
   final Giocatore giocatore;
@@ -702,7 +708,8 @@ class _SquadrePageState extends State<SquadrePage> {
                 ),
               ),
               Expanded(
-                child: ListView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     _buildGlassButton('Aggiungi Giocatori', () async {
                       Navigator.of(context).pop();
@@ -749,11 +756,10 @@ class _SquadrePageState extends State<SquadrePage> {
               ),
               Padding(
                 padding: EdgeInsets.only(top: 20.0),
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: Icon(Icons.close, color: getColor('primary')),
+                child: _buildGlassIconButton(
+                  icon: Icons.close,
+                  symbol: 'xmark',
+                  onTap: () => Navigator.pop(context),
                 ),
               ),
             ],
@@ -867,17 +873,19 @@ class _SquadrePageState extends State<SquadrePage> {
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(
-                  controller: nomeCtrl,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: fieldDecoration.copyWith(labelText: 'Nome'),
+                LiquidGlassTextBox(
+                  child: TextField(
+                    controller: nomeCtrl,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: fieldDecoration.copyWith(labelText: 'Nome'),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 nazioni.length <= 1
                     ? Center(
                         child: CircularProgressIndicator(color: primaryColor),
                       )
-                    : DropdownButtonFormField<String>(
+                    : LiquidGlassDropdownButtonFormField<String>(
                         initialValue: nazioneSelezionata,
                         isExpanded: true,
                         menuMaxHeight: 300,
@@ -898,7 +906,7 @@ class _SquadrePageState extends State<SquadrePage> {
                       ),
                 if (!isAllenatore) ...[
                   const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
+                  LiquidGlassDropdownButtonFormField<String>(
                     initialValue: ruoli.contains(ruoloSelezionato)
                         ? ruoloSelezionato
                         : ruoli.first,
@@ -912,7 +920,7 @@ class _SquadrePageState extends State<SquadrePage> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
+                  LiquidGlassDropdownButtonFormField<String>(
                     initialValue: ruoliAlt.contains(ruoloAltSelezionato)
                         ? ruoloAltSelezionato
                         : '',
@@ -1068,37 +1076,39 @@ class _SquadrePageState extends State<SquadrePage> {
                 height: 400,
                 child: Column(
                   children: [
-                    TextField(
-                      cursorColor: getColor('primary'),
-                      style: TextStyle(color: getColor('primary')),
-                      decoration: InputDecoration(
-                        labelText: 'Cerca per nome',
-                        labelStyle: TextStyle(
-                          color: getColor('primary', forText: true),
-                        ),
-                        floatingLabelStyle: TextStyle(
-                          color: getColor('primary', forText: true),
-                        ),
-                        prefixIcon: Icon(
-                          Icons.search,
-                          color: getColor('primary', forText: true),
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: getColor('primary'),
-                            width: 2,
+                    LiquidGlassTextBox(
+                      child: TextField(
+                        cursorColor: getColor('primary'),
+                        style: TextStyle(color: getColor('primary')),
+                        decoration: InputDecoration(
+                          labelText: 'Cerca per nome',
+                          labelStyle: TextStyle(
+                            color: getColor('primary', forText: true),
+                          ),
+                          floatingLabelStyle: TextStyle(
+                            color: getColor('primary', forText: true),
+                          ),
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: getColor('primary', forText: true),
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                              color: getColor('primary'),
+                              width: 2,
+                            ),
                           ),
                         ),
+                        onChanged: (value) {
+                          setDialogState(() {
+                            searchQuery = value.toLowerCase();
+                          });
+                        },
                       ),
-                      onChanged: (value) {
-                        setDialogState(() {
-                          searchQuery = value.toLowerCase();
-                        });
-                      },
                     ),
                     SizedBox(height: 16),
                     Expanded(
@@ -1174,6 +1184,29 @@ class _SquadrePageState extends State<SquadrePage> {
   }
 
   Widget _buildGlassButton(String text, VoidCallback onTap) {
+    final buttonColor = getColor('primary');
+    final foregroundColor = getIconColor('primary');
+
+    if (NativeLiquidGlassUtils.supportsLiquidGlass) {
+      return LayoutBuilder(
+        builder: (context, constraints) => LiquidGlassButton(
+          label: text,
+          onPressed: onTap,
+          width: constraints.maxWidth,
+          height: 50,
+          tint: buttonColor.withValues(alpha: 0.28),
+          foregroundColor: foregroundColor,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          maxLines: 1,
+          labelTextStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+          style: LiquidGlassButtonStyle.prominentGlass,
+        ),
+      );
+    }
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -1200,14 +1233,87 @@ class _SquadrePageState extends State<SquadrePage> {
             Colors.white.withOpacity(0.1),
           ],
         ),
-        child: Text(
-          text,
-          style: TextStyle(
-            color: getIconColor('primary'),
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Center(
+            child: Text(
+              text,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: foregroundColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildEditAction(BuildContext pageContext) {
+    if (!NativeLiquidGlassUtils.supportsLiquidGlass) {
+      return IconButton(
+        icon: Icon(Icons.edit, color: getIconColor('secondary')),
+        onPressed: () => _showEditModal(pageContext),
+      );
+    }
+
+    return LiquidGlassButton.icon(
+      icon: const NativeLiquidGlassIcon.sfSymbol('pencil'),
+      onPressed: () => _showEditModal(pageContext),
+      size: 44,
+      iconColor: getIconColor('secondary'),
+      style: LiquidGlassButtonStyle.plain,
+    );
+  }
+
+  Widget _buildGlassIconButton({
+    required IconData icon,
+    required String symbol,
+    required VoidCallback onTap,
+  }) {
+    final buttonColor = getColor('primary');
+    final foregroundColor = getIconColor('primary');
+
+    if (NativeLiquidGlassUtils.supportsLiquidGlass) {
+      return LiquidGlassButton.icon(
+        icon: NativeLiquidGlassIcon.sfSymbol(symbol),
+        onPressed: onTap,
+        size: 48,
+        iconSize: 22,
+        padding: const EdgeInsets.all(10),
+        iconColor: foregroundColor,
+        tint: buttonColor.withValues(alpha: 0.08),
+        style: LiquidGlassButtonStyle.glass,
+      );
+    }
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: PlatformGlassContainer(
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        blur: 15,
+        alignment: Alignment.center,
+        border: 2,
+        linearGradient: LinearGradient(
+          colors: [
+            buttonColor.withValues(alpha: 0.12),
+            buttonColor.withValues(alpha: 0.04),
+          ],
+        ),
+        borderGradient: LinearGradient(
+          colors: [
+            buttonColor.withValues(alpha: 0.1),
+            buttonColor.withValues(alpha: 0.04),
+          ],
+        ),
+        child: Icon(icon, color: foregroundColor, size: 22),
       ),
     );
   }
@@ -1227,69 +1333,63 @@ class _SquadrePageState extends State<SquadrePage> {
           }
         },
         child: Scaffold(
-        appBar: PreferredSize(
-          preferredSize: Size.fromHeight(kToolbarHeight),
-          child: AppBar(
-            actions: [
-              globals.admin
-                  ? Row(
+          appBar: PreferredSize(
+            preferredSize: Size.fromHeight(kToolbarHeight),
+            child: AppBar(
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: LiquidGlassActionGroup(
+                    itemCount: globals.admin ? 2 : 1,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: IconButton(
-                            icon: Icon(
-                              Icons.edit,
-                              color: getIconColor('secondary'),
-                            ),
-                            onPressed: () {
-                              _showEditModal(context);
-                            },
-                          ),
+                        if (globals.admin) _buildEditAction(context),
+                        SettingsIcon(
+                          iconColor: getIconColor('secondary'),
+                          onDismiss: () async {
+                            await _loadGiocatori();
+                            setState(() {});
+                          },
                         ),
                       ],
-                    )
-                  : SizedBox(),
-              SettingsIcon(
-                iconColor: getIconColor('secondary'),
-                onDismiss: () async {
-                  await _loadGiocatori();
-                  setState(() {});
-                },
-              ),
-            ],
-            flexibleSpace: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: _allGradientColors(),
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                    ),
+                  ),
+                ),
+              ],
+              flexibleSpace: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: _allGradientColors(),
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                 ),
               ),
-            ),
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back, color: getIconColor('primary')),
-              onPressed: () {
-                Navigator.pop(context, _categoriaAggiornata);
-              },
-            ),
-            title: Text(
-              CommonService.decodePlayerName(widget.squadra.nome),
-              style: TextStyle(color: getIconColor('primary')),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: LiquidGlassBackButton(
+                color: getIconColor('primary'),
+                onPressed: () {
+                  Navigator.pop(context, _categoriaAggiornata);
+                },
+              ),
+              title: Text(
+                CommonService.decodePlayerName(widget.squadra.nome),
+                style: TextStyle(color: getIconColor('primary')),
+              ),
             ),
           ),
-        ),
-        body: SizedBox(
-          width: MediaQuery.of(context).size.width * 1.0,
-          height: MediaQuery.of(context).size.height * 1.0,
-          child: Column(
-            children: [
-              headerTeam(context, isWide, screenWidth, screenHeight),
-              infoTeam(context, isWide, screenWidth, screenHeight),
-            ],
+          body: SizedBox(
+            width: MediaQuery.of(context).size.width * 1.0,
+            height: MediaQuery.of(context).size.height * 1.0,
+            child: Column(
+              children: [
+                headerTeam(context, isWide, screenWidth, screenHeight),
+                infoTeam(context, isWide, screenWidth, screenHeight),
+              ],
+            ),
           ),
-        ),
         ),
       ),
     );
@@ -2094,7 +2194,7 @@ class _SquadrePageState extends State<SquadrePage> {
                     color: Colors.white,
                   ),
                   child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
+                    child: LiquidGlassDropdownButton<String>(
                       value: _selectedMercatoView,
                       isExpanded: true,
                       icon: Icon(
@@ -2318,13 +2418,9 @@ class _SquadrePageState extends State<SquadrePage> {
                 Positioned(
                   bottom: 16,
                   right: 16,
-                  child: FloatingActionButton(
+                  child: _buildMercatoAddButton(
                     heroTag: 'mercato_fab_empty_$sessione',
-                    onPressed: () {
-                      _mostraDialogSceltaMercato(sessione);
-                    },
-                    backgroundColor: getColor('primary'),
-                    child: Icon(Icons.add, color: getIconColor('primary')),
+                    onPressed: () => _mostraDialogSceltaMercato(sessione),
                   ),
                 ),
             ],
@@ -2435,13 +2531,9 @@ class _SquadrePageState extends State<SquadrePage> {
                 Positioned(
                   bottom: 16,
                   right: 16,
-                  child: FloatingActionButton(
+                  child: _buildMercatoAddButton(
                     heroTag: 'mercato_fab_wide_$sessione',
-                    onPressed: () {
-                      _mostraDialogSceltaMercato(sessione);
-                    },
-                    backgroundColor: getColor('primary'),
-                    child: Icon(Icons.add, color: getIconColor('primary')),
+                    onPressed: () => _mostraDialogSceltaMercato(sessione),
                   ),
                 ),
             ],
@@ -2466,18 +2558,39 @@ class _SquadrePageState extends State<SquadrePage> {
               Positioned(
                 bottom: 16,
                 right: 16,
-                child: FloatingActionButton(
+                child: _buildMercatoAddButton(
                   heroTag: 'mercato_fab_mobile_$sessione',
-                  onPressed: () {
-                    _mostraDialogSceltaMercato(sessione);
-                  },
-                  backgroundColor: getColor('primary'),
-                  child: Icon(Icons.add, color: getIconColor('primary')),
+                  onPressed: () => _mostraDialogSceltaMercato(sessione),
                 ),
               ),
           ],
         );
       },
+    );
+  }
+
+  Widget _buildMercatoAddButton({
+    required String heroTag,
+    required VoidCallback onPressed,
+  }) {
+    if (NativeLiquidGlassUtils.supportsLiquidGlass) {
+      return LiquidGlassButton.icon(
+        icon: const NativeLiquidGlassIcon.sfSymbol('plus'),
+        onPressed: onPressed,
+        size: 56,
+        iconSize: 24,
+        padding: const EdgeInsets.all(16),
+        iconColor: getIconColor('primary'),
+        tint: getColor('primary'),
+        style: LiquidGlassButtonStyle.glass,
+      );
+    }
+
+    return LiquidGlassFloatingActionButton(
+      heroTag: heroTag,
+      onPressed: onPressed,
+      backgroundColor: getColor('primary'),
+      child: Icon(Icons.add, color: getIconColor('primary')),
     );
   }
 
@@ -2919,7 +3032,7 @@ class _SquadrePageState extends State<SquadrePage> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: DropdownButtonHideUnderline(
-              child: DropdownButton<int>(
+              child: LiquidGlassDropdownButton<int>(
                 value: _statSortColumnIndex,
                 isExpanded: true,
                 icon: Icon(
@@ -3373,7 +3486,7 @@ class _SquadrePageState extends State<SquadrePage> {
             borderRadius: BorderRadius.circular(8),
           ),
           child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
+            child: LiquidGlassDropdownButton<String>(
               value: _selectedSquadType,
               isExpanded: true,
               icon: Icon(
@@ -4465,37 +4578,39 @@ class _SquadrePageState extends State<SquadrePage> {
                 height: 400,
                 child: Column(
                   children: [
-                    TextField(
-                      cursorColor: getColor('primary'),
-                      style: TextStyle(color: getColor('primary')),
-                      decoration: InputDecoration(
-                        labelText: 'Cerca per nome',
-                        labelStyle: TextStyle(
-                          color: getColor('primary', forText: true),
-                        ),
-                        floatingLabelStyle: TextStyle(
-                          color: getColor('primary', forText: true),
-                        ),
-                        prefixIcon: Icon(
-                          Icons.search,
-                          color: getColor('primary', forText: true),
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: getColor('primary'),
-                            width: 2,
+                    LiquidGlassTextBox(
+                      child: TextField(
+                        cursorColor: getColor('primary'),
+                        style: TextStyle(color: getColor('primary')),
+                        decoration: InputDecoration(
+                          labelText: 'Cerca per nome',
+                          labelStyle: TextStyle(
+                            color: getColor('primary', forText: true),
+                          ),
+                          floatingLabelStyle: TextStyle(
+                            color: getColor('primary', forText: true),
+                          ),
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: getColor('primary', forText: true),
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                              color: getColor('primary'),
+                              width: 2,
+                            ),
                           ),
                         ),
+                        onChanged: (value) {
+                          setDialogState(() {
+                            searchQuery = value.toLowerCase();
+                          });
+                        },
                       ),
-                      onChanged: (value) {
-                        setDialogState(() {
-                          searchQuery = value.toLowerCase();
-                        });
-                      },
                     ),
                     SizedBox(height: 16),
                     Expanded(
@@ -4734,14 +4849,19 @@ class _SquadrePageState extends State<SquadrePage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: getColor('primary').withOpacity(0.5),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 35),
+                        child: SizedBox(
+                          width: 35,
+                          height: 35,
+                          child: _buildGlassIconButton(
+                            icon: Icons.close,
+                            symbol: 'xmark',
+                            onTap: () => Navigator.pop(context),
+                          ),
                         ),
-                        child: Icon(Icons.close, color: getColor('primary')),
                       ),
-                      SizedBox(width: 12),
+                      SizedBox(width: 20),
                       ElevatedButton(
                         onPressed: () async {
                           Navigator.pop(context);
@@ -5050,19 +5170,21 @@ class _SquadrePageState extends State<SquadrePage> {
           ),
           content: Form(
             key: formKey,
-            child: TextFormField(
-              controller: durataController,
-              keyboardType: TextInputType.number,
-              cursorColor: primaryColor,
-              style: TextStyle(color: primaryColor),
-              decoration: fieldDecoration,
-              validator: (value) {
-                final n = int.tryParse(value ?? '');
-                if (n == null || n <= 0) {
-                  return 'Inserisci un numero di partite valido';
-                }
-                return null;
-              },
+            child: LiquidGlassTextBox(
+              child: TextFormField(
+                controller: durataController,
+                keyboardType: TextInputType.number,
+                cursorColor: primaryColor,
+                style: TextStyle(color: primaryColor),
+                decoration: fieldDecoration,
+                validator: (value) {
+                  final n = int.tryParse(value ?? '');
+                  if (n == null || n <= 0) {
+                    return 'Inserisci un numero di partite valido';
+                  }
+                  return null;
+                },
+              ),
             ),
           ),
           actions: [
@@ -5202,7 +5324,7 @@ class _SquadrePageState extends State<SquadrePage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    DropdownButtonFormField<Competizione>(
+                    LiquidGlassDropdownButtonFormField<Competizione>(
                       initialValue: competizioneSelezionata,
                       isExpanded: true,
                       icon: Icon(Icons.arrow_drop_down, color: primaryColor),
@@ -5228,21 +5350,23 @@ class _SquadrePageState extends State<SquadrePage> {
                       },
                     ),
                     SizedBox(height: 16),
-                    TextFormField(
-                      controller: durataController,
-                      keyboardType: TextInputType.number,
-                      cursorColor: primaryColor,
-                      style: TextStyle(color: primaryColor),
-                      decoration: fieldDecoration.copyWith(
-                        labelText: 'Durata (partite)',
+                    LiquidGlassTextBox(
+                      child: TextFormField(
+                        controller: durataController,
+                        keyboardType: TextInputType.number,
+                        cursorColor: primaryColor,
+                        style: TextStyle(color: primaryColor),
+                        decoration: fieldDecoration.copyWith(
+                          labelText: 'Durata (partite)',
+                        ),
+                        validator: (value) {
+                          final n = int.tryParse(value ?? '');
+                          if (n == null || n <= 0) {
+                            return 'Inserisci un numero di partite valido';
+                          }
+                          return null;
+                        },
                       ),
-                      validator: (value) {
-                        final n = int.tryParse(value ?? '');
-                        if (n == null || n <= 0) {
-                          return 'Inserisci un numero di partite valido';
-                        }
-                        return null;
-                      },
                     ),
                   ],
                 ),
@@ -6060,28 +6184,32 @@ class _SquadrePageState extends State<SquadrePage> {
         children: [
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: DropdownButton<String>(
-              value: _selectedFormazioneType,
-              isExpanded: true,
-              items: ['Attuale', 'Pre-mercato'].map((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(
-                    value,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: getColor('primary', forText: true),
+            child: LiquidGlassDropdownBox(
+              color: getColor('primary', forText: true),
+              child: LiquidGlassDropdownButton<String>(
+                value: _selectedFormazioneType,
+                isExpanded: true,
+                style: TextStyle(color: getColor('primary', forText: true)),
+                items: ['Attuale', 'Pre-mercato'].map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(
+                      value,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: getColor('primary', forText: true),
+                      ),
                     ),
-                  ),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                if (newValue != null) {
-                  setState(() {
-                    _selectedFormazioneType = newValue;
-                  });
-                }
-              },
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      _selectedFormazioneType = newValue;
+                    });
+                  }
+                },
+              ),
             ),
           ),
           _buildSingleFormazione(
@@ -6123,53 +6251,22 @@ class _SquadrePageState extends State<SquadrePage> {
       child: Center(
         child: formazione.titolari.isEmpty
             ? (showAddButton
-                  ? GestureDetector(
-                      onTap: () async {
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => AddFormazionePage(
-                              squadra: widget.squadra,
-                              campionato: widget.campionato,
-                              giocatori: giocatori,
-                            ),
+                  ? _buildAggiungiFormazioneButton(() async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AddFormazionePage(
+                            squadra: widget.squadra,
+                            campionato: widget.campionato,
+                            giocatori: giocatori,
                           ),
-                        );
-                        if (result == true) {
-                          await _loadGiocatori();
-                          setState(() {});
-                        }
-                      },
-                      child: PlatformGlassContainer(
-                        width: 64,
-                        height: 64,
-                        borderRadius: 32,
-                        blur: 15,
-                        alignment: Alignment.center,
-                        border: 2,
-                        linearGradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            getColor('primary').withOpacity(0.6),
-                            getColor('secondary').withOpacity(0.4),
-                          ],
                         ),
-                        borderGradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.white.withOpacity(0.5),
-                            Colors.white.withOpacity(0.2),
-                          ],
-                        ),
-                        child: Icon(
-                          Icons.add,
-                          size: 36,
-                          color: getIconColor('primary'),
-                        ),
-                      ),
-                    )
+                      );
+                      if (result == true) {
+                        await _loadGiocatori();
+                        setState(() {});
+                      }
+                    })
                   : const SizedBox.shrink())
             : buildPartitaFormazione(
                 PartitaFormazioneModel(
@@ -6469,13 +6566,23 @@ class _SquadrePageState extends State<SquadrePage> {
         if (showAdminButtons && formazione.titolari.isNotEmpty) ...[
           Padding(
             padding: EdgeInsets.only(
-              left: isWide ? 0 : 8,
-              right: isWide ? 0 : 8,
-              top: 8,
+              left: NativeLiquidGlassUtils.supportsLiquidGlass
+                  ? 0
+                  : isWide
+                  ? 0
+                  : 8,
+              right: NativeLiquidGlassUtils.supportsLiquidGlass
+                  ? 0
+                  : isWide
+                  ? 0
+                  : 8,
+              top: NativeLiquidGlassUtils.supportsLiquidGlass ? 24 : 8,
               bottom: 4,
             ),
-            child: InkWell(
-              onTap: () async {
+            child: _buildFormazioneActionButton(
+              label: 'Modifica formazione',
+              icon: Icons.edit,
+              onPressed: () async {
                 final result = await Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -6491,162 +6598,209 @@ class _SquadrePageState extends State<SquadrePage> {
                   setState(() {});
                 }
               },
-              borderRadius: BorderRadius.circular(12),
-              child: PlatformGlassContainer(
-                width: double.infinity,
-                height: 50,
-                borderRadius: 12,
-                blur: 15,
-                alignment: Alignment.center,
-                border: 2,
-                linearGradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    getColor('primary').withOpacity(0.5),
-                    getColor('secondary').withOpacity(0.3),
-                  ],
-                ),
-                borderGradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.white.withOpacity(0.4),
-                    Colors.white.withOpacity(0.15),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.edit, size: 18, color: getIconColor('primary')),
-                    SizedBox(width: 8),
-                    Text(
-                      'Modifica formazione',
-                      style: TextStyle(
-                        color: getIconColor('primary'),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ),
           ),
         ],
         if (showAdminButtons) ...[
           Padding(
             padding: EdgeInsets.only(
-              left: isWide ? 0 : 8,
-              right: isWide ? 0 : 8,
+              left: NativeLiquidGlassUtils.supportsLiquidGlass
+                  ? 0
+                  : isWide
+                  ? 0
+                  : 8,
+              right: NativeLiquidGlassUtils.supportsLiquidGlass
+                  ? 0
+                  : isWide
+                  ? 0
+                  : 8,
               top: 8,
               bottom: 8,
             ),
-            child: InkWell(
-              onTap: () async {
-                await _aggiornaFormazionePreMercato();
-              },
-              borderRadius: BorderRadius.circular(12),
-              child: PlatformGlassContainer(
-                width: double.infinity,
-                height: 50,
-                borderRadius: 12,
-                blur: 15,
-                alignment: Alignment.center,
-                border: 2,
-                linearGradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    getColor('primary').withOpacity(0.5),
-                    getColor('secondary').withOpacity(0.3),
-                  ],
-                ),
-                borderGradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.white.withOpacity(0.4),
-                    Colors.white.withOpacity(0.15),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.save_alt,
-                      size: 18,
-                      color: getIconColor('primary'),
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      'Aggiorna formazione pre mercato',
-                      style: TextStyle(
-                        color: getIconColor('primary'),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            child: _buildFormazioneActionButton(
+              label: 'Aggiorna formazione pre mercato',
+              icon: Icons.save_alt,
+              onPressed: _aggiornaFormazionePreMercato,
             ),
           ),
           Padding(
             padding: EdgeInsets.only(
-              left: isWide ? 0 : 8,
-              right: isWide ? 0 : 8,
+              left: NativeLiquidGlassUtils.supportsLiquidGlass
+                  ? 0
+                  : isWide
+                  ? 0
+                  : 8,
+              right: NativeLiquidGlassUtils.supportsLiquidGlass
+                  ? 0
+                  : isWide
+                  ? 0
+                  : 8,
               top: 4,
               bottom: 4,
             ),
-            child: InkWell(
-              onTap: () async {
-                await _resetFormazione();
-              },
-              borderRadius: BorderRadius.circular(12),
-              child: PlatformGlassContainer(
-                width: double.infinity,
-                height: 50,
-                borderRadius: 12,
-                blur: 15,
-                alignment: Alignment.center,
-                border: 2,
-                linearGradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.red[700]!.withOpacity(0.7),
-                    Colors.red[400]!.withOpacity(0.4),
-                  ],
-                ),
-                borderGradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.white.withOpacity(0.4),
-                    Colors.white.withOpacity(0.15),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.delete_outline, size: 18, color: Colors.white),
-                    SizedBox(width: 8),
-                    Text(
-                      'Reset formazione',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            child: _buildFormazioneActionButton(
+              label: 'Reset formazione',
+              icon: Icons.delete_outline,
+              tint: Colors.red,
+              onPressed: _resetFormazione,
             ),
           ),
         ],
       ],
+    );
+  }
+
+  Widget _buildAggiungiFormazioneButton(VoidCallback onPressed) {
+    if (NativeLiquidGlassUtils.supportsLiquidGlass) {
+      return LiquidGlassButton.icon(
+        icon: const NativeLiquidGlassIcon.sfSymbol('plus'),
+        onPressed: onPressed,
+        size: 64,
+        iconSize: 30,
+        padding: const EdgeInsets.all(16),
+        iconColor: getIconColor('primary'),
+        tint: getColor('primary'),
+        style: LiquidGlassButtonStyle.glass,
+      );
+    }
+
+    return GestureDetector(
+      onTap: onPressed,
+      child: PlatformGlassContainer(
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        blur: 15,
+        alignment: Alignment.center,
+        border: 2,
+        linearGradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            getColor('primary').withOpacity(0.6),
+            getColor('secondary').withOpacity(0.4),
+          ],
+        ),
+        borderGradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withOpacity(0.5),
+            Colors.white.withOpacity(0.2),
+          ],
+        ),
+        child: Icon(Icons.add, size: 36, color: getIconColor('primary')),
+      ),
+    );
+  }
+
+  Widget _buildFormazioneActionButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback onPressed,
+    Color? tint,
+  }) {
+    if (NativeLiquidGlassUtils.supportsLiquidGlass) {
+      final foregroundColor = tint == null
+          ? getIconColor('primary')
+          : Colors.white;
+      final glassColor = tint ?? getColor('primary');
+      return FractionallySizedBox(
+        widthFactor: 0.95,
+        child: SizedBox(
+          height: 50,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(25),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              child: Material(
+                color: glassColor.withOpacity(0.55),
+                shape: StadiumBorder(
+                  side: BorderSide(color: Colors.white.withOpacity(0.35)),
+                ),
+                child: InkWell(
+                  onTap: onPressed,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(icon, size: 18, color: foregroundColor),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: foregroundColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final buttonColor = tint ?? getColor('primary');
+    final foregroundColor = tint == null
+        ? getIconColor('primary')
+        : Colors.white;
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(12),
+      child: PlatformGlassContainer(
+        width: double.infinity,
+        height: 50,
+        borderRadius: 12,
+        blur: 15,
+        alignment: Alignment.center,
+        border: 2,
+        linearGradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            (tint == null ? buttonColor : Colors.red[700]!).withOpacity(
+              tint == null ? 0.5 : 0.7,
+            ),
+            (tint == null ? getColor('secondary') : Colors.red[400]!)
+                .withOpacity(tint == null ? 0.3 : 0.4),
+          ],
+        ),
+        borderGradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withOpacity(0.4),
+            Colors.white.withOpacity(0.15),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 18, color: foregroundColor),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: foregroundColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -6890,31 +7044,33 @@ class _AssegnaNumeriDialogState extends State<_AssegnaNumeriDialog> {
                     child: ListTile(
                       leading: SizedBox(
                         width: 60,
-                        child: TextFormField(
-                          controller: controller,
-                          keyboardType: TextInputType.number,
-                          textAlign: TextAlign.center,
-                          cursorColor: widget.primaryColor,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: widget.primaryTextColor,
-                            fontSize: 16,
-                          ),
-                          decoration: InputDecoration(
-                            enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: widget.primaryColor.withOpacity(0.5),
-                              ),
+                        child: LiquidGlassTextBox(
+                          child: TextFormField(
+                            controller: controller,
+                            keyboardType: TextInputType.number,
+                            textAlign: TextAlign.center,
+                            cursorColor: widget.primaryColor,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: widget.primaryTextColor,
+                              fontSize: 16,
                             ),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: widget.primaryColor,
-                                width: 2,
+                            decoration: InputDecoration(
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: widget.primaryColor.withOpacity(0.5),
+                                ),
                               ),
-                            ),
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 8,
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: widget.primaryColor,
+                                  width: 2,
+                                ),
+                              ),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 8,
+                              ),
                             ),
                           ),
                         ),

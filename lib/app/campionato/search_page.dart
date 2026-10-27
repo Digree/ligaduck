@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ligaduck/app/widgets/liquid_glass_close_button.dart';
 import 'package:ligaduck/app/widgets/platform_glass.dart';
 import 'package:native_liquid_glass/native_liquid_glass.dart';
 import 'package:ligaduck/app/service/giocatori_provider.dart';
@@ -224,6 +225,7 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   void _showFilterDialog() {
+    var isWide = MediaQuery.of(context).size.width > 600;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -235,6 +237,39 @@ class _SearchPageState extends State<SearchPage> {
         final numeroController = TextEditingController();
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            void addSelectedNumber() {
+              FocusScope.of(context).unfocus();
+              final number = int.tryParse(numeroController.text.trim());
+              if (number != null && number >= 0) {
+                setDialogState(() {
+                  _selectedNumeriMaglia.add(number);
+                });
+                setState(() {});
+                numeroController.clear();
+              }
+            }
+
+            void resetFilters() {
+              setDialogState(() {
+                _selectedNazione = null;
+                _selectedNazioneSquadre = null;
+                _selectedRuolo = null;
+                _selectedNumeriMaglia.clear();
+                _selectedEta = _limitiEta;
+              });
+            }
+
+            void applyFilters() {
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Filtri applicati'),
+                  backgroundColor: Colors.blueAccent,
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            }
+
             return Container(
               constraints: BoxConstraints(
                 maxHeight: MediaQuery.of(context).size.height * 0.8,
@@ -260,13 +295,18 @@ class _SearchPageState extends State<SearchPage> {
                           color: Colors.white,
                         ),
                       ),
-                      IconButton(
-                        icon: Icon(Icons.close, color: Colors.white),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        padding: EdgeInsets.zero,
-                        constraints: BoxConstraints(),
+                      _buildGlassIconButton(
+                        icon: Icons.close,
+                        symbol: 'xmark',
+                        tooltip: 'Chiudi',
+                        onPressed: () => Navigator.of(context).pop(),
+                        size: 40,
+                        fallback: IconButton(
+                          icon: Icon(Icons.close, color: Colors.white),
+                          onPressed: () => Navigator.of(context).pop(),
+                          padding: EdgeInsets.zero,
+                          constraints: BoxConstraints(),
+                        ),
                       ),
                     ],
                   ),
@@ -326,12 +366,15 @@ class _SearchPageState extends State<SearchPage> {
                             ),
                             SizedBox(height: 24),
                             // Radio button Ruoli
-                            Text(
-                              'Ruolo',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
+                            Padding(
+                              padding: EdgeInsetsGeometry.only(bottom: 10),
+                              child: Text(
+                                'Ruolo',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                             SizedBox(height: 8),
@@ -340,55 +383,30 @@ class _SearchPageState extends State<SearchPage> {
                               spacing: 8,
                               runSpacing: 8,
                               children: [
-                                buildRuoloChip(
+                                _buildRoleFilterButton(
                                   'P',
                                   'Portiere',
-                                  _selectedRuolo,
-                                  (ruolo) {
-                                    setDialogState(() {
-                                      _selectedRuolo = ruolo;
-                                    });
-                                  },
+                                  setDialogState,
                                 ),
-                                buildRuoloChip(
+                                _buildRoleFilterButton(
                                   'D',
                                   'Difensore',
-                                  _selectedRuolo,
-                                  (ruolo) {
-                                    setDialogState(() {
-                                      _selectedRuolo = ruolo;
-                                    });
-                                  },
+                                  setDialogState,
                                 ),
-                                buildRuoloChip(
+                                _buildRoleFilterButton(
                                   'C',
                                   'Centrocampista',
-                                  _selectedRuolo,
-                                  (ruolo) {
-                                    setDialogState(() {
-                                      _selectedRuolo = ruolo;
-                                    });
-                                  },
+                                  setDialogState,
                                 ),
-                                buildRuoloChip(
+                                _buildRoleFilterButton(
                                   'A',
                                   'Attaccante',
-                                  _selectedRuolo,
-                                  (ruolo) {
-                                    setDialogState(() {
-                                      _selectedRuolo = ruolo;
-                                    });
-                                  },
+                                  setDialogState,
                                 ),
-                                buildRuoloChip(
+                                _buildRoleFilterButton(
                                   'All',
                                   'Allenatore',
-                                  _selectedRuolo,
-                                  (ruolo) {
-                                    setDialogState(() {
-                                      _selectedRuolo = ruolo;
-                                    });
-                                  },
+                                  setDialogState,
                                 ),
                               ],
                             ),
@@ -501,32 +519,35 @@ class _SearchPageState extends State<SearchPage> {
                                   ),
                                 ),
                                 SizedBox(width: 8),
-                                ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.white,
+                                Padding(
+                                  padding: EdgeInsetsGeometry.only(
+                                    top: isWide ? 10 : 30,
+                                  ),
+                                  child: _buildGlassTextButton(
+                                    text: 'Aggiungi',
+                                    color: Colors.white,
                                     foregroundColor: Colors.blueAccent,
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 12,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
+                                    width: 104,
+                                    height: 48,
+                                    onPressed: addSelectedNumber,
+                                    fallback: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.white,
+                                        foregroundColor: Colors.blueAccent,
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 12,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                      ),
+                                      onPressed: addSelectedNumber,
+                                      child: Text('Aggiungi'),
                                     ),
                                   ),
-                                  onPressed: () {
-                                    FocusScope.of(context).unfocus();
-                                    final n = int.tryParse(
-                                      numeroController.text.trim(),
-                                    );
-                                    if (n != null && n >= 0) {
-                                      setDialogState(() {
-                                        _selectedNumeriMaglia.add(n);
-                                      });
-                                      setState(() {});
-                                      numeroController.clear();
-                                    }
-                                  },
-                                  child: Text('Aggiungi'),
                                 ),
                               ],
                             ),
@@ -538,20 +559,13 @@ class _SearchPageState extends State<SearchPage> {
                                 children:
                                     (_selectedNumeriMaglia.toList()..sort())
                                         .map(
-                                          (n) => Chip(
-                                            label: Text(
-                                              '#$n',
-                                              style: TextStyle(
-                                                color: Colors.blueAccent,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            backgroundColor: Colors.white,
-                                            deleteIconColor: Colors.blueAccent,
+                                          (n) => _buildGlassNumberChip(
+                                            n,
                                             onDeleted: () {
-                                              setDialogState(() {
-                                                _selectedNumeriMaglia.remove(n);
-                                              });
+                                              setDialogState(
+                                                () => _selectedNumeriMaglia
+                                                    .remove(n),
+                                              );
                                               setState(() {});
                                             },
                                           ),
@@ -614,38 +628,38 @@ class _SearchPageState extends State<SearchPage> {
                   ),
                   SizedBox(height: 16),
                   // Actions
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      _buildGlassButton(
-                        text: 'Azzera',
-                        onPressed: () {
-                          setDialogState(() {
-                            _selectedNazione = null;
-                            _selectedNazioneSquadre = null;
-                            _selectedRuolo = null;
-                            _selectedNumeriMaglia.clear();
-                            _selectedEta = _limitiEta;
-                          });
-                        },
-                        color: Colors.red,
-                      ),
-                      SizedBox(width: 8),
-                      _buildGlassButton(
-                        text: 'Applica',
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Filtri applicati'),
-                              backgroundColor: Colors.blueAccent,
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                        },
-                        color: Colors.blue,
-                      ),
-                    ],
+                  Padding(
+                    padding: EdgeInsets.only(top: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        _buildGlassTextButton(
+                          text: 'Azzera',
+                          onPressed: resetFilters,
+                          color: Colors.red,
+                          width: 100,
+                          height: 44,
+                          fallback: _buildFallbackGlassButton(
+                            text: 'Azzera',
+                            onPressed: resetFilters,
+                            color: Colors.red,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        _buildGlassTextButton(
+                          text: 'Applica',
+                          onPressed: applyFilters,
+                          color: Colors.blue,
+                          width: 100,
+                          height: 44,
+                          fallback: _buildFallbackGlassButton(
+                            text: 'Applica',
+                            onPressed: applyFilters,
+                            color: Colors.blue,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -656,27 +670,91 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  Widget _buildGlassButton({
+  Widget _buildRoleFilterButton(
+    String label,
+    String role,
+    StateSetter setDialogState,
+  ) {
+    final isSelected = _selectedRuolo == role;
+    if (!NativeLiquidGlassUtils.supportsLiquidGlass) {
+      return buildRuoloChip(label, role, _selectedRuolo, (selectedRole) {
+        setDialogState(() {
+          _selectedRuolo = selectedRole;
+        });
+      });
+    }
+
+    return _buildGlassTextButton(
+      text: label,
+      color: isSelected ? Colors.blueAccent : Colors.white,
+      foregroundColor: isSelected ? Colors.white : Colors.blueAccent,
+      width: label == 'All' ? 64 : 48,
+      height: 44,
+      onPressed: () {
+        setDialogState(() {
+          _selectedRuolo = isSelected ? null : role;
+        });
+      },
+    );
+  }
+
+  Widget _buildGlassTextButton({
     required String text,
     required VoidCallback onPressed,
     required Color color,
+    Color foregroundColor = Colors.white,
+    double width = 100,
+    double height = 44,
+    IconData? icon,
+    String? symbol,
+    Widget? fallback,
   }) {
     if (NativeLiquidGlassUtils.supportsLiquidGlass) {
       return LiquidGlassButton(
         label: text,
         onPressed: onPressed,
-        width: 100,
-        height: 30,
+        icon: symbol == null
+            ? (icon == null ? null : NativeLiquidGlassIcon.iconData(icon))
+            : NativeLiquidGlassIcon.sfSymbol(symbol),
+        width: width,
+        height: height,
         tint: color,
-        foregroundColor: Colors.white,
+        foregroundColor: foregroundColor,
+        iconColor: foregroundColor,
+        padding: EdgeInsets.symmetric(horizontal: width < 72 ? 4 : 12),
+        imagePadding: 6,
+        maxLines: 1,
         labelTextStyle: const TextStyle(
-          fontSize: 16,
+          fontSize: 14,
           fontWeight: FontWeight.w600,
         ),
         style: LiquidGlassButtonStyle.prominentGlass,
+        borderRadius: height / 2,
       );
     }
 
+    if (fallback != null) return fallback;
+
+    return SizedBox(
+      width: width,
+      height: height,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: foregroundColor,
+          padding: EdgeInsets.symmetric(horizontal: width < 72 ? 4 : 12),
+        ),
+        child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis),
+      ),
+    );
+  }
+
+  Widget _buildFallbackGlassButton({
+    required String text,
+    required VoidCallback onPressed,
+    required Color color,
+  }) {
     return InkWell(
       onTap: onPressed,
       borderRadius: BorderRadius.circular(12),
@@ -705,6 +783,88 @@ class _SearchPageState extends State<SearchPage> {
         ),
       ),
     );
+  }
+
+  Widget _buildGlassIconButton({
+    required IconData icon,
+    required String symbol,
+    required String tooltip,
+    required VoidCallback onPressed,
+    double size = 48,
+    double tintOpacity = 0.08,
+    Widget? fallback,
+  }) {
+    if (NativeLiquidGlassUtils.supportsLiquidGlass) {
+      return LiquidGlassButton.icon(
+        icon: NativeLiquidGlassIcon.sfSymbol(symbol),
+        onPressed: onPressed,
+        size: size,
+        iconSize: 22,
+        iconColor: Colors.white,
+        tint: Colors.blueAccent.withValues(alpha: tintOpacity),
+        padding: const EdgeInsets.all(6),
+        tooltip: tooltip,
+        style: LiquidGlassButtonStyle.glass,
+      );
+    }
+
+    return fallback ??
+        IconButton(
+          tooltip: tooltip,
+          onPressed: onPressed,
+          icon: Icon(icon, color: Colors.white),
+        );
+  }
+
+  Widget _buildGlassNumberChip(int number, {required VoidCallback onDeleted}) {
+    if (!NativeLiquidGlassUtils.supportsLiquidGlass) {
+      return Chip(
+        label: Text(
+          '#$number',
+          style: TextStyle(
+            color: Colors.blueAccent,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        deleteIconColor: Colors.blueAccent,
+        onDeleted: onDeleted,
+      );
+    }
+
+    final chip = InkWell(
+      onTap: onDeleted,
+      borderRadius: BorderRadius.circular(20),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '#$number',
+              style: TextStyle(
+                color: Colors.blueAccent,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(width: 4),
+            Icon(Icons.close, size: 16, color: Colors.blueAccent),
+          ],
+        ),
+      ),
+    );
+
+    if (NativeLiquidGlassUtils.supportsLiquidGlass) {
+      return LiquidGlassContainer(
+        config: const LiquidGlassConfig(
+          shape: LiquidGlassEffectShape.capsule,
+          backgroundColor: Colors.white,
+        ),
+        child: SizedBox(width: 76, height: 36, child: Center(child: chip)),
+      );
+    }
+
+    return chip;
   }
 
   Widget _buildRisultatiSection() {
@@ -1029,12 +1189,7 @@ class _SearchPageState extends State<SearchPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blueAccent,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
+        leading: LiquidGlassBackButton(onPressed: () => Navigator.pop(context)),
         title: Text('Ricerca', style: TextStyle(color: Colors.white)),
       ),
       body: Padding(
@@ -1069,10 +1224,14 @@ class _SearchPageState extends State<SearchPage> {
                   ),
                 ),
                 SizedBox(width: 12),
-                SizedBox(
-                  height: 56,
-                  width: 56,
-                  child: Container(
+                _buildGlassIconButton(
+                  icon: Icons.filter_list,
+                  symbol: 'line.3.horizontal.decrease',
+                  tooltip: 'Filtri',
+                  onPressed: _showFilterDialog,
+                  size: 56,
+                  tintOpacity: 0.8,
+                  fallback: Container(
                     decoration: BoxDecoration(
                       color: Colors.blueAccent,
                       borderRadius: BorderRadius.circular(12),
@@ -1083,9 +1242,7 @@ class _SearchPageState extends State<SearchPage> {
                         color: Colors.white,
                         size: 24,
                       ),
-                      onPressed: () {
-                        _showFilterDialog();
-                      },
+                      onPressed: _showFilterDialog,
                       tooltip: 'Filtri',
                     ),
                   ),
@@ -1099,76 +1256,120 @@ class _SearchPageState extends State<SearchPage> {
               spacing: 8,
               runSpacing: 8,
               children: [
-                FilterChip(
-                  label: Text(
-                    'Giocatori',
-                    style: TextStyle(
-                      color: _searchType == 'Giocatori'
-                          ? Colors.white
-                          : Colors.blueAccent,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  selected: _searchType == 'Giocatori',
-                  onSelected: (bool selected) {
+                _buildGlassTextButton(
+                  text: 'Giocatori',
+                  color: _searchType == 'Giocatori'
+                      ? Colors.blueAccent
+                      : Colors.white,
+                  foregroundColor: _searchType == 'Giocatori'
+                      ? Colors.white
+                      : Colors.blueAccent,
+                  width: 132,
+                  height: 44,
+                  onPressed: () {
                     setState(() {
                       _searchType = 'Giocatori';
                     });
                   },
-                  backgroundColor: Colors.white,
-                  selectedColor: Colors.blueAccent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(
-                      color: _searchType == 'Giocatori'
-                          ? Colors.blueAccent
-                          : Colors.blueAccent.withOpacity(0.3),
+                  fallback: FilterChip(
+                    label: Text(
+                      'Giocatori',
+                      style: TextStyle(
+                        color: _searchType == 'Giocatori'
+                            ? Colors.white
+                            : Colors.blueAccent,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    selected: _searchType == 'Giocatori',
+                    onSelected: (_) =>
+                        setState(() => _searchType = 'Giocatori'),
+                    backgroundColor: Colors.white,
+                    selectedColor: Colors.blueAccent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      side: BorderSide(
+                        color: _searchType == 'Giocatori'
+                            ? Colors.blueAccent
+                            : Colors.blueAccent.withOpacity(0.3),
+                      ),
                     ),
                   ),
                 ),
-                FilterChip(
-                  label: Text(
-                    'Squadre',
-                    style: TextStyle(
-                      color: _searchType == 'Squadre'
-                          ? Colors.white
-                          : Colors.blueAccent,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  selected: _searchType == 'Squadre',
-                  onSelected: (bool selected) {
+                _buildGlassTextButton(
+                  text: 'Squadre',
+                  color: _searchType == 'Squadre'
+                      ? Colors.blueAccent
+                      : Colors.white,
+                  foregroundColor: _searchType == 'Squadre'
+                      ? Colors.white
+                      : Colors.blueAccent,
+                  width: 112,
+                  height: 44,
+                  onPressed: () {
                     setState(() {
                       _searchType = 'Squadre';
                     });
                   },
-                  backgroundColor: Colors.white,
-                  selectedColor: Colors.blueAccent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(
-                      color: _searchType == 'Squadre'
-                          ? Colors.blueAccent
-                          : Colors.blueAccent.withOpacity(0.3),
+                  fallback: FilterChip(
+                    label: Text(
+                      'Squadre',
+                      style: TextStyle(
+                        color: _searchType == 'Squadre'
+                            ? Colors.white
+                            : Colors.blueAccent,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    selected: _searchType == 'Squadre',
+                    onSelected: (_) => setState(() => _searchType = 'Squadre'),
+                    backgroundColor: Colors.white,
+                    selectedColor: Colors.blueAccent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      side: BorderSide(
+                        color: _searchType == 'Squadre'
+                            ? Colors.blueAccent
+                            : Colors.blueAccent.withOpacity(0.3),
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
             SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _performSearch,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent,
+            LayoutBuilder(
+              builder: (context, constraints) => _buildGlassTextButton(
+                text: 'Cerca',
+                icon: Icons.search,
+                symbol: 'magnifyingglass',
+                onPressed: _performSearch,
+                color: Colors.blueAccent,
                 foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                width: constraints.maxWidth,
+                height: 52,
+                fallback: SizedBox(
+                  width: constraints.maxWidth,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: _performSearch,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'Cerca',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              child: Text(
-                'Cerca',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
             SizedBox(height: 20),

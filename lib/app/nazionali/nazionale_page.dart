@@ -1,4 +1,6 @@
+import 'package:ligaduck/app/widgets/liquid_glass_dropdown.dart';
 import 'package:flutter/material.dart';
+import 'package:ligaduck/app/widgets/liquid_glass_close_button.dart';
 import 'package:ligaduck/app/widgets/platform_glass.dart';
 import 'package:native_liquid_glass/native_liquid_glass.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
@@ -17,6 +19,7 @@ import 'package:ligaduck/app/nazionali/add_formazione_nazionale_page.dart';
 import 'package:ligaduck/app/squadre/add_giocatori_page.dart';
 import 'package:ligaduck/app/widgets/search_giocatori_widgets.dart';
 import 'package:ligaduck/app/widgets/settings_icon.dart';
+import 'package:ligaduck/app/widgets/liquid_glass_action_group.dart';
 import 'package:ligaduck/app/widgets/squadra_logo_widget.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
@@ -198,9 +201,11 @@ class _NazionalePageState extends State<NazionalePage> {
 
   bool _isLight(Color c) => c.computeLuminance() > 0.5;
 
+  Color _contrastingColor(Color background) =>
+      _isLight(background) ? Colors.black : Colors.white;
+
   Color getIconColor(String type) {
-    final c = getColor(type);
-    return _isLight(c) ? Colors.black : Colors.white;
+    return _contrastingColor(getColor(type));
   }
 
   int _getNumeroConvocato(Giocatore giocatore) {
@@ -266,9 +271,8 @@ class _NazionalePageState extends State<NazionalePage> {
               ),
               Padding(
                 padding: EdgeInsets.only(top: 20.0),
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Icon(Icons.close, color: getColor('primary')),
+                child: _buildEditCloseButton(
+                  onTap: () => Navigator.pop(context),
                 ),
               ),
             ],
@@ -279,6 +283,9 @@ class _NazionalePageState extends State<NazionalePage> {
   }
 
   Widget _buildGlassButton(String text, VoidCallback onTap) {
+    final buttonColor = getColor('primary');
+    final foregroundColor = _contrastingColor(buttonColor);
+
     if (NativeLiquidGlassUtils.supportsLiquidGlass) {
       return LayoutBuilder(
         builder: (context, constraints) => LiquidGlassButton(
@@ -286,8 +293,10 @@ class _NazionalePageState extends State<NazionalePage> {
           onPressed: onTap,
           width: constraints.maxWidth,
           height: 50,
-          tint: Colors.white,
-          foregroundColor: getIconColor('primary'),
+          tint: buttonColor.withValues(alpha: 0.28),
+          foregroundColor: foregroundColor,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          maxLines: 1,
           labelTextStyle: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -319,15 +328,45 @@ class _NazionalePageState extends State<NazionalePage> {
             Colors.white.withOpacity(0.1),
           ],
         ),
-        child: Text(
-          text,
-          style: TextStyle(
-            color: getIconColor('primary'),
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Center(
+            child: Text(
+              text,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: foregroundColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildEditCloseButton({required VoidCallback onTap}) {
+    final buttonColor = getColor('primary');
+    final foregroundColor = getIconColor('primary');
+    if (NativeLiquidGlassUtils.supportsLiquidGlass) {
+      return LiquidGlassButton.icon(
+        icon: const NativeLiquidGlassIcon.sfSymbol('xmark'),
+        onPressed: onTap,
+        size: 48,
+        iconSize: 20,
+        padding: const EdgeInsets.all(10),
+        iconColor: foregroundColor,
+        tint: buttonColor.withValues(alpha: 0.08),
+        style: LiquidGlassButtonStyle.glass,
+      );
+    }
+
+    return ElevatedButton(
+      onPressed: onTap,
+      child: Icon(Icons.close, color: buttonColor),
     );
   }
 
@@ -345,24 +384,31 @@ class _NazionalePageState extends State<NazionalePage> {
           preferredSize: Size.fromHeight(kToolbarHeight),
           child: AppBar(
             actions: [
-              globals.admin
-                  ? Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: IconButton(
-                        icon: Icon(
-                          Icons.edit,
-                          color: getIconColor('secondary'),
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: LiquidGlassActionGroup(
+                  itemCount: globals.admin ? 2 : 1,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (globals.admin)
+                        IconButton(
+                          icon: Icon(
+                            Icons.edit,
+                            color: getIconColor('secondary'),
+                          ),
+                          onPressed: () => _showEditModal(context),
                         ),
-                        onPressed: () => _showEditModal(context),
+                      SettingsIcon(
+                        iconColor: getIconColor('secondary'),
+                        onDismiss: () async {
+                          await _loadGiocatori();
+                          setState(() {});
+                        },
                       ),
-                    )
-                  : SizedBox(),
-              SettingsIcon(
-                iconColor: getIconColor('secondary'),
-                onDismiss: () async {
-                  await _loadGiocatori();
-                  setState(() {});
-                },
+                    ],
+                  ),
+                ),
               ),
             ],
             flexibleSpace: Container(
@@ -376,8 +422,8 @@ class _NazionalePageState extends State<NazionalePage> {
             ),
             backgroundColor: Colors.transparent,
             elevation: 0,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back, color: getIconColor('primary')),
+            leading: LiquidGlassBackButton(
+              color: getIconColor('primary'),
               onPressed: () => Navigator.pop(context),
             ),
             title: Text(
@@ -611,6 +657,10 @@ class _NazionalePageState extends State<NazionalePage> {
             IconButton(
               padding: EdgeInsets.zero,
               constraints: BoxConstraints(minWidth: 36, minHeight: 36),
+              style: ButtonStyle(
+                backgroundBuilder: (_, _, child) =>
+                    child ?? const SizedBox.shrink(),
+              ),
               icon: Icon(
                 Icons.person_add,
                 size: 18,
@@ -1332,12 +1382,17 @@ class _NazionalePageState extends State<NazionalePage> {
                             color: getIconColor('primary'),
                           ),
                           SizedBox(width: 8),
-                          Text(
-                            'Modifica formazione',
-                            style: TextStyle(
-                              color: getIconColor('primary'),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
+                          Flexible(
+                            child: Text(
+                              'Modifica formazione',
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: getIconColor('primary'),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
                             ),
                           ),
                         ],
@@ -1358,14 +1413,14 @@ class _NazionalePageState extends State<NazionalePage> {
                     border: 2,
                     linearGradient: LinearGradient(
                       colors: [
-                        Colors.red[700]!.withOpacity(0.7),
-                        Colors.red[400]!.withOpacity(0.4),
+                        Colors.red[700]!.withValues(alpha: 0.7),
+                        Colors.red[400]!.withValues(alpha: 0.4),
                       ],
                     ),
                     borderGradient: LinearGradient(
                       colors: [
-                        Colors.white.withOpacity(0.4),
-                        Colors.white.withOpacity(0.15),
+                        Colors.red[700]!.withValues(alpha: 0.4),
+                        Colors.red[400]!.withValues(alpha: 0.15),
                       ],
                     ),
                     child: Row(
@@ -1374,15 +1429,20 @@ class _NazionalePageState extends State<NazionalePage> {
                         Icon(
                           Icons.delete_outline,
                           size: 18,
-                          color: Colors.white,
+                          color: _contrastingColor(Colors.red[700]!),
                         ),
                         SizedBox(width: 8),
-                        Text(
-                          'Reset formazione',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
+                        Flexible(
+                          child: Text(
+                            'Reset formazione',
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: _contrastingColor(Colors.red[700]!),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
                           ),
                         ),
                       ],
@@ -1716,14 +1776,16 @@ class _NazionalePageState extends State<NazionalePage> {
               height: 400,
               child: Column(
                 children: [
-                  TextField(
-                    decoration: InputDecoration(
-                      labelText: 'Cerca per nome',
-                      prefixIcon: Icon(Icons.search),
-                      border: OutlineInputBorder(),
+                  LiquidGlassTextBox(
+                    child: TextField(
+                      decoration: InputDecoration(
+                        labelText: 'Cerca per nome',
+                        prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (v) =>
+                          setDialogState(() => query = v.toLowerCase()),
                     ),
-                    onChanged: (v) =>
-                        setDialogState(() => query = v.toLowerCase()),
                   ),
                   SizedBox(height: 16),
                   Expanded(
@@ -2038,7 +2100,7 @@ class _NazionalePageState extends State<NazionalePage> {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: getColor('primary'),
-                    foregroundColor: Colors.white,
+                    foregroundColor: getIconColor('primary'),
                   ),
                   onPressed: () async {
                     if (idCapitanoSelezionato == null) {
@@ -2162,27 +2224,29 @@ class _NazionalePageState extends State<NazionalePage> {
                             child: ListTile(
                               leading: SizedBox(
                                 width: 60,
-                                child: TextFormField(
-                                  controller: controller,
-                                  keyboardType: TextInputType.number,
-                                  textAlign: TextAlign.center,
-                                  cursorColor: getColor('primary'),
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: getColor('primary', forText: true),
-                                    fontSize: 16,
-                                  ),
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: getColor('primary'),
-                                        width: 2,
-                                      ),
+                                child: LiquidGlassTextBox(
+                                  child: TextFormField(
+                                    controller: controller,
+                                    keyboardType: TextInputType.number,
+                                    textAlign: TextAlign.center,
+                                    cursorColor: getColor('primary'),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: getColor('primary', forText: true),
+                                      fontSize: 16,
                                     ),
-                                    contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 8,
+                                    decoration: InputDecoration(
+                                      border: OutlineInputBorder(),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: getColor('primary'),
+                                          width: 2,
+                                        ),
+                                      ),
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 8,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -2426,8 +2490,7 @@ class _ConvocazioneDialogState extends State<_ConvocazioneDialog> {
                       ),
                     ),
                   ),
-                  IconButton(
-                    icon: Icon(Icons.close),
+                  LiquidGlassCloseButton(
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
@@ -2443,26 +2506,28 @@ class _ConvocazioneDialogState extends State<_ConvocazioneDialog> {
                   Row(
                     children: [
                       Expanded(
-                        child: TextField(
-                          controller: _searchCtrl,
-                          cursorColor: widget.primaryColor,
-                          decoration: InputDecoration(
-                            labelText: 'Nome',
-                            prefixIcon: Icon(Icons.search),
-                            isDense: true,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(
-                                color: widget.primaryColor,
-                                width: 2,
+                        child: LiquidGlassTextBox(
+                          child: TextField(
+                            controller: _searchCtrl,
+                            cursorColor: widget.primaryColor,
+                            decoration: InputDecoration(
+                              labelText: 'Nome',
+                              prefixIcon: Icon(Icons.search),
+                              isDense: true,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
                               ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: widget.primaryColor,
+                                  width: 2,
+                                ),
+                              ),
+                              labelStyle: TextStyle(color: widget.primaryColor),
                             ),
-                            labelStyle: TextStyle(color: widget.primaryColor),
+                            onSubmitted: (_) => _cerca(),
                           ),
-                          onSubmitted: (_) => _cerca(),
                         ),
                       ),
                     ],
@@ -2471,40 +2536,46 @@ class _ConvocazioneDialogState extends State<_ConvocazioneDialog> {
                   Row(
                     children: [
                       Expanded(
-                        child: TextField(
-                          controller: _numCtrl,
-                          keyboardType: TextInputType.number,
-                          cursorColor: widget.primaryColor,
-                          decoration: InputDecoration(
-                            labelText: 'N° maglia',
-                            prefixIcon: Icon(Icons.tag, size: 18),
-                            isDense: true,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(
-                                color: widget.primaryColor,
-                                width: 2,
+                        child: LiquidGlassTextBox(
+                          child: TextField(
+                            controller: _numCtrl,
+                            keyboardType: TextInputType.number,
+                            cursorColor: widget.primaryColor,
+                            decoration: InputDecoration(
+                              labelText: 'N° maglia',
+                              prefixIcon: Icon(Icons.tag, size: 18),
+                              isDense: true,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
                               ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: widget.primaryColor,
+                                  width: 2,
+                                ),
+                              ),
+                              labelStyle: TextStyle(color: widget.primaryColor),
                             ),
-                            labelStyle: TextStyle(color: widget.primaryColor),
+                            onSubmitted: (_) => _aggiungiNumero(),
                           ),
-                          onSubmitted: (_) => _aggiungiNumero(),
                         ),
                       ),
                       SizedBox(width: 8),
                       ElevatedButton(
                         onPressed: _aggiungiNumero,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: widget.primaryColor,
-                          foregroundColor: widget.iconColor,
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 12,
-                          ),
-                        ),
+                        style:
+                            ElevatedButton.styleFrom(
+                              backgroundColor: widget.primaryColor,
+                              foregroundColor: widget.iconColor,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 12,
+                              ),
+                            ).copyWith(
+                              backgroundBuilder: (_, _, child) =>
+                                  child ?? const SizedBox.shrink(),
+                            ),
                         child: Text('+ N°'),
                       ),
                       SizedBox(width: 8),
@@ -2512,14 +2583,18 @@ class _ConvocazioneDialogState extends State<_ConvocazioneDialog> {
                         onPressed: _cerca,
                         icon: Icon(Icons.search, size: 16),
                         label: Text('Cerca'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: widget.primaryColor,
-                          foregroundColor: widget.iconColor,
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 12,
-                          ),
-                        ),
+                        style:
+                            ElevatedButton.styleFrom(
+                              backgroundColor: widget.primaryColor,
+                              foregroundColor: widget.iconColor,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 12,
+                              ),
+                            ).copyWith(
+                              backgroundBuilder: (_, _, child) =>
+                                  child ?? const SizedBox.shrink(),
+                            ),
                       ),
                     ],
                   ),

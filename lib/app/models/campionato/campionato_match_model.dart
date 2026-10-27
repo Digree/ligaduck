@@ -1,3 +1,4 @@
+import 'package:ligaduck/app/widgets/liquid_glass_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/widgets/platform_glass.dart';
 import 'package:ligaduck/app/partita/partita_home_page.dart';
@@ -487,31 +488,33 @@ Future<void> _showRisultatoDialog(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       Expanded(
-                        child: TextField(
-                          controller: homeController,
-                          keyboardType: TextInputType.number,
-                          textAlign: TextAlign.center,
-                          cursorColor: competizioneColor,
-                          enabled: !isLoading,
-                          decoration: InputDecoration(
-                            labelText: CommonService.decodePlayerName(
-                              model.partita.teamHome,
-                            ),
-                            labelStyle: TextStyle(color: Colors.white),
-                            border: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.white),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.white),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Colors.white,
-                                width: 2.0,
+                        child: LiquidGlassTextBox(
+                          child: TextField(
+                            controller: homeController,
+                            keyboardType: TextInputType.number,
+                            textAlign: TextAlign.center,
+                            cursorColor: competizioneColor,
+                            enabled: !isLoading,
+                            decoration: InputDecoration(
+                              labelText: CommonService.decodePlayerName(
+                                model.partita.teamHome,
+                              ),
+                              labelStyle: TextStyle(color: Colors.white),
+                              border: OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.white),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.white),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: Colors.white,
+                                  width: 2.0,
+                                ),
                               ),
                             ),
+                            style: TextStyle(color: Colors.white),
                           ),
-                          style: TextStyle(color: Colors.white),
                         ),
                       ),
                       Padding(
@@ -526,31 +529,33 @@ Future<void> _showRisultatoDialog(
                         ),
                       ),
                       Expanded(
-                        child: TextField(
-                          controller: awayController,
-                          keyboardType: TextInputType.number,
-                          textAlign: TextAlign.center,
-                          cursorColor: Colors.white,
-                          enabled: !isLoading,
-                          decoration: InputDecoration(
-                            labelText: CommonService.decodePlayerName(
-                              model.partita.teamAway,
-                            ),
-                            labelStyle: TextStyle(color: Colors.white),
-                            border: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.white),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.white),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Colors.white,
-                                width: 2.0,
+                        child: LiquidGlassTextBox(
+                          child: TextField(
+                            controller: awayController,
+                            keyboardType: TextInputType.number,
+                            textAlign: TextAlign.center,
+                            cursorColor: Colors.white,
+                            enabled: !isLoading,
+                            decoration: InputDecoration(
+                              labelText: CommonService.decodePlayerName(
+                                model.partita.teamAway,
+                              ),
+                              labelStyle: TextStyle(color: Colors.white),
+                              border: OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.white),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.white),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: Colors.white,
+                                  width: 2.0,
+                                ),
                               ),
                             ),
+                            style: TextStyle(color: Colors.white),
                           ),
-                          style: TextStyle(color: Colors.white),
                         ),
                       ),
                     ],

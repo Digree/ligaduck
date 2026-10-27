@@ -1,4 +1,6 @@
+import 'package:ligaduck/app/widgets/liquid_glass_dropdown.dart';
 import 'package:flutter/material.dart';
+import 'package:ligaduck/app/widgets/liquid_glass_close_button.dart';
 import 'package:ligaduck/app/models/country.dart';
 import 'package:ligaduck/app/service/competizioni_provider.dart';
 import 'package:ligaduck/app/service/country_service.dart';
@@ -10,6 +12,7 @@ import 'package:ligaduck/app/service/models/trofeo.dart';
 import 'package:ligaduck/app/service/models/nazionale.dart';
 import 'package:ligaduck/app/service/nazionali_provider.dart';
 import 'package:ligaduck/app/service/squadre_provider.dart';
+import 'package:native_liquid_glass/native_liquid_glass.dart';
 import 'package:provider/provider.dart';
 
 class InserisciSquadraPage extends StatefulWidget {
@@ -340,11 +343,13 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
   }
 
   Widget _buildTipoSelector() {
-    return Row(
+    final supportsLiquidGlass = NativeLiquidGlassUtils.supportsLiquidGlass;
+    final selector = Row(
       children: ['Club', 'Nazionale'].map((tipo) {
-        final sel = _tipo == tipo;
+        final isSelected = _tipo == tipo;
         return Expanded(
           child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onTap: () => setState(() => _tipo = tipo),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
@@ -352,15 +357,34 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
               margin: const EdgeInsets.symmetric(horizontal: 4),
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
-                color: sel ? Colors.blueAccent : Colors.grey[200],
-                borderRadius: BorderRadius.circular(8),
+                color: supportsLiquidGlass
+                    ? isSelected
+                          ? Colors.blueAccent
+                          : Colors.blueAccent.withValues(alpha: 0.16)
+                    : isSelected
+                    ? Colors.blueAccent
+                    : Colors.grey[200],
+                borderRadius: BorderRadius.circular(
+                  supportsLiquidGlass ? 24 : 8,
+                ),
+                border: supportsLiquidGlass && isSelected
+                    ? Border.all(color: Colors.white.withValues(alpha: 0.3))
+                    : null,
               ),
               child: Center(
                 child: Text(
                   tipo,
                   style: TextStyle(
-                    color: sel ? Colors.white : Colors.grey[700],
-                    fontWeight: sel ? FontWeight.bold : FontWeight.normal,
+                    color: supportsLiquidGlass
+                        ? isSelected
+                              ? Colors.white
+                              : Colors.blueAccent
+                        : isSelected
+                        ? Colors.white
+                        : Colors.grey[700],
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                   ),
                 ),
               ),
@@ -369,31 +393,101 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
         );
       }).toList(),
     );
+    if (!supportsLiquidGlass) return selector;
+
+    return LiquidGlassContainer(
+      height: 52,
+      config: const LiquidGlassConfig(
+        shape: LiquidGlassEffectShape.capsule,
+        effect: LiquidGlassEffect.clear,
+      ),
+      child: Padding(padding: const EdgeInsets.all(3), child: selector),
+    );
+  }
+
+  Widget _buildFormActionButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback? onPressed,
+    bool fullWidth = false,
+  }) {
+    final Widget button;
+    if (NativeLiquidGlassUtils.supportsLiquidGlass) {
+      button = LiquidGlassButton(
+        label: label,
+        onPressed: onPressed,
+        icon: NativeLiquidGlassIcon.iconData(icon),
+        width: fullWidth ? double.infinity : null,
+        height: 48,
+        iconSize: 20,
+        foregroundColor: Colors.white,
+        iconColor: Colors.white,
+        labelColor: Colors.white,
+        tint: Colors.blueAccent,
+        style: LiquidGlassButtonStyle.prominentGlass,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        labelTextStyle: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+        ),
+      );
+    } else {
+      button = ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          alignment: Alignment.center,
+          backgroundColor: Colors.blueAccent,
+          foregroundColor: Colors.white,
+          minimumSize: Size(fullWidth ? double.infinity : 0, 48),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        ),
+        child: Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return fullWidth
+        ? SizedBox(width: double.infinity, child: button)
+        : Align(alignment: Alignment.centerLeft, child: button);
   }
 
   List<Widget> _buildNazionaleFormFields() {
     return [
-      TextFormField(
-        controller: _nomeController,
-        decoration: InputDecoration(
-          labelText: 'Nome nazionale',
-          labelStyle: TextStyle(color: Colors.blueAccent),
-          prefixIcon: Icon(Icons.flag),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.blueAccent, width: 2),
+      LiquidGlassTextBox(
+        child: TextFormField(
+          controller: _nomeController,
+          decoration: InputDecoration(
+            labelText: 'Nome nazionale',
+            labelStyle: TextStyle(color: Colors.blueAccent),
+            prefixIcon: Icon(Icons.flag),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.blueAccent, width: 2),
+            ),
           ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Inserisci il nome della nazionale';
+            }
+            return null;
+          },
         ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Inserisci il nome della nazionale';
-          }
-          return null;
-        },
       ),
       SizedBox(height: 16),
-      DropdownButtonFormField<String>(
+      LiquidGlassDropdownButtonFormField<String>(
         initialValue: _federazioneSelezionata,
         decoration: InputDecoration(
           labelText: 'Federazione',
@@ -472,22 +566,15 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
               );
             }).toList(),
           ),
-          SizedBox(height: 8),
+          SizedBox(height: 12),
         ],
         // Pulsante per aggiungere colori
-        ElevatedButton.icon(
+        _buildFormActionButton(
+          label: _coloriSelezionati.isEmpty
+              ? 'Aggiungi colori'
+              : 'Aggiungi altro colore',
+          icon: Icons.add,
           onPressed: _showColoriDialog,
-          icon: Icon(Icons.add, color: Colors.white),
-          label: Text(
-            _coloriSelezionati.isEmpty
-                ? 'Aggiungi colori'
-                : 'Aggiungi altro colore',
-            style: TextStyle(color: Colors.white),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blueAccent,
-            padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-          ),
         ),
       ],
     );
@@ -569,7 +656,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
             color: Colors.blueAccent,
           ),
         ),
-        SizedBox(height: 8),
+        SizedBox(height: 12),
         if (_trofeiSelezionati.isNotEmpty) ...[
           Column(
             children: _trofeiSelezionati.asMap().entries.map((entry) {
@@ -603,24 +690,17 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
               );
             }).toList(),
           ),
-          SizedBox(height: 8),
+          SizedBox(height: 12),
         ],
         // Pulsante per aggiungere trofei
-        ElevatedButton.icon(
+        _buildFormActionButton(
+          label: _trofeiSelezionati.isEmpty
+              ? 'Aggiungi trofei'
+              : 'Aggiungi altro trofeo',
+          icon: Icons.add,
           onPressed: _competizioniTrofeiDisponibili.isNotEmpty
               ? _showTrofeiDialog
               : null,
-          icon: Icon(Icons.add, color: Colors.white),
-          label: Text(
-            _trofeiSelezionati.isEmpty
-                ? 'Aggiungi trofei'
-                : 'Aggiungi altro trofeo',
-            style: TextStyle(color: Colors.white),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blueAccent,
-            padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-          ),
         ),
       ],
     );
@@ -709,40 +789,44 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 16),
-                TextFormField(
-                  controller: quantitaController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Quantità',
-                    labelStyle: TextStyle(color: Colors.blueAccent),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: Colors.blueAccent,
-                        width: 2,
+                LiquidGlassTextBox(
+                  child: TextFormField(
+                    controller: quantitaController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Quantità',
+                      labelStyle: TextStyle(color: Colors.blueAccent),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: Colors.blueAccent,
+                          width: 2,
+                        ),
                       ),
                     ),
                   ),
                 ),
                 SizedBox(height: 16),
-                TextFormField(
-                  controller: anniController,
-                  keyboardType: TextInputType.text,
-                  decoration: InputDecoration(
-                    labelText: 'Anni (separati da virgola)',
-                    labelStyle: TextStyle(color: Colors.blueAccent),
-                    hintText: 'es: 2020, 2022, 2024',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: Colors.blueAccent,
-                        width: 2,
+                LiquidGlassTextBox(
+                  child: TextFormField(
+                    controller: anniController,
+                    keyboardType: TextInputType.text,
+                    decoration: InputDecoration(
+                      labelText: 'Anni (separati da virgola)',
+                      labelStyle: TextStyle(color: Colors.blueAccent),
+                      hintText: 'es: 2020, 2022, 2024',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: Colors.blueAccent,
+                          width: 2,
+                        ),
                       ),
                     ),
                   ),
@@ -845,7 +929,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
             color: Colors.blueAccent,
           ),
         ),
-        SizedBox(height: 8),
+        SizedBox(height: 12),
         // Debug info
         if (_competizioniDisponibili.isEmpty)
           Container(
@@ -900,9 +984,13 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
             }).toList(),
           ),
         ],
-        SizedBox(height: 8),
+        SizedBox(height: 12),
         // Pulsante per aggiungere competizioni - sempre presente
-        ElevatedButton.icon(
+        _buildFormActionButton(
+          label: _competizioniSelezionate.isEmpty
+              ? 'Aggiungi competizioni (${_competizioniAbilitateDisponibili.length} disponibili)'
+              : 'Aggiungi altra competizione',
+          icon: Icons.add,
           onPressed: _competizioniAbilitateDisponibili.isNotEmpty
               ? _showCompetizioniDialog
               : () {
@@ -916,19 +1004,6 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
                     ),
                   );
                 },
-          icon: Icon(Icons.add, color: Colors.white),
-          label: Text(
-            _competizioniSelezionate.isEmpty
-                ? 'Aggiungi competizioni (${_competizioniAbilitateDisponibili.length} disponibili)'
-                : 'Aggiungi altra competizione',
-            style: TextStyle(color: Colors.white),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _competizioniAbilitateDisponibili.isNotEmpty
-                ? Colors.blueAccent
-                : Colors.grey,
-            padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-          ),
         ),
       ],
     );
@@ -1018,8 +1093,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blueAccent,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+        leading: LiquidGlassBackButton(
           onPressed: () {
             Navigator.pop(context);
           },
@@ -1050,82 +1124,88 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
                   if (_tipo == 'Nazionale')
                     ..._buildNazionaleFormFields()
                   else ...[
-                    TextFormField(
-                      controller: _nomeController,
-                      decoration: InputDecoration(
-                        labelText: 'Nome',
-                        labelStyle: TextStyle(color: Colors.blueAccent),
-                        prefixIcon: Icon(Icons.shield),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: Colors.blueAccent,
-                            width: 2,
+                    LiquidGlassTextBox(
+                      child: TextFormField(
+                        controller: _nomeController,
+                        decoration: InputDecoration(
+                          labelText: 'Nome',
+                          labelStyle: TextStyle(color: Colors.blueAccent),
+                          prefixIcon: Icon(Icons.shield),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                              color: Colors.blueAccent,
+                              width: 2,
+                            ),
                           ),
                         ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Inserisci il nome della squadra';
+                          }
+                          return null;
+                        },
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Inserisci il nome della squadra';
-                        }
-                        return null;
-                      },
                     ),
                     SizedBox(height: 16),
-                    TextFormField(
-                      controller: _cittaController,
-                      decoration: InputDecoration(
-                        labelText: 'Città',
-                        labelStyle: TextStyle(color: Colors.blueAccent),
-                        prefixIcon: Icon(Icons.location_city),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: Colors.blueAccent,
-                            width: 2,
+                    LiquidGlassTextBox(
+                      child: TextFormField(
+                        controller: _cittaController,
+                        decoration: InputDecoration(
+                          labelText: 'Città',
+                          labelStyle: TextStyle(color: Colors.blueAccent),
+                          prefixIcon: Icon(Icons.location_city),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                              color: Colors.blueAccent,
+                              width: 2,
+                            ),
                           ),
                         ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Inserisci la città';
+                          }
+                          return null;
+                        },
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Inserisci la città';
-                        }
-                        return null;
-                      },
                     ),
                     SizedBox(height: 16),
-                    TextFormField(
-                      controller: _stadioController,
-                      decoration: InputDecoration(
-                        labelText: 'Stadio',
-                        labelStyle: TextStyle(color: Colors.blueAccent),
-                        prefixIcon: Icon(Icons.stadium),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: Colors.blueAccent,
-                            width: 2,
+                    LiquidGlassTextBox(
+                      child: TextFormField(
+                        controller: _stadioController,
+                        decoration: InputDecoration(
+                          labelText: 'Stadio',
+                          labelStyle: TextStyle(color: Colors.blueAccent),
+                          prefixIcon: Icon(Icons.stadium),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                              color: Colors.blueAccent,
+                              width: 2,
+                            ),
                           ),
                         ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Inserisci il nome dello stadio';
+                          }
+                          return null;
+                        },
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Inserisci il nome dello stadio';
-                        }
-                        return null;
-                      },
                     ),
                     SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
+                    LiquidGlassDropdownButtonFormField<String>(
                       initialValue: _campionatoSelezionato,
                       decoration: InputDecoration(
                         labelText: 'Campionato',
@@ -1204,7 +1284,7 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
                               ],
                             ),
                           )
-                        : DropdownButtonFormField<String>(
+                        : LiquidGlassDropdownButtonFormField<String>(
                             initialValue:
                                 _categorieCorrente.contains(
                                   _categoriaSelezionata,
@@ -1273,7 +1353,12 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
                         ],
                       ),
                     ),
-                  ElevatedButton(
+                  _buildFormActionButton(
+                    label: _tipo == 'Club'
+                        ? 'Salva Squadra'
+                        : 'Salva Nazionale',
+                    icon: Icons.save_outlined,
+                    fullWidth: true,
                     onPressed: _isSaving
                         ? null
                         : () {
@@ -1283,15 +1368,6 @@ class _InserisciSquadraPageState extends State<InserisciSquadraPage> {
                                   : _salvaNazionale();
                             }
                           },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueAccent,
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    child: Text(
-                      _tipo == 'Club' ? 'Salva Squadra' : 'Salva Nazionale',
-                      style: TextStyle(fontSize: 16),
-                    ),
                   ),
                 ],
               ),

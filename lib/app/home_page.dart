@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/campionato/campionato_home_page.dart';
 import 'package:ligaduck/app/config/models/service/config_provider.dart';
+import 'package:native_liquid_glass/native_liquid_glass.dart';
 import 'package:provider/provider.dart';
 import 'package:ligaduck/app/config/models/global.dart' as globals;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ligaduck/app/utils/version_helper.dart';
 import 'package:ligaduck/app/statistiche/statistiche_squadre_page.dart';
+import 'package:ligaduck/app/widgets/liquid_glass_action_group.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -49,148 +51,166 @@ class _HomePage extends State<HomePage> {
         backgroundColor: Colors.blueAccent,
         title: const Text('Liga Duck', style: TextStyle(color: Colors.white)),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.leaderboard, color: Colors.white),
-            tooltip: 'Statistiche Squadre',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const StatisticheSquadrePage(),
-                ),
-              );
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.settings, color: Colors.white),
-            onPressed: () {
-              showModalBottomSheet(
-                backgroundColor: Colors.blueAccent.withOpacity(0.8),
-                context: context,
-                builder: (BuildContext context) {
-                  bool isAdmin = globals.admin;
-                  bool isMostraColori = globals.mostraColori;
-                  return StatefulBuilder(
-                    builder: (context, setModalState) {
-                      return Container(
-                        padding: EdgeInsets.all(16),
-                        height: 450,
-                        width: 500,
-                        child: Column(
-                          children: [
-                            Padding(
-                              padding: EdgeInsets.only(top: 32),
-                              child: Row(
-                                children: [
-                                  Padding(
-                                    padding: EdgeInsets.only(left: 16.0),
-                                    child: Text(
-                                      'Modalità Admin',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                  Spacer(),
-                                  Switch(
-                                    value: isAdmin,
-                                    activeTrackColor: Colors.blueAccent,
-                                    onChanged: (value) {
-                                      setModalState(() {
-                                        isAdmin = value;
-                                        globals.admin = value;
-                                      });
-                                      _savePreferences(admin: value);
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Padding(
-                              padding: EdgeInsets.only(top: 16),
-                              child: Row(
-                                children: [
-                                  Padding(
-                                    padding: EdgeInsets.only(left: 16.0),
-                                    child: Text(
-                                      'Mostra colori',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                  Spacer(),
-                                  Switch(
-                                    value: isMostraColori,
-                                    activeTrackColor: Colors.blueAccent,
-                                    onChanged: (value) {
-                                      setModalState(() {
-                                        isMostraColori = value;
-                                        globals.mostraColori = value;
-                                      });
-                                      _savePreferences(mostraColori: value);
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Padding(
-                              padding: EdgeInsets.only(top: 32),
-                              child: FutureBuilder<String>(
-                                future: VersionHelper.getFullVersion(),
-                                builder: (context, snapshot) {
-                                  final version = snapshot.data ?? 'loading...';
-                                  return Row(
-                                    children: [
-                                      Padding(
-                                        padding: EdgeInsets.only(left: 16.0),
-                                        child: Text(
-                                          'App Version',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                      Spacer(),
-                                      Padding(
-                                        padding: EdgeInsets.only(right: 16.0),
-                                        child: Text(
-                                          version,
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.white70,
-                                            fontFamily: 'monospace',
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              ),
-                            ),
-                            Padding(
-                              padding: EdgeInsets.only(top: 80.0),
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                child: Icon(
-                                  Icons.close,
-                                  color: Colors.blueAccent,
-                                ),
-                              ),
-                            ),
-                          ],
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: LiquidGlassActionGroup(
+              itemCount: 2,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.leaderboard, color: Colors.white),
+                    tooltip: 'Statistiche Squadre',
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const StatisticheSquadrePage(),
                         ),
                       );
                     },
-                  );
-                },
-              );
-            },
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.settings, color: Colors.white),
+                    onPressed: () {
+                      showModalBottomSheet(
+                        backgroundColor: Colors.blueAccent.withOpacity(0.8),
+                        context: context,
+                        builder: (BuildContext context) {
+                          bool isAdmin = globals.admin;
+                          bool isMostraColori = globals.mostraColori;
+                          return StatefulBuilder(
+                            builder: (context, setModalState) {
+                              return Container(
+                                padding: EdgeInsets.all(16),
+                                height: 350,
+                                width: 500,
+                                child: Column(
+                                  children: [
+                                    Padding(
+                                      padding: EdgeInsets.only(top: 32),
+                                      child: Row(
+                                        children: [
+                                          Padding(
+                                            padding: EdgeInsets.only(
+                                              left: 16.0,
+                                            ),
+                                            child: Text(
+                                              'Modalità Admin',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                          Spacer(),
+                                          Switch(
+                                            value: isAdmin,
+                                            activeTrackColor: Colors.blueAccent,
+                                            onChanged: (value) {
+                                              setModalState(() {
+                                                isAdmin = value;
+                                                globals.admin = value;
+                                              });
+                                              _savePreferences(admin: value);
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: EdgeInsets.only(top: 16),
+                                      child: Row(
+                                        children: [
+                                          Padding(
+                                            padding: EdgeInsets.only(
+                                              left: 16.0,
+                                            ),
+                                            child: Text(
+                                              'Mostra colori',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                          Spacer(),
+                                          Switch(
+                                            value: isMostraColori,
+                                            activeTrackColor: Colors.blueAccent,
+                                            onChanged: (value) {
+                                              setModalState(() {
+                                                isMostraColori = value;
+                                                globals.mostraColori = value;
+                                              });
+                                              _savePreferences(
+                                                mostraColori: value,
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: EdgeInsets.only(top: 32),
+                                      child: FutureBuilder<String>(
+                                        future: VersionHelper.getFullVersion(),
+                                        builder: (context, snapshot) {
+                                          final version =
+                                              snapshot.data ?? 'loading...';
+                                          return Row(
+                                            children: [
+                                              Padding(
+                                                padding: EdgeInsets.only(
+                                                  left: 16.0,
+                                                ),
+                                                child: Text(
+                                                  'App Version',
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ),
+                                              Spacer(),
+                                              Padding(
+                                                padding: EdgeInsets.only(
+                                                  right: 16.0,
+                                                ),
+                                                child: Text(
+                                                  version,
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    color: Colors.white70,
+                                                    fontFamily: 'monospace',
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: EdgeInsets.only(top: 50.0),
+                                      child: _buildGlassIconButton(
+                                        icon: Icons.close,
+                                        symbol: 'xmark',
+                                        onTap: () => Navigator.pop(context),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -315,6 +335,33 @@ class _HomePage extends State<HomePage> {
         },
       ),
       floatingActionButton: SizedBox(),
+    );
+  }
+
+  Widget _buildGlassIconButton({
+    required IconData icon,
+    required String symbol,
+    required VoidCallback onTap,
+  }) {
+    final buttonColor = Colors.blueAccent;
+    final foregroundColor = Colors.white;
+
+    if (NativeLiquidGlassUtils.supportsLiquidGlass) {
+      return LiquidGlassButton.icon(
+        icon: NativeLiquidGlassIcon.sfSymbol(symbol),
+        onPressed: onTap,
+        size: 48,
+        iconSize: 22,
+        padding: const EdgeInsets.all(10),
+        iconColor: foregroundColor,
+        tint: buttonColor.withValues(alpha: 0.08),
+        style: LiquidGlassButtonStyle.glass,
+      );
+    }
+
+    return ElevatedButton(
+      onPressed: onTap,
+      child: Icon(icon, color: buttonColor),
     );
   }
 }

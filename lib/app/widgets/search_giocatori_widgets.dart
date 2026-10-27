@@ -1,3 +1,4 @@
+import 'package:ligaduck/app/widgets/liquid_glass_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/models/nazionale.dart';
@@ -373,7 +374,7 @@ Widget buildRisultatiGiocatori({
                         color: Colors.white,
                       ),
                       child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
+                        child: LiquidGlassDropdownButton<String>(
                           value: sortType,
                           isExpanded: true,
                           icon: Icon(

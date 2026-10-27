@@ -1,3 +1,4 @@
+import 'package:ligaduck/app/widgets/liquid_glass_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
@@ -344,7 +345,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
             child: Column(
               children: [
                 SizedBox(height: 4),
-                DropdownButtonFormField<String>(
+                LiquidGlassDropdownButtonFormField<String>(
                   //initialValue: eventoSelezionato?.nome,
                   isExpanded: true,
                   decoration: InputDecoration(
@@ -539,48 +540,31 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
               Expanded(child: _buildMinutoField(team)),
               SizedBox(width: 16),
               Expanded(
-                child: TextFormField(
-                  controller: team == 0
-                      ? _recuperoControllerHome
-                      : _recuperoControllerAway,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(2),
-                  ],
-                  decoration: InputDecoration(
-                    labelText: 'Recupero',
-                    labelStyle: TextStyle(
-                      color: getColor(),
-                      fontFamily: widget.competizione?.id == 5
-                          ? 'champions'
-                          : widget.competizione?.id == 6 ||
-                                widget.competizione?.id == 7
-                          ? 'europa'
-                          : widget.competizione?.id == 8
-                          ? 'supercup'
-                          : null,
-                    ),
-                    prefixIcon: Icon(
-                      Icons.add,
-                      color: Color(
-                        widget.competizione!.colori.isNotEmpty
-                            ? int.parse(
-                                widget.competizione!.colori[0].replaceFirst(
-                                  '#',
-                                  'FF',
-                                ),
-                                radix: 16,
-                              )
-                            : 0xFF000000,
+                child: LiquidGlassTextBox(
+                  child: TextFormField(
+                    controller: team == 0
+                        ? _recuperoControllerHome
+                        : _recuperoControllerAway,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(2),
+                    ],
+                    decoration: InputDecoration(
+                      labelText: 'Recupero',
+                      labelStyle: TextStyle(
+                        color: getColor(),
+                        fontFamily: widget.competizione?.id == 5
+                            ? 'champions'
+                            : widget.competizione?.id == 6 ||
+                                  widget.competizione?.id == 7
+                            ? 'europa'
+                            : widget.competizione?.id == 8
+                            ? 'supercup'
+                            : null,
                       ),
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
+                      prefixIcon: Icon(
+                        Icons.add,
                         color: Color(
                           widget.competizione!.colori.isNotEmpty
                               ? int.parse(
@@ -593,6 +577,25 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                               : 0xFF000000,
                         ),
                       ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: Color(
+                            widget.competizione!.colori.isNotEmpty
+                                ? int.parse(
+                                    widget.competizione!.colori[0].replaceFirst(
+                                      '#',
+                                      'FF',
+                                    ),
+                                    radix: 16,
+                                  )
+                                : 0xFF000000,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -602,7 +605,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
           SizedBox(height: 16),
           SizedBox(
             height: 100,
-            child: DropdownButtonFormField<String>(
+            child: LiquidGlassDropdownButtonFormField<String>(
               //initialValue: null,
               isExpanded: true,
               decoration: InputDecoration(
@@ -714,35 +717,37 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
               Expanded(child: _buildMinutoField(team)),
               SizedBox(width: 16),
               Expanded(
-                child: TextFormField(
-                  controller: team == 0
-                      ? _recuperoControllerHome
-                      : _recuperoControllerAway,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(2),
-                  ],
-                  decoration: InputDecoration(
-                    labelText: 'Recupero',
-                    labelStyle: TextStyle(
-                      color: getColor(),
-                      fontFamily: widget.competizione?.id == 5
-                          ? 'champions'
-                          : widget.competizione?.id == 6 ||
-                                widget.competizione?.id == 7
-                          ? 'europa'
-                          : widget.competizione?.id == 8
-                          ? 'supercup'
-                          : null,
-                    ),
-                    prefixIcon: Icon(Icons.add, color: getColor()),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: getColor()),
+                child: LiquidGlassTextBox(
+                  child: TextFormField(
+                    controller: team == 0
+                        ? _recuperoControllerHome
+                        : _recuperoControllerAway,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(2),
+                    ],
+                    decoration: InputDecoration(
+                      labelText: 'Recupero',
+                      labelStyle: TextStyle(
+                        color: getColor(),
+                        fontFamily: widget.competizione?.id == 5
+                            ? 'champions'
+                            : widget.competizione?.id == 6 ||
+                                  widget.competizione?.id == 7
+                            ? 'europa'
+                            : widget.competizione?.id == 8
+                            ? 'supercup'
+                            : null,
+                      ),
+                      prefixIcon: Icon(Icons.add, color: getColor()),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: getColor()),
+                      ),
                     ),
                   ),
                 ),
@@ -910,7 +915,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
           SizedBox(height: 8),
           SizedBox(
             height: 50,
-            child: DropdownButtonFormField<String>(
+            child: LiquidGlassDropdownButtonFormField<String>(
               initialValue: pair.idIn,
               isExpanded: true,
               decoration: InputDecoration(
@@ -980,7 +985,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
           SizedBox(height: 8),
           SizedBox(
             height: 60,
-            child: DropdownButtonFormField<String>(
+            child: LiquidGlassDropdownButtonFormField<String>(
               initialValue: pair.idOut,
               isExpanded: true,
               decoration: InputDecoration(
@@ -1061,58 +1066,60 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
             ),
           ),
           SizedBox(height: 8),
-          TextFormField(
-            controller: team == 0
-                ? _squalificaControllerHome
-                : _squalificaControllerAway,
-            keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(2),
-            ],
-            decoration: InputDecoration(
-              labelText: 'Numero giornate',
-              labelStyle: TextStyle(
-                color: getColor(),
-                fontFamily: widget.competizione?.id == 5
-                    ? 'champions'
-                    : widget.competizione?.id == 6 ||
-                          widget.competizione?.id == 7
-                    ? 'europa'
-                    : widget.competizione?.id == 8
-                    ? 'supercup'
-                    : null,
+          LiquidGlassTextBox(
+            child: TextFormField(
+              controller: team == 0
+                  ? _squalificaControllerHome
+                  : _squalificaControllerAway,
+              keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(2),
+              ],
+              decoration: InputDecoration(
+                labelText: 'Numero giornate',
+                labelStyle: TextStyle(
+                  color: getColor(),
+                  fontFamily: widget.competizione?.id == 5
+                      ? 'champions'
+                      : widget.competizione?.id == 6 ||
+                            widget.competizione?.id == 7
+                      ? 'europa'
+                      : widget.competizione?.id == 8
+                      ? 'supercup'
+                      : null,
+                ),
+                hintStyle: TextStyle(
+                  color: Colors.grey[500],
+                  fontFamily: widget.competizione?.id == 5
+                      ? 'champions'
+                      : widget.competizione?.id == 6 ||
+                            widget.competizione?.id == 7
+                      ? 'europa'
+                      : widget.competizione?.id == 8
+                      ? 'supercup'
+                      : null,
+                ),
+                prefixIcon: Icon(Icons.event_busy, color: getColor()),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: getColor(), width: 2),
+                ),
               ),
-              hintStyle: TextStyle(
-                color: Colors.grey[500],
-                fontFamily: widget.competizione?.id == 5
-                    ? 'champions'
-                    : widget.competizione?.id == 6 ||
-                          widget.competizione?.id == 7
-                    ? 'europa'
-                    : widget.competizione?.id == 8
-                    ? 'supercup'
-                    : null,
-              ),
-              prefixIcon: Icon(Icons.event_busy, color: getColor()),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: getColor(), width: 2),
-              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Inserisci il numero di giornate';
+                }
+                int giornate = int.tryParse(value) ?? 0;
+                if (giornate <= 0 || giornate > 99) {
+                  return 'Inserisci un numero valido (1-99)';
+                }
+                return null;
+              },
             ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Inserisci il numero di giornate';
-              }
-              int giornate = int.tryParse(value) ?? 0;
-              if (giornate <= 0 || giornate > 99) {
-                return 'Inserisci un numero valido (1-99)';
-              }
-              return null;
-            },
           ),
         ],
       ),
@@ -1404,59 +1411,61 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
                       ),
                     ),
                     SizedBox(height: 8),
-                    TextFormField(
-                      controller: pair.infortunioController,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(2),
-                      ],
-                      decoration: InputDecoration(
-                        labelText: 'Numero giornate',
-                        labelStyle: TextStyle(
-                          color: getColor(),
-                          fontFamily: widget.competizione?.id == 5
-                              ? 'champions'
-                              : widget.competizione?.id == 6 ||
-                                    widget.competizione?.id == 7
-                              ? 'europa'
-                              : widget.competizione?.id == 8
-                              ? 'supercup'
-                              : null,
+                    LiquidGlassTextBox(
+                      child: TextFormField(
+                        controller: pair.infortunioController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(2),
+                        ],
+                        decoration: InputDecoration(
+                          labelText: 'Numero giornate',
+                          labelStyle: TextStyle(
+                            color: getColor(),
+                            fontFamily: widget.competizione?.id == 5
+                                ? 'champions'
+                                : widget.competizione?.id == 6 ||
+                                      widget.competizione?.id == 7
+                                ? 'europa'
+                                : widget.competizione?.id == 8
+                                ? 'supercup'
+                                : null,
+                          ),
+                          hintStyle: TextStyle(
+                            color: Colors.grey[500],
+                            fontFamily: widget.competizione?.id == 5
+                                ? 'champions'
+                                : widget.competizione?.id == 6 ||
+                                      widget.competizione?.id == 7
+                                ? 'europa'
+                                : widget.competizione?.id == 8
+                                ? 'supercup'
+                                : null,
+                          ),
+                          prefixIcon: Icon(Icons.event_busy, color: getColor()),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: getColor(), width: 2),
+                          ),
                         ),
-                        hintStyle: TextStyle(
-                          color: Colors.grey[500],
-                          fontFamily: widget.competizione?.id == 5
-                              ? 'champions'
-                              : widget.competizione?.id == 6 ||
-                                    widget.competizione?.id == 7
-                              ? 'europa'
-                              : widget.competizione?.id == 8
-                              ? 'supercup'
-                              : null,
-                        ),
-                        prefixIcon: Icon(Icons.event_busy, color: getColor()),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: getColor(), width: 2),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (!pair.infortunio) {
+                        validator: (value) {
+                          if (!pair.infortunio) {
+                            return null;
+                          }
+                          if (value == null || value.isEmpty) {
+                            return 'Inserisci il numero di giornate';
+                          }
+                          int giornate = int.tryParse(value) ?? 0;
+                          if (giornate <= 0 || giornate > 99) {
+                            return 'Inserisci un numero valido (1-99)';
+                          }
                           return null;
-                        }
-                        if (value == null || value.isEmpty) {
-                          return 'Inserisci il numero di giornate';
-                        }
-                        int giornate = int.tryParse(value) ?? 0;
-                        if (giornate <= 0 || giornate > 99) {
-                          return 'Inserisci un numero valido (1-99)';
-                        }
-                        return null;
-                      },
+                        },
+                      ),
                     ),
                   ],
                 ),
@@ -1598,7 +1607,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
           SizedBox(height: 16),
           SizedBox(
             height: 100,
-            child: DropdownButtonFormField<String>(
+            child: LiquidGlassDropdownButtonFormField<String>(
               isExpanded: true,
               decoration: InputDecoration(
                 labelText: 'Seleziona Giocatore',
@@ -1991,7 +2000,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
     );
 
     if (widget.minutiDisponibili != null) {
-      return DropdownButtonFormField<int>(
+      return LiquidGlassDropdownButtonFormField<int>(
         initialValue: team == 0 ? _minutoDropdownHome : _minutoDropdownAway,
         decoration: decoration,
         items: widget.minutiDisponibili!
@@ -2016,25 +2025,27 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
       );
     }
 
-    return TextFormField(
-      controller: team == 0 ? _minutoControllerHome : _minutoControllerAway,
-      keyboardType: TextInputType.number,
-      inputFormatters: [
-        FilteringTextInputFormatter.digitsOnly,
-        LengthLimitingTextInputFormatter(3),
-      ],
-      decoration: decoration,
-      validator: (value) {
-        int minuto = int.tryParse(value ?? '') ?? 0;
-        if (value == null || value.isEmpty) {
-          if (minuto <= 0 || minuto > 120) {
-            return 'Inserisci un minuto valido (1-120).';
-          } else {
-            return 'Inserisci il minuto';
+    return LiquidGlassTextBox(
+      child: TextFormField(
+        controller: team == 0 ? _minutoControllerHome : _minutoControllerAway,
+        keyboardType: TextInputType.number,
+        inputFormatters: [
+          FilteringTextInputFormatter.digitsOnly,
+          LengthLimitingTextInputFormatter(3),
+        ],
+        decoration: decoration,
+        validator: (value) {
+          int minuto = int.tryParse(value ?? '') ?? 0;
+          if (value == null || value.isEmpty) {
+            if (minuto <= 0 || minuto > 120) {
+              return 'Inserisci un minuto valido (1-120).';
+            } else {
+              return 'Inserisci il minuto';
+            }
           }
-        }
-        return null;
-      },
+          return null;
+        },
+      ),
     );
   }
 

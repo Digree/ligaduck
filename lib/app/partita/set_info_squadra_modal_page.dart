@@ -1,3 +1,4 @@
+import 'package:ligaduck/app/widgets/liquid_glass_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
@@ -231,7 +232,7 @@ class _SetInfoSquadraModalPageState extends State<SetInfoSquadraModalPage> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
+        child: LiquidGlassDropdownButton<String>(
           value: validValue,
           isExpanded: true,
           icon: Icon(
@@ -569,7 +570,7 @@ class _SetInfoSquadraModalPageState extends State<SetInfoSquadraModalPage> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: DropdownButtonHideUnderline(
-        child: DropdownButton<String?>(
+        child: LiquidGlassDropdownButton<String?>(
           value: _capitanoSelezionato,
           isExpanded: true,
           hint: Text(
@@ -663,7 +664,7 @@ class _SetInfoSquadraModalPageState extends State<SetInfoSquadraModalPage> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: DropdownButtonHideUnderline(
-        child: DropdownButton<String?>(
+        child: LiquidGlassDropdownButton<String?>(
           value: _capitanoSelezionato,
           isExpanded: true,
           hint: Text(

@@ -1,3 +1,4 @@
+import 'package:ligaduck/app/widgets/liquid_glass_dropdown.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -6,6 +7,7 @@ import 'package:csv/csv.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:ligaduck/app/widgets/liquid_glass_close_button.dart';
 import 'package:flutter/services.dart';
 import 'package:ligaduck/app/models/country.dart';
 import 'package:ligaduck/app/service/country_service.dart';
@@ -100,8 +102,8 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
             ),
           ),
         ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: getIconColor()),
+        leading: LiquidGlassBackButton(
+          color: getIconColor(),
           onPressed: () {
             Navigator.pop(
               context,
@@ -197,53 +199,16 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
                 left: isWide ? 0 : 16,
                 right: isWide ? 0 : 16,
               ),
-              child: TextFormField(
-                controller: _nomeController,
-                decoration: InputDecoration(
-                  labelText: 'Nome',
-                  labelStyle: TextStyle(
-                    color: getColor("primary", forText: true),
-                  ),
-                  prefixIcon: Icon(
-                    Icons.person,
-                    color: getColor("primary", forText: true),
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: getColor("primary", forText: true),
-                      width: 2,
-                    ),
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Inserisci il nome';
-                  }
-                  return null;
-                },
-              ),
-            ),
-
-            if (_ruoloSelezionato != 'Allenatore') ...[
-              SizedBox(height: 16),
-              Padding(
-                padding: EdgeInsets.only(
-                  left: isWide ? 0 : 16,
-                  right: isWide ? 0 : 16,
-                ),
+              child: LiquidGlassTextBox(
                 child: TextFormField(
-                  controller: _numeroMagliaController,
+                  controller: _nomeController,
                   decoration: InputDecoration(
-                    labelText: 'Numero',
+                    labelText: 'Nome',
                     labelStyle: TextStyle(
                       color: getColor("primary", forText: true),
                     ),
                     prefixIcon: Icon(
-                      Icons.numbers,
+                      Icons.person,
                       color: getColor("primary", forText: true),
                     ),
                     border: OutlineInputBorder(
@@ -259,10 +224,51 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Inserisci il numero';
+                      return 'Inserisci il nome';
                     }
                     return null;
                   },
+                ),
+              ),
+            ),
+
+            if (_ruoloSelezionato != 'Allenatore') ...[
+              SizedBox(height: 16),
+              Padding(
+                padding: EdgeInsets.only(
+                  left: isWide ? 0 : 16,
+                  right: isWide ? 0 : 16,
+                ),
+                child: LiquidGlassTextBox(
+                  child: TextFormField(
+                    controller: _numeroMagliaController,
+                    decoration: InputDecoration(
+                      labelText: 'Numero',
+                      labelStyle: TextStyle(
+                        color: getColor("primary", forText: true),
+                      ),
+                      prefixIcon: Icon(
+                        Icons.numbers,
+                        color: getColor("primary", forText: true),
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: getColor("primary", forText: true),
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Inserisci il numero';
+                      }
+                      return null;
+                    },
+                  ),
                 ),
               ),
             ],
@@ -276,7 +282,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
               ),
               child: SizedBox(
                 width: double.infinity,
-                child: DropdownButtonFormField<String>(
+                child: LiquidGlassDropdownButtonFormField<String>(
                   initialValue: widget.soloAllenatori
                       ? 'Allenatore'
                       : _ruoloSelezionato,
@@ -370,7 +376,7 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
                           ],
                         ),
                       )
-                    : DropdownButtonFormField<String>(
+                    : LiquidGlassDropdownButtonFormField<String>(
                         initialValue: _nazioneSelezionata,
                         isExpanded: true,
                         menuMaxHeight: 300,
@@ -581,28 +587,30 @@ class _AddGiocatoriPageState extends State<AddGiocatoriPage> {
                 height: 400,
                 child: Column(
                   children: [
-                    TextField(
-                      cursorColor: getColor('primary'),
-                      decoration: InputDecoration(
-                        labelText: 'Cerca per nome',
-                        labelStyle: TextStyle(color: getColor('primary')),
-                        prefixIcon: Icon(
-                          Icons.search,
-                          color: getColor('primary'),
-                        ),
-                        border: OutlineInputBorder(),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
+                    LiquidGlassTextBox(
+                      child: TextField(
+                        cursorColor: getColor('primary'),
+                        decoration: InputDecoration(
+                          labelText: 'Cerca per nome',
+                          labelStyle: TextStyle(color: getColor('primary')),
+                          prefixIcon: Icon(
+                            Icons.search,
                             color: getColor('primary'),
-                            width: 2,
+                          ),
+                          border: OutlineInputBorder(),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: getColor('primary'),
+                              width: 2,
+                            ),
                           ),
                         ),
+                        onChanged: (value) {
+                          setDialogState(() {
+                            searchQuery = value.toLowerCase();
+                          });
+                        },
                       ),
-                      onChanged: (value) {
-                        setDialogState(() {
-                          searchQuery = value.toLowerCase();
-                        });
-                      },
                     ),
                     SizedBox(height: 16),
                     Expanded(

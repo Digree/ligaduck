@@ -1,3 +1,4 @@
+import 'package:ligaduck/app/widgets/liquid_glass_dropdown.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -5,6 +6,8 @@ import 'package:csv/csv.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:ligaduck/app/widgets/liquid_glass_close_button.dart';
+import 'package:ligaduck/app/widgets/liquid_glass_action_group.dart';
 import 'package:flutter/services.dart';
 import 'package:ligaduck/app/campionato/campionato_home_page.dart';
 import 'package:ligaduck/app/competizione/statistiche/gol_annullati_page.dart';
@@ -37,6 +40,7 @@ import 'package:ligaduck/app/widgets/settings_icon.dart';
 import 'package:ligaduck/app/widgets/fireworks.dart';
 import 'package:ligaduck/app/competizione/elimination_bracket.dart';
 import 'package:ligaduck/main.dart' show routeObserver;
+import 'package:native_liquid_glass/native_liquid_glass.dart';
 
 class CompetizioneHomePage extends StatefulWidget {
   final String title;
@@ -418,6 +422,30 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     }
 
     final int tabCount = (mostraClassifica ? 4 : 3) + (hasEliminazione ? 1 : 0);
+    final useLiquidGlassPhoneLayout =
+        NativeLiquidGlassUtils.supportsLiquidGlass &&
+        MediaQuery.sizeOf(context).shortestSide < 600;
+    final showCloseGiornataButton =
+        globals.admin &&
+        giornataChiusa != null &&
+        giornate_.isNotEmpty &&
+        widget.competizione.conclusa == false;
+    final closeGiornataButton = IconButton(
+      onPressed: (tuttePartiteSalvate || giornataChiusa!)
+          ? () {
+              giornataChiusa = !giornataChiusa!;
+              closeGiornata();
+            }
+          : null,
+      icon: giornataChiusa!
+          ? Icon(Icons.lock, color: Colors.white)
+          : Icon(
+              Icons.lock_open,
+              color: (tuttePartiteSalvate || giornataChiusa!)
+                  ? Colors.white
+                  : Colors.grey,
+            ),
+    );
 
     return Theme(
       data: Theme.of(context).copyWith(
@@ -444,73 +472,152 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                 child: AppBar(
                   automaticallyImplyLeading: false,
                   actions: [
-                    globals.admin
-                        ? Row(
-                            children: [
-                              if (giornataChiusa != null &&
-                                  giornate_.isNotEmpty &&
-                                  widget.competizione.conclusa == false)
-                                IconButton(
-                                  onPressed:
-                                      (tuttePartiteSalvate || giornataChiusa!)
-                                      ? () {
-                                          giornataChiusa = !giornataChiusa!;
-                                          closeGiornata();
-                                        }
-                                      : null,
-                                  icon: giornataChiusa!
-                                      ? Icon(Icons.lock, color: Colors.white)
-                                      : Icon(
-                                          Icons.lock_open,
-                                          color:
-                                              (tuttePartiteSalvate ||
-                                                  giornataChiusa!)
-                                              ? Colors.white
-                                              : Colors.grey,
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: LiquidGlassActionGroup(
+                        itemCount:
+                            1 +
+                            (globals.admin
+                                ? (showCloseGiornataButton &&
+                                              !useLiquidGlassPhoneLayout
+                                          ? 1
+                                          : 0) +
+                                      (widget.competizione.conclusa == false
+                                          ? 1
+                                          : 0) +
+                                      1 +
+                                      (widget.competizione.conclusa ? 1 : 0)
+                                : 0),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (showCloseGiornataButton &&
+                                !useLiquidGlassPhoneLayout)
+                              closeGiornataButton,
+                            if (globals.admin &&
+                                widget.competizione.conclusa == false)
+                              if (NativeLiquidGlassUtils.supportsLiquidGlass)
+                                LiquidGlassMenu.icon(
+                                  icon: const NativeLiquidGlassIcon.sfSymbol(
+                                    'plus',
+                                  ),
+                                  color: Colors.white,
+                                  menuTitle: 'Aggiungi',
+                                  items: [
+                                    const LiquidGlassMenuItem(
+                                      id: 'upload_csv',
+                                      title: 'Carica CSV',
+                                      icon: NativeLiquidGlassIcon.sfSymbol(
+                                        'square.and.arrow.up',
+                                      ),
+                                    ),
+                                    const LiquidGlassMenuItem(
+                                      id: 'create_day',
+                                      title: 'Crea giornata',
+                                      icon: NativeLiquidGlassIcon.sfSymbol(
+                                        'calendar.badge.plus',
+                                      ),
+                                    ),
+                                    if (_isClassificaGironi())
+                                      const LiquidGlassMenuItem(
+                                        id: 'configure_groups',
+                                        title: 'Configura gruppi',
+                                        icon: NativeLiquidGlassIcon.sfSymbol(
+                                          'person.3',
                                         ),
-                                ),
-                              if (widget.competizione.conclusa == false)
+                                      ),
+                                  ],
+                                  onItemSelected: (id) {
+                                    switch (id) {
+                                      case 'upload_csv':
+                                        _pickAndProcessCsvFile();
+                                      case 'create_day':
+                                        _showCreaGiornataDialog();
+                                      case 'configure_groups':
+                                        _showConfiguraGironiDialog();
+                                    }
+                                  },
+                                )
+                              else
                                 IconButton(
                                   onPressed: () {
                                     showAddCalendarModal();
                                   },
                                   icon: Icon(Icons.add, color: Colors.white),
                                 ),
-                              IconButton(
-                                onPressed: () {
-                                  _downloadCsvTemplate();
-                                },
-                                icon: Icon(Icons.download, color: Colors.white),
-                                tooltip: 'Scarica Template CSV',
-                              ),
-                              if (widget.competizione.conclusa)
+                            if (globals.admin)
+                              if (NativeLiquidGlassUtils.supportsLiquidGlass)
+                                LiquidGlassMenu.icon(
+                                  icon: const NativeLiquidGlassIcon.sfSymbol(
+                                    'arrow.down.to.line',
+                                  ),
+                                  color: Colors.white,
+                                  menuTitle: 'Scarica Template CSV',
+                                  items: const [
+                                    LiquidGlassMenuItem(
+                                      id: 'save_template',
+                                      title: 'Salva come file',
+                                      icon: NativeLiquidGlassIcon.sfSymbol(
+                                        'square.and.arrow.down',
+                                      ),
+                                    ),
+                                    LiquidGlassMenuItem(
+                                      id: 'copy_template',
+                                      title: 'Copia negli appunti',
+                                      icon: NativeLiquidGlassIcon.sfSymbol(
+                                        'doc.on.doc',
+                                      ),
+                                    ),
+                                    LiquidGlassMenuItem(
+                                      id: 'template_instructions',
+                                      title: 'Mostra istruzioni',
+                                      icon: NativeLiquidGlassIcon.sfSymbol(
+                                        'info.circle',
+                                      ),
+                                    ),
+                                  ],
+                                  onItemSelected: _handleCsvTemplateMenuAction,
+                                )
+                              else
                                 IconButton(
                                   onPressed: () {
-                                    setState(() {
-                                      _testFireworks = !_testFireworks;
-                                    });
+                                    _downloadCsvTemplate();
                                   },
                                   icon: Icon(
-                                    _testFireworks
-                                        ? Icons.celebration
-                                        : Icons.celebration_outlined,
-                                    color: _testFireworks
-                                        ? Colors.yellow
-                                        : Colors.white,
+                                    Icons.download,
+                                    color: Colors.white,
                                   ),
-                                  tooltip: 'Fuochi d\'Artificio',
+                                  tooltip: 'Scarica Template CSV',
                                 ),
-                            ],
-                          )
-                        : SizedBox(),
-                    SettingsIcon(
-                      iconColor: Colors.white,
-                      onDismiss: () {
-                        setState(() {
-                          _invalidateCacheKey++;
-                        });
-                        // _caricaClassifica rimosso - le impostazioni non modificano la classifica
-                      },
+                            if (globals.admin && widget.competizione.conclusa)
+                              IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _testFireworks = !_testFireworks;
+                                  });
+                                },
+                                icon: Icon(
+                                  _testFireworks
+                                      ? Icons.celebration
+                                      : Icons.celebration_outlined,
+                                  color: _testFireworks
+                                      ? Colors.yellow
+                                      : Colors.white,
+                                ),
+                                tooltip: 'Fuochi d\'Artificio',
+                              ),
+                            SettingsIcon(
+                              iconColor: Colors.white,
+                              onDismiss: () {
+                                setState(() {
+                                  _invalidateCacheKey++;
+                                });
+                                // _caricaClassifica rimosso - le impostazioni non modificano la classifica
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                   flexibleSpace: Container(
@@ -550,11 +657,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                           Positioned(
                             top: 10,
                             left: 10,
-                            child: IconButton(
-                              icon: const Icon(
-                                Icons.arrow_back,
-                                color: Colors.white,
-                              ),
+                            child: LiquidGlassBackButton(
                               onPressed: () {
                                 Navigator.push(
                                   context,
@@ -568,6 +671,19 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                               },
                             ),
                           ),
+                          if (showCloseGiornataButton &&
+                              useLiquidGlassPhoneLayout)
+                            Positioned(
+                              top: 10,
+                              left: 62,
+                              child: LiquidGlassActionGroup(
+                                itemCount: 1,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [closeGiornataButton],
+                                ),
+                              ),
+                            ),
                           Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -2563,30 +2679,32 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
               child: Row(
                 children: [
                   Expanded(
-                    child: DropdownButton<String>(
-                      value: selectedGiornata,
-                      hint: const Text('Seleziona giornata'),
-                      isExpanded: true,
-                      items: giornate
-                          .map(
-                            (g) => DropdownMenuItem<String>(
-                              value: g.id,
-                              child: Text(
-                                g.fase == 'G'
-                                    ? "${g.giornata}^ Giornata"
-                                    : CommonService.decodePlayerName(
-                                        g.giornata,
-                                      ),
+                    child: LiquidGlassDropdownBox(
+                      child: LiquidGlassDropdownButton<String>(
+                        value: selectedGiornata,
+                        hint: const Text('Seleziona giornata'),
+                        isExpanded: true,
+                        items: giornate
+                            .map(
+                              (g) => DropdownMenuItem<String>(
+                                value: g.id,
+                                child: Text(
+                                  g.fase == 'G'
+                                      ? "${g.giornata}^ Giornata"
+                                      : CommonService.decodePlayerName(
+                                          g.giornata,
+                                        ),
+                                ),
                               ),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          selectedGiornata = newValue;
-                        });
-                        _verificaPartiteSalvate();
-                      },
+                            )
+                            .toList(),
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            selectedGiornata = newValue;
+                          });
+                          _verificaPartiteSalvate();
+                        },
+                      ),
                     ),
                   ),
                   if (globals.admin && selectedGiornata != null)
@@ -3841,7 +3959,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
           children: [
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: DropdownButtonFormField<String>(
+              child: LiquidGlassDropdownButtonFormField<String>(
                 initialValue: _vistaSquadre,
                 isDense: true,
                 icon: Icon(Icons.arrow_drop_down, color: coloreCompetizione),
@@ -4092,24 +4210,26 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
               ),
             ),
             if (globals.admin && _modificaFasceAttiva)
-              DropdownButton<int?>(
-                value: _fasciaDiSquadra(s.id),
-                underline: SizedBox(),
-                dropdownColor: color,
-                iconEnabledColor: Colors.white,
-                hint: Text('-', style: _glassTextStyle()),
-                items: [
-                  DropdownMenuItem<int?>(
-                    value: null,
-                    child: Text('-', style: _glassTextStyle()),
-                  ),
-                  for (int f = 1; f <= _numeroFasce; f++)
+              LiquidGlassDropdownBox(
+                child: LiquidGlassDropdownButton<int?>(
+                  value: _fasciaDiSquadra(s.id),
+                  underline: SizedBox(),
+                  dropdownColor: color,
+                  iconEnabledColor: Colors.white,
+                  hint: Text('-', style: _glassTextStyle()),
+                  items: [
                     DropdownMenuItem<int?>(
-                      value: f,
-                      child: Text('$f', style: _glassTextStyle()),
+                      value: null,
+                      child: Text('-', style: _glassTextStyle()),
                     ),
-                ],
-                onChanged: (value) => _setFasciaSquadra(s.id, value),
+                    for (int f = 1; f <= _numeroFasce; f++)
+                      DropdownMenuItem<int?>(
+                        value: f,
+                        child: Text('$f', style: _glassTextStyle()),
+                      ),
+                  ],
+                  onChanged: (value) => _setFasciaSquadra(s.id, value),
+                ),
               ),
           ],
         ),
@@ -4489,7 +4609,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
         children: [
           Expanded(
             child: DropdownButtonHideUnderline(
-              child: DropdownButtonFormField<int?>(
+              child: LiquidGlassDropdownButtonFormField<int?>(
                 initialValue: selezionato?.id,
                 isDense: true,
                 dropdownColor: _competizioneColor().withOpacity(0.95),
@@ -5311,23 +5431,24 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                 Row(
                                   children: [
                                     Expanded(
-                                      child: TextFormField(
-                                        controller: nomeController,
-                                        decoration: InputDecoration(
-                                          labelText: 'Nome gruppo',
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              8,
+                                      child: LiquidGlassTextBox(
+                                        child: TextFormField(
+                                          controller: nomeController,
+                                          decoration: InputDecoration(
+                                            labelText: 'Nome gruppo',
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                             ),
+                                            isDense: true,
                                           ),
-                                          isDense: true,
+                                          onChanged: (value) {
+                                            setStateDialog(() {
+                                              gruppiConfig[groupIndex]['nome'] =
+                                                  value;
+                                            });
+                                          },
                                         ),
-                                        onChanged: (value) {
-                                          setStateDialog(() {
-                                            gruppiConfig[groupIndex]['nome'] =
-                                                value;
-                                          });
-                                        },
                                       ),
                                     ),
                                     if (gruppiConfig.length > 1)
@@ -5603,29 +5724,31 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                           children: [
                             Expanded(
                               flex: 2,
-                              child: TextFormField(
-                                controller: nomeGiornataController,
-                                decoration: InputDecoration(
-                                  labelText: 'Nome giornata',
-                                  labelStyle: TextStyle(
-                                    color: getColor("primary"),
-                                  ),
-                                  hintText: 'es: 1, Ottavi, Semifinale...',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                    borderSide: BorderSide(
+                              child: LiquidGlassTextBox(
+                                child: TextFormField(
+                                  controller: nomeGiornataController,
+                                  decoration: InputDecoration(
+                                    labelText: 'Nome giornata',
+                                    labelStyle: TextStyle(
                                       color: getColor("primary"),
-                                      width: 1,
                                     ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                    borderSide: BorderSide(
-                                      color: getColor("primary"),
-                                      width: 2,
+                                    hintText: 'es: 1, Ottavi, Semifinale...',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: BorderSide(
+                                        color: getColor("primary"),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: BorderSide(
+                                        color: getColor("primary"),
+                                        width: 2,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -5634,7 +5757,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                             SizedBox(width: 16),
                             Expanded(
                               flex: 1,
-                              child: DropdownButtonFormField<String>(
+                              child: LiquidGlassDropdownButtonFormField<String>(
                                 initialValue: selectedFase,
                                 isExpanded: true,
                                 decoration: InputDecoration(
@@ -5680,33 +5803,35 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                           ],
                         )
                       else ...[
-                        TextFormField(
-                          controller: nomeGiornataController,
-                          decoration: InputDecoration(
-                            labelText: 'Nome giornata',
-                            labelStyle: TextStyle(color: getColor("primary")),
-                            hintText: 'es: 1, Ottavi, Semifinale...',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(
-                                color: getColor("primary"),
-                                width: 1,
+                        LiquidGlassTextBox(
+                          child: TextFormField(
+                            controller: nomeGiornataController,
+                            decoration: InputDecoration(
+                              labelText: 'Nome giornata',
+                              labelStyle: TextStyle(color: getColor("primary")),
+                              hintText: 'es: 1, Ottavi, Semifinale...',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(
-                                color: getColor("primary"),
-                                width: 2,
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: getColor("primary"),
+                                  width: 1,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: getColor("primary"),
+                                  width: 2,
+                                ),
                               ),
                             ),
                           ),
                         ),
                         SizedBox(height: 16),
-                        DropdownButtonFormField<String>(
+                        LiquidGlassDropdownButtonFormField<String>(
                           initialValue: selectedFase,
                           decoration: InputDecoration(
                             labelText: 'Fase',
@@ -6132,56 +6257,72 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                 ? Row(
                                     children: [
                                       Expanded(
-                                        child: DropdownButtonFormField<int>(
-                                          initialValue: partita['idHome'],
-                                          decoration: InputDecoration(
-                                            labelText: 'Casa',
-                                            labelStyle: TextStyle(
-                                              color: getColor("primary"),
-                                            ),
-                                            border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            enabledBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                              borderSide: BorderSide(
-                                                color: getColor("primary"),
-                                                width: 1,
-                                              ),
-                                            ),
-                                            focusedBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                              borderSide: BorderSide(
-                                                color: getColor("primary"),
-                                                width: 2,
-                                              ),
-                                            ),
-                                          ),
-                                          items:
-                                              squadreDisponibili(
-                                                index,
-                                                'idHome',
-                                              ).map((squadra) {
-                                                return DropdownMenuItem<int>(
-                                                  value: squadra.id,
-                                                  child: Text(
-                                                    CommonService.decodePlayerName(
-                                                      squadra.nome,
+                                        child:
+                                            LiquidGlassDropdownButtonFormField<
+                                              int
+                                            >(
+                                              initialValue: partita['idHome'],
+                                              decoration: InputDecoration(
+                                                labelText: 'Casa',
+                                                labelStyle: TextStyle(
+                                                  color: getColor("primary"),
+                                                ),
+                                                border: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                                enabledBorder:
+                                                    OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8,
+                                                          ),
+                                                      borderSide: BorderSide(
+                                                        color: getColor(
+                                                          "primary",
+                                                        ),
+                                                        width: 1,
+                                                      ),
                                                     ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                );
-                                              }).toList(),
-                                          onChanged: (value) {
-                                            setState(() {
-                                              partite[index]['idHome'] = value;
-                                            });
-                                          },
-                                        ),
+                                                focusedBorder:
+                                                    OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8,
+                                                          ),
+                                                      borderSide: BorderSide(
+                                                        color: getColor(
+                                                          "primary",
+                                                        ),
+                                                        width: 2,
+                                                      ),
+                                                    ),
+                                              ),
+                                              items:
+                                                  squadreDisponibili(
+                                                    index,
+                                                    'idHome',
+                                                  ).map((squadra) {
+                                                    return DropdownMenuItem<
+                                                      int
+                                                    >(
+                                                      value: squadra.id,
+                                                      child: Text(
+                                                        CommonService.decodePlayerName(
+                                                          squadra.nome,
+                                                        ),
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                              onChanged: (value) {
+                                                setState(() {
+                                                  partite[index]['idHome'] =
+                                                      value;
+                                                });
+                                              },
+                                            ),
                                       ),
                                       SizedBox(width: 8),
                                       Padding(
@@ -6198,56 +6339,72 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                       ),
                                       SizedBox(width: 8),
                                       Expanded(
-                                        child: DropdownButtonFormField<int>(
-                                          initialValue: partita['idAway'],
-                                          decoration: InputDecoration(
-                                            labelText: 'Trasferta',
-                                            labelStyle: TextStyle(
-                                              color: getColor("primary"),
-                                            ),
-                                            border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            enabledBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                              borderSide: BorderSide(
-                                                color: getColor("primary"),
-                                                width: 1,
-                                              ),
-                                            ),
-                                            focusedBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                              borderSide: BorderSide(
-                                                color: getColor("primary"),
-                                                width: 2,
-                                              ),
-                                            ),
-                                          ),
-                                          items:
-                                              squadreDisponibili(
-                                                index,
-                                                'idAway',
-                                              ).map((squadra) {
-                                                return DropdownMenuItem<int>(
-                                                  value: squadra.id,
-                                                  child: Text(
-                                                    CommonService.decodePlayerName(
-                                                      squadra.nome,
+                                        child:
+                                            LiquidGlassDropdownButtonFormField<
+                                              int
+                                            >(
+                                              initialValue: partita['idAway'],
+                                              decoration: InputDecoration(
+                                                labelText: 'Trasferta',
+                                                labelStyle: TextStyle(
+                                                  color: getColor("primary"),
+                                                ),
+                                                border: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                                enabledBorder:
+                                                    OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8,
+                                                          ),
+                                                      borderSide: BorderSide(
+                                                        color: getColor(
+                                                          "primary",
+                                                        ),
+                                                        width: 1,
+                                                      ),
                                                     ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                );
-                                              }).toList(),
-                                          onChanged: (value) {
-                                            setState(() {
-                                              partite[index]['idAway'] = value;
-                                            });
-                                          },
-                                        ),
+                                                focusedBorder:
+                                                    OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8,
+                                                          ),
+                                                      borderSide: BorderSide(
+                                                        color: getColor(
+                                                          "primary",
+                                                        ),
+                                                        width: 2,
+                                                      ),
+                                                    ),
+                                              ),
+                                              items:
+                                                  squadreDisponibili(
+                                                    index,
+                                                    'idAway',
+                                                  ).map((squadra) {
+                                                    return DropdownMenuItem<
+                                                      int
+                                                    >(
+                                                      value: squadra.id,
+                                                      child: Text(
+                                                        CommonService.decodePlayerName(
+                                                          squadra.nome,
+                                                        ),
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                              onChanged: (value) {
+                                                setState(() {
+                                                  partite[index]['idAway'] =
+                                                      value;
+                                                });
+                                              },
+                                            ),
                                       ),
                                       SizedBox(
                                         width: 40,
@@ -6271,66 +6428,82 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                 : Row(
                                     children: [
                                       Expanded(
-                                        child: DropdownButtonFormField<int>(
-                                          initialValue: partita['idHome'],
-                                          isExpanded: true,
-                                          decoration: InputDecoration(
-                                            labelText: 'Casa',
-                                            labelStyle: TextStyle(
-                                              color: getColor("primary"),
-                                              fontSize: 12,
-                                            ),
-                                            border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            enabledBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                              borderSide: BorderSide(
-                                                color: getColor("primary"),
-                                                width: 1,
-                                              ),
-                                            ),
-                                            focusedBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                              borderSide: BorderSide(
-                                                color: getColor("primary"),
-                                                width: 2,
-                                              ),
-                                            ),
-                                            contentPadding:
-                                                EdgeInsets.symmetric(
-                                                  horizontal: 8,
-                                                  vertical: 8,
+                                        child:
+                                            LiquidGlassDropdownButtonFormField<
+                                              int
+                                            >(
+                                              initialValue: partita['idHome'],
+                                              isExpanded: true,
+                                              decoration: InputDecoration(
+                                                labelText: 'Casa',
+                                                labelStyle: TextStyle(
+                                                  color: getColor("primary"),
+                                                  fontSize: 12,
                                                 ),
-                                          ),
-                                          items:
-                                              squadreDisponibili(
-                                                index,
-                                                'idHome',
-                                              ).map((squadra) {
-                                                return DropdownMenuItem<int>(
-                                                  value: squadra.id,
-                                                  child: Text(
-                                                    CommonService.decodePlayerName(
-                                                      squadra.nome,
+                                                border: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                                enabledBorder:
+                                                    OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8,
+                                                          ),
+                                                      borderSide: BorderSide(
+                                                        color: getColor(
+                                                          "primary",
+                                                        ),
+                                                        width: 1,
+                                                      ),
                                                     ),
-                                                    style: TextStyle(
-                                                      fontSize: 12,
+                                                focusedBorder:
+                                                    OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8,
+                                                          ),
+                                                      borderSide: BorderSide(
+                                                        color: getColor(
+                                                          "primary",
+                                                        ),
+                                                        width: 2,
+                                                      ),
                                                     ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                );
-                                              }).toList(),
-                                          onChanged: (value) {
-                                            setState(() {
-                                              partite[index]['idHome'] = value;
-                                            });
-                                          },
-                                        ),
+                                                contentPadding:
+                                                    EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 8,
+                                                    ),
+                                              ),
+                                              items:
+                                                  squadreDisponibili(
+                                                    index,
+                                                    'idHome',
+                                                  ).map((squadra) {
+                                                    return DropdownMenuItem<
+                                                      int
+                                                    >(
+                                                      value: squadra.id,
+                                                      child: Text(
+                                                        CommonService.decodePlayerName(
+                                                          squadra.nome,
+                                                        ),
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                        ),
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                              onChanged: (value) {
+                                                setState(() {
+                                                  partite[index]['idHome'] =
+                                                      value;
+                                                });
+                                              },
+                                            ),
                                       ),
                                       Padding(
                                         padding: EdgeInsets.symmetric(
@@ -6345,66 +6518,82 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                         ),
                                       ),
                                       Expanded(
-                                        child: DropdownButtonFormField<int>(
-                                          initialValue: partita['idAway'],
-                                          isExpanded: true,
-                                          decoration: InputDecoration(
-                                            labelText: 'Trasferta',
-                                            labelStyle: TextStyle(
-                                              color: getColor("primary"),
-                                              fontSize: 12,
-                                            ),
-                                            border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            enabledBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                              borderSide: BorderSide(
-                                                color: getColor("primary"),
-                                                width: 1,
-                                              ),
-                                            ),
-                                            focusedBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                              borderSide: BorderSide(
-                                                color: getColor("primary"),
-                                                width: 2,
-                                              ),
-                                            ),
-                                            contentPadding:
-                                                EdgeInsets.symmetric(
-                                                  horizontal: 8,
-                                                  vertical: 8,
+                                        child:
+                                            LiquidGlassDropdownButtonFormField<
+                                              int
+                                            >(
+                                              initialValue: partita['idAway'],
+                                              isExpanded: true,
+                                              decoration: InputDecoration(
+                                                labelText: 'Trasferta',
+                                                labelStyle: TextStyle(
+                                                  color: getColor("primary"),
+                                                  fontSize: 12,
                                                 ),
-                                          ),
-                                          items:
-                                              squadreDisponibili(
-                                                index,
-                                                'idAway',
-                                              ).map((squadra) {
-                                                return DropdownMenuItem<int>(
-                                                  value: squadra.id,
-                                                  child: Text(
-                                                    CommonService.decodePlayerName(
-                                                      squadra.nome,
+                                                border: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                                enabledBorder:
+                                                    OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8,
+                                                          ),
+                                                      borderSide: BorderSide(
+                                                        color: getColor(
+                                                          "primary",
+                                                        ),
+                                                        width: 1,
+                                                      ),
                                                     ),
-                                                    style: TextStyle(
-                                                      fontSize: 12,
+                                                focusedBorder:
+                                                    OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8,
+                                                          ),
+                                                      borderSide: BorderSide(
+                                                        color: getColor(
+                                                          "primary",
+                                                        ),
+                                                        width: 2,
+                                                      ),
                                                     ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                );
-                                              }).toList(),
-                                          onChanged: (value) {
-                                            setState(() {
-                                              partite[index]['idAway'] = value;
-                                            });
-                                          },
-                                        ),
+                                                contentPadding:
+                                                    EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 8,
+                                                    ),
+                                              ),
+                                              items:
+                                                  squadreDisponibili(
+                                                    index,
+                                                    'idAway',
+                                                  ).map((squadra) {
+                                                    return DropdownMenuItem<
+                                                      int
+                                                    >(
+                                                      value: squadra.id,
+                                                      child: Text(
+                                                        CommonService.decodePlayerName(
+                                                          squadra.nome,
+                                                        ),
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                        ),
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                              onChanged: (value) {
+                                                setState(() {
+                                                  partite[index]['idAway'] =
+                                                      value;
+                                                });
+                                              },
+                                            ),
                                       ),
                                       SizedBox(
                                         width: 40,
@@ -7392,25 +7581,31 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  TextField(
-                    controller: championsController,
-                    keyboardType: TextInputType.number,
-                    cursorColor: color,
-                    decoration: fieldDecoration('Champions League'),
+                  LiquidGlassTextBox(
+                    child: TextField(
+                      controller: championsController,
+                      keyboardType: TextInputType.number,
+                      cursorColor: color,
+                      decoration: fieldDecoration('Champions League'),
+                    ),
                   ),
                   SizedBox(height: 12),
-                  TextField(
-                    controller: europaLeagueController,
-                    keyboardType: TextInputType.number,
-                    cursorColor: color,
-                    decoration: fieldDecoration('Europa League'),
+                  LiquidGlassTextBox(
+                    child: TextField(
+                      controller: europaLeagueController,
+                      keyboardType: TextInputType.number,
+                      cursorColor: color,
+                      decoration: fieldDecoration('Europa League'),
+                    ),
                   ),
                   SizedBox(height: 12),
-                  TextField(
-                    controller: conferenceController,
-                    keyboardType: TextInputType.number,
-                    cursorColor: color,
-                    decoration: fieldDecoration('Conference League'),
+                  LiquidGlassTextBox(
+                    child: TextField(
+                      controller: conferenceController,
+                      keyboardType: TextInputType.number,
+                      cursorColor: color,
+                      decoration: fieldDecoration('Conference League'),
+                    ),
                   ),
                 ],
               ),
@@ -7570,19 +7765,33 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
   // Funzioni per il template CSV
   void _downloadCsvTemplate() {
     try {
-      // Crea l'intestazione del CSV per giornate e partite
-      List<List<dynamic>> csvData = [
-        ['Giornata', 'SquadraCasa', 'SquadraTrasferta', 'Fase'],
-      ];
+      _showCsvDownloadOptions(_buildCsvTemplateContent());
+    } catch (e) {
+      _showMessage('Errore nella creazione del template CSV: $e');
+    }
+  }
 
-      // Converte in stringa CSV
-      String csv = const ListToCsvConverter(
-        fieldDelimiter: ';',
-        eol: '\n',
-      ).convert(csvData);
+  String _buildCsvTemplateContent() {
+    final csvData = [
+      ['Giornata', 'SquadraCasa', 'SquadraTrasferta', 'Fase'],
+    ];
+    return const ListToCsvConverter(
+      fieldDelimiter: ';',
+      eol: '\n',
+    ).convert(csvData);
+  }
 
-      // Mostra dialog con opzioni di salvataggio
-      _showCsvDownloadOptions(csv);
+  void _handleCsvTemplateMenuAction(String action) {
+    try {
+      final csvContent = _buildCsvTemplateContent();
+      switch (action) {
+        case 'save_template':
+          _saveTemplateToFile(csvContent);
+        case 'copy_template':
+          _copyToClipboard(csvContent);
+        case 'template_instructions':
+          _showTemplateInstructions(csvContent);
+      }
     } catch (e) {
       _showMessage('Errore nella creazione del template CSV: $e');
     }

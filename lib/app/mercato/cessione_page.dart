@@ -1,4 +1,6 @@
+import 'package:ligaduck/app/widgets/liquid_glass_dropdown.dart';
 import 'package:flutter/material.dart';
+import 'package:ligaduck/app/widgets/liquid_glass_close_button.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/squadre_provider.dart';
 import 'package:ligaduck/app/service/mercato_provider.dart';
@@ -182,7 +184,7 @@ class _CessionePageState extends State<CessionePage> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
+                                child: LiquidGlassDropdownButton<String>(
                                   value: _selectedNazione,
                                   hint: Text('Seleziona nazionalità'),
                                   isExpanded: true,
@@ -675,7 +677,7 @@ class _CessionePageState extends State<CessionePage> {
                           color: Colors.white,
                         ),
                         child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
+                          child: LiquidGlassDropdownButton<String>(
                             value: _sortType,
                             isExpanded: true,
                             icon: Icon(
@@ -803,8 +805,7 @@ class _CessionePageState extends State<CessionePage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blueAccent,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+        leading: LiquidGlassBackButton(
           onPressed: () {
             Navigator.pop(context);
           },
@@ -834,26 +835,31 @@ class _CessionePageState extends State<CessionePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Cerca squadra...',
-                      prefixIcon: Icon(Icons.search, color: Colors.blueAccent),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.blueAccent),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
+                  child: LiquidGlassTextBox(
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Cerca squadra...',
+                        prefixIcon: Icon(
+                          Icons.search,
                           color: Colors.blueAccent,
-                          width: 2,
                         ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.blueAccent),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: Colors.blueAccent,
+                            width: 2,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor: Colors.blueAccent.withOpacity(0.05),
                       ),
-                      filled: true,
-                      fillColor: Colors.blueAccent.withOpacity(0.05),
+                      onSubmitted: (_) => _performSearch(),
                     ),
-                    onSubmitted: (_) => _performSearch(),
                   ),
                 ),
                 SizedBox(width: 12),

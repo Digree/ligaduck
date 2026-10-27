@@ -1,4 +1,6 @@
+import 'package:ligaduck/app/widgets/liquid_glass_dropdown.dart';
 import 'package:flutter/material.dart';
+import 'package:ligaduck/app/widgets/liquid_glass_close_button.dart';
 import 'package:ligaduck/app/service/giocatori_provider.dart';
 import 'package:ligaduck/app/service/models/giocatore.dart';
 import 'package:ligaduck/app/service/models/nazionale.dart';
@@ -458,7 +460,7 @@ class _AcquistoPageState extends State<AcquistoPage> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
+                                child: LiquidGlassDropdownButton<String>(
                                   value: _selectedNazione,
                                   hint: Text('Seleziona nazionalità'),
                                   isExpanded: true,
@@ -562,42 +564,47 @@ class _AcquistoPageState extends State<AcquistoPage> {
                             Row(
                               children: [
                                 Expanded(
-                                  child: TextField(
-                                    controller: numeroController,
-                                    keyboardType: TextInputType.number,
-                                    textInputAction: TextInputAction.done,
-                                    decoration: InputDecoration(
-                                      hintText: 'Es. 10',
-                                      enabledBorder: OutlineInputBorder(
-                                        borderSide: BorderSide(
-                                          color: Colors.blueAccent.withOpacity(
-                                            0.3,
+                                  child: LiquidGlassTextBox(
+                                    child: TextField(
+                                      controller: numeroController,
+                                      keyboardType: TextInputType.number,
+                                      textInputAction: TextInputAction.done,
+                                      decoration: InputDecoration(
+                                        hintText: 'Es. 10',
+                                        enabledBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                            color: Colors.blueAccent
+                                                .withOpacity(0.3),
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
                                           ),
                                         ),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide: BorderSide(
-                                          color: Colors.blueAccent,
+                                        focusedBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                            color: Colors.blueAccent,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                         ),
-                                        borderRadius: BorderRadius.circular(8),
+                                        contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 10,
+                                        ),
                                       ),
-                                      contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 10,
-                                      ),
+                                      onSubmitted: (value) {
+                                        FocusScope.of(context).unfocus();
+                                        final n = int.tryParse(value.trim());
+                                        if (n != null && n >= 0) {
+                                          setDialogState(() {
+                                            _selectedNumeriMaglia.add(n);
+                                          });
+                                          setState(() {});
+                                          numeroController.clear();
+                                        }
+                                      },
                                     ),
-                                    onSubmitted: (value) {
-                                      FocusScope.of(context).unfocus();
-                                      final n = int.tryParse(value.trim());
-                                      if (n != null && n >= 0) {
-                                        setDialogState(() {
-                                          _selectedNumeriMaglia.add(n);
-                                        });
-                                        setState(() {});
-                                        numeroController.clear();
-                                      }
-                                    },
                                   ),
                                 ),
                                 SizedBox(width: 8),
@@ -787,8 +794,7 @@ class _AcquistoPageState extends State<AcquistoPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blueAccent,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+        leading: LiquidGlassBackButton(
           onPressed: () {
             Navigator.pop(context);
           },
@@ -807,26 +813,31 @@ class _AcquistoPageState extends State<AcquistoPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Cerca giocatore...',
-                      prefixIcon: Icon(Icons.search, color: Colors.blueAccent),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.blueAccent),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
+                  child: LiquidGlassTextBox(
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Cerca giocatore...',
+                        prefixIcon: Icon(
+                          Icons.search,
                           color: Colors.blueAccent,
-                          width: 2,
                         ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.blueAccent),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: Colors.blueAccent,
+                            width: 2,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor: Colors.blueAccent.withOpacity(0.05),
                       ),
-                      filled: true,
-                      fillColor: Colors.blueAccent.withOpacity(0.05),
+                      onSubmitted: (_) => _performSearch(),
                     ),
-                    onSubmitted: (_) => _performSearch(),
                   ),
                 ),
                 SizedBox(width: 12),

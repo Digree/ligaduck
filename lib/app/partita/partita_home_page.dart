@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:ligaduck/app/widgets/liquid_glass_action_group.dart';
+import 'package:ligaduck/app/widgets/liquid_glass_close_button.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:ligaduck/app/config/models/global.dart';
@@ -23,6 +25,7 @@ import 'package:ligaduck/services/commonService.dart';
 import 'package:provider/provider.dart';
 import 'package:ligaduck/app/widgets/settings_icon.dart';
 import 'package:ligaduck/app/widgets/squadra_logo_widget.dart';
+import 'package:native_liquid_glass/native_liquid_glass.dart';
 
 class PartitaHomePage extends StatefulWidget {
   final String partitaId;
@@ -583,6 +586,32 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     }
   }
 
+  Widget _buildPlusFab({
+    required String heroTag,
+    required VoidCallback onPressed,
+    required Color backgroundColor,
+    required Widget child,
+  }) {
+    if (NativeLiquidGlassUtils.supportsLiquidGlass) {
+      return LiquidGlassButton.icon(
+        icon: const NativeLiquidGlassIcon.sfSymbol('plus'),
+        onPressed: onPressed,
+        size: 56,
+        iconSize: 24,
+        padding: const EdgeInsets.all(16),
+        iconColor: Colors.white,
+        tint: backgroundColor,
+        style: LiquidGlassButtonStyle.glass,
+      );
+    }
+    return FloatingActionButton(
+      heroTag: heroTag,
+      onPressed: onPressed,
+      backgroundColor: backgroundColor,
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<SquadreProvider>(context, listen: false);
@@ -687,8 +716,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
           surfaceTintColor: Colors.transparent,
           elevation: 0,
           scrolledUnderElevation: 0,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: Colors.white),
+          leading: LiquidGlassBackButton(
             onPressed: () {
               Navigator.pop(
                 context,
@@ -697,31 +725,35 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             },
           ),
           actions: [
-            admin && !partita!.salvata
-                ? Row(
-                    children: [
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: LiquidGlassActionGroup(
+                itemCount: admin && !partita!.salvata ? 2 : 1,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (admin && !partita!.salvata)
                       IconButton(
-                        onPressed: (() {
-                          salvaPartita();
-                        }),
+                        onPressed: salvaPartita,
                         icon: Icon(Icons.save, color: Colors.white),
                       ),
-                    ],
-                  )
-                : SizedBox(),
-            SettingsIcon(
-              iconColor: Colors.white,
-              onDismiss: () async {
-                try {
-                  final fetchedPartita = await fetchPartita();
-                  setState(() {
-                    partita = fetchedPartita;
-                  });
-                  caricaGiocatori();
-                } catch (e) {
-                  print('Errore nel ricaricamento della partita: $e');
-                }
-              },
+                    SettingsIcon(
+                      iconColor: Colors.white,
+                      onDismiss: () async {
+                        try {
+                          final fetchedPartita = await fetchPartita();
+                          setState(() {
+                            partita = fetchedPartita;
+                          });
+                          caricaGiocatori();
+                        } catch (e) {
+                          print('Errore nel ricaricamento della partita: $e');
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
           flexibleSpace: Container(
@@ -1723,7 +1755,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                 alignment: Alignment.centerRight,
                 child: Padding(
                   padding: EdgeInsets.only(right: 32),
-                  child: FloatingActionButton(
+                  child: _buildPlusFab(
                     heroTag: "tabellino_fab",
                     onPressed: () async {
                       final result = await showDialog<Evento>(
@@ -1819,7 +1851,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
             Positioned(
               bottom: 32,
               right: 32,
-              child: FloatingActionButton(
+              child: _buildPlusFab(
                 heroTag: "tabellino_fab",
                 onPressed: () async {
                   final result = await showDialog<Evento>(
@@ -5357,7 +5389,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                     ),
                     SizedBox(height: 16),
                     Center(
-                      child: FloatingActionButton(
+                      child: _buildPlusFab(
                         heroTag: "formazione_fab_$selectedFormazione",
                         onPressed: () {
                           caricaFormazioniDaSquadre(selectedFormazione);

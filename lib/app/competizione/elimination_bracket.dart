@@ -1,3 +1,4 @@
+import 'package:ligaduck/app/widgets/liquid_glass_dropdown.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -971,26 +972,28 @@ class _EliminazioneBracketState extends State<EliminazioneBracket> {
         ),
         SizedBox(
           width: 58,
-          child: TextField(
-            controller: ctrl,
-            keyboardType: TextInputType.number,
-            textAlign: TextAlign.center,
-            decoration: InputDecoration(
-              isDense: true,
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(
-                  color: widget.primaryColor.withOpacity(0.5),
+          child: LiquidGlassTextBox(
+            child: TextField(
+              controller: ctrl,
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.center,
+              decoration: InputDecoration(
+                isDense: true,
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: widget.primaryColor.withOpacity(0.5),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: widget.primaryColor, width: 2),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 8,
+                  horizontal: 4,
                 ),
               ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: widget.primaryColor, width: 2),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 8,
-                horizontal: 4,
-              ),
+              onChanged: (_) => onChange(),
             ),
-            onChanged: (_) => onChange(),
           ),
         ),
       ],
@@ -1037,7 +1040,7 @@ class _EliminazioneBracketState extends State<EliminazioneBracket> {
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 6),
-                  DropdownButtonFormField<String>(
+                  LiquidGlassDropdownButtonFormField<String>(
                     initialValue: selPhase,
                     decoration: InputDecoration(
                       isDense: true,
@@ -1253,7 +1256,7 @@ class _EliminazioneBracketState extends State<EliminazioneBracket> {
         .where((s) => seen.add(s.id))
         .toList();
 
-    return DropdownButtonFormField<int?>(
+    return LiquidGlassDropdownButtonFormField<int?>(
       initialValue: current?.id,
       isExpanded: true,
       decoration: InputDecoration(

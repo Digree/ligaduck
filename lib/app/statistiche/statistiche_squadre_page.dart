@@ -1,4 +1,6 @@
+import 'package:ligaduck/app/widgets/liquid_glass_dropdown.dart';
 import 'package:flutter/material.dart';
+import 'package:ligaduck/app/widgets/liquid_glass_close_button.dart';
 import 'package:provider/provider.dart';
 import 'package:ligaduck/app/config/models/service/config_provider.dart';
 import 'package:ligaduck/app/service/squadre_provider.dart';
@@ -392,51 +394,53 @@ class _StatisticheSquadrePageState extends State<StatisticheSquadrePage> {
                 height: 400,
                 child: Column(
                   children: [
-                    TextField(
-                      autofocus: true,
-                      cursorColor: Colors.blueAccent,
-                      decoration: InputDecoration(
-                        hintText: 'Cerca squadra...',
-                        prefixIcon: const Icon(
-                          Icons.search,
-                          color: Colors.blueAccent,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(
+                    LiquidGlassTextBox(
+                      child: TextField(
+                        autofocus: true,
+                        cursorColor: Colors.blueAccent,
+                        decoration: InputDecoration(
+                          hintText: 'Cerca squadra...',
+                          prefixIcon: const Icon(
+                            Icons.search,
                             color: Colors.blueAccent,
                           ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: Colors.blueAccent.withOpacity(0.5),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Colors.blueAccent,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                              color: Colors.blueAccent.withOpacity(0.5),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Colors.blueAccent,
+                              width: 2,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 8,
+                            horizontal: 12,
                           ),
                         ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(
-                            color: Colors.blueAccent,
-                            width: 2,
-                          ),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 8,
-                          horizontal: 12,
-                        ),
+                        onChanged: (value) {
+                          setDialogState(() {
+                            query = value.toLowerCase();
+                            filtered = _squadrePaperi
+                                .where(
+                                  (s) => CommonService.decodePlayerName(
+                                    s.nome,
+                                  ).toLowerCase().contains(query),
+                                )
+                                .toList();
+                          });
+                        },
                       ),
-                      onChanged: (value) {
-                        setDialogState(() {
-                          query = value.toLowerCase();
-                          filtered = _squadrePaperi
-                              .where(
-                                (s) => CommonService.decodePlayerName(
-                                  s.nome,
-                                ).toLowerCase().contains(query),
-                              )
-                              .toList();
-                        });
-                      },
                     ),
                     const SizedBox(height: 8),
                     Expanded(
@@ -516,6 +520,9 @@ class _StatisticheSquadrePageState extends State<StatisticheSquadrePage> {
       appBar: AppBar(
         backgroundColor: Colors.blueAccent,
         iconTheme: const IconThemeData(color: Colors.white),
+        leading: LiquidGlassBackButton(
+          onPressed: () => Navigator.maybePop(context),
+        ),
         title: const Text(
           'Statistiche Squadre',
           style: TextStyle(color: Colors.white),
@@ -530,7 +537,7 @@ class _StatisticheSquadrePageState extends State<StatisticheSquadrePage> {
             const SizedBox(height: 12),
             _isLoadingCampionati
                 ? const LinearProgressIndicator(color: Colors.blueAccent)
-                : DropdownButtonFormField<String>(
+                : LiquidGlassDropdownButtonFormField<String>(
                     initialValue: _campionatoSelezionato,
                     style: const TextStyle(color: Colors.blueAccent),
                     decoration: InputDecoration(
@@ -776,7 +783,7 @@ class _StatisticheSquadrePageState extends State<StatisticheSquadrePage> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: DropdownButtonHideUnderline(
-              child: DropdownButton<int>(
+              child: LiquidGlassDropdownButton<int>(
                 value: _sortColumnIndex,
                 isExpanded: true,
                 style: const TextStyle(color: Colors.blueAccent),

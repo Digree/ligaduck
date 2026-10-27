@@ -1,10 +1,13 @@
 import 'package:flutter/gestures.dart';
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 import 'package:ligaduck/app/widgets/platform_glass.dart';
 import 'package:ligaduck/app/nazionali/nazionale_page.dart';
 import 'package:ligaduck/app/service/models/nazionale.dart';
 import 'package:ligaduck/services/commonService.dart';
 import 'package:ligaduck/app/config/models/global.dart';
+import 'package:native_liquid_glass/native_liquid_glass.dart';
 
 class ListaNazionaliModel {
   final String campionato;
@@ -206,59 +209,63 @@ class _ListaNazionaliWidgetState extends State<ListaNazionaliWidget> {
                               ),
                             ),
                           ),
-                          child: PlatformGlassContainer(
-                            width: double.infinity,
-                            height: 40,
-                            borderRadius: 30,
-                            blur: 15,
-                            alignment: Alignment.center,
-                            border: 2,
-                            linearGradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                mostraColori
-                                    ? _getNazionaleColor(
-                                        'primary',
-                                        nazionale.colori,
-                                      ).withOpacity(0.7)
-                                    : Colors.blueAccent.withOpacity(0.5),
-                                mostraColori
-                                    ? _getNazionaleColor(
-                                        'secondary',
-                                        nazionale.colori,
-                                      ).withOpacity(0.5)
-                                    : Colors.blueAccent.withOpacity(0.1),
-                              ],
-                            ),
-                            borderGradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                mostraColori
-                                    ? _getNazionaleColor(
-                                        'primary',
-                                        nazionale.colori,
-                                      ).withOpacity(0.5)
-                                    : Colors.white.withOpacity(0.1),
-                                mostraColori
-                                    ? _getNazionaleColor(
-                                        'secondary',
-                                        nazionale.colori,
-                                      ).withOpacity(0.1)
-                                    : Colors.white.withOpacity(0.2),
-                              ],
-                            ),
-                            child: Text(
-                              CommonService.decodePlayerName(nazionale.nome),
-                              style: TextStyle(
-                                color: mostraColori
-                                    ? Colors.black
-                                    : Colors.blue[900],
-                                fontSize: 16,
-                              ),
-                            ),
-                          ),
+                          child: NativeLiquidGlassUtils.supportsLiquidGlass
+                              ? _buildNazionaleGlassPill(nazionale)
+                              : PlatformGlassContainer(
+                                  width: double.infinity,
+                                  height: 40,
+                                  borderRadius: 30,
+                                  blur: 15,
+                                  alignment: Alignment.center,
+                                  border: 2,
+                                  linearGradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      mostraColori
+                                          ? _getNazionaleColor(
+                                              'primary',
+                                              nazionale.colori,
+                                            ).withOpacity(0.7)
+                                          : Colors.blueAccent.withOpacity(0.5),
+                                      mostraColori
+                                          ? _getNazionaleColor(
+                                              'secondary',
+                                              nazionale.colori,
+                                            ).withOpacity(0.5)
+                                          : Colors.blueAccent.withOpacity(0.1),
+                                    ],
+                                  ),
+                                  borderGradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      mostraColori
+                                          ? _getNazionaleColor(
+                                              'primary',
+                                              nazionale.colori,
+                                            ).withOpacity(0.5)
+                                          : Colors.white.withOpacity(0.1),
+                                      mostraColori
+                                          ? _getNazionaleColor(
+                                              'secondary',
+                                              nazionale.colori,
+                                            ).withOpacity(0.1)
+                                          : Colors.white.withOpacity(0.2),
+                                    ],
+                                  ),
+                                  child: Text(
+                                    CommonService.decodePlayerName(
+                                      nazionale.nome,
+                                    ),
+                                    style: TextStyle(
+                                      color: mostraColori
+                                          ? Colors.black
+                                          : Colors.blue[900],
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ),
                         ), // GestureDetector
                       ),
                     ),
@@ -295,4 +302,48 @@ Color _getNazionaleColor(String type, List<String> colori) {
     return colorMap[colori[1].toLowerCase()] ?? Colors.grey;
   }
   return Colors.grey;
+}
+
+Widget _buildNazionaleGlassPill(Nazionale nazionale) {
+  final primary = mostraColori
+      ? _getNazionaleColor('primary', nazionale.colori)
+      : Colors.blueAccent;
+  final secondary = mostraColori
+      ? _getNazionaleColor('secondary', nazionale.colori)
+      : Colors.lightBlueAccent;
+  return FractionallySizedBox(
+    widthFactor: 0.95,
+    child: SizedBox(
+      height: 40,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(25),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: DecoratedBox(
+            decoration: ShapeDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [primary.withOpacity(0.75), secondary.withOpacity(0.3)],
+              ),
+              shape: StadiumBorder(
+                side: BorderSide(color: Colors.white.withOpacity(0.35)),
+              ),
+            ),
+            child: Center(
+              child: Text(
+                CommonService.decodePlayerName(nazionale.nome),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: mostraColori ? Colors.black : Colors.blue[900],
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }

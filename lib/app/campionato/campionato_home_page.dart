@@ -1,3 +1,4 @@
+import 'package:ligaduck/app/widgets/liquid_glass_dropdown.dart';
 import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,8 @@ import 'package:ligaduck/app/competizione/competizione_home_page.dart';
 import 'package:ligaduck/app/config/models/global.dart';
 import 'package:ligaduck/app/home_page.dart';
 import 'package:ligaduck/app/widgets/settings_icon.dart';
+import 'package:ligaduck/app/widgets/liquid_glass_action_group.dart';
+import 'package:ligaduck/app/widgets/liquid_glass_close_button.dart';
 import 'package:ligaduck/app/models/campionato/campionato_match_model.dart';
 import 'package:ligaduck/app/models/campionato/lista_squadre_model.dart';
 import 'package:ligaduck/app/models/competizione/competizione_button_model.dart';
@@ -477,140 +480,9 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
               ),
               SizedBox(height: 10),
               InkWell(
-                onTap: () async {
-                  final provider = Provider.of<CompetizioniProvider>(
-                    pageContext,
-                    listen: false,
-                  );
+                onTap: () {
                   Navigator.of(context).pop();
-                  final conferma = await showDialog<bool>(
-                    context: pageContext,
-                    builder: (ctx) => AlertDialog(
-                      title: Text('Inizializza campionato'),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Vuoi davvero inizializzare il campionato "${widget.campionato}"? L\'operazione aggiungerà la nuova carriera a tutti i giocatori.',
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'L\'operazione può richiedere qualche minuto.',
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 13,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ],
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(ctx).pop(false),
-                          child: Text(
-                            'Annulla',
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                        ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueAccent,
-                          ),
-                          onPressed: () => Navigator.of(ctx).pop(true),
-                          child: Text(
-                            'Conferma',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                  if (conferma == true) {
-                    final progressNotifier = ValueNotifier<double>(0.0);
-
-                    showDialog(
-                      context: pageContext,
-                      barrierDismissible: false,
-                      builder: (ctx) => PopScope(
-                        canPop: false,
-                        child: AlertDialog(
-                          title: Text('Inizializzazione in corso...'),
-                          content: ValueListenableBuilder<double>(
-                            valueListenable: progressNotifier,
-                            builder: (_, value, _) => Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                LinearProgressIndicator(
-                                  value: value,
-                                  backgroundColor: Colors.grey.shade300,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.blueAccent,
-                                  ),
-                                  minHeight: 8,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                SizedBox(height: 10),
-                                Text(
-                                  '${(value * 100).toInt()}%',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                SizedBox(height: 8),
-                                Text(
-                                  'L\'operazione può richiedere qualche minuto.',
-                                  style: TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 12,
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-
-                    final timer = Timer.periodic(Duration(milliseconds: 400), (
-                      t,
-                    ) {
-                      if (progressNotifier.value < 0.85) {
-                        progressNotifier.value = (progressNotifier.value + 0.08)
-                            .clamp(0.0, 0.85);
-                      } else {
-                        t.cancel();
-                      }
-                    });
-
-                    final ok = await provider.inizializzaCampionato(
-                      widget.campionato,
-                    );
-
-                    timer.cancel();
-                    progressNotifier.value = 1.0;
-                    await Future.delayed(Duration(milliseconds: 400));
-
-                    if (mounted) Navigator.of(pageContext).pop();
-                    progressNotifier.dispose();
-
-                    if (mounted) {
-                      ScaffoldMessenger.of(pageContext).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            ok
-                                ? 'Campionato inizializzato con successo'
-                                : 'Campionato già inizializzato',
-                          ),
-                          backgroundColor: ok ? Colors.green : Colors.red,
-                        ),
-                      );
-                      if (ok) _refreshPage();
-                    }
-                  }
+                  _initializeCampionato(pageContext);
                 },
                 borderRadius: BorderRadius.circular(12),
                 child: PlatformGlassContainer(
@@ -687,12 +559,11 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                 ),
               ),
               Padding(
-                padding: EdgeInsets.only(top: 20.0),
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: Icon(Icons.close, color: Colors.blueAccent),
+                padding: EdgeInsets.only(top: 50.0),
+                child: _buildGlassIconButton(
+                  icon: Icons.close,
+                  symbol: 'xmark',
+                  onTap: () => Navigator.pop(context),
                 ),
               ),
             ],
@@ -702,79 +573,239 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
     );
   }
 
+  Widget _buildEditAction(BuildContext pageContext) {
+    if (!NativeLiquidGlassUtils.supportsLiquidGlass) {
+      return IconButton(
+        icon: Icon(Icons.edit, color: Colors.white),
+        onPressed: () => _showAddSquadraModal(pageContext),
+      );
+    }
+
+    return LiquidGlassMenu.icon(
+      icon: const NativeLiquidGlassIcon.sfSymbol('pencil'),
+      color: Colors.white,
+      menuTitle: 'Modifica',
+      items: const [
+        LiquidGlassMenuItem(
+          id: 'insert_team',
+          title: 'Inserisci squadra',
+          icon: NativeLiquidGlassIcon.sfSymbol('person.badge.plus'),
+        ),
+        LiquidGlassMenuItem(
+          id: 'initialize',
+          title: 'Inizializza campionato',
+          icon: NativeLiquidGlassIcon.sfSymbol('arrow.counterclockwise'),
+        ),
+        LiquidGlassMenuItem(
+          id: 'competitions',
+          title: 'Competizioni abilitate',
+          icon: NativeLiquidGlassIcon.sfSymbol('trophy'),
+        ),
+      ],
+      onItemSelected: (id) {
+        switch (id) {
+          case 'insert_team':
+            Navigator.push(
+              pageContext,
+              MaterialPageRoute(
+                builder: (context) =>
+                    InserisciSquadraPage(campionato: widget.campionato),
+              ),
+            ).then((_) => _refreshPage());
+          case 'initialize':
+            _initializeCampionato(pageContext);
+          case 'competitions':
+            _mostraDialogCompetizioniAbilitate();
+        }
+      },
+    );
+  }
+
+  Future<void> _initializeCampionato(BuildContext pageContext) async {
+    final provider = Provider.of<CompetizioniProvider>(
+      pageContext,
+      listen: false,
+    );
+    final conferma = await showDialog<bool>(
+      context: pageContext,
+      builder: (ctx) => AlertDialog(
+        title: Text('Inizializza campionato'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Vuoi davvero inizializzare il campionato "${widget.campionato}"? L\'operazione aggiungerà la nuova carriera a tutti i giocatori.',
+            ),
+            SizedBox(height: 8),
+            Text(
+              'L\'operazione può richiedere qualche minuto.',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 13,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text('Annulla', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text('Conferma', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (conferma != true || !pageContext.mounted) return;
+
+    final progressNotifier = ValueNotifier<double>(0.0);
+    showDialog(
+      context: pageContext,
+      barrierDismissible: false,
+      builder: (ctx) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          title: Text('Inizializzazione in corso...'),
+          content: ValueListenableBuilder<double>(
+            valueListenable: progressNotifier,
+            builder: (_, value, _) => Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                LinearProgressIndicator(
+                  value: value,
+                  backgroundColor: Colors.grey.shade300,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+                  minHeight: 8,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  '${(value * 100).toInt()}%',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'L\'operazione può richiedere qualche minuto.',
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final timer = Timer.periodic(Duration(milliseconds: 400), (timer) {
+      if (progressNotifier.value < 0.85) {
+        progressNotifier.value = (progressNotifier.value + 0.08).clamp(
+          0.0,
+          0.85,
+        );
+      } else {
+        timer.cancel();
+      }
+    });
+    final ok = await provider.inizializzaCampionato(widget.campionato);
+    timer.cancel();
+    progressNotifier.value = 1.0;
+    await Future.delayed(Duration(milliseconds: 400));
+
+    if (pageContext.mounted) Navigator.of(pageContext).pop();
+    progressNotifier.dispose();
+    if (!mounted || !pageContext.mounted) return;
+
+    ScaffoldMessenger.of(pageContext).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok
+              ? 'Campionato inizializzato con successo'
+              : 'Campionato già inizializzato',
+        ),
+        backgroundColor: ok ? Colors.green : Colors.red,
+      ),
+    );
+    if (ok) _refreshPage();
+  }
+
   @override
   Widget build(BuildContext context) {
     bool isWide = MediaQuery.of(context).size.width > 600;
+    final appBarActions = <Widget>[
+      if (admin && (_selectedIndex == 0 || _selectedIndex == 1))
+        _buildEditAction(context),
+      IconButton(
+        icon: Icon(Icons.search, color: Colors.white),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SearchPage(campionato: widget.campionato),
+            ),
+          );
+        },
+      ),
+      if (isWide && (_selectedIndex == 2 || _selectedIndex == 3))
+        IconButton(
+          icon: Icon(Icons.home, color: Colors.white),
+          onPressed: () => setState(() => _selectedIndex = 0),
+          tooltip: 'Home',
+        ),
+      if (isWide && _selectedIndex != 2)
+        IconButton(
+          icon: Icon(Icons.compare_arrows_outlined, color: Colors.white),
+          onPressed: () => setState(() => _selectedIndex = 2),
+          tooltip: 'Mercato',
+        ),
+      if (isWide && _selectedIndex != 3)
+        IconButton(
+          icon: Icon(Icons.emoji_events, color: Colors.white),
+          onPressed: () => setState(() => _selectedIndex = 3),
+          tooltip: "Albo d'oro",
+        ),
+      SettingsIcon(
+        iconColor: Colors.white,
+        onDismiss: () {
+          setState(() {});
+        },
+      ),
+    ];
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blueAccent,
         centerTitle: true,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (context) => HomePage()),
-              (route) => false,
-            );
-          },
-        ),
-        title: Text(widget.title, style: TextStyle(color: Colors.white)),
-        actions: [
-          if (admin && (_selectedIndex == 0 || _selectedIndex == 1))
-            IconButton(
-              icon: Icon(Icons.edit, color: Colors.white),
-              onPressed: () {
-                _showAddSquadraModal(context);
-              },
-            ),
-          IconButton(
-            icon: Icon(Icons.search, color: Colors.white),
+        leading: Center(
+          child: LiquidGlassBackButton(
             onPressed: () {
-              Navigator.push(
+              Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      SearchPage(campionato: widget.campionato),
-                ),
+                MaterialPageRoute(builder: (context) => HomePage()),
+                (route) => false,
               );
             },
           ),
-          if (isWide && (_selectedIndex == 2 || _selectedIndex == 3))
-            IconButton(
-              icon: Icon(Icons.home, color: Colors.white),
-              onPressed: () {
-                setState(() {
-                  _selectedIndex = 0;
-                });
-              },
-              tooltip: 'Home',
+        ),
+        title: Text(widget.title, style: TextStyle(color: Colors.white)),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: LiquidGlassActionGroup(
+              itemCount: appBarActions.length,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: appBarActions,
+              ),
             ),
-          if (isWide && _selectedIndex != 2)
-            IconButton(
-              icon: Icon(Icons.compare_arrows_outlined, color: Colors.white),
-              onPressed: () {
-                setState(() {
-                  _selectedIndex = 2;
-                });
-              },
-              tooltip: 'Mercato',
-            ),
-          if (isWide && _selectedIndex != 3)
-            IconButton(
-              icon: Icon(Icons.emoji_events, color: Colors.white),
-              onPressed: () {
-                setState(() {
-                  _selectedIndex = 3;
-                });
-              },
-              tooltip: "Albo d'oro",
-            ),
-          SettingsIcon(
-            iconColor: Colors.white,
-            onDismiss: () {
-              setState(() {});
-            },
           ),
         ],
       ),
@@ -909,9 +940,9 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
           ),
           if (!isWide)
             Positioned(
-              left: 16,
-              right: 16,
-              bottom: 16,
+              left: 6,
+              right: 6,
+              bottom: 5,
               child: _buildBottomNavigationBar(context),
             ),
         ],
@@ -925,23 +956,29 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
         items: const [
           LiquidGlassTabItem(
             label: 'Home',
-            icon: NativeLiquidGlassIcon.iconData(Icons.home_outlined),
-            selectedIcon: NativeLiquidGlassIcon.iconData(Icons.home),
+            icon: NativeLiquidGlassIcon.sfSymbol('house'),
+            selectedIcon: NativeLiquidGlassIcon.sfSymbol('house.fill'),
+            selectedItemColor: Colors.blueAccent,
           ),
           LiquidGlassTabItem(
             label: 'Squadre',
-            icon: NativeLiquidGlassIcon.iconData(Icons.shield_outlined),
-            selectedIcon: NativeLiquidGlassIcon.iconData(Icons.shield),
+            icon: NativeLiquidGlassIcon.sfSymbol('shield'),
+            selectedIcon: NativeLiquidGlassIcon.sfSymbol('shield.fill'),
+            selectedItemColor: Colors.blueAccent,
           ),
           LiquidGlassTabItem(
             label: 'Mercato',
-            icon: NativeLiquidGlassIcon.iconData(Icons.compare_arrows_outlined),
-            selectedIcon: NativeLiquidGlassIcon.iconData(Icons.compare_arrows),
+            icon: NativeLiquidGlassIcon.sfSymbol('arrow.left.arrow.right'),
+            selectedIcon: NativeLiquidGlassIcon.sfSymbol(
+              'arrow.left.arrow.right',
+            ),
+            selectedItemColor: Colors.blueAccent,
           ),
           LiquidGlassTabItem(
             label: "Albo d'oro",
-            icon: NativeLiquidGlassIcon.iconData(Icons.emoji_events_outlined),
-            selectedIcon: NativeLiquidGlassIcon.iconData(Icons.emoji_events),
+            icon: NativeLiquidGlassIcon.sfSymbol('trophy'),
+            selectedIcon: NativeLiquidGlassIcon.sfSymbol('trophy.fill'),
+            selectedItemColor: Colors.blueAccent,
           ),
         ],
         currentIndex: _selectedIndex,
@@ -951,7 +988,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
           });
         },
         height: 70,
-        selectedItemColor: Colors.white,
+        selectedItemColor: Colors.blueAccent,
         labelTextStyle: const TextStyle(
           fontFamily: 'Inter',
           fontSize: 11,
@@ -1030,12 +1067,12 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(icon, color: Colors.white, size: 24),
+                    Icon(icon, color: Colors.blueAccent, size: 24),
                     SizedBox(height: 4),
                     Text(
                       label,
                       style: TextStyle(
-                        color: Colors.white,
+                        color: Colors.blueAccent,
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                       ),
@@ -1737,75 +1774,78 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                                             height: 400,
                                             child: Column(
                                               children: [
-                                                TextField(
-                                                  autofocus: true,
-                                                  cursorColor:
-                                                      Colors.blueAccent,
-                                                  decoration: InputDecoration(
-                                                    hintText:
-                                                        'Cerca squadra...',
-                                                    prefixIcon: Icon(
-                                                      Icons.search,
-                                                      color: Colors.blueAccent,
-                                                    ),
-                                                    border: OutlineInputBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            8,
-                                                          ),
-                                                      borderSide: BorderSide(
+                                                LiquidGlassTextBox(
+                                                  child: TextField(
+                                                    autofocus: true,
+                                                    cursorColor:
+                                                        Colors.blueAccent,
+                                                    decoration: InputDecoration(
+                                                      hintText:
+                                                          'Cerca squadra...',
+                                                      prefixIcon: Icon(
+                                                        Icons.search,
                                                         color:
                                                             Colors.blueAccent,
                                                       ),
-                                                    ),
-                                                    enabledBorder:
-                                                        OutlineInputBorder(
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                8,
-                                                              ),
-                                                          borderSide: BorderSide(
-                                                            color: Colors
-                                                                .blueAccent
-                                                                .withOpacity(
-                                                                  0.5,
+                                                      border: OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              8,
+                                                            ),
+                                                        borderSide: BorderSide(
+                                                          color:
+                                                              Colors.blueAccent,
+                                                        ),
+                                                      ),
+                                                      enabledBorder:
+                                                          OutlineInputBorder(
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  8,
+                                                                ),
+                                                            borderSide: BorderSide(
+                                                              color: Colors
+                                                                  .blueAccent
+                                                                  .withOpacity(
+                                                                    0.5,
+                                                                  ),
+                                                            ),
+                                                          ),
+                                                      focusedBorder:
+                                                          OutlineInputBorder(
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  8,
+                                                                ),
+                                                            borderSide:
+                                                                BorderSide(
+                                                                  color: Colors
+                                                                      .blueAccent,
+                                                                  width: 2,
                                                                 ),
                                                           ),
-                                                        ),
-                                                    focusedBorder:
-                                                        OutlineInputBorder(
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                8,
-                                                              ),
-                                                          borderSide:
-                                                              BorderSide(
-                                                                color: Colors
-                                                                    .blueAccent,
-                                                                width: 2,
-                                                              ),
-                                                        ),
-                                                    contentPadding:
-                                                        EdgeInsets.symmetric(
-                                                          vertical: 8,
-                                                          horizontal: 12,
-                                                        ),
+                                                      contentPadding:
+                                                          EdgeInsets.symmetric(
+                                                            vertical: 8,
+                                                            horizontal: 12,
+                                                          ),
+                                                    ),
+                                                    onChanged: (value) {
+                                                      setDialogState(() {
+                                                        query = value
+                                                            .toLowerCase();
+                                                        filtered = squadreCoinvolte
+                                                            .where(
+                                                              (s) => s.nome
+                                                                  .toLowerCase()
+                                                                  .contains(
+                                                                    query,
+                                                                  ),
+                                                            )
+                                                            .toList();
+                                                      });
+                                                    },
                                                   ),
-                                                  onChanged: (value) {
-                                                    setDialogState(() {
-                                                      query = value
-                                                          .toLowerCase();
-                                                      filtered = squadreCoinvolte
-                                                          .where(
-                                                            (s) => s.nome
-                                                                .toLowerCase()
-                                                                .contains(
-                                                                  query,
-                                                                ),
-                                                          )
-                                                          .toList();
-                                                    });
-                                                  },
                                                 ),
                                                 SizedBox(height: 8),
                                                 Expanded(
@@ -2551,5 +2591,32 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
       partita.idGiornata,
     );
     return competizione;
+  }
+
+  Widget _buildGlassIconButton({
+    required IconData icon,
+    required String symbol,
+    required VoidCallback onTap,
+  }) {
+    final buttonColor = Colors.blueAccent;
+    final foregroundColor = Colors.white;
+
+    if (NativeLiquidGlassUtils.supportsLiquidGlass) {
+      return LiquidGlassButton.icon(
+        icon: NativeLiquidGlassIcon.sfSymbol(symbol),
+        onPressed: onTap,
+        size: 48,
+        iconSize: 22,
+        padding: const EdgeInsets.all(10),
+        iconColor: foregroundColor,
+        tint: buttonColor.withValues(alpha: 0.08),
+        style: LiquidGlassButtonStyle.glass,
+      );
+    }
+
+    return ElevatedButton(
+      onPressed: onTap,
+      child: Icon(icon, color: buttonColor),
+    );
   }
 }
