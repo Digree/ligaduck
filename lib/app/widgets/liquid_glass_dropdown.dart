@@ -259,32 +259,15 @@ class LiquidGlassDropdownBox extends StatelessWidget {
   }
 }
 
-/// Imita il vetro sui campi di testo solo sui dispositivi Liquid Glass.
+/// Wrapper dei campi di testo. Non applica più alcun effetto vetro:
+/// i contenitori Liquid Glass attorno ai campi di input causavano glitch
+/// grafici (artefatti di rendering, soprattutto dentro dialog e liste
+/// scrollabili come "Assegna numeri"). Il widget resta come semplice
+/// passthrough per non dover toccare i ~40 call site esistenti.
 class LiquidGlassTextBox extends StatelessWidget {
   final Widget child;
   const LiquidGlassTextBox({super.key, required this.child});
 
   @override
-  Widget build(BuildContext context) {
-    if (!NativeLiquidGlassUtils.supportsLiquidGlass) return child;
-    final theme = Theme.of(context);
-    return LiquidGlassContainer(
-      config: const LiquidGlassConfig(
-        effect: LiquidGlassEffect.regular,
-        shape: LiquidGlassEffectShape.rect,
-        cornerRadius: 16,
-      ),
-      child: Theme(
-        data: theme.copyWith(
-          inputDecorationTheme: theme.inputDecorationTheme.copyWith(
-            filled: false,
-            border: InputBorder.none,
-            enabledBorder: InputBorder.none,
-            focusedBorder: InputBorder.none,
-          ),
-        ),
-        child: child,
-      ),
-    );
-  }
+  Widget build(BuildContext context) => child;
 }
