@@ -786,11 +786,12 @@ class _CessionePageState extends State<CessionePage> {
   }
 
   String _getNazioneBandiera(String categoria) {
-    // Se la categoria è Serie A, B o C (Paperi), mostra bandiera Italia
-    final categoriaLower = categoria.toLowerCase();
-    if (categoriaLower == 'serie a' ||
-        categoriaLower == 'serie b' ||
-        categoriaLower == 'serie c') {
+    // Se la categoria è una serie italiana (Paperi), mostra bandiera Italia.
+    // startsWith tollera varianti come "SerieD", "Serie D " o "Serie D Girone A":
+    // un match esatto fallito farebbe cadere getCountryCode sul fallback delle
+    // prime 2 lettere ("se" -> bandiera svedese).
+    final categoriaLower = categoria.toLowerCase().trim();
+    if (categoriaLower.startsWith('serie')) {
       return 'italia';
     }
     return categoria;

@@ -852,14 +852,21 @@ class _GiocatorePageState extends State<GiocatorePage>
     final squadraCarriera = _squadraPerCarriera(c);
     final nazionaleCarriera = _nazionalePerCarriera(c);
     final isNazionale = c.idNazionale?.isNotEmpty ?? false;
+    final isAllenatore = giocatore.ruolo == 'Allenatore';
+    final isPortiere = giocatore.ruolo == 'Portiere';
     final statPairs = <(String, int)>[
       ('PG', c.presenze),
-      ('Gol', c.gol),
-      ('Esp', c.espulsioni),
-      ('Aut', c.autogol ?? 0),
-      ('Rig', c.rigoriSbagliati ?? 0),
-      ('G.Ann', c.golAnnullati ?? 0),
-      ('CS', c.cleanSheet ?? 0),
+      if (!isAllenatore) ...[
+        ('Gol', c.gol),
+        ('Esp', c.espulsioni),
+        ('Aut', c.autogol ?? 0),
+        ('Rig', c.rigoriSbagliati ?? 0),
+        ('G.Ann', c.golAnnullati ?? 0),
+        if (isPortiere) ...[
+          ('GS', c.golSubiti ?? 0),
+          ('CS', c.cleanSheet ?? 0),
+        ],
+      ],
     ];
 
     final logo = SizedBox(

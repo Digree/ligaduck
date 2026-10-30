@@ -1,12 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:native_liquid_glass/native_liquid_glass.dart';
 
-class LiquidGlassBackButton extends StatelessWidget {
+class LiquidGlassBackButton extends StatefulWidget {
   final VoidCallback onPressed;
   final Color color;
   final String tooltip;
   final double size;
   final LiquidGlassEffect effect;
+  final bool useNativeLiquidGlass;
 
   const LiquidGlassBackButton({
     super.key,
@@ -15,31 +18,107 @@ class LiquidGlassBackButton extends StatelessWidget {
     this.tooltip = 'Indietro',
     this.size = 44,
     this.effect = LiquidGlassEffect.clear,
+    this.useNativeLiquidGlass = true,
   });
 
   @override
-  Widget build(BuildContext context) {
+  State<LiquidGlassBackButton> createState() => _LiquidGlassBackButtonState();
+}
+
+class _LiquidGlassBackButtonState extends State<LiquidGlassBackButton> {
+  // Su iOS il bottone è una vista nativa (UiKitView): per ~500ms dalla
+  // creazione mostra un riquadro grigio al posto del vetro. Il bottone resta
+  // quasi invisibile (opacità 0.01: a 0.0 Flutter non dipingerebbe affatto la
+  // platform view, rimandandone la creazione al momento del reveal) finché la
+  // transizione di apertura è completata ed è trascorso un margine sufficiente
+  // alla vista nativa per rendersi, poi appare con un breve fade.
+  static const _minHiddenDuration = Duration(milliseconds: 600);
+
+  bool _visible = false;
+  bool _transitionDone = false;
+  bool _minDelayDone = false;
+  Animation<double>? _routeAnimation;
+  Timer? _minDelayTimer;
+
+  @override
+  void initState() {
+    super.initState();
     if (NativeLiquidGlassUtils.supportsLiquidGlass) {
-      return LiquidGlassButton.icon(
-        icon: NativeLiquidGlassIcon.sfSymbol('chevron.left'),
-        onPressed: onPressed,
-        size: size,
-        iconSize: 22,
-        iconColor: color,
-        tint: Colors.blueAccent.withValues(alpha: 0.01),
-        padding: const EdgeInsets.all(6),
-        tooltip: tooltip,
-        style: LiquidGlassButtonStyle.glass,
+      _minDelayTimer = Timer(_minHiddenDuration, () {
+        _minDelayDone = true;
+        _maybeReveal();
+      });
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_transitionDone || !NativeLiquidGlassUtils.supportsLiquidGlass) return;
+    final animation = ModalRoute.of(context)?.animation;
+    if (animation == null || animation.status == AnimationStatus.completed) {
+      _transitionDone = true;
+      _maybeReveal();
+    } else if (!identical(animation, _routeAnimation)) {
+      _routeAnimation?.removeStatusListener(_onRouteAnimationStatus);
+      _routeAnimation = animation..addStatusListener(_onRouteAnimationStatus);
+    }
+  }
+
+  void _onRouteAnimationStatus(AnimationStatus status) {
+    if (status != AnimationStatus.completed) return;
+    _routeAnimation?.removeStatusListener(_onRouteAnimationStatus);
+    _routeAnimation = null;
+    _transitionDone = true;
+    _maybeReveal();
+  }
+
+  void _maybeReveal() {
+    if (_visible || !_transitionDone || !_minDelayDone || !mounted) return;
+    setState(() => _visible = true);
+  }
+
+  @override
+  void dispose() {
+    _minDelayTimer?.cancel();
+    _routeAnimation?.removeStatusListener(_onRouteAnimationStatus);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.useNativeLiquidGlass &&
+        NativeLiquidGlassUtils.supportsLiquidGlass) {
+      return AnimatedOpacity(
+        opacity: _visible ? 1.0 : 0.01,
+        duration: const Duration(milliseconds: 200),
+        child: IgnorePointer(
+          ignoring: !_visible,
+          child: LiquidGlassButton.icon(
+            icon: NativeLiquidGlassIcon.sfSymbol('chevron.left'),
+            onPressed: widget.onPressed,
+            size: widget.size,
+            iconSize: 22,
+            iconColor: widget.color,
+            tint: Colors.blueAccent.withValues(alpha: 0.01),
+            padding: const EdgeInsets.all(6),
+            tooltip: widget.tooltip,
+            style: LiquidGlassButtonStyle.glass,
+          ),
+        ),
       );
     }
 
     return IconButton(
-      tooltip: tooltip,
-      onPressed: onPressed,
-      icon: Icon(Icons.arrow_back, color: color),
+      tooltip: widget.tooltip,
+      onPressed: widget.onPressed,
+      icon: Icon(Icons.arrow_back, color: widget.color),
       iconSize: 24,
       padding: EdgeInsets.zero,
-      constraints: BoxConstraints.tightFor(width: size, height: size),
+      constraints: BoxConstraints.tightFor(
+        width: widget.size,
+        height: widget.size,
+      ),
     );
   }
 }

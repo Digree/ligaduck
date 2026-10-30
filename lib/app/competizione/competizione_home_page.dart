@@ -2680,10 +2680,16 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                 children: [
                   Expanded(
                     child: LiquidGlassDropdownBox(
+                      color: getColor('primary'),
                       child: LiquidGlassDropdownButton<String>(
                         value: selectedGiornata,
-                        hint: const Text('Seleziona giornata'),
+                        hint: Text(
+                          'Seleziona giornata',
+                          style: TextStyle(color: getColor('primary')),
+                        ),
                         isExpanded: true,
+                        style: TextStyle(color: getColor('primary')),
+                        iconEnabledColor: getColor('primary'),
                         items: giornate
                             .map(
                               (g) => DropdownMenuItem<String>(
@@ -2694,6 +2700,10 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                       : CommonService.decodePlayerName(
                                           g.giornata,
                                         ),
+                                  style: TextStyle(
+                                    color: getColor('primary'),
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             )

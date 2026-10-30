@@ -1174,11 +1174,11 @@ class _SearchPageState extends State<SearchPage> {
 
   String _getNazioneBandiera(String categoria) {
     // Le categorie delle serie italiane devono mostrare la bandiera italiana.
-    final categoriaLower = categoria.toLowerCase();
-    if (categoriaLower == 'serie a' ||
-        categoriaLower == 'serie b' ||
-        categoriaLower == 'serie c' ||
-        categoriaLower == 'serie d') {
+    // startsWith tollera varianti come "SerieD", "Serie D " o "Serie D Girone A":
+    // un match esatto fallito farebbe cadere getCountryCode sul fallback delle
+    // prime 2 lettere ("se" -> bandiera svedese).
+    final categoriaLower = categoria.toLowerCase().trim();
+    if (categoriaLower.startsWith('serie')) {
       return 'italia';
     }
     return categoria;
