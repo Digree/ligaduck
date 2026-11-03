@@ -58,6 +58,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
   List<String> _coloriNazionaleAway = [];
   List<Convocato> _convocatiNazionaleHome = [];
   List<Convocato> _convocatiNazionaleAway = [];
+  List<GiocatoreNonDisponibile> _indisponibiliNazionaleHome = [];
+  List<GiocatoreNonDisponibile> _indisponibiliNazionaleAway = [];
 
   // Fasce di gioco (6 × 15 min): 0-15, 15-30, 30-45, 45-60, 60-75, 75-90
   final List<bool> _periodiGioco = List.filled(6, false);
@@ -247,6 +249,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       List<String> coloriAway = [];
       List<Convocato> convocatiHome = [];
       List<Convocato> convocatiAway = [];
+      List<GiocatoreNonDisponibile> indisponibiliHome = [];
+      List<GiocatoreNonDisponibile> indisponibiliAway = [];
 
       if ((partita!.idNazionaleHome?.isNotEmpty ?? false) ||
           (partita!.idNazionaleAway?.isNotEmpty ?? false)) {
@@ -264,6 +268,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
           );
           coloriHome = naz.colori;
           convocatiHome = naz.convocati;
+          indisponibiliHome = naz.indisponibili;
         }
         if ((partita!.idNazionaleAway?.isNotEmpty ?? false)) {
           final naz = nazionali.firstWhere(
@@ -272,6 +277,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
           );
           coloriAway = naz.colori;
           convocatiAway = naz.convocati;
+          indisponibiliAway = naz.indisponibili;
         }
       }
 
@@ -297,6 +303,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
         _coloriNazionaleAway = coloriAway;
         _convocatiNazionaleHome = convocatiHome;
         _convocatiNazionaleAway = convocatiAway;
+        _indisponibiliNazionaleHome = indisponibiliHome;
+        _indisponibiliNazionaleAway = indisponibiliAway;
       });
     } catch (e) {
       print('Errore nel caricamento dei giocatori: $e');
@@ -2030,20 +2038,34 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     );
   }
 
+  /// Verifica se un giocatore è uscito per infortunio controllando tutte le
+  /// fonti: indisponibili della partita, della squadra e della nazionale.
+  bool _isGiocatoreInfortunato(String? idGiocatore, bool isCasa) {
+    if (idGiocatore == null) return false;
+    bool check(List<GiocatoreNonDisponibile> list) =>
+        list.any((i) => i.idGiocatore == idGiocatore && i.motivo == 'inf');
+    final formazione = isCasa
+        ? partita!.formazioneHome
+        : partita!.formazioneAway;
+    if (check(formazione.indisponibili)) return true;
+    if (check(
+      isCasa ? _indisponibiliNazionaleHome : _indisponibiliNazionaleAway,
+    )) {
+      return true;
+    }
+    final cod = isCasa ? partita!.codHome : partita!.codAway;
+    for (final s in _squadreCache) {
+      if (s.cod == cod && check(s.indisponibili)) return true;
+    }
+    return false;
+  }
+
   Widget buildTabellinoRow(evento) {
     double screenWidth = MediaQuery.of(context).size.width;
     final bool isEventoCasa = _isEventoCasa(evento);
-    final formazioneEvento = isEventoCasa
-        ? partita!.formazioneHome
-        : partita!.formazioneAway;
     final giocatoreUscitoInfortunato =
         evento.codAzione == 'sos' &&
-        evento.idGiocatoreOut != null &&
-        formazioneEvento.indisponibili.any(
-          (indisponibile) =>
-              indisponibile.idGiocatore == evento.idGiocatoreOut &&
-              indisponibile.motivo == 'inf',
-        );
+        _isGiocatoreInfortunato(evento.idGiocatoreOut, isEventoCasa);
 
     Widget rowContent = Container(
       width: screenWidth * 1,
@@ -2517,8 +2539,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                             fontSize: 16,
                             color:
                                 evento.codAzione == 'aut' ||
-                                    (evento.codAzione == 'rig' &&
-                                        evento.esitoRigore == false) ||
+                                    evento.codAzione == 'rig_sb' ||
                                     evento.codAzione == 'gol_ann'
                                 ? Colors.red
                                 : Colors.black,
@@ -5512,6 +5533,19 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
         .map((evento) => evento.idGiocatore)
         .toList();
 
+    // Estrai gli infortuni (giocatori usciti per infortunio) dal tabellino
+    final infortunatiHome = <String>[
+      for (var evento in eventiSosHome)
+        if (_isGiocatoreInfortunato(evento.idGiocatoreOut, true))
+          evento.idGiocatoreOut!,
+    ];
+
+    final infortunatiAway = <String>[
+      for (var evento in eventiSosAway)
+        if (_isGiocatoreInfortunato(evento.idGiocatoreOut, false))
+          evento.idGiocatoreOut!,
+    ];
+
     return Container(
       padding: EdgeInsets.all(16),
       child: Column(
@@ -5564,6 +5598,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                     autogol: autogolHome,
                                     sostituzioni: sostituzioniHome,
                                     espulsi: espulsiHome,
+                                    infortunati: infortunatiHome,
                                     competizioneId: competizione?.id,
                                     useAlt: false,
                                     onGiocatoreChanged: (pos, nuovoGiocatore) {
@@ -5590,6 +5625,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                     autogol: autogolAway,
                                     sostituzioni: sostituzioniAway,
                                     espulsi: espulsiAway,
+                                    infortunati: infortunatiAway,
                                     competizioneId: competizione?.id,
                                     useAlt: false,
                                     onGiocatoreChanged: (pos, nuovoGiocatore) {
@@ -5644,6 +5680,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                       autogol: autogolHome,
                                       sostituzioni: sostituzioniHome,
                                       espulsi: espulsiHome,
+                                      infortunati: infortunatiHome,
                                       competizioneId: competizione?.id,
                                       useAlt: _useDivisaAlt(partita!.codHome),
                                       onGiocatoreChanged:
@@ -5673,6 +5710,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                       autogol: autogolAway,
                                       sostituzioni: sostituzioniAway,
                                       espulsi: espulsiAway,
+                                      infortunati: infortunatiAway,
                                       competizioneId: competizione?.id,
                                       useAlt: _useDivisaAlt(partita!.codAway),
                                       onGiocatoreChanged:
@@ -5779,6 +5817,19 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
         .map((evento) => evento.idGiocatore)
         .toList();
 
+    // Estrai gli infortuni (giocatori usciti per infortunio) dal tabellino
+    final infortunatiHome = <String>[
+      for (var evento in eventiSosHome)
+        if (_isGiocatoreInfortunato(evento.idGiocatoreOut, true))
+          evento.idGiocatoreOut!,
+    ];
+
+    final infortunatiAway = <String>[
+      for (var evento in eventiSosAway)
+        if (_isGiocatoreInfortunato(evento.idGiocatoreOut, false))
+          evento.idGiocatoreOut!,
+    ];
+
     return Container(
       padding: EdgeInsets.all(16),
       child: Container(
@@ -5825,6 +5876,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                 autogol: autogolHome,
                                 sostituzioni: sostituzioniHome,
                                 espulsi: espulsiHome,
+                                infortunati: infortunatiHome,
                                 competizioneId: competizione?.id,
                                 useAlt: false,
                                 onGiocatoreChanged: (pos, nuovoGiocatore) {
@@ -5850,6 +5902,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                 autogol: autogolAway,
                                 sostituzioni: sostituzioniAway,
                                 espulsi: espulsiAway,
+                                infortunati: infortunatiAway,
                                 competizioneId: competizione?.id,
                                 useAlt: false,
                                 onGiocatoreChanged: (pos, nuovoGiocatore) {
@@ -5905,6 +5958,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                   autogol: autogolHome,
                                   sostituzioni: sostituzioniHome,
                                   espulsi: espulsiHome,
+                                  infortunati: infortunatiHome,
                                   competizioneId: competizione?.id,
                                   useAlt: _useDivisaAlt(partita!.codHome),
                                   onGiocatoreChanged: (pos, nuovoGiocatore) {
@@ -5932,6 +5986,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                   autogol: autogolAway,
                                   sostituzioni: sostituzioniAway,
                                   espulsi: espulsiAway,
+                                  infortunati: infortunatiAway,
                                   competizioneId: competizione?.id,
                                   useAlt: _useDivisaAlt(partita!.codAway),
                                   onGiocatoreChanged: (pos, nuovoGiocatore) {

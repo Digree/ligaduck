@@ -133,6 +133,9 @@ class LiquidGlassDropdownButton<T> extends StatelessWidget {
       borderRadius: borderRadius,
       isDense: isDense,
       selectedItemBuilder: selectedItemBuilder,
+      // Senza questo, dopo la selezione il bottone resta evidenziato
+      // dall'overlay di focus dell'InkWell finché non perde il focus.
+      focusColor: Colors.transparent,
     );
   }
 }

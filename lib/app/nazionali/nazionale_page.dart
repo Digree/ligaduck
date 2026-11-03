@@ -1649,11 +1649,7 @@ class _NazionalePageState extends State<NazionalePage> {
               onTap: () async {
                 Navigator.of(ctx).pop();
                 final nazionaliProv = context.read<NazionaliProvider>();
-                final giocatoriProv = GiocatoriProvider();
                 final nazionaleId = (_nazionale ?? widget.nazionale).id;
-                final allenatoriPrima = await giocatoriProv.getAllenatoriLiberi(
-                  widget.campionato,
-                );
                 final squadraFake = _nazionaleAsSquadra();
                 final result = await Navigator.push(
                   context,
@@ -1668,13 +1664,14 @@ class _NazionalePageState extends State<NazionalePage> {
                   ),
                 );
                 if (result == true) {
-                  final allenatoriDopo = await giocatoriProv
-                      .getAllenatoriLiberi(widget.campionato);
-                  final nuovi = allenatoriDopo
-                      .where((a) => !allenatoriPrima.any((p) => p.id == a.id))
-                      .toList();
-                  for (final a in nuovi) {
-                    await _confermaConvocazione(a, 'Allenatore', nazionaliProv);
+                  final allenatore = await nazionaliProv
+                      .fetchAllenatoreNazionale(widget.campionato, nazionaleId);
+                  if (allenatore != null) {
+                    await _confermaConvocazione(
+                      allenatore,
+                      'Allenatore',
+                      nazionaliProv,
+                    );
                   }
                   await _loadGiocatori();
                 }
@@ -1829,9 +1826,8 @@ class _NazionalePageState extends State<NazionalePage> {
                               subtitle: Text(a.nazione),
                               onTap: () async {
                                 Navigator.of(dialogContext).pop();
-                                await _confermaConvocazione(
+                                await _assegnaAllenatoreEsistente(
                                   a,
-                                  'Allenatore',
                                   nazionaliProvider,
                                 );
                               },
@@ -1860,6 +1856,43 @@ class _NazionalePageState extends State<NazionalePage> {
         );
       },
     );
+  }
+
+  /// Assegna un allenatore esistente alla nazionale: come per le squadre,
+  /// ma con id_squadra sempre 0 e id_nazionale valorizzato.
+  Future<void> _assegnaAllenatoreEsistente(
+    Giocatore allenatore,
+    NazionaliProvider nazionaliProvider,
+  ) async {
+    final giocatoriProvider = GiocatoriProvider();
+    final nazionaleId = (_nazionale ?? widget.nazionale).id;
+    final aggiornato = Giocatore(
+      id: allenatore.id,
+      nome: allenatore.nome,
+      eta: allenatore.eta,
+      ruolo: allenatore.ruolo,
+      nazione: allenatore.nazione,
+      carriera: [
+        ...allenatore.carriera,
+        Carriera(
+          campionato: widget.campionato,
+          idSquadra: 0,
+          numero: 0,
+          gol: 0,
+          presenze: 0,
+          espulsioni: 0,
+          esonero: false,
+          attivo: true,
+          idNazionale: nazionaleId,
+        ),
+      ],
+      idSquadraAttuale: 0,
+      ex: allenatore.ex,
+      attivo: allenatore.attivo,
+    );
+    await giocatoriProvider.aggiungiGiocatore(aggiornato, widget.campionato);
+    if (!mounted) return;
+    await _confermaConvocazione(aggiornato, 'Allenatore', nazionaliProvider);
   }
 
   // ─── dialog admin ─────────────────────────────────────────────────────────

@@ -1114,7 +1114,9 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
       width: isWide
           ? MediaQuery.of(context).size.width * 0.5
           : MediaQuery.of(context).size.width,
-      height: isWide ? null : MediaQuery.of(context).size.height * 0.49,
+      height: isWide
+          ? MediaQuery.of(context).size.height * 0.62
+          : MediaQuery.of(context).size.height * 0.49,
       child: Padding(
         padding: EdgeInsetsGeometry.only(right: 16.0),
         child: Column(
@@ -1472,8 +1474,7 @@ class _CampionatoHomePageState extends State<CampionatoHomePage>
                                   ),
                                 const SizedBox(height: 0),
                                 if (!isWide)
-                                  SmoothPageIndicator(
-                                    controller: _pageController,
+                                  SmoothPageIndicator(                                    controller: _pageController,
                                     count: pages.length,
                                     effect: WormEffect(
                                       dotHeight: 10,

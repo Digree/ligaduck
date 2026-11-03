@@ -182,8 +182,8 @@ class _GiocatorePageState extends State<GiocatorePage>
 
   /// Età calcolata a partire dalla carriera più vecchia registrata: si sommano
   /// all'età anagrafica le edizioni trascorse tra quella più vecchia e quella
-  /// attualmente visualizzata (es. carriera più vecchia 34, campionato attuale
-  /// 44 => età + (44-34)).
+  /// attualmente visualizzata, più uno (es. carriera più vecchia 34,
+  /// campionato attuale 44 => età + (44-34) + 1).
   int _etaCalcolataFor(Giocatore g) {
     return g.etaNelCampionato(campionato);
   }

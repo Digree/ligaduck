@@ -19,6 +19,7 @@ class PartitaFormazioneModel {
   autogol; // Lista di ID giocatori che hanno segnato autogol
   final List<String>? sostituzioni; // Lista di ID giocatori entrati in campo
   final List<String>? espulsi; // Lista di ID giocatori espulsi
+  final List<String>? infortunati; // Lista di ID giocatori usciti per infortunio
   final int? competizioneId; // ID della competizione per il font condizionale
   final bool useAlt; // true se la partita è dopo divisaAlt della squadra
 
@@ -36,6 +37,7 @@ class PartitaFormazioneModel {
     this.autogol,
     this.sostituzioni,
     this.espulsi,
+    this.infortunati,
     this.competizioneId,
     this.useAlt = false,
   });
@@ -403,6 +405,12 @@ Widget buildGiocatore(
     hasSostituito = model.sostituzioni!.contains(idGiocatore);
   }
 
+  // Verifica se il giocatore è uscito per infortunio
+  bool isInfortunato = false;
+  if (idGiocatore != null && model.infortunati != null) {
+    isInfortunato = model.infortunati!.contains(idGiocatore);
+  }
+
   Widget giocatoreWidget = Stack(
     clipBehavior: Clip.none,
     children: [
@@ -540,6 +548,22 @@ Widget buildGiocatore(
                 height: 16,
               ),
             ),
+          ),
+        ),
+      // Mostra l'icona dell'infortunio se il giocatore è uscito infortunato
+      if (isInfortunato)
+        Positioned(
+          bottom: 14,
+          right: -6,
+          child: Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.black, width: 1.5),
+            ),
+            child: Icon(Icons.healing, color: Colors.orange, size: 12),
           ),
         ),
       // Mostra l'icona del capitano se il giocatore è capitano

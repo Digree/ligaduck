@@ -108,8 +108,8 @@ class Convocato {
       idGiocatore: json['idGiocatore'],
       nome: json['nome'],
       ruolo: json['ruolo'],
-      numeroMaglia: json['numeroMaglia'],
-      idSquadra: json['idSquadra'],
+      numeroMaglia: json['numeroMaglia'] ?? 0,
+      idSquadra: json['idSquadra'] ?? 0,
       capitano: json['capitano'] == true,
     );
   }
