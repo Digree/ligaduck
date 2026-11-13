@@ -280,6 +280,7 @@ class Evento {
   final int? idTeam;
   final String? idNazionale;
   bool? esitoRigore;
+  String? assist;
 
   Evento({
     required this.id,
@@ -291,6 +292,7 @@ class Evento {
     this.idTeam,
     this.idNazionale,
     this.esitoRigore,
+    this.assist,
   });
 
   factory Evento.fromJson(Map<String, dynamic> json) {
@@ -304,6 +306,7 @@ class Evento {
       idTeam: json['idTeam'],
       idNazionale: json['idNazionale'],
       esitoRigore: json['esitoRigore'],
+      assist: json['assist'],
     );
   }
 
@@ -318,6 +321,7 @@ class Evento {
       'idTeam': idTeam,
       'idNazionale': idNazionale,
       'esitoRigore': esitoRigore,
+      'assist': assist,
     };
   }
 }

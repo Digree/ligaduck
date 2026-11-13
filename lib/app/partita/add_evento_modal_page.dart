@@ -47,6 +47,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
   List<TipoEvento> eventi = [];
   TipoEvento? eventoSelezionato;
   String giocatoreSelezionato = '';
+  String? assistSelezionato;
   String tipoGolSelezionato = 'no';
   String esitoRigoreSelezionato = 'segnato';
   bool isLoading = false;
@@ -495,6 +496,8 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
             buildTipoGolRadioButton(),
             SizedBox(height: 16),
             buildWidgetSelectPlayer(team),
+            SizedBox(height: 16),
+            buildWidgetSelectAssist(team),
           ],
         );
       case 'gol_ann':
@@ -604,7 +607,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
           ),
           SizedBox(height: 16),
           SizedBox(
-            height: 100,
+            height: 78,
             child: LiquidGlassDropdownButtonFormField<String>(
               //initialValue: null,
               isExpanded: true,
@@ -702,6 +705,55 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget buildWidgetSelectAssist(int team) {
+    final formazione = team == 0
+        ? widget.partita.formazioneHome.panchina +
+              widget.partita.formazioneHome.titolari
+        : widget.partita.formazioneAway.panchina +
+              widget.partita.formazioneAway.titolari;
+    return SizedBox(
+      height: 78,
+      child: LiquidGlassDropdownButtonFormField<String>(
+        isExpanded: true,
+        decoration: InputDecoration(
+          labelText: 'Assist (opzionale)',
+          labelStyle: TextStyle(
+            fontFamily: widget.competizione?.id == 5
+                ? 'champions'
+                : widget.competizione?.id == 6 || widget.competizione?.id == 7
+                ? 'europa'
+                : widget.competizione?.id == 8
+                ? 'supercup'
+                : null,
+            color: getColor(),
+          ),
+          prefixIcon: Icon(Icons.handshake, color: getColor()),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: getColor(), width: 2),
+          ),
+        ),
+        items: formazione
+            .where((element) => element.inCampo == true)
+            .map(
+              (giocatore) => DropdownMenuItem<String>(
+                value: giocatore.idGiocatore,
+                child: Text(
+                  "${giocatore.pos} ${CommonService.decodePlayerName(giocatore.nome)}",
+                ),
+              ),
+            )
+            .toList(),
+        onChanged: (String? newValue) {
+          setState(() {
+            assistSelezionato = newValue;
+          });
+        },
       ),
     );
   }

@@ -17,6 +17,7 @@ class PartitaFormazioneModel {
   final List<String>? marcatori; // Lista di ID giocatori che hanno segnato
   final List<String>?
   autogol; // Lista di ID giocatori che hanno segnato autogol
+  final List<String>? assist; // Lista di ID giocatori che hanno fatto assist
   final List<String>? sostituzioni; // Lista di ID giocatori entrati in campo
   final List<String>? espulsi; // Lista di ID giocatori espulsi
   final List<String>? infortunati; // Lista di ID giocatori usciti per infortunio
@@ -35,6 +36,7 @@ class PartitaFormazioneModel {
     this.divisa,
     this.marcatori,
     this.autogol,
+    this.assist,
     this.sostituzioni,
     this.espulsi,
     this.infortunati,
@@ -388,6 +390,7 @@ Widget buildGiocatore(
   // Conta quanti gol ha segnato il giocatore
   int numeroGol = 0;
   int numeroAutogol = 0;
+  int numeroAssist = 0;
   String? idGiocatore;
   if (pos <= model.formazione.length) {
     idGiocatore = model.formazione[pos - 1].idGiocatore;
@@ -396,6 +399,9 @@ Widget buildGiocatore(
     }
     if (model.autogol != null) {
       numeroAutogol = model.autogol!.where((id) => id == idGiocatore).length;
+    }
+    if (model.assist != null) {
+      numeroAssist = model.assist!.where((id) => id == idGiocatore).length;
     }
   }
 
@@ -492,6 +498,31 @@ Widget buildGiocatore(
                 padding: EdgeInsets.all(2),
                 child: Image.asset(
                   'assets/icon/gol.png',
+                  width: 14,
+                  height: 14,
+                ),
+              ),
+            ),
+          );
+        }),
+      // Mostra le icone degli assist in base al numero di assist fatti
+      if (numeroAssist > 0)
+        ...List.generate(numeroAssist, (index) {
+          return Positioned(
+            top: -4,
+            left: -4 - ((numeroAutogol + index) * 10.0),
+            child: Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.black, width: 1),
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(2),
+                child: Image.asset(
+                  'assets/icon/assist.png',
                   width: 14,
                   height: 14,
                 ),

@@ -856,8 +856,13 @@ class _GiocatorePageState extends State<GiocatorePage>
     final isPortiere = giocatore.ruolo == 'Portiere';
     final statPairs = <(String, int)>[
       ('PG', c.presenze),
-      if (!isAllenatore) ...[
+      if (isAllenatore) ...[
+        ('V', c.vinte ?? 0),
+        ('P', c.pareggiate ?? 0),
+        ('S', c.perse ?? 0),
+      ] else ...[
         ('Gol', c.gol),
+        ('Ass', c.assist ?? 0),
         ('Esp', c.espulsioni),
         ('Aut', c.autogol ?? 0),
         ('Rig', c.rigoriSbagliati ?? 0),

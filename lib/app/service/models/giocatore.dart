@@ -78,6 +78,10 @@ class Carriera {
   final int? golAnnullati;
   final int? golSubiti;
   final int? cleanSheet;
+  final int? assist;
+  final int? vinte;
+  final int? pareggiate;
+  final int? perse;
   final bool? esonero;
   final bool? capitano;
   final bool attivo;
@@ -97,6 +101,10 @@ class Carriera {
     this.golAnnullati,
     this.golSubiti,
     this.cleanSheet,
+    this.assist,
+    this.vinte,
+    this.pareggiate,
+    this.perse,
     this.esonero,
     this.capitano,
     required this.attivo,
@@ -118,6 +126,10 @@ class Carriera {
       golAnnullati: json['golAnnullati'],
       golSubiti: json['golSubiti'],
       cleanSheet: json['cleanSheet'],
+      assist: json['assist'],
+      vinte: json['vinte'],
+      pareggiate: json['pareggiate'],
+      perse: json['perse'],
       esonero: json['esonero'],
       capitano: json['capitano'],
       attivo: json['attivo'],
@@ -142,6 +154,10 @@ class Carriera {
       'golAnnullati': golAnnullati,
       'golSubiti': golSubiti,
       'cleanSheet': cleanSheet,
+      'assist': assist,
+      'vinte': vinte,
+      'pareggiate': pareggiate,
+      'perse': perse,
       'esonero': esonero,
       'capitano': capitano,
       'attivo': attivo,

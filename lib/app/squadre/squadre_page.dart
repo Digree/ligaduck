@@ -48,6 +48,7 @@ class _StatRowSquadra {
   final int rigoriSbagliati;
   final int golAnnullati;
   final int cleanSheet;
+  final int assist;
 
   _StatRowSquadra({
     required this.giocatore,
@@ -61,6 +62,7 @@ class _StatRowSquadra {
     required this.rigoriSbagliati,
     required this.golAnnullati,
     required this.cleanSheet,
+    required this.assist,
   });
 }
 
@@ -2919,6 +2921,7 @@ class _SquadrePageState extends State<SquadrePage> {
           rigoriSbagliati: carriera.rigoriSbagliati ?? 0,
           golAnnullati: carriera.golAnnullati ?? 0,
           cleanSheet: carriera.cleanSheet ?? 0,
+          assist: carriera.assist ?? 0,
         ),
       );
     }
@@ -2938,14 +2941,16 @@ class _SquadrePageState extends State<SquadrePage> {
         case 4:
           return a.gol.compareTo(b.gol);
         case 5:
-          return a.espulsioni.compareTo(b.espulsioni);
+          return a.assist.compareTo(b.assist);
         case 6:
-          return a.autogol.compareTo(b.autogol);
+          return a.espulsioni.compareTo(b.espulsioni);
         case 7:
-          return a.rigoriSbagliati.compareTo(b.rigoriSbagliati);
+          return a.autogol.compareTo(b.autogol);
         case 8:
-          return a.golAnnullati.compareTo(b.golAnnullati);
+          return a.rigoriSbagliati.compareTo(b.rigoriSbagliati);
         case 9:
+          return a.golAnnullati.compareTo(b.golAnnullati);
+        case 10:
           return a.cleanSheet.compareTo(b.cleanSheet);
         case 1:
         default:
@@ -2972,6 +2977,7 @@ class _SquadrePageState extends State<SquadrePage> {
     'Ruolo',
     'PG',
     'Gol',
+    'Ass',
     'Esp',
     'Aut',
     'Rig',
@@ -3072,6 +3078,7 @@ class _SquadrePageState extends State<SquadrePage> {
     final statPairs = <(String, int)>[
       ('PG', r.presenze),
       ('Gol', r.gol),
+      ('Ass', r.assist),
       ('Esp', r.espulsioni),
       ('Aut', r.autogol),
       ('Rig', r.rigoriSbagliati),
@@ -5091,6 +5098,10 @@ class _SquadrePageState extends State<SquadrePage> {
                               golAnnullati: c.golAnnullati,
                               golSubiti: c.golSubiti,
                               cleanSheet: c.cleanSheet,
+                              assist: c.assist,
+                              vinte: c.vinte,
+                              pareggiate: c.pareggiate,
+                              perse: c.perse,
                               esonero: c.esonero,
                               capitano: shouldBeCapitano,
                               attivo: c.attivo,

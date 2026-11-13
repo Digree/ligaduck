@@ -1124,6 +1124,47 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                                   Row(
                                                     children: [
                                                       Image.asset(
+                                                        'assets/icon/assist.png',
+                                                        width: 20,
+                                                        height: 20,
+                                                      ),
+                                                      SizedBox(width: 8),
+                                                      Text(
+                                                        'Classifica Assist',
+                                                        style: TextStyle(
+                                                          fontSize: 20,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                        textAlign:
+                                                            TextAlign.start,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  SizedBox(height: 8),
+                                                  Expanded(
+                                                    child: buildAssistBox(
+                                                      selectedGiornata!,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 8),
+                                      Expanded(
+                                        child: Card(
+                                          child: SizedBox(
+                                            height: 300,
+                                            child: Padding(
+                                              padding: EdgeInsets.all(12),
+                                              child: Column(
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      Image.asset(
                                                         'assets/icon/aut.png',
                                                         width: 20,
                                                         height: 20,
@@ -1574,6 +1615,115 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     } else {
       return Center(child: Text('Nessun marcatore disponibile'));
     }
+  }
+
+  Widget buildAssistBox(selectedGiornata) {
+    Giornata? giornata;
+    for (var giornata_ in giornate_) {
+      if (giornata_.id == selectedGiornata) {
+        giornata = giornata_;
+        break;
+      }
+    }
+
+    if (giornata?.statistiche == null) {
+      return Center(child: Text('Nessuna statistica disponibile'));
+    }
+
+    final assistList = List<Malus>.from(giornata!.statistiche!.assist)
+      ..sort((a, b) => b.quantita.compareTo(a.quantita));
+    if (assistList.isEmpty) {
+      return Center(child: Text('Nessun assist disponibile'));
+    }
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                for (var assist in assistList.take(3))
+                  FutureBuilder<Squadra>(
+                    future: getSquadra(
+                      Provider.of<SquadreProvider>(context, listen: false),
+                      assist.idSquadra ?? 0,
+                      idNazionale: assist.idNazionale,
+                    ),
+                    builder: (context, snapshot) {
+                      return Container(
+                        padding: EdgeInsets.symmetric(
+                          vertical: 8,
+                          horizontal: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: Colors.grey[300]!,
+                              width: 1.0,
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  if (snapshot.hasData)
+                                    Padding(
+                                      padding: EdgeInsets.only(right: 8),
+                                      child: SquadraLogoWidget(
+                                        codSquadra: snapshot.data!.cod,
+                                        squadra: snapshot.data!,
+                                        size: 30,
+                                        nomeNazionale: _nomeNazionaleOrNull(
+                                          snapshot.data,
+                                          idNazionale: assist.idNazionale,
+                                        ),
+                                      ),
+                                    )
+                                  else
+                                    Padding(
+                                      padding: EdgeInsets.only(right: 8),
+                                      child: Icon(
+                                        Icons.shield,
+                                        size: 30,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  Expanded(
+                                    child: Text(
+                                      CommonService.decodePlayerName(
+                                        assist.nome,
+                                      ),
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      textAlign: TextAlign.left,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              '${assist.quantita}',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.right,
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget buildAutogolBox(selectedGiornata) {
@@ -3671,6 +3821,41 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                     SizedBox(
                       height: 200,
                       child: buildMarcatoriBox(selectedGiornata!),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(8),
+            child: Card(
+              child: Padding(
+                padding: EdgeInsets.all(12),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Image.asset(
+                          'assets/icon/assist.png',
+                          width: 20,
+                          height: 20,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Classifica Assist',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.start,
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    SizedBox(
+                      height: 200,
+                      child: buildAssistBox(selectedGiornata!),
                     ),
                   ],
                 ),

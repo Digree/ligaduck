@@ -2060,6 +2060,44 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     return false;
   }
 
+  /// Sottotitolo con icona scarpino e nome dell'assistman, se presente.
+  Widget? _buildAssistSubtitle(Evento evento, bool isEventoCasa) {
+    final assist = evento.assist;
+    if (assist == null || assist.isEmpty) return null;
+    if (evento.codAzione != 'gol' &&
+        evento.codAzione != 'rig' &&
+        evento.codAzione != 'pun') {
+      return null;
+    }
+    final nome = setNomeTabellino(
+      assist,
+      isEventoCasa ? partita!.formazioneHome : partita!.formazioneAway,
+    );
+    if (nome.isEmpty) return null;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Image.asset('assets/icon/assist.png', width: 14, height: 14),
+        const SizedBox(width: 4),
+        Text(
+          nome,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+            fontStyle: FontStyle.italic,
+            fontFamily: competizione?.id == 5
+                ? 'champions'
+                : competizione?.id == 6 || competizione?.id == 7
+                ? 'europa'
+                : competizione?.id == 8
+                ? 'supercup'
+                : null,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget buildTabellinoRow(evento) {
     double screenWidth = MediaQuery.of(context).size.width;
     final bool isEventoCasa = _isEventoCasa(evento);
@@ -2072,7 +2110,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       height:
           evento.codAzione == 'sos' ||
               evento.codAzione == 'pun' ||
-              evento.codAzione == 'rig'
+              evento.codAzione == 'rig' ||
+              (evento.assist?.isNotEmpty ?? false)
           ? 60
           : 40,
       decoration: BoxDecoration(
@@ -2275,6 +2314,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                     : null,
                               ),
                             ),
+                            if (_buildAssistSubtitle(evento, true) != null)
+                              _buildAssistSubtitle(evento, true)!,
                           ],
                         )
                       else if (evento.codAzione == 'rig')
@@ -2335,8 +2376,38 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                           : null,
                                     ),
                                   ),
+                                  if (_buildAssistSubtitle(evento, true) !=
+                                      null)
+                                    _buildAssistSubtitle(evento, true)!,
                                 ],
                               )
+                      else if (evento.codAzione == 'gol' &&
+                          (evento.assist?.isNotEmpty ?? false))
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              setNomeTabellino(
+                                evento.idGiocatore,
+                                partita!.formazioneHome,
+                              ),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black,
+                                fontFamily: competizione?.id == 5
+                                    ? 'champions'
+                                    : competizione?.id == 6 ||
+                                          competizione?.id == 7
+                                    ? 'europa'
+                                    : competizione?.id == 8
+                                    ? 'supercup'
+                                    : null,
+                              ),
+                            ),
+                            _buildAssistSubtitle(evento, true)!,
+                          ],
+                        )
                       else
                         Text(
                           setNomeTabellino(
@@ -2465,6 +2536,8 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                     : null,
                               ),
                             ),
+                            if (_buildAssistSubtitle(evento, false) != null)
+                              _buildAssistSubtitle(evento, false)!,
                           ],
                         )
                       else if (evento.codAzione == 'rig')
@@ -2525,8 +2598,38 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                           : null,
                                     ),
                                   ),
+                                  if (_buildAssistSubtitle(evento, false) !=
+                                      null)
+                                    _buildAssistSubtitle(evento, false)!,
                                 ],
                               )
+                      else if (evento.codAzione == 'gol' &&
+                          (evento.assist?.isNotEmpty ?? false))
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              setNomeTabellino(
+                                evento.idGiocatore,
+                                partita!.formazioneAway,
+                              ),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black,
+                                fontFamily: competizione?.id == 5
+                                    ? 'champions'
+                                    : competizione?.id == 6 ||
+                                          competizione?.id == 7
+                                    ? 'europa'
+                                    : competizione?.id == 8
+                                    ? 'supercup'
+                                    : null,
+                              ),
+                            ),
+                            _buildAssistSubtitle(evento, false)!,
+                          ],
+                        )
                       else
                         Text(
                           setNomeTabellino(
@@ -5493,6 +5596,33 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
         .map((evento) => evento.idGiocatore)
         .toList();
 
+    // Estrai gli assist dal tabellino per la squadra specifica
+    final assistHome = partita!.tabellino
+        .where(
+          (evento) =>
+              (evento.codAzione == 'gol' ||
+                  evento.codAzione == 'rig' ||
+                  evento.codAzione == 'pun') &&
+              _isEventoCasa(evento) &&
+              evento.minuto != 121 &&
+              (evento.assist?.isNotEmpty ?? false),
+        )
+        .map((evento) => evento.assist!)
+        .toList();
+
+    final assistAway = partita!.tabellino
+        .where(
+          (evento) =>
+              (evento.codAzione == 'gol' ||
+                  evento.codAzione == 'rig' ||
+                  evento.codAzione == 'pun') &&
+              _isEventoTrasferta(evento) &&
+              evento.minuto != 121 &&
+              (evento.assist?.isNotEmpty ?? false),
+        )
+        .map((evento) => evento.assist!)
+        .toList();
+
     // Estrai le sostituzioni (giocatori entrati E usciti) dal tabellino
     final eventiSosHome = partita!.tabellino
         .where((evento) => evento.codAzione == 'sos' && _isEventoCasa(evento))
@@ -5596,6 +5726,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                         partita!.formazioneHome.indisponibili,
                                     marcatori: marcatoriHome,
                                     autogol: autogolHome,
+                                    assist: assistHome,
                                     sostituzioni: sostituzioniHome,
                                     espulsi: espulsiHome,
                                     infortunati: infortunatiHome,
@@ -5623,6 +5754,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                         partita!.formazioneAway.indisponibili,
                                     marcatori: marcatoriAway,
                                     autogol: autogolAway,
+                                    assist: assistAway,
                                     sostituzioni: sostituzioniAway,
                                     espulsi: espulsiAway,
                                     infortunati: infortunatiAway,
@@ -5678,6 +5810,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                           partita!.formazioneHome.indisponibili,
                                       marcatori: marcatoriHome,
                                       autogol: autogolHome,
+                                    assist: assistHome,
                                       sostituzioni: sostituzioniHome,
                                       espulsi: espulsiHome,
                                       infortunati: infortunatiHome,
@@ -5708,6 +5841,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                           partita!.formazioneAway.indisponibili,
                                       marcatori: marcatoriAway,
                                       autogol: autogolAway,
+                                    assist: assistAway,
                                       sostituzioni: sostituzioniAway,
                                       espulsi: espulsiAway,
                                       infortunati: infortunatiAway,
@@ -5775,6 +5909,33 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
     final autogolAway = partita!.tabellino
         .where((evento) => evento.codAzione == 'aut' && _isEventoCasa(evento))
         .map((evento) => evento.idGiocatore)
+        .toList();
+
+    // Estrai gli assist dal tabellino per la squadra specifica
+    final assistHome = partita!.tabellino
+        .where(
+          (evento) =>
+              (evento.codAzione == 'gol' ||
+                  evento.codAzione == 'rig' ||
+                  evento.codAzione == 'pun') &&
+              _isEventoCasa(evento) &&
+              evento.minuto != 121 &&
+              (evento.assist?.isNotEmpty ?? false),
+        )
+        .map((evento) => evento.assist!)
+        .toList();
+
+    final assistAway = partita!.tabellino
+        .where(
+          (evento) =>
+              (evento.codAzione == 'gol' ||
+                  evento.codAzione == 'rig' ||
+                  evento.codAzione == 'pun') &&
+              _isEventoTrasferta(evento) &&
+              evento.minuto != 121 &&
+              (evento.assist?.isNotEmpty ?? false),
+        )
+        .map((evento) => evento.assist!)
         .toList();
 
     // Estrai le sostituzioni (giocatori entrati E usciti) dal tabellino
@@ -5874,6 +6035,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                     partita!.formazioneHome.indisponibili,
                                 marcatori: marcatoriHome,
                                 autogol: autogolHome,
+                                    assist: assistHome,
                                 sostituzioni: sostituzioniHome,
                                 espulsi: espulsiHome,
                                 infortunati: infortunatiHome,
@@ -5900,6 +6062,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                     partita!.formazioneAway.indisponibili,
                                 marcatori: marcatoriAway,
                                 autogol: autogolAway,
+                                    assist: assistAway,
                                 sostituzioni: sostituzioniAway,
                                 espulsi: espulsiAway,
                                 infortunati: infortunatiAway,
@@ -5956,6 +6119,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                       partita!.formazioneHome.indisponibili,
                                   marcatori: marcatoriHome,
                                   autogol: autogolHome,
+                                    assist: assistHome,
                                   sostituzioni: sostituzioniHome,
                                   espulsi: espulsiHome,
                                   infortunati: infortunatiHome,
@@ -5984,6 +6148,7 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                                       partita!.formazioneAway.indisponibili,
                                   marcatori: marcatoriAway,
                                   autogol: autogolAway,
+                                    assist: assistAway,
                                   sostituzioni: sostituzioniAway,
                                   espulsi: espulsiAway,
                                   infortunati: infortunatiAway,
@@ -6092,6 +6257,35 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
               .toList();
 
     final numeroAutogol = autogol
+        .where((id) => id == giocatore.idGiocatore)
+        .length;
+
+    // Conta gli assist del giocatore (esclusi i rigori dopo il 120, minuto 121)
+    final assistList = team == 0
+        ? partita!.tabellino
+              .where(
+                (evento) =>
+                    (evento.codAzione == 'gol' ||
+                        evento.codAzione == 'rig' ||
+                        evento.codAzione == 'pun') &&
+                    _isEventoCasa(evento) &&
+                    evento.minuto != 121,
+              )
+              .map((evento) => evento.assist)
+              .toList()
+        : partita!.tabellino
+              .where(
+                (evento) =>
+                    (evento.codAzione == 'gol' ||
+                        evento.codAzione == 'rig' ||
+                        evento.codAzione == 'pun') &&
+                    _isEventoTrasferta(evento) &&
+                    evento.minuto != 121,
+              )
+              .map((evento) => evento.assist)
+              .toList();
+
+    final numeroAssist = assistList
         .where((id) => id == giocatore.idGiocatore)
         .length;
 
@@ -6245,6 +6439,30 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
                           padding: EdgeInsets.all(2),
                           child: Image.asset(
                             'assets/icon/gol.png',
+                            width: 14,
+                            height: 14,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                // Mostra icone assist
+                if (numeroAssist > 0)
+                  ...List.generate(numeroAssist, (index) {
+                    return Padding(
+                      padding: EdgeInsets.only(left: 8),
+                      child: Container(
+                        width: 18,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.black, width: 1),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.all(2),
+                          child: Image.asset(
+                            'assets/icon/assist.png',
                             width: 14,
                             height: 14,
                           ),

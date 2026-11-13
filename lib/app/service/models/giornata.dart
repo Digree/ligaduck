@@ -132,6 +132,7 @@ class StatisticheGiornata {
   final List<Malus> golAnnullati;
   final List<Marcatura> cleanSheet;
   final List<Autogol> autogol;
+  final List<Malus> assist;
 
   StatisticheGiornata({
     required this.marcatori,
@@ -140,6 +141,7 @@ class StatisticheGiornata {
     required this.golAnnullati,
     required this.cleanSheet,
     required this.autogol,
+    this.assist = const [],
   });
 
   factory StatisticheGiornata.fromJson(Map<String, dynamic> json) {
@@ -174,6 +176,11 @@ class StatisticheGiornata {
                 .map((e) => Autogol.fromJson(e as Map<String, dynamic>))
                 .toList()
           : [],
+      assist: json['assist'] != null
+          ? (json['assist'] as List)
+                .map((e) => Malus.fromJson(e as Map<String, dynamic>))
+                .toList()
+          : [],
     );
   }
 
@@ -185,6 +192,7 @@ class StatisticheGiornata {
       'golAnnullati': golAnnullati.map((e) => e.toJson()).toList(),
       'cleanSheet': cleanSheet.map((e) => e.toJson()).toList(),
       'autogol': autogol.map((e) => e.toJson()).toList(),
+      'assist': assist.map((e) => e.toJson()).toList(),
     };
   }
 }
