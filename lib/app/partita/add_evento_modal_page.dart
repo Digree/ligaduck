@@ -1976,6 +1976,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
           idTeam: _getIdTeam(team, eventoSelezionato!.cod == 'aut'),
           idNazionale: _getIdNazionale(team, eventoSelezionato!.cod == 'aut'),
           esitoRigore: esitoRigoreSelezionato == 'segnato' ? true : false,
+          assist: eventoSelezionato!.cod == 'gol' ? assistSelezionato : null,
         );
 
         success = await putEvento(evento);
@@ -2116,6 +2117,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
     }
     setState(() {
       giocatoreSelezionato = '';
+      assistSelezionato = null;
       eventoSelezionato = null;
       tipoGolSelezionato = 'no';
       esitoRigoreSelezionato = 'segnato';
