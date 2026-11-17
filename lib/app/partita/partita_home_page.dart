@@ -3915,6 +3915,9 @@ class _PartitaHomePageState extends State<PartitaHomePage> {
       widget.campionato,
       competizione!.id,
     );
+    if (!giornate.any((giornata) => giornata.classifica?.isNotEmpty ?? false)) {
+      return [];
+    }
 
     Giornata? giornataCorrente;
     try {

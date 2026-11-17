@@ -175,6 +175,9 @@ Widget buildCampionatoMatch(
 
         // Check phase logic
         bool isPhaseE = (currentFase ?? '').toUpperCase() == 'E';
+        bool isGroupPhaseCompetition16 =
+            model.competizione?.id == 16 &&
+            (currentFase ?? '').toUpperCase() == 'G';
 
         // Se la fase è E, apri sempre la pagina normalmente
         if (isPhaseE) {
@@ -191,7 +194,7 @@ Widget buildCampionatoMatch(
           if (shouldRefresh == true && model.onRefreshRequired != null) {
             model.onRefreshRequired!();
           }
-        } else if (isHomeEstera && isAwayEstera) {
+        } else if (isHomeEstera && isAwayEstera && !isGroupPhaseCompetition16) {
           // Per partite tra squadre estere (non in fase E)
           if (globals.admin && !model.partita.salvata) {
             // Se è admin e partita non salvata, mostra dialog
