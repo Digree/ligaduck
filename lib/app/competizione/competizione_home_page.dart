@@ -156,6 +156,12 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
         widget.competizione.classifica == 'Girone';
   }
 
+  bool get _mostraAssist => giornate_.any(
+    (giornata) =>
+        giornata.id == selectedGiornata &&
+        (giornata.statistiche?.assist.isNotEmpty ?? false),
+  );
+
   bool _isNazionaleSquadra(Squadra? squadra, {String? idNazionale}) {
     return (idNazionale?.isNotEmpty ?? false) ||
         (squadra?.categoria.toLowerCase().contains('naz') ?? false);
@@ -1112,47 +1118,49 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                                           ),
                                         ),
                                       ),
-                                      SizedBox(width: 8),
-                                      Expanded(
-                                        child: Card(
-                                          child: SizedBox(
-                                            height: 300,
-                                            child: Padding(
-                                              padding: EdgeInsets.all(12),
-                                              child: Column(
-                                                children: [
-                                                  Row(
-                                                    children: [
-                                                      Image.asset(
-                                                        'assets/icon/assist.png',
-                                                        width: 20,
-                                                        height: 20,
-                                                      ),
-                                                      SizedBox(width: 8),
-                                                      Text(
-                                                        'Classifica Assist',
-                                                        style: TextStyle(
-                                                          fontSize: 20,
-                                                          fontWeight:
-                                                              FontWeight.bold,
+                                      if (_mostraAssist) ...[
+                                        SizedBox(width: 8),
+                                        Expanded(
+                                          child: Card(
+                                            child: SizedBox(
+                                              height: 300,
+                                              child: Padding(
+                                                padding: EdgeInsets.all(12),
+                                                child: Column(
+                                                  children: [
+                                                    Row(
+                                                      children: [
+                                                        Image.asset(
+                                                          'assets/icon/assist.png',
+                                                          width: 20,
+                                                          height: 20,
                                                         ),
-                                                        textAlign:
-                                                            TextAlign.start,
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  SizedBox(height: 8),
-                                                  Expanded(
-                                                    child: buildAssistBox(
-                                                      selectedGiornata!,
+                                                        SizedBox(width: 8),
+                                                        Text(
+                                                          'Classifica Assist',
+                                                          style: TextStyle(
+                                                            fontSize: 20,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                          ),
+                                                          textAlign:
+                                                              TextAlign.start,
+                                                        ),
+                                                      ],
                                                     ),
-                                                  ),
-                                                ],
+                                                    SizedBox(height: 8),
+                                                    Expanded(
+                                                      child: buildAssistBox(
+                                                        selectedGiornata!,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
                                             ),
                                           ),
                                         ),
-                                      ),
+                                      ],
                                       SizedBox(width: 8),
                                       Expanded(
                                         child: Card(
@@ -1718,6 +1726,37 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
                       );
                     },
                   ),
+              ],
+            ),
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.only(top: 8),
+          child: InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ClassificaStatisticaPage(
+                    campionato: widget.campionato,
+                    competizione: widget.competizione,
+                    statistiche: assistList,
+                    titolo: 'Classifica Assist',
+                  ),
+                ),
+              );
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Vedi tutti gli assist',
+                  style: TextStyle(
+                    color: Colors.blue,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+                Icon(Icons.arrow_right, color: Colors.blue),
               ],
             ),
           ),
@@ -3827,41 +3866,42 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
               ),
             ),
           ),
-          Padding(
-            padding: EdgeInsets.all(8),
-            child: Card(
-              child: Padding(
-                padding: EdgeInsets.all(12),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Image.asset(
-                          'assets/icon/assist.png',
-                          width: 20,
-                          height: 20,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Classifica Assist',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+          if (_mostraAssist)
+            Padding(
+              padding: EdgeInsets.all(8),
+              child: Card(
+                child: Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Image.asset(
+                            'assets/icon/assist.png',
+                            width: 20,
+                            height: 20,
                           ),
-                          textAlign: TextAlign.start,
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 8),
-                    SizedBox(
-                      height: 200,
-                      child: buildAssistBox(selectedGiornata!),
-                    ),
-                  ],
+                          SizedBox(width: 8),
+                          Text(
+                            'Classifica Assist',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.start,
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 8),
+                      SizedBox(
+                        height: 200,
+                        child: buildAssistBox(selectedGiornata!),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
           Padding(
             padding: EdgeInsets.all(8),
             child: Card(

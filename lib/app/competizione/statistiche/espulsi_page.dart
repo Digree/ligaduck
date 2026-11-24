@@ -12,7 +12,7 @@ import 'package:ligaduck/app/widgets/squadra_logo_widget.dart';
 import 'package:ligaduck/services/commonService.dart';
 import 'package:provider/provider.dart';
 
-class EspulsiPage extends StatefulWidget {
+class EspulsiPage extends StatelessWidget {
   final List<Malus> espulsi;
   final String campionato;
   final Competizione competizione;
@@ -25,12 +25,38 @@ class EspulsiPage extends StatefulWidget {
   });
 
   @override
-  State<EspulsiPage> createState() => _EspulsiPageState();
+  Widget build(BuildContext context) => ClassificaStatisticaPage(
+    statistiche: espulsi,
+    campionato: campionato,
+    competizione: competizione,
+    titolo: 'Espulsioni',
+    ricreaCompetizioneAlRitorno: true,
+  );
 }
 
-class _EspulsiPageState extends State<EspulsiPage> {
+class ClassificaStatisticaPage extends StatefulWidget {
+  final List<Malus> statistiche;
+  final String campionato;
+  final Competizione competizione;
+  final String titolo;
+  final bool ricreaCompetizioneAlRitorno;
+
+  const ClassificaStatisticaPage({
+    super.key,
+    required this.statistiche,
+    required this.campionato,
+    required this.competizione,
+    required this.titolo,
+    this.ricreaCompetizioneAlRitorno = false,
+  });
+
+  @override
+  State<ClassificaStatisticaPage> createState() => _ClassificaStatisticaPageState();
+}
+
+class _ClassificaStatisticaPageState extends State<ClassificaStatisticaPage> {
   late final Future<List<Squadra>> _squadreFuture;
-  List<Malus> _displayedEspulsi = [];
+  List<Malus> _statisticheVisualizzate = [];
   Map<int, String> _squadreMap = {};
   String _sortBy = 'Quantità';
 
@@ -42,24 +68,25 @@ class _EspulsiPageState extends State<EspulsiPage> {
       listen: false,
     );
     _squadreFuture = squadreProvider.fetchSquadre(widget.campionato);
-    _displayedEspulsi = List.from(widget.espulsi);
+    _statisticheVisualizzate = List.from(widget.statistiche);
     _loadSquadreAndSort();
   }
 
   Future<void> _loadSquadreAndSort() async {
     final squadre = await _squadreFuture;
+    if (!mounted) return;
     _squadreMap = {for (var s in squadre) s.id: s.nome};
-    _sortEspulsi();
+    _sortStatistiche();
   }
 
-  void _sortEspulsi() {
+  void _sortStatistiche() {
     setState(() {
       if (_sortBy == 'Quantità') {
-        _displayedEspulsi.sort((a, b) => b.quantita.compareTo(a.quantita));
+        _statisticheVisualizzate.sort((a, b) => b.quantita.compareTo(a.quantita));
       } else if (_sortBy == 'Nome') {
-        _displayedEspulsi.sort((a, b) => a.nome.compareTo(b.nome));
+        _statisticheVisualizzate.sort((a, b) => a.nome.compareTo(b.nome));
       } else if (_sortBy == 'Squadra') {
-        _displayedEspulsi.sort((a, b) {
+        _statisticheVisualizzate.sort((a, b) {
           final nomeA = _squadreMap[a.idSquadra] ?? '';
           final nomeB = _squadreMap[b.idSquadra] ?? '';
           return nomeA.compareTo(nomeB);
@@ -114,6 +141,10 @@ class _EspulsiPageState extends State<EspulsiPage> {
                     left: 10,
                     child: LiquidGlassBackButton(
                       onPressed: () {
+                        if (!widget.ricreaCompetizioneAlRitorno) {
+                          Navigator.pop(context);
+                          return;
+                        }
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -150,7 +181,7 @@ class _EspulsiPageState extends State<EspulsiPage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Espulsioni',
+                          widget.titolo,
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 20,
@@ -198,23 +229,26 @@ class _EspulsiPageState extends State<EspulsiPage> {
                   ),
                 ),
                 SizedBox(width: 8),
-                LiquidGlassDropdownBox(
-                  child: LiquidGlassDropdownButton<String>(
-                    value: _sortBy,
-                    items: ['Quantità', 'Nome', 'Squadra'].map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      if (newValue != null) {
-                        setState(() {
-                          _sortBy = newValue;
-                          _sortEspulsi();
-                        });
-                      }
-                    },
+                SizedBox(
+                  width: 160,
+                  child: LiquidGlassDropdownBox(
+                    child: LiquidGlassDropdownButton<String>(
+                      value: _sortBy,
+                      items: ['Quantità', 'Nome', 'Squadra'].map((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _sortBy = newValue;
+                            _sortStatistiche();
+                          });
+                        }
+                      },
+                    ),
                   ),
                 ),
               ],
@@ -222,9 +256,9 @@ class _EspulsiPageState extends State<EspulsiPage> {
           ),
           Expanded(
             child: ListView.builder(
-              itemCount: _displayedEspulsi.length,
+              itemCount: _statisticheVisualizzate.length,
               itemBuilder: (context, index) {
-                final espulso = _displayedEspulsi[index];
+                final statistica = _statisticheVisualizzate[index];
                 bool isHovered = false;
                 return StatefulBuilder(
                   builder: (context, setRowState) {
@@ -234,8 +268,8 @@ class _EspulsiPageState extends State<EspulsiPage> {
                       child: FutureBuilder<Squadra>(
                         future: getSquadra(
                           Provider.of<SquadreProvider>(context, listen: false),
-                          espulso.idSquadra ?? 0,
-                          idNazionale: espulso.idNazionale,
+                          statistica.idSquadra ?? 0,
+                          idNazionale: statistica.idNazionale,
                         ),
                         builder: (context, snapshot) {
                           return Container(
@@ -274,7 +308,7 @@ class _EspulsiPageState extends State<EspulsiPage> {
                                                 (snapshot.data!.categoria
                                                         .toLowerCase()
                                                         .contains('naz') ||
-                                                    (espulso
+                                                    (statistica
                                                             .idNazionale
                                                             ?.isNotEmpty ??
                                                         false))
@@ -347,7 +381,7 @@ class _EspulsiPageState extends State<EspulsiPage> {
                                       Expanded(
                                         child: Text(
                                           CommonService.decodePlayerName(
-                                            espulso.nome,
+                                            statistica.nome,
                                           ),
                                           style: TextStyle(
                                             fontSize: 16,
@@ -372,7 +406,7 @@ class _EspulsiPageState extends State<EspulsiPage> {
                                 Padding(
                                   padding: EdgeInsets.only(right: 32),
                                   child: Text(
-                                    '${espulso.quantita}',
+                                    '${statistica.quantita}',
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
