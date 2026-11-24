@@ -1,24 +1,24 @@
 {
-  "lastUpdate": "2026-11-17",
+  "lastUpdate": "2026-11-24",
   "android": {
-    "version": "44.03.09",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.03.09/ligaduck-v44.03.09.apk",
-    "releaseNotes": "- Assist (per davvero!)"
+    "version": "44.03.10",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.03.10/ligaduck-v44.03.10.apk",
+    "releaseNotes": "- Statistiche Assist"
   },
   "ios": {
-    "version": "44.03.09",
+    "version": "44.03.10",
     "downloadUrl": "https://apps.apple.com/app/ligaduck",
-    "releaseNotes": "- Assist (per davvero!)"
+    "releaseNotes": "- Statistiche Assist"
   },
   "macos": {
-    "version": "44.03.09",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.03.09/ligaduck-v44.03.09.dmg",
-    "releaseNotes": "- Assist (per davvero!)"
+    "version": "44.03.10",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.03.10/ligaduck-v44.03.10.dmg",
+    "releaseNotes": "- Statistiche Assist"
   },
   "windows": {
-    "version": "44.03.09",
-    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.03.09/ligaduck-v44.03.09-windows.zip",
-    "msixUrl": "https://github.com/Digree/ligaduck/releases/download/v44.03.09/LigaDuckManager-Windows-v44.03.09.msix",
-    "releaseNotes": "- Assist (per davvero!)"
+    "version": "44.03.10",
+    "downloadUrl": "https://github.com/Digree/ligaduck/releases/download/v44.03.10/ligaduck-v44.03.10-windows.zip",
+    "msixUrl": "https://github.com/Digree/ligaduck/releases/download/v44.03.10/LigaDuckManager-Windows-v44.03.10.msix",
+    "releaseNotes": "- Statistiche Assist"
   }
 }
