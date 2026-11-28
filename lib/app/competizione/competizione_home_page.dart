@@ -178,28 +178,18 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
     return null;
   }
 
-  /// Trova il nome del girone per un ID di squadra (club o nazionale)
-  String? _findGironeNome(int squadraId) {
-    if (!_isClassificaGironi() ||
-        widget.competizione.gironi == null ||
-        widget.competizione.gironi!.isEmpty) {
-      return null;
-    }
+  String? _findGironeNome(Partita partita) {
+    final idNazionale = partita.idNazionaleHome?.isNotEmpty == true
+        ? partita.idNazionaleHome
+        : _nazionaleIdByFakeId[partita.idTeamHome];
 
-    for (final girone in widget.competizione.gironi!) {
-      // Controlla se la squadra è in un girone di club
-      if (girone.idSquadre != null && girone.idSquadre!.contains(squadraId)) {
-        return girone.nome;
-      }
-      // Controlla se la squadra è in un girone di nazionali (confronta con fake id)
-      if (girone.idNazioni != null && girone.idNazioni!.isNotEmpty) {
-        // Cerca il fake id corrispondente alla nazionale
-        for (final fakeId in _nazionaleIdByFakeId.keys) {
-          if (_nazionaleIdByFakeId[fakeId] == squadraId &&
-              girone.idNazioni!.contains(squadraId)) {
-            return girone.nome;
-          }
+    for (final girone in widget.competizione.gironi ?? <Girone>[]) {
+      if (idNazionale != null) {
+        if (girone.idNazioni?.contains(idNazionale) ?? false) {
+          return girone.nome;
         }
+      } else if (girone.idSquadre?.contains(partita.idTeamHome) ?? false) {
+        return girone.nome;
       }
     }
 
@@ -407,6 +397,7 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
       5,
       6,
       7,
+      16,
       17,
     ].contains(widget.competizione.id);
 
@@ -3337,10 +3328,12 @@ class _CompetizioneHomePageState extends State<CompetizioneHomePage>
               currentFase = null;
             }
 
-            // Pre-processing: crea una mappa di quale girone è stato mostrato per ogni partita
+            // Le etichette dei gironi riguardano solo la relativa fase.
             final Map<int, String?> partitaGironeMap = {};
-            for (int i = 0; i < partite.length; i++) {
-              partitaGironeMap[i] = _findGironeNome(partite[i].idTeamHome);
+            if (currentFase?.toUpperCase() == 'G') {
+              for (int i = 0; i < partite.length; i++) {
+                partitaGironeMap[i] = _findGironeNome(partite[i]);
+              }
             }
 
             return Padding(

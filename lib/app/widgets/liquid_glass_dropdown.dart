@@ -159,6 +159,7 @@ class LiquidGlassDropdownButtonFormField<T> extends StatelessWidget {
   final bool isDense;
   final AutovalidateMode? autovalidateMode;
   final List<Widget> Function(BuildContext)? selectedItemBuilder;
+  final bool useNative;
 
   const LiquidGlassDropdownButtonFormField({
     super.key,
@@ -180,12 +181,14 @@ class LiquidGlassDropdownButtonFormField<T> extends StatelessWidget {
     this.isDense = true,
     this.autovalidateMode,
     this.selectedItemBuilder,
+    this.useNative = true,
   });
 
   @override
   Widget build(BuildContext context) {
     final current = value ?? initialValue;
     final titlesOk =
+        useNative &&
         NativeLiquidGlassUtils.supportsLiquidGlass &&
         onChanged != null &&
         (items ?? const []).isNotEmpty &&

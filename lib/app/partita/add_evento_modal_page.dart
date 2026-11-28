@@ -1,4 +1,5 @@
 import 'package:ligaduck/app/widgets/liquid_glass_dropdown.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ligaduck/app/service/models/competizione.dart';
@@ -69,6 +70,14 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
       team == 0 ? _sostituzioniHome : _sostituzioniAway;
 
   late TabController _tabController;
+
+  bool get _useNativeDropdown {
+    final media = MediaQuery.of(context);
+    return kIsWeb ||
+        defaultTargetPlatform != TargetPlatform.iOS ||
+        media.size.width > 600 ||
+        media.orientation != Orientation.portrait;
+  }
 
   @override
   void initState() {
@@ -347,6 +356,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
               children: [
                 SizedBox(height: 4),
                 LiquidGlassDropdownButtonFormField<String>(
+                  useNative: _useNativeDropdown,
                   //initialValue: eventoSelezionato?.nome,
                   isExpanded: true,
                   decoration: InputDecoration(
@@ -609,6 +619,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
           SizedBox(
             height: 78,
             child: LiquidGlassDropdownButtonFormField<String>(
+              useNative: _useNativeDropdown,
               //initialValue: null,
               isExpanded: true,
               decoration: InputDecoration(
@@ -718,6 +729,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
     return SizedBox(
       height: 78,
       child: LiquidGlassDropdownButtonFormField<String>(
+        useNative: _useNativeDropdown,
         isExpanded: true,
         decoration: InputDecoration(
           labelText: 'Assist (opzionale)',
@@ -968,6 +980,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
           SizedBox(
             height: 50,
             child: LiquidGlassDropdownButtonFormField<String>(
+              useNative: _useNativeDropdown,
               initialValue: pair.idIn,
               isExpanded: true,
               decoration: InputDecoration(
@@ -1038,6 +1051,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
           SizedBox(
             height: 60,
             child: LiquidGlassDropdownButtonFormField<String>(
+              useNative: _useNativeDropdown,
               initialValue: pair.idOut,
               isExpanded: true,
               decoration: InputDecoration(
@@ -1660,6 +1674,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
           SizedBox(
             height: 100,
             child: LiquidGlassDropdownButtonFormField<String>(
+              useNative: _useNativeDropdown,
               isExpanded: true,
               decoration: InputDecoration(
                 labelText: 'Seleziona Giocatore',
@@ -2054,6 +2069,7 @@ class _AddEventoModalPageState extends State<AddEventoModalPage>
 
     if (widget.minutiDisponibili != null) {
       return LiquidGlassDropdownButtonFormField<int>(
+        useNative: _useNativeDropdown,
         initialValue: team == 0 ? _minutoDropdownHome : _minutoDropdownAway,
         decoration: decoration,
         items: widget.minutiDisponibili!
